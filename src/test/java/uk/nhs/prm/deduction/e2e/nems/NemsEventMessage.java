@@ -1,8 +1,9 @@
 package uk.nhs.prm.deduction.e2e.nems;
 
+
 public class NemsEventMessage {
     public static NemsEventMessage parseMessage(String messageBody) {
-        return null;
+        return new NemsEventMessage();
     }
 
     public String nhsNumber() {
