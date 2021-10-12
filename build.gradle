@@ -21,8 +21,3 @@ dependencies {
 test {
     useJUnitPlatform()
 }
-tasks.withType(Test) {
-    environment 'NHS_ENVIRONMENT', 'test'
-    environment 'AWS_ACCOUNT_NO', '005235525306'
-
-}
