@@ -30,7 +30,7 @@ public class AwsConfigurationClient {
             return parameterResponse.parameter().value();
 
         } catch (SsmException e) {
-            System.err.println(e.getMessage());
+            System.err.println(String.format("Error for ssm parameter %s and error is %s",paramName, e.getMessage()));
             System.exit(1);
         }
         return paramName;
