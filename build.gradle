@@ -19,11 +19,5 @@ dependencies {
 }
 
 test {
-    testLogging.showStandardStreams = true
     useJUnitPlatform()
-}
-tasks.withType(Test) {
-    environment 'NHS_ENVIRONMENT', 'dev'
-    environment 'AWS_ACCOUNT_NO', '416874859154'
-
 }
