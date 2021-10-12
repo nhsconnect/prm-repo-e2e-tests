@@ -84,7 +84,6 @@ case "${command}" in
       check_env
       assume_environment_role $NHS_ENVIRONMENT
       configure_mesh_access
-#      ./tasks _configure_mtls_certificates
       dojo "./tasks _test_e2e"
       ;;
   *)

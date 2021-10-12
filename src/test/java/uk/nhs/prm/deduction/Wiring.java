@@ -2,6 +2,7 @@ package uk.nhs.prm.deduction;
 
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
+import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessageQueue;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
@@ -18,5 +19,9 @@ public class Wiring {
 
     private SqsQueue sqsQueue() {
         return new SqsQueue();
+    }
+
+    public MeshMailbox meshMailbox() throws Exception {
+        return new MeshMailbox(configuration);
     }
 }

@@ -36,7 +36,7 @@ public class AuthTokenGenerator {
     }
 
     public String getAuthorizationToken() throws Exception {
-        String timeStamp = new SimpleDateFormat("YmdHM").format(Calendar.getInstance().getTime());
+        String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
         String hmac_msg = mailbox_id + ":" + nonce + ":" + nonce_count  + ":" + mailbox_password + ":" + timeStamp;
         String hmac = calculateHMAC(hmac_msg, env_shared_secret);
         String s = AUTHSCHEMANAME+" "+ mailbox_id + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;

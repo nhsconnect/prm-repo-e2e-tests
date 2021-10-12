@@ -18,6 +18,7 @@ public class StackOverflowInsecureSSLContextLoader {
 
     public static SSLContext getClientAuthSslContext(String clientCertInPemFormat, String clientKeyInPemFormat) throws NoSuchAlgorithmException, IOException, CertificateException, InvalidKeySpecException, KeyStoreException, UnrecoverableKeyException, KeyManagementException {
         SSLContext sslContext = SSLContext.getInstance("TLS");
+
         byte[] certDerBytes = parseDERFromPEM(clientCertInPemFormat.getBytes(), "-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----");
         byte[] keyDerBytes = parseDERFromPEM(clientKeyInPemFormat.getBytes(), "-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----");
 

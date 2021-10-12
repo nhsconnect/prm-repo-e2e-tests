@@ -1,39 +1,34 @@
 package uk.nhs.prm.deduction.e2e.mesh;
 
-import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
-import org.apache.http.HttpException;
-import org.springframework.beans.factory.annotation.Value;
 
-import java.io.IOException;
+import org.apache.http.HttpException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
+import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
+
 import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import static uk.nhs.prm.deduction.e2e.client.StackOverflowInsecureSSLContextLoader.getClientAuthSslContext;
 
 public class MeshClient {
 
-    @Value("${meshMailboxId}")
-    String meshMailboxId;
 
-    public void postMessageToMeshMailbox() throws HttpException {
+    public String postMessage(String mailboxServiceUri, String meshMailboxId, String clientCert, String clientKey, NemsEventMessage message) throws Exception {
         try {
-            System.out.println("Getting value from SSM "+meshMailboxId);
 
-            AuthTokenGenerator authTokenGenerator = new AuthTokenGenerator();
-
-            String token = authTokenGenerator.getAuthorizationToken();
-
-            String payloadString = "Test-String";
-            String endpoint = "";
-            HttpRequest.BodyPublisher jsonPayload = HttpRequest.BodyPublishers.ofString(payloadString);
+            HttpRequest.BodyPublisher messageBody = HttpRequest.BodyPublishers.ofString(message.body());
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URL(endpoint).toURI())
-                    .method("POST", jsonPayload)
-                    .header("Authorization", token)
+                    .uri(new URL(mailboxServiceUri).toURI())
+                    .method("POST", messageBody)
+                    .header("Authorization", getAuthToken())
                     .header("Content-Type", "application/octet-stream")
                     .header("Mex-LocalID", "Test")
                     .header("Mex-To", meshMailboxId)
@@ -42,21 +37,61 @@ public class MeshClient {
                     .build();
 
             HttpResponse<String> response = HttpClient.newBuilder()
-                    .sslContext(getClientAuthSslContext(
-                            readTestResource("mesh-mailbox-client-cert.pem"),
-                            readTestResource("mesh-mailbox-key.pem")))
+                    .sslContext(getClientAuthSslContext(clientCert, clientKey))
                     .build()
                     .send(request, HttpResponse.BodyHandlers.ofString());
-
-            System.out.println("response status code from mesh is " + response.statusCode());
-            System.out.println("response body from mesh is " + response.body());
-
+            return getMessageIdFromMessage(response.body());
         } catch (Exception e) {
             throw new HttpException("Exception encountered", e);
         }
     }
 
-    private String readTestResource(String filename) throws IOException {
-        return Files.readString(Paths.get("src/test/resources/" + filename));
+
+
+
+    public List<String> getMessageIds(String mailboxServiceUri, String meshMailboxId, String clientCert, String clientKey) throws HttpException {
+        try {
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URL(mailboxServiceUri).toURI())
+                    .GET()
+                    .header("Authorization", getAuthToken())
+                    .build();
+
+            HttpResponse<String> response = HttpClient.newBuilder()
+                    .sslContext(getClientAuthSslContext(clientCert, clientKey))
+                    .build()
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+            return getListOfMessagesOnMailbox(response.body());
+        } catch (Exception e) {
+            throw new HttpException("Exception encountered", e);
+        }
+    }
+
+    private String getAuthToken() throws Exception {
+        AuthTokenGenerator authTokenGenerator = new AuthTokenGenerator();
+
+        return authTokenGenerator.getAuthorizationToken();
+    }
+
+    private String getMessageIdFromMessage(String responseBody) throws JSONException {
+        JSONObject jsonObject = new JSONObject(responseBody);
+        return String.valueOf(jsonObject.get("messageID"));
+    }
+
+    private List<String>  getListOfMessagesOnMailbox(String responseBody) throws JSONException {
+        JSONObject jsonObject = new JSONObject(responseBody);
+        return getListFromJsonArray((JSONArray) jsonObject.get("messages"));
+    }
+
+    private List<String> getListFromJsonArray(JSONArray jsonArray) throws JSONException {
+        ArrayList<String> list = new ArrayList<String>();
+        if (jsonArray != null) {
+            int len = jsonArray.length();
+            for (int i=0;i<len;i++){
+                list.add(jsonArray.get(i).toString());
+            }
+        }
+        return list;
     }
 }
