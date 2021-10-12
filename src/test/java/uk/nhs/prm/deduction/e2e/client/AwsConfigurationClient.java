@@ -27,7 +27,6 @@ public class AwsConfigurationClient {
                     .build();
 
             GetParameterResponse parameterResponse = ssmClient.getParameter(parameterRequest);
-            System.out.println("The parameter value is " + parameterResponse.parameter().value());
             return parameterResponse.parameter().value();
 
         } catch (SsmException e) {
