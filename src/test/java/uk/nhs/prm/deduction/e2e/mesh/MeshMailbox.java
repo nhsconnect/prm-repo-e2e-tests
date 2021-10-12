@@ -16,16 +16,16 @@ public class MeshMailbox {
     private MeshClient meshClient;
 
     public MeshMailbox(TestConfiguration configuration) throws Exception {
-        meshClient = new MeshClient();
+        meshClient = new MeshClient(configuration);
         this.configuration = configuration;
     }
 
     public String postMessage(NemsEventMessage message) throws Exception {
-       return meshClient.postMessage(getMailboxServicOutboxeUri(), configuration.getMeshMailBoxID(), configuration.getMeshMailBoxClientCert(), configuration.getMeshMailBoxClientKey(), message);
+       return meshClient.postMessage(getMailboxServicOutboxeUri(), message);
     }
 
     public boolean hasMessageId(String messageId) throws HttpException, JSONException {
-        List<String> messageIds = meshClient.getMessageIds(getMailboxServicInboxeUri(), configuration.getMeshMailBoxID(), configuration.getMeshMailBoxClientCert(), configuration.getMeshMailBoxClientKey());
+        List<String> messageIds = meshClient.getMessageIds(getMailboxServicInboxeUri());
 
         return listContainsMessageID(messageIds,messageId);
     }

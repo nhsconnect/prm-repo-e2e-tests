@@ -22,7 +22,7 @@ test {
     useJUnitPlatform()
 }
 tasks.withType(Test) {
-    environment 'NHS_ENVIRONMENT', 'dev'
-    environment 'AWS_ACCOUNT_NO', '416874859154'
+    environment 'NHS_ENVIRONMENT', 'test'
+    environment 'AWS_ACCOUNT_NO', '005235525306'
 
 }

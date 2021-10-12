@@ -5,6 +5,7 @@ import org.apache.http.HttpException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 
@@ -19,9 +20,13 @@ import java.util.List;
 import static uk.nhs.prm.deduction.e2e.client.StackOverflowInsecureSSLContextLoader.getClientAuthSslContext;
 
 public class MeshClient {
+    private TestConfiguration configuration;
 
+    public MeshClient(TestConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
-    public String postMessage(String mailboxServiceUri, String meshMailboxId, String clientCert, String clientKey, NemsEventMessage message) throws Exception {
+    public String postMessage(String mailboxServiceUri, NemsEventMessage message) throws Exception {
         try {
 
             HttpRequest.BodyPublisher messageBody = HttpRequest.BodyPublishers.ofString(message.body());
@@ -31,13 +36,13 @@ public class MeshClient {
                     .header("Authorization", getAuthToken())
                     .header("Content-Type", "application/octet-stream")
                     .header("Mex-LocalID", "Test")
-                    .header("Mex-To", meshMailboxId)
-                    .header("Mex-From", meshMailboxId)
+                    .header("Mex-To", configuration.getMeshMailBoxID())
+                    .header("Mex-From", configuration.getMeshMailBoxID())
                     .header("Mex-WorkflowID", "API-DOCS-TEST")
                     .build();
 
             HttpResponse<String> response = HttpClient.newBuilder()
-                    .sslContext(getClientAuthSslContext(clientCert, clientKey))
+                    .sslContext(getClientAuthSslContext(configuration.getMeshMailBoxClientCert(), configuration.getMeshMailBoxClientKey()))
                     .build()
                     .send(request, HttpResponse.BodyHandlers.ofString());
             return getMessageIdFromMessage(response.body());
@@ -49,7 +54,7 @@ public class MeshClient {
 
 
 
-    public List<String> getMessageIds(String mailboxServiceUri, String meshMailboxId, String clientCert, String clientKey) throws HttpException {
+    public List<String> getMessageIds(String mailboxServiceUri) throws HttpException {
         try {
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -59,7 +64,7 @@ public class MeshClient {
                     .build();
 
             HttpResponse<String> response = HttpClient.newBuilder()
-                    .sslContext(getClientAuthSslContext(clientCert, clientKey))
+                    .sslContext(getClientAuthSslContext(configuration.getMeshMailBoxClientCert(), configuration.getMeshMailBoxClientKey()))
                     .build()
                     .send(request, HttpResponse.BodyHandlers.ofString());
             return getListOfMessagesOnMailbox(response.body());
@@ -69,7 +74,7 @@ public class MeshClient {
     }
 
     private String getAuthToken() throws Exception {
-        AuthTokenGenerator authTokenGenerator = new AuthTokenGenerator();
+        AuthTokenGenerator authTokenGenerator = new AuthTokenGenerator(configuration);
 
         return authTokenGenerator.getAuthorizationToken();
     }
