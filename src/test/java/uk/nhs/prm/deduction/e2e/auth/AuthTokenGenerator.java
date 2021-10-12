@@ -1,5 +1,7 @@
 package uk.nhs.prm.deduction.e2e.auth;
 
+import uk.nhs.prm.deduction.e2e.TestConfiguration;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
@@ -13,10 +15,12 @@ public class AuthTokenGenerator {
     private static final String HMAC_SHA216 = "HmacSHA256";
     private static final String AUTHSCHEMANAME = "NHSMESH";
     private static final String env_shared_secret = "BackBone";
-    private static final String mailbox_id = "B85002OT001";
-    private static final String mailbox_password = "tPI9yr4jLQxp";
     private static final String nonce = UUID.randomUUID().toString();
     private static final String nonce_count = "0";
+    TestConfiguration configuration;
+    public AuthTokenGenerator(TestConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
     private String toHexString(byte[] bytes) {
         Formatter formatter = new Formatter();
@@ -37,10 +41,9 @@ public class AuthTokenGenerator {
 
     public String getAuthorizationToken() throws Exception {
         String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
-        String hmac_msg = mailbox_id + ":" + nonce + ":" + nonce_count  + ":" + mailbox_password + ":" + timeStamp;
+        String hmac_msg = configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count  + ":" + configuration.getMeshMailBoxPassword() + ":" + timeStamp;
         String hmac = calculateHMAC(hmac_msg, env_shared_secret);
-        String s = AUTHSCHEMANAME+" "+ mailbox_id + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;
-
+        String s = AUTHSCHEMANAME+" "+ configuration.getMeshMailBoxID() + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;
         return s;
     }
 
