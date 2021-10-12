@@ -8,7 +8,15 @@ public class TestConfiguration {
     private AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
 
     public String getMeshMailBoxID() {
-        return awsConfigurationClient.getParaValue(String.format("/repo/%s/user-input/external/mesh-mailbox-id", getEnvironmentName()));
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-id", getEnvironmentName()));
+    }
+
+    public String getMeshMailBoxClientCert() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-client-cert", getEnvironmentName()));
+    }
+
+    public String getMeshMailBoxClientKey() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-client-key", getEnvironmentName()));
     }
 
     public String meshForwarderObservabilityQueueUri() {

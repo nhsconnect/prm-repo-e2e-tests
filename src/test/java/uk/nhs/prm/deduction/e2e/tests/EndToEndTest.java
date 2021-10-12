@@ -7,7 +7,8 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessageQueue;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EndToEndTest {
@@ -18,24 +19,23 @@ public class EndToEndTest {
     private MeshMailbox meshMailbox;
 
     @BeforeEach
-    public void wireUp() {
+    public void wireUp() throws Exception {
         meshForwarderQueue = wiring.meshForwarderQueue();
-        meshMailbox = new MeshMailbox();
+        meshMailbox = wiring.meshMailbox();
     }
 
-    //    @Disabled("in progress")
     @Test
-    public void theSystemShouldMoveMessagesFromOurMeshMailboxOntoAQueue() {
+    public void theSystemShouldMoveMessagesFromOurMeshMailboxOntoAQueue() throws Exception {
         NemsEventMessage nemsEventMessage = someNemsEvent("1234567890");
 
-        meshMailbox.postMessage(nemsEventMessage);
+        String postedMessageId  = meshMailbox.postMessage(nemsEventMessage);
 
-        assertEquals(meshForwarderQueue.readEventMessage().nhsNumber(), "1234567890");
-        assertTrue(meshMailbox.isEmpty());
+        assertThat(meshForwarderQueue.readEventMessage().body()).contains("1234567890");
+        assertFalse(meshMailbox.hasMessageId(postedMessageId));
     }
 
     private NemsEventMessage someNemsEvent(String nhsNumber) {
-        return new NemsEventMessage();
+        return new NemsEventMessage("dummy message for nhs number: " + nhsNumber);
     }
 
 }

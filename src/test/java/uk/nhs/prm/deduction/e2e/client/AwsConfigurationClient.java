@@ -18,11 +18,12 @@ public class AwsConfigurationClient {
                 .build();
     }
 
-    public String getParaValue(String paraName) {
+    public String getParamValue(String paramName) {
 
         try {
             GetParameterRequest parameterRequest = GetParameterRequest.builder()
-                    .name(paraName)
+                    .name(paramName)
+                    .withDecryption(true)
                     .build();
 
             GetParameterResponse parameterResponse = ssmClient.getParameter(parameterRequest);
@@ -33,6 +34,6 @@ public class AwsConfigurationClient {
             System.err.println(e.getMessage());
             System.exit(1);
         }
-        return paraName;
+        return paramName;
     }
 }
