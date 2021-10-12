@@ -41,7 +41,6 @@ public class AuthTokenGenerator {
         String hmac = calculateHMAC(hmac_msg, env_shared_secret);
         String s = AUTHSCHEMANAME+" "+ mailbox_id + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;
 
-        System.out.println(s);
         return s;
     }
 
