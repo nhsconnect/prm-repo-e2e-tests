@@ -13,6 +13,7 @@ public class NemsEventMessageQueue {
     }
 
     public NemsEventMessage readEventMessage() {
+        System.out.println(String.format("Queue Uri is %s",queueUri));
         String messageBody = sqsQueue.readMessageBody(queueUri);
         return NemsEventMessage.parseMessage(messageBody);
     }

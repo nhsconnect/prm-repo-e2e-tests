@@ -1,9 +1,14 @@
 package uk.nhs.prm.deduction.e2e;
 
+import org.springframework.beans.factory.annotation.Value;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
 
 
 public class TestConfiguration {
+    @Value("${environment}")
+    String environment;
+    @Value("${accountId}")
+    String accountId;
 
     private AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
 
@@ -28,10 +33,10 @@ public class TestConfiguration {
     }
 
     private String getAwsAccountNo() {
-        return System.getenv("AWS_ACCOUNT_NO");
+        return accountId;
     }
 
     private String getEnvironmentName() {
-        return System.getenv("NHS_ENVIRONMENT");
+        return environment;
     }
 }

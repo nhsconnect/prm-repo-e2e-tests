@@ -6,6 +6,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 import java.util.List;
 
+
 public class SQSClient {
     public String readMessageFrom(String queueUrl) {
         SqsClient sqsClient = SqsClient.create();

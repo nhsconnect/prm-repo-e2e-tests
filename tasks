@@ -83,7 +83,6 @@ case "${command}" in
   test_e2e)
       check_env
       assume_environment_role $NHS_ENVIRONMENT
-      configure_mesh_access
       dojo "./tasks _test_e2e"
       ;;
   *)
