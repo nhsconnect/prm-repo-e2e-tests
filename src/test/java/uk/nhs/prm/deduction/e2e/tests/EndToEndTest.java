@@ -32,7 +32,6 @@ public class EndToEndTest {
 
         String postedMessageId  = meshMailbox.postMessage(nemsEventMessage);
         System.out.println(String.format("Message Id for the posted message is %s",postedMessageId));
-
         //To-do this needs to be removed and forwarder needs to be configured
         Thread.sleep(60000);
         assertThat(meshForwarderQueue.readEventMessage().body()).contains("1234567890");

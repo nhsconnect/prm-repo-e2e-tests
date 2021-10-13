@@ -5,10 +5,6 @@ import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
 
 
 public class TestConfiguration {
-    @Value("${environment}")
-    String environment;
-    @Value("${accountId}")
-    String accountId;
 
     private AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
 
@@ -33,10 +29,10 @@ public class TestConfiguration {
     }
 
     private String getAwsAccountNo() {
-        return accountId;
+        return System.getenv("AWS_ACCOUNT_ID");
     }
 
     private String getEnvironmentName() {
-        return environment;
+        return System.getenv("NHS_ENVIRONMENT");
     }
 }
