@@ -1,9 +1,10 @@
 package uk.nhs.prm.deduction.e2e;
 
-import org.springframework.beans.factory.annotation.Value;
+
+import org.springframework.stereotype.Component;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
 
-
+@Component
 public class TestConfiguration {
 
     private AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
