@@ -1,7 +1,7 @@
 format_version: 4
 pipelines:
   'prm-deductions-automatic-trigger-e2e.audit':
-    group: deductions-audit
+    group: system-tests
     label_template: '${git[:8]}'
     materials:
       git:

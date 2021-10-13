@@ -1,7 +1,7 @@
 format_version: 4
 pipelines:
   'prm-deductions-automatic-trigger-e2e.dev':
-    group: deductions
+    group: system-tests
     label_template: '${git[:8]}'
     timer:
       spec: "0 0 9,13,17,21 * * ?"
@@ -34,7 +34,7 @@ pipelines:
                       - -c
                       - ./tasks test_e2e
   'prm-deductions-automatic-trigger-e2e.test':
-    group: deductions
+    group: system-tests
     label_template: '${git[:8]}'
     timer:
       spec: "0 0 9,13,17,21 * * ?"
