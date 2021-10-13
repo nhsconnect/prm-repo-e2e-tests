@@ -16,39 +16,49 @@ import java.security.spec.PKCS8EncodedKeySpec;
 public class StackOverflowInsecureSSLContextLoader {
 
 
-    public static SSLContext getClientAuthSslContext(String clientCertInPemFormat, String clientKeyInPemFormat) throws NoSuchAlgorithmException, IOException, CertificateException, InvalidKeySpecException, KeyStoreException, UnrecoverableKeyException, KeyManagementException {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
+    public SSLContext getClientAuthSslContext(String clientCertInPemFormat, String clientKeyInPemFormat){
 
-        byte[] certDerBytes = parseDERFromPEM(clientCertInPemFormat.getBytes(), "-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----");
-        byte[] keyDerBytes = parseDERFromPEM(clientKeyInPemFormat.getBytes(), "-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----");
+        log("** initialising SSL context to make request to Mesh Mailbox");
+        SSLContext sslContext = null;
+        try {
+            sslContext = SSLContext.getInstance("TLS");
+            byte[] certDerBytes = parseDERFromPEM(clientCertInPemFormat.getBytes(), "-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----");
+            byte[] keyDerBytes = parseDERFromPEM(clientKeyInPemFormat.getBytes(), "-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----");
 
-        X509Certificate cert = generateCertificateFromDER(certDerBytes);
-        RSAPrivateKey key = generatePrivateKeyFromDER(keyDerBytes);
+            X509Certificate cert = generateCertificateFromDER(certDerBytes);
+            RSAPrivateKey key = generatePrivateKeyFromDER(keyDerBytes);
 
-        KeyStore keystore = KeyStore.getInstance("JKS");
-        keystore.load(null);
-        keystore.setCertificateEntry("client-cert", cert);
-        keystore.setKeyEntry("client-key", key, "password".toCharArray(), new Certificate[]{cert});
+            KeyStore keystore = KeyStore.getInstance("JKS");
+            keystore.load(null);
+            keystore.setCertificateEntry("client-cert", cert);
+            keystore.setKeyEntry("client-key", key, "password".toCharArray(), new Certificate[]{cert});
 
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-        kmf.init(keystore, "password".toCharArray());
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            kmf.init(keystore, "password".toCharArray());
 
-        KeyManager[] km = kmf.getKeyManagers();
+            KeyManager[] km = kmf.getKeyManagers();
 
-        sslContext.init(km, null, null);
-        TrustManager acceptAll = new X509TrustManager() {
-            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            }
+            sslContext.init(km, null, null);
+            TrustManager acceptAll = new X509TrustManager() {
+                public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                }
 
-            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            }
+                public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                }
 
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
-        };
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+            };
 
-        sslContext.init(km, new TrustManager[]{acceptAll}, null);
+            sslContext.init(km, new TrustManager[]{acceptAll}, null);
+
+            log("** SSL context initialised");
+
+        }catch (Exception e){
+            log("** encountered exception %s",e.getMessage());
+            e.printStackTrace();
+        }
         return sslContext;
     }
 
@@ -71,5 +81,14 @@ public class StackOverflowInsecureSSLContextLoader {
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
 
         return (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(certBytes));
+    }
+
+
+    public void log(String message) {
+        System.out.println(message);
+    }
+
+    public void log(String messageBody, String messageValue) {
+        System.out.println(String.format(messageBody, messageValue));
     }
 }
