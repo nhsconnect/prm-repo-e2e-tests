@@ -6,8 +6,9 @@ set -Eeo pipefail
 # Local Config Parameters #
 ###########################
 
-AWS_DEFAULT_REGION=eu-west-2
-IMAGE_REPO_NAME=deductions/prm-deductions-automatic-trigger-e2e-test
+export AWS_DEFAULT_REGION=eu-west-2
+export AWS_REGION=eu-west-2
+IMAGE_REPO_NAME=deductions/prm-deductions-automatic-trigger-e2e
 export NHS_SERVICE=prm-deductions-automatic-trigger-e2e-test
 AWS_HELPERS_VERSION=0.2.10
 echo "AWS helper scripts version: $AWS_HELPERS_VERSION"
@@ -38,7 +39,7 @@ function set_image_tag() {
 }
 
 function get_aws_account_id {
-    AWS_ACCOUNT_ID=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Account")
+    export AWS_ACCOUNT_ID=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Account")
 }
 
 function configure_local_envs {
@@ -83,6 +84,7 @@ case "${command}" in
   test_e2e)
       check_env
       assume_environment_role $NHS_ENVIRONMENT
+      get_aws_account_id
       dojo "./tasks _test_e2e"
       ;;
   *)
