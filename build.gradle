@@ -13,10 +13,8 @@ dependencies {
     testImplementation 'software.amazon.awssdk:ssm:2.17.56'
     testImplementation 'software.amazon.awssdk:sqs:2.17.56'
     testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.5.5'
-    annotationProcessor 'org.projectlombok:lombok'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    testImplementation 'org.awaitility:awaitility:3.0.0'
 }
 
 tasks.withType(Test) {
