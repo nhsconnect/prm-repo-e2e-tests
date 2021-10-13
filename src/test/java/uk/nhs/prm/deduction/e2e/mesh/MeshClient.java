@@ -94,6 +94,7 @@ public class MeshClient {
         if (jsonArray != null) {
             int len = jsonArray.length();
             for (int i=0;i<len;i++){
+                System.out.println(String.format("Message Id for the posted message on the inbox %s",jsonArray.get(i).toString()));
                 list.add(jsonArray.get(i).toString());
             }
         }
