@@ -8,10 +8,15 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessageQueue;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+
+@SpringBootTest(classes=EndToEndTest.class)
 public class EndToEndTest {
 
     private Wiring wiring = new Wiring();
@@ -31,10 +36,12 @@ public class EndToEndTest {
 
         String postedMessageId  = meshMailbox.postMessage(nemsEventMessage);
         System.out.println(String.format("Message Id for the posted message is %s",postedMessageId));
-        //To-do this needs to be removed and forwarder needs to be configured
-        Thread.sleep(60000);
-        assertThat(meshForwarderQueue.readEventMessage().body()).contains("1234567890");
-        assertFalse(meshMailbox.hasMessageId(postedMessageId));
+
+        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10,TimeUnit.SECONDS).untilAsserted(()->{
+            assertThat(meshForwarderQueue.readEventMessage().body()).contains("1234567890");
+            assertFalse(meshMailbox.hasMessageId(postedMessageId));
+        });
+
     }
 
     private NemsEventMessage someNemsEvent(String nhsNumber) {
