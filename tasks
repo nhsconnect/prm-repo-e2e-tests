@@ -9,7 +9,7 @@ set -Eeo pipefail
 export AWS_DEFAULT_REGION=eu-west-2
 export AWS_REGION=eu-west-2
 IMAGE_REPO_NAME=deductions/prm-deductions-automatic-trigger-e2e
-export NHS_SERVICE=prm-deductions-automatic-trigger-e2e-test
+export NHS_SERVICE=prm-deductions-automatic-trigger-e2e
 AWS_HELPERS_VERSION=0.2.10
 echo "AWS helper scripts version: $AWS_HELPERS_VERSION"
 

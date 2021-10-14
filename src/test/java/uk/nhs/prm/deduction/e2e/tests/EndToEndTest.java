@@ -28,6 +28,8 @@ public class EndToEndTest {
     @Autowired
     private MeshMailbox meshMailbox;
 
+ //Todo write a start method that starts with cleaning up the queue
+
     @Test
     public void theSystemShouldMoveMessagesFromOurMeshMailboxOntoAQueue() throws Exception {
         NemsEventMessage nemsEventMessage = someNemsEvent("1234567890");
