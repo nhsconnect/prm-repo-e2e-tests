@@ -9,17 +9,16 @@ import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 public class NemsEventMessageQueue {
 
 
-    @Autowired
-    private TestConfiguration configuration ;
+
     @Autowired
     private SqsQueue sqsQueue;
 
 
-    public NemsEventMessage readEventMessage() {
+    public NemsEventMessage readEventMessage(String queueUri) {
         log("** Reading message from the queue");
 
-        log(String.format("** Queue Uri is %s",configuration.meshForwarderObservabilityQueueUri()));
-        String messageBody = sqsQueue.readMessageBody(configuration.meshForwarderObservabilityQueueUri());
+        log(String.format("** Queue Uri is %s",queueUri));
+        String messageBody = sqsQueue.readMessageBody(queueUri);
         return NemsEventMessage.parseMessage(messageBody);
     }
 

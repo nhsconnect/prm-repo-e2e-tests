@@ -29,6 +29,9 @@ public class TestConfiguration {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-mesh-forwarder-nems-events-observability-queue", getAwsAccountNo(), getEnvironmentName());
     }
 
+    public String NemsEventProcesorUnhandledQueueUri() {
+        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-unhandled-events-queue", getAwsAccountNo(), getEnvironmentName());
+    }
     private String getAwsAccountNo() {
         return System.getenv("AWS_ACCOUNT_ID");
     }
