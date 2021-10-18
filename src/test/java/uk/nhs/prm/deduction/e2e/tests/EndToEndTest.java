@@ -22,7 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(classes = {EndToEndTest.class,NemsEventMessageQueue.class,MeshMailbox.class, SqsQueue.class, MeshClient.class, TestConfiguration.class,AuthTokenGenerator.class})
 public class EndToEndTest {
 
-
+    @Autowired
+    private TestConfiguration configuration ;
     @Autowired
     private NemsEventMessageQueue meshForwarderQueue;
     @Autowired
@@ -36,12 +37,27 @@ public class EndToEndTest {
 
         String postedMessageId = meshMailbox.postMessage(nemsEventMessage);
 
-        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertThat(meshForwarderQueue.readEventMessage().body()).contains("1234567890");
-            assertFalse(meshMailbox.hasMessageId(postedMessageId));
-        });
+        validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsEventMessage);
+
+        validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(postedMessageId,nemsEventMessage);
+
 //Todo delete messages on the queue once read
     }
+
+    private void validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
+        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(meshForwarderQueue.readEventMessage(configuration.meshForwarderObservabilityQueueUri()).body()).contains(nemsEventMessage.body());
+            assertFalse(meshMailbox.hasMessageId(postedMessageId));
+        });
+    }
+    private void validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
+        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(meshForwarderQueue.readEventMessage(configuration.NemsEventProcesorUnhandledQueueUri()).body()).contains(nemsEventMessage.body());
+            assertFalse(meshMailbox.hasMessageId(postedMessageId));
+        });
+    }
+
+
 
     private NemsEventMessage someNemsEvent(String nhsNumber) {
         return new NemsEventMessage("dummy message for nhs number: " + nhsNumber);
