@@ -1,5 +1,7 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,12 +13,18 @@ import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessageQueue;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest(classes = {EndToEndTest.class,NemsEventMessageQueue.class,MeshMailbox.class, SqsQueue.class, MeshClient.class, TestConfiguration.class,AuthTokenGenerator.class})
@@ -33,13 +41,13 @@ public class EndToEndTest {
 
     @Test
     public void theSystemShouldMoveMessagesFromOurMeshMailboxOntoAQueue() throws Exception {
-        NemsEventMessage nemsEventMessage = someNemsEvent("1234567890");
+        NemsEventMessage nemsEventMessage = someNemsEvent("change-of-gp-deduction.xml");
 
         String postedMessageId = meshMailbox.postMessage(nemsEventMessage);
 
         validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsEventMessage);
 
-        validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(postedMessageId,nemsEventMessage);
+        validateThatMessageLandsCorrectlyOnDeductionsObservabilityQueue(postedMessageId,nemsEventMessage);
 
 //Todo delete messages on the queue once read
     }
@@ -50,20 +58,51 @@ public class EndToEndTest {
             assertFalse(meshMailbox.hasMessageId(postedMessageId));
         });
     }
+    private void validateThatMessageLandsCorrectlyOnDeductionsObservabilityQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
+        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, String> response= getNemsEventParserResponse(meshForwarderQueue.readEventMessage(configuration.deductionsObservabilityQueueUri()).body());
+            System.out.println(response);
+            assertEquals(response.get("nhsNumber"),"9912003888");
+            assertFalse(meshMailbox.hasMessageId(postedMessageId));
+        });
+    }
     private void validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertThat(meshForwarderQueue.readEventMessage(configuration.NemsEventProcesorUnhandledQueueUri()).body()).contains(nemsEventMessage.body());
+            Map<String, String> response= getNemsEventParserResponse(meshForwarderQueue.readEventMessage(configuration.NemsEventProcesorUnhandledQueueUri()).body());
+            assertEquals(response.get("nhsNumber"),"9912003888");
             assertFalse(meshMailbox.hasMessageId(postedMessageId));
         });
     }
 
 
 
-    private NemsEventMessage someNemsEvent(String nhsNumber) {
-        return new NemsEventMessage("dummy message for nhs number: " + nhsNumber);
+    private NemsEventMessage someNemsEvent(String nemsEvent) throws IOException {
+        return new NemsEventMessage(readXmlFile(nemsEvent));
     }
 
     public void log(String messageBody, String messageValue) {
         System.out.println(String.format(messageBody, messageValue));
+    }
+    private String readXmlFile(String nemsEvent) throws IOException {
+        File file = new File(String.format("src/test/resources/%s", nemsEvent));
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String line;
+        StringBuilder sb = new StringBuilder();
+
+        while((line=br.readLine())!= null){
+            sb.append(line.trim());
+        }
+        return sb.toString();
+    }
+
+    private Map<String, String> getNemsEventParserResponse(String responseBody) throws JSONException {
+        Map<String, String> response = new HashMap<>();
+        JSONObject jsonObject = new JSONObject(responseBody);
+        response.put("nhsNumber",jsonObject.get("nhsNumber").toString());
+        response.put("eventType",jsonObject.get("eventType").toString());
+        response.put("previousOdsCode",jsonObject.get("previousOdsCode").toString());
+        response.put("lastUpdated",jsonObject.get("lastUpdated").toString());
+        return response;
+
     }
 }
