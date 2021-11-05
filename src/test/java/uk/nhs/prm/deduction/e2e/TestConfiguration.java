@@ -32,6 +32,9 @@ public class TestConfiguration {
     public String NemsEventProcesorUnhandledQueueUri() {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-unhandled-events-queue", getAwsAccountNo(), getEnvironmentName());
     }
+    public String deductionsObservabilityQueueUri() {
+        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-deductions-observability-queue", getAwsAccountNo(), getEnvironmentName());
+    }
     private String getAwsAccountNo() {
         return System.getenv("AWS_ACCOUNT_ID");
     }
