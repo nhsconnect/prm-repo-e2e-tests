@@ -17,7 +17,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -40,17 +39,31 @@ public class EndToEndTest {
  //Todo write a start method that starts with cleaning up the queue
 
     @Test
-    public void theSystemShouldMoveMessagesFromOurMeshMailboxOntoAQueue() throws Exception {
+    public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
         NemsEventMessage nemsEventMessage = someNemsEvent("change-of-gp-deduction.xml");
 
         String postedMessageId = meshMailbox.postMessage(nemsEventMessage);
 
         validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsEventMessage);
 
-        validateThatMessageLandsCorrectlyOnDeductionsObservabilityQueue(postedMessageId,nemsEventMessage);
+        validateThatMessageLandsCorrectlyOnSuspensionsObservabilityQueue(postedMessageId);
 
 //Todo delete messages on the queue once read
     }
+
+    @Test
+    public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
+        NemsEventMessage nemsEventMessage = someNemsEvent("change-of-gp-non-deduction.xml");
+
+        String postedMessageId = meshMailbox.postMessage(nemsEventMessage);
+
+        validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsEventMessage);
+
+        validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(postedMessageId, nemsEventMessage);
+
+//Todo delete messages on the queue once read
+    }
+
 
     private void validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -58,22 +71,20 @@ public class EndToEndTest {
             assertFalse(meshMailbox.hasMessageId(postedMessageId));
         });
     }
-    private void validateThatMessageLandsCorrectlyOnDeductionsObservabilityQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
+    private void validateThatMessageLandsCorrectlyOnSuspensionsObservabilityQueue(String postedMessageId) {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            Map<String, String> response= getNemsEventParserResponse(meshForwarderQueue.readEventMessage(configuration.deductionsObservabilityQueueUri()).body());
-            System.out.println(response);
+            Map<String, String> response= getNemsEventParserResponse(meshForwarderQueue.readEventMessage(configuration.suspensionsObservabilityQueueUri()).body());
             assertEquals(response.get("nhsNumber"),"9912003888");
             assertFalse(meshMailbox.hasMessageId(postedMessageId));
         });
     }
-    private void validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
+    private void validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(String postedMessageId, NemsEventMessage nemsEventMessage) {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            Map<String, String> response= getNemsEventParserResponse(meshForwarderQueue.readEventMessage(configuration.NemsEventProcesorUnhandledQueueUri()).body());
-            assertEquals(response.get("nhsNumber"),"9912003888");
+            String unhandledMessageBody= meshForwarderQueue.readEventMessage(configuration.NemsEventProcesorUnhandledQueueUri()).body();
+            assertEquals(unhandledMessageBody,nemsEventMessage.body());
             assertFalse(meshMailbox.hasMessageId(postedMessageId));
         });
     }
-
 
 
     private NemsEventMessage someNemsEvent(String nemsEvent) throws IOException {
