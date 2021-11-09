@@ -40,11 +40,11 @@ public class EndToEndTest {
 
     @Test
     public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
-        NemsEventMessage nemsEventMessage = someNemsEvent("change-of-gp-deduction.xml");
+        NemsEventMessage nemsSuspensionMessage = someNemsEvent("change-of-gp-suspension.xml");
 
-        String postedMessageId = meshMailbox.postMessage(nemsEventMessage);
+        String postedMessageId = meshMailbox.postMessage(nemsSuspensionMessage);
 
-        validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsEventMessage);
+        validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsSuspensionMessage);
 
         validateThatMessageLandsCorrectlyOnSuspensionsObservabilityQueue(postedMessageId);
 
@@ -53,13 +53,13 @@ public class EndToEndTest {
 
     @Test
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
-        NemsEventMessage nemsEventMessage = someNemsEvent("change-of-gp-non-deduction.xml");
+        NemsEventMessage nemsNonSuspensionMessage = someNemsEvent("change-of-gp-non-suspension.xml");
 
-        String postedMessageId = meshMailbox.postMessage(nemsEventMessage);
+        String postedMessageId = meshMailbox.postMessage(nemsNonSuspensionMessage);
 
-        validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsEventMessage);
+        validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsNonSuspensionMessage);
 
-        validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(postedMessageId, nemsEventMessage);
+        validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(postedMessageId, nemsNonSuspensionMessage);
 
 //Todo delete messages on the queue once read
     }
