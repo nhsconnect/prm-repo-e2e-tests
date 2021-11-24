@@ -17,6 +17,9 @@ pipelines:
       nems-event-processor:
         pipeline: prm-deductions-nems-event-processor.dev
         stage: deploy
+      mesh-forwarder:
+        pipeline: prm-deductions-mesh-forwarder.dev
+        stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: dev
     stages:
@@ -49,6 +52,9 @@ pipelines:
         stage: deploy
       nems-event-processor:
         pipeline: prm-deductions-nems-event-processor.test
+        stage: deploy
+      mesh-forwarder:
+        pipeline: prm-deductions-mesh-forwarder.test
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: test
