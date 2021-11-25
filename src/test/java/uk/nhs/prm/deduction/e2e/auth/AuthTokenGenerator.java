@@ -41,27 +41,17 @@ public class AuthTokenGenerator {
         return toHexString(mac.doFinal(data.getBytes()));
     }
 
-//    public String getAuthorizationToken() throws Exception {
-//        log("** creating auth token");
-//        String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
-//        String hmac_msg = configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count  + ":" + configuration.getMeshMailBoxPassword() + ":" + timeStamp;
-//        String hmac = calculateHMAC(hmac_msg, env_shared);
-//        String token = AUTHSCHEMANAME+" "+ configuration.getMeshMailBoxID() + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;
-//
-//        log("** auth token created");
-//        return token;
-//    }
-
     public String getAuthorizationToken() throws Exception {
         log("** creating auth token");
         String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
-        String hmac_msg = configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count  + ":" + "tPI9yr4jLQxp" + ":" + timeStamp;
+        String hmac_msg = configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count  + ":" + configuration.getMeshMailBoxPassword() + ":" + timeStamp;
         String hmac = calculateHMAC(hmac_msg, env_shared);
         String token = AUTHSCHEMANAME+" "+ configuration.getMeshMailBoxID() + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;
 
         log("** auth token created");
         return token;
     }
+
 
 
     public void log(String message) {
