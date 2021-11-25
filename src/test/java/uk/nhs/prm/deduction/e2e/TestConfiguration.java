@@ -35,6 +35,10 @@ public class TestConfiguration {
     public String suspensionsObservabilityQueueUri() {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-suspensions-observability-queue", getAwsAccountNo(), getEnvironmentName());
     }
+
+    public String NonSuspendedObservabilityQueueUri() {
+        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-not-suspended-observability-queue", getAwsAccountNo(), getEnvironmentName());
+    }
     private String getAwsAccountNo() {
         return System.getenv("AWS_ACCOUNT_ID");
     }

@@ -32,7 +32,7 @@ public class EndToEndTest {
     @Autowired
     private TestConfiguration configuration ;
     @Autowired
-    private NemsEventMessageQueue meshForwarderQueue;
+    private NemsEventMessageQueue queue;
     @Autowired
     private MeshMailbox meshMailbox;
 
@@ -48,8 +48,12 @@ public class EndToEndTest {
 
         validateThatMessageLandsCorrectlyOnSuspensionsObservabilityQueue(postedMessageId);
 
+        validateThatMessageLandsCorrectlyOnNonSuspendedObservabilityQueue(postedMessageId);
+
 //Todo delete messages on the queue once read
     }
+
+
 
     @Test
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
@@ -64,23 +68,29 @@ public class EndToEndTest {
 //Todo delete messages on the queue once read
     }
 
-
+    private void validateThatMessageLandsCorrectlyOnNonSuspendedObservabilityQueue(String postedMessageId) {
+        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, String> response= getNemsEventParserResponse(queue.readEventMessage(configuration.NonSuspendedObservabilityQueueUri()).body());
+            assertEquals(response.get("nhsNumber"),"9912003888");
+            assertFalse(meshMailbox.hasMessageId(postedMessageId));
+        });
+    }
     private void validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertThat(meshForwarderQueue.readEventMessage(configuration.meshForwarderObservabilityQueueUri()).body()).contains(nemsEventMessage.body());
+            assertThat(queue.readEventMessage(configuration.meshForwarderObservabilityQueueUri()).body()).contains(nemsEventMessage.body());
             assertFalse(meshMailbox.hasMessageId(postedMessageId));
         });
     }
     private void validateThatMessageLandsCorrectlyOnSuspensionsObservabilityQueue(String postedMessageId) {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            Map<String, String> response= getNemsEventParserResponse(meshForwarderQueue.readEventMessage(configuration.suspensionsObservabilityQueueUri()).body());
+            Map<String, String> response= getNemsEventParserResponse(queue.readEventMessage(configuration.suspensionsObservabilityQueueUri()).body());
             assertEquals(response.get("nhsNumber"),"9912003888");
             assertFalse(meshMailbox.hasMessageId(postedMessageId));
         });
     }
     private void validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(String postedMessageId, NemsEventMessage nemsEventMessage) {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            String unhandledMessageBody= meshForwarderQueue.readEventMessage(configuration.NemsEventProcesorUnhandledQueueUri()).body();
+            String unhandledMessageBody= queue.readEventMessage(configuration.NemsEventProcesorUnhandledQueueUri()).body();
             assertEquals(unhandledMessageBody,nemsEventMessage.body());
             assertFalse(meshMailbox.hasMessageId(postedMessageId));
         });
