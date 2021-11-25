@@ -47,7 +47,7 @@ public class EndToEndTest {
         validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsSuspensionMessage);
 
         validateThatMessageLandsCorrectlyOnSuspensionsObservabilityQueue(postedMessageId);
-
+//temporary
         validateThatMessageLandsCorrectlyOnNonSuspendedObservabilityQueue(postedMessageId);
 
 //Todo delete messages on the queue once read
