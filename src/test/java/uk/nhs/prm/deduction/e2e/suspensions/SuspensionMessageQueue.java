@@ -1,21 +1,22 @@
-package uk.nhs.prm.deduction.e2e.nems;
+package uk.nhs.prm.deduction.e2e.suspensions;
 
+import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 @Component
-public class NemsEventMessageQueue {
+public class SuspensionMessageQueue {
+
     @Autowired
     private SqsQueue sqsQueue;
 
-    public NemsEventMessage readEventMessage(String queueUri) {
+    public SuspensionMessage readEventMessage(String queueUri) throws JSONException {
         log("** Reading message from the queue");
 
         log(String.format("** Queue Uri is %s",queueUri));
         String messageBody = sqsQueue.readMessageBody(queueUri);
-        return NemsEventMessage.parseMessage(messageBody);
+        return SuspensionMessage.parseMessage(messageBody);
     }
 
 

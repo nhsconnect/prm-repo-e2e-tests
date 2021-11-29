@@ -13,7 +13,10 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessageQueue;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessage;
+import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageQueue;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -27,7 +30,16 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-@SpringBootTest(classes = {EndToEndTest.class,NemsEventMessageQueue.class,MeshMailbox.class, SqsQueue.class, MeshClient.class, TestConfiguration.class,AuthTokenGenerator.class})
+@SpringBootTest(classes = {
+        EndToEndTest.class,
+        NemsEventMessageQueue.class,
+        MeshMailbox.class,
+        SqsQueue.class,
+        MeshClient.class,
+        TestConfiguration.class,
+        AuthTokenGenerator.class,
+        SuspensionMessageQueue.class
+})
 public class EndToEndTest {
 
     @Autowired
@@ -35,12 +47,16 @@ public class EndToEndTest {
     @Autowired
     private NemsEventMessageQueue meshForwarderQueue;
     @Autowired
+    private SuspensionMessageQueue suspensionMessageQueue;
+    @Autowired
     private MeshMailbox meshMailbox;
 
  //Todo write a start method that starts with cleaning up the queue
 
     @Test
     public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
+        System.out.println(System.currentTimeMillis() % 10000);
+
         NemsEventMessage nemsSuspensionMessage = readFromFile("change-of-gp-suspension.xml");
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspensionMessage);
@@ -49,12 +65,9 @@ public class EndToEndTest {
 
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        then(() -> {
-            Map<String, String> response = getNemsEventParserResponse(readSuspensionMessage().body());
-            assertEquals(response.get("nhsNumber"),"9912003888");
-            assertFalse(meshMailbox.hasMessageId(postedMessageId));
-        });
+        then(() -> assertEquals(readSuspensionMessage().nhsNumber(), "9912003888"));
 
+        then(() -> assertEquals(readNotReallySuspendedMessage().nhsNumber(), "9912003888"));
 //Todo delete messages on the queue once read
     }
 
@@ -68,8 +81,6 @@ public class EndToEndTest {
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
         then(() -> assertEquals(readUnhandledNemsEvent().body(), nemsNonSuspensionMessage.body()));
-        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
-
 //Todo delete messages on the queue once read
     }
 
@@ -81,8 +92,12 @@ public class EndToEndTest {
         return meshForwarderQueue.readEventMessage(configuration.nemsEventProcesorUnhandledQueueUri());
     }
 
-    private NemsEventMessage readSuspensionMessage() {
-        return meshForwarderQueue.readEventMessage(configuration.suspensionsObservabilityQueueUri());
+    private SuspensionMessage readSuspensionMessage() throws JSONException {
+        return suspensionMessageQueue.readEventMessage(configuration.suspensionsObservabilityQueueUri());
+    }
+
+    private SuspensionMessage readNotReallySuspendedMessage() throws JSONException {
+        return suspensionMessageQueue.readEventMessage(configuration.notReallySuspendedObservabilityQueueUri());
     }
 
     private void then(ThrowingRunnable assertion) {
@@ -107,15 +122,5 @@ public class EndToEndTest {
             sb.append(line.trim());
         }
         return sb.toString();
-    }
-
-    private Map<String, String> getNemsEventParserResponse(String responseBody) throws JSONException {
-        Map<String, String> response = new HashMap<>();
-        JSONObject jsonObject = new JSONObject(responseBody);
-        response.put("nhsNumber",jsonObject.get("nhsNumber").toString());
-        response.put("eventType",jsonObject.get("eventType").toString());
-        response.put("previousOdsCode",jsonObject.get("previousOdsCode").toString());
-        response.put("lastUpdated",jsonObject.get("lastUpdated").toString());
-        return response;
     }
 }
