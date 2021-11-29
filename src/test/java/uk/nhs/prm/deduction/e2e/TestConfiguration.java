@@ -29,7 +29,7 @@ public class TestConfiguration {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-mesh-forwarder-nems-events-observability-queue", getAwsAccountNo(), getEnvironmentName());
     }
 
-    public String NemsEventProcesorUnhandledQueueUri() {
+    public String nemsEventProcesorUnhandledQueueUri() {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-unhandled-events-queue", getAwsAccountNo(), getEnvironmentName());
     }
     public String suspensionsObservabilityQueueUri() {
@@ -40,10 +40,18 @@ public class TestConfiguration {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-not-suspended-observability-queue", getAwsAccountNo(), getEnvironmentName());
     }
     private String getAwsAccountNo() {
-        return System.getenv("AWS_ACCOUNT_ID");
+        return getRequiredEnvVar("AWS_ACCOUNT_ID");
     }
 
     private String getEnvironmentName() {
-        return System.getenv("NHS_ENVIRONMENT");
+        return getRequiredEnvVar("NHS_ENVIRONMENT");
+    }
+
+    private String getRequiredEnvVar(String name) {
+        String value = System.getenv(name);
+        if (value == null) {
+            throw new RuntimeException("Required environment variable has not been set: " + name);
+        }
+        return value;
     }
 }

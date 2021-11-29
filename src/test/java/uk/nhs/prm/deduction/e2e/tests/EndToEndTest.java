@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import org.awaitility.core.ThrowingRunnable;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -30,9 +31,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EndToEndTest {
 
     @Autowired
-    private TestConfiguration configuration ;
+    private TestConfiguration configuration;
     @Autowired
-    private NemsEventMessageQueue queue;
+    private NemsEventMessageQueue meshForwarderQueue;
     @Autowired
     private MeshMailbox meshMailbox;
 
@@ -40,70 +41,62 @@ public class EndToEndTest {
 
     @Test
     public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
-        NemsEventMessage nemsSuspensionMessage = someNemsEvent("change-of-gp-suspension.xml");
+        NemsEventMessage nemsSuspensionMessage = readFromFile("change-of-gp-suspension.xml");
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspensionMessage);
 
-        validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsSuspensionMessage);
+        then(() -> assertThat(readForwardedMeshEvent().body()).contains(nemsSuspensionMessage.body()));
 
-        validateThatMessageLandsCorrectlyOnSuspensionsObservabilityQueue(postedMessageId);
-//temporary
-        validateThatMessageLandsCorrectlyOnNonSuspendedObservabilityQueue(postedMessageId);
+        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+
+        then(() -> {
+            Map<String, String> response = getNemsEventParserResponse(readSuspensionMessage().body());
+            assertEquals(response.get("nhsNumber"),"9912003888");
+            assertFalse(meshMailbox.hasMessageId(postedMessageId));
+        });
 
 //Todo delete messages on the queue once read
     }
-
-
 
     @Test
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
-        NemsEventMessage nemsNonSuspensionMessage = someNemsEvent("change-of-gp-non-suspension.xml");
+        NemsEventMessage nemsNonSuspensionMessage = readFromFile("change-of-gp-non-suspension.xml");
 
         String postedMessageId = meshMailbox.postMessage(nemsNonSuspensionMessage);
 
-        validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(postedMessageId,nemsNonSuspensionMessage);
+        then(() -> assertThat(readForwardedMeshEvent().body()).contains(nemsNonSuspensionMessage.body()));
+        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(postedMessageId, nemsNonSuspensionMessage);
+        then(() -> assertEquals(readUnhandledNemsEvent().body(), nemsNonSuspensionMessage.body()));
+        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
 //Todo delete messages on the queue once read
     }
 
-    private void validateThatMessageLandsCorrectlyOnNonSuspendedObservabilityQueue(String postedMessageId) {
-        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            Map<String, String> response= getNemsEventParserResponse(queue.readEventMessage(configuration.NonSuspendedObservabilityQueueUri()).body());
-            assertEquals(response.get("nhsNumber"),"9912003888");
-            assertFalse(meshMailbox.hasMessageId(postedMessageId));
-        });
-    }
-    private void validateThatMessageLandsCorrectlyOnMeshObsverabilityQueue(String postedMessageId,NemsEventMessage nemsEventMessage) {
-        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertThat(queue.readEventMessage(configuration.meshForwarderObservabilityQueueUri()).body()).contains(nemsEventMessage.body());
-            assertFalse(meshMailbox.hasMessageId(postedMessageId));
-        });
-    }
-    private void validateThatMessageLandsCorrectlyOnSuspensionsObservabilityQueue(String postedMessageId) {
-        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            Map<String, String> response= getNemsEventParserResponse(queue.readEventMessage(configuration.suspensionsObservabilityQueueUri()).body());
-            assertEquals(response.get("nhsNumber"),"9912003888");
-            assertFalse(meshMailbox.hasMessageId(postedMessageId));
-        });
-    }
-    private void validateThatMessageLandsCorrectlyOnNemsEventUnhandledQueue(String postedMessageId, NemsEventMessage nemsEventMessage) {
-        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            String unhandledMessageBody= queue.readEventMessage(configuration.NemsEventProcesorUnhandledQueueUri()).body();
-            assertEquals(unhandledMessageBody,nemsEventMessage.body());
-            assertFalse(meshMailbox.hasMessageId(postedMessageId));
-        });
+    private NemsEventMessage readForwardedMeshEvent() {
+        return meshForwarderQueue.readEventMessage(configuration.meshForwarderObservabilityQueueUri());
     }
 
+    private NemsEventMessage readUnhandledNemsEvent() {
+        return meshForwarderQueue.readEventMessage(configuration.nemsEventProcesorUnhandledQueueUri());
+    }
 
-    private NemsEventMessage someNemsEvent(String nemsEvent) throws IOException {
-        return new NemsEventMessage(readXmlFile(nemsEvent));
+    private NemsEventMessage readSuspensionMessage() {
+        return meshForwarderQueue.readEventMessage(configuration.suspensionsObservabilityQueueUri());
+    }
+
+    private void then(ThrowingRunnable assertion) {
+        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS).untilAsserted(assertion);
+    }
+
+    private NemsEventMessage readFromFile(String nemsEventFilename) throws IOException {
+        return new NemsEventMessage(readXmlFile(nemsEventFilename));
     }
 
     public void log(String messageBody, String messageValue) {
         System.out.println(String.format(messageBody, messageValue));
     }
+
     private String readXmlFile(String nemsEvent) throws IOException {
         File file = new File(String.format("src/test/resources/%s", nemsEvent));
         BufferedReader br = new BufferedReader(new FileReader(file));
@@ -124,6 +117,5 @@ public class EndToEndTest {
         response.put("previousOdsCode",jsonObject.get("previousOdsCode").toString());
         response.put("lastUpdated",jsonObject.get("lastUpdated").toString());
         return response;
-
     }
 }
