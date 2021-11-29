@@ -9,7 +9,6 @@ public class NemsEventMessage {
     private final String messageBody;
 
     public NemsEventMessage(String messageBody) {
-
         this.messageBody = messageBody;
     }
 
