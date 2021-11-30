@@ -2,7 +2,6 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.awaitility.core.ThrowingRunnable;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,13 +15,10 @@ import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessage;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageQueue;
 
-import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -55,9 +51,9 @@ public class EndToEndTest {
 
     @Test
     public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
-        System.out.println(System.currentTimeMillis() % 10000);
+        String nhsNumber = randomNhsNumber();
 
-        NemsEventMessage nemsSuspensionMessage = readFromFile("change-of-gp-suspension.xml");
+        NemsEventMessage nemsSuspensionMessage = createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspensionMessage);
 
@@ -65,15 +61,15 @@ public class EndToEndTest {
 
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        then(() -> assertEquals(readSuspensionMessage().nhsNumber(), "9912003888"));
+        then(() -> assertEquals(readSuspensionMessage().nhsNumber(), nhsNumber));
 
-        then(() -> assertEquals(readNotReallySuspendedMessage().nhsNumber(), "9912003888"));
+        then(() -> assertEquals(readNotReallySuspendedMessage().nhsNumber(), nhsNumber));
 //Todo delete messages on the queue once read
     }
 
     @Test
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
-        NemsEventMessage nemsNonSuspensionMessage = readFromFile("change-of-gp-non-suspension.xml");
+        NemsEventMessage nemsNonSuspensionMessage = createNemsEventFromTemplate("change-of-gp-non-suspension.xml", randomNhsNumber());
 
         String postedMessageId = meshMailbox.postMessage(nemsNonSuspensionMessage);
 
@@ -82,6 +78,10 @@ public class EndToEndTest {
 
         then(() -> assertEquals(readUnhandledNemsEvent().body(), nemsNonSuspensionMessage.body()));
 //Todo delete messages on the queue once read
+    }
+
+    private String randomNhsNumber() {
+        return "991200" + (System.currentTimeMillis() % 10000);
     }
 
     private NemsEventMessage readForwardedMeshEvent() {
@@ -104,15 +104,15 @@ public class EndToEndTest {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS).untilAsserted(assertion);
     }
 
-    private NemsEventMessage readFromFile(String nemsEventFilename) throws IOException {
-        return new NemsEventMessage(readXmlFile(nemsEventFilename));
+    private NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber) throws IOException {
+        return new NemsEventMessage(readTestResourceFile(nemsEventFilename).replaceAll("__NHS_NUMBER__", nhsNumber));
     }
 
     public void log(String messageBody, String messageValue) {
         System.out.println(String.format(messageBody, messageValue));
     }
 
-    private String readXmlFile(String nemsEvent) throws IOException {
+    private String readTestResourceFile(String nemsEvent) throws IOException {
         File file = new File(String.format("src/test/resources/%s", nemsEvent));
         BufferedReader br = new BufferedReader(new FileReader(file));
         String line;

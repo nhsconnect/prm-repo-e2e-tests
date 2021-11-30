@@ -19,7 +19,7 @@
                     <extension url="nhsNumber">
                         <valueIdentifier>
                             <system value="https://fhir.nhs.uk/Id/nhs-number"/>
-                            <value value="9912003888"/>
+                            <value value="__NHS_NUMBER__"/>
                         </valueIdentifier>
                     </extension>
                     <extension url="name">
@@ -136,7 +136,7 @@
                         </valueCodeableConcept>
                     </extension>
                     <system value="https://fhir.nhs.uk/Id/nhs-number"/>
-                    <value value="9912003888"/>
+                    <value value="__NHS_NUMBER__"/>
                 </identifier>
                 <name>
                     <use value="official"/>
