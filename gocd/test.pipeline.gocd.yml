@@ -20,6 +20,9 @@ pipelines:
       mesh-forwarder:
         pipeline: prm-deductions-mesh-forwarder.dev
         stage: deploy
+      suspension-service:
+        pipeline: prm-repo-suspension-service.dev
+        stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: dev
     stages:
@@ -55,6 +58,9 @@ pipelines:
         stage: deploy
       mesh-forwarder:
         pipeline: prm-deductions-mesh-forwarder.test
+        stage: deploy
+      suspension-service:
+        pipeline: prm-repo-suspension-service.test
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: test
