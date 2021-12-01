@@ -12,7 +12,8 @@ pipelines:
           tasks:
             - exec:
                 command: echo
-                arguments: "kept for history, renamed to continuity-e2e-tests.dev"
+                arguments:
+                  - "kept for history, renamed to continuity-e2e-tests.dev"
   'prm-deductions-automatic-trigger-e2e.test':
     group: repo-history
     materials:
@@ -29,4 +30,5 @@ pipelines:
           tasks:
             - exec:
                 command: echo
-                arguments: "kept for history, renamed to continuity-e2e-tests.test"
+                arguments:
+                  - "kept for history, renamed to continuity-e2e-tests.dev"
