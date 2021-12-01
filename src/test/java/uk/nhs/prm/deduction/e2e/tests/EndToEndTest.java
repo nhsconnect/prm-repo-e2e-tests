@@ -41,8 +41,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EndToEndTest {
 
     @Autowired
-    private TestConfiguration configuration;
-    @Autowired
     private MeshForwarderQueue meshForwarderQueue;
     @Autowired
     private NemsEventProcessorUnhandledQueue nemsEventProcessorUnhandledQueue;
@@ -87,7 +85,7 @@ public class EndToEndTest {
     }
 
     private void then(ThrowingRunnable assertion) {
-        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS).untilAsserted(assertion);
+        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(2, TimeUnit.SECONDS).untilAsserted(assertion);
     }
 
     private NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber) throws IOException {
