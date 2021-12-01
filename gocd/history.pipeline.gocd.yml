@@ -1,0 +1,32 @@
+format_version: 4
+pipelines:
+  'prm-deductions-automatic-trigger-e2e.dev':
+    group: repo-history
+    materials:
+      git:
+        type: configrepo
+        ignore:
+          - "**/*"
+    stages:
+      - test:
+          tasks:
+            - exec:
+                command: echo
+                arguments: "kept for history, renamed to continuity-e2e-tests.dev"
+  'prm-deductions-automatic-trigger-e2e.test':
+    group: repo-history
+    materials:
+      git:
+        type: configrepo
+        ignore:
+          - "**/*"
+    stages:
+      - test:
+          clean_workspace: true
+          timeout: 15
+          resources:
+            - docker
+          tasks:
+            - exec:
+                command: echo
+                arguments: "kept for history, renamed to continuity-e2e-tests.test"
