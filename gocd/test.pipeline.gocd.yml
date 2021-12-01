@@ -1,7 +1,7 @@
 format_version: 4
 pipelines:
-  'prm-deductions-automatic-trigger-e2e.dev':
-    group: system-tests
+  continuity-e2e-tests.dev:
+    group: continuity-service
     label_template: '${git[:8]}'
     timer:
       spec: "0 0 9,13,17,21 * * ?"
@@ -39,8 +39,8 @@ pipelines:
                     arguments:
                       - -c
                       - ./tasks test_e2e
-  'prm-deductions-automatic-trigger-e2e.test':
-    group: system-tests
+  continuity-e2e-tests.test:
+    group: continuity-service
     label_template: '${git[:8]}'
     timer:
       spec: "0 0 9,13,17,21 * * ?"
