@@ -16,7 +16,7 @@ public class NemsEventMessageQueue {
         this.queueUri = queueUri;
     }
 
-    public NemsEventMessage readEventMessage() {
+    public NemsEventMessage readMessage() {
         log("** Reading message from the queue");
 
         log(String.format("** Queue Uri is %s", this.queueUri));
