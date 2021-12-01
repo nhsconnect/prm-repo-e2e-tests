@@ -9,7 +9,7 @@ pipelines:
     materials:
       git:
         type: configrepo
-        blacklist:
+        ignore:
           - docs/**/*.*
       pds-adaptor:
         pipeline: prm-deductions-pds-adaptor.dev
@@ -48,7 +48,7 @@ pipelines:
     materials:
       git:
         type: configrepo
-        blacklist:
+        ignore:
           - docs/**/*.*
       pds-adaptor:
         pipeline: prm-deductions-pds-adaptor.test
