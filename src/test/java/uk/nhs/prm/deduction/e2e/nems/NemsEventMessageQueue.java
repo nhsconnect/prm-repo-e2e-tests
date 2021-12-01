@@ -7,17 +7,22 @@ import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 @Component
 public class NemsEventMessageQueue {
-    @Autowired
-    private SqsQueue sqsQueue;
 
-    public NemsEventMessage readEventMessage(String queueUri) {
-        log("** Reading message from the queue");
+    private final SqsQueue sqsQueue;
+    private final String queueUri;
 
-        log(String.format("** Queue Uri is %s",queueUri));
-        String messageBody = sqsQueue.readMessageBody(queueUri);
-        return NemsEventMessage.parseMessage(messageBody);
+    public NemsEventMessageQueue(SqsQueue sqsQueue, String queueUri) {
+        this.sqsQueue = sqsQueue;
+        this.queueUri = queueUri;
     }
 
+    public NemsEventMessage readEventMessage() {
+        log("** Reading message from the queue");
+
+        log(String.format("** Queue Uri is %s", this.queueUri));
+        String messageBody = sqsQueue.readMessageBody(this.queueUri);
+        return NemsEventMessage.parseMessage(messageBody);
+    }
 
     public void log(String messageBody) {
         System.out.println(messageBody);

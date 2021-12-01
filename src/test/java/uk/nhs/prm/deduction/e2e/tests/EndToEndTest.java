@@ -9,8 +9,10 @@ import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
 import uk.nhs.prm.deduction.e2e.mesh.MeshClient;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
+import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessageQueue;
+import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessage;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageQueue;
@@ -28,7 +30,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = {
         EndToEndTest.class,
-        NemsEventMessageQueue.class,
+        MeshForwarderQueue.class,
+        NemsEventProcessorUnhandledQueue.class,
         MeshMailbox.class,
         SqsQueue.class,
         MeshClient.class,
@@ -41,13 +44,13 @@ public class EndToEndTest {
     @Autowired
     private TestConfiguration configuration;
     @Autowired
-    private NemsEventMessageQueue meshForwarderQueue;
+    private MeshForwarderQueue meshForwarderQueue;
+    @Autowired
+    private NemsEventProcessorUnhandledQueue nemsEventProcessorUnhandledQueue;
     @Autowired
     private SuspensionMessageQueue suspensionMessageQueue;
     @Autowired
     private MeshMailbox meshMailbox;
-
- //Todo write a start method that starts with cleaning up the queue
 
     @Test
     public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
@@ -64,7 +67,6 @@ public class EndToEndTest {
         then(() -> assertEquals(readSuspensionMessage().nhsNumber(), nhsNumber));
 
         then(() -> assertEquals(readNotReallySuspendedMessage().nhsNumber(), nhsNumber));
-//Todo delete messages on the queue once read
     }
 
     @Test
@@ -77,19 +79,18 @@ public class EndToEndTest {
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
         then(() -> assertEquals(readUnhandledNemsEvent().body(), nemsNonSuspensionMessage.body()));
-//Todo delete messages on the queue once read
     }
 
     private String randomNhsNumber() {
-        return "991200" + (System.currentTimeMillis() % 10000);
+        return "99120" + (System.currentTimeMillis() % 100000);
     }
 
     private NemsEventMessage readForwardedMeshEvent() {
-        return meshForwarderQueue.readEventMessage(configuration.meshForwarderObservabilityQueueUri());
+        return meshForwarderQueue.readEventMessage();
     }
 
     private NemsEventMessage readUnhandledNemsEvent() {
-        return meshForwarderQueue.readEventMessage(configuration.nemsEventProcesorUnhandledQueueUri());
+        return nemsEventProcessorUnhandledQueue.readEventMessage();
     }
 
     private SuspensionMessage readSuspensionMessage() throws JSONException {
