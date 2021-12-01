@@ -23,17 +23,15 @@ public class SQSClient {
 
         List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
         log("** Read messages on the queue ");
-        log("** No of messages on the queue are <this should be 1> "+messages.size());
+
+        if (messages.isEmpty()) {
+            log("** No messages found on the queue");
+            throw new AssertionError("No messages found on the queue: " +  queueUrl);
+        }
+        log("** Read 1 message from queue");
         return messages.get(0).body();
     }
 
-    private NemsEventMessage someNemsEvent(String nhsNumber) {
-        return new NemsEventMessage("dummy message for nhs number: " + nhsNumber);
-    }
-
-    public void log(String messageBody, String messageValue) {
-        System.out.println(String.format(messageBody, messageValue));
-    }
     public void log(String messageBody) {
         System.out.println(messageBody);
     }
