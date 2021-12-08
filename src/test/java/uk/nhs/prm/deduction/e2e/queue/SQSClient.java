@@ -3,7 +3,6 @@ package uk.nhs.prm.deduction.e2e.queue;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 
 import java.util.List;
 
@@ -11,7 +10,7 @@ import java.util.List;
 public class SQSClient {
     public String readMessageFrom(String queueUrl) {
 
-        log("** Creating SQS client to read message");
+      //  log("** Creating SQS client to read message");
 
         SqsClient sqsClient = SqsClient.create();
 
@@ -22,7 +21,7 @@ public class SQSClient {
                 .build();
 
         List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
-        log("** Read messages on the queue ");
+      //  log("** Read messages on the queue ");
 
         if (messages.isEmpty()) {
             log("** No messages found on the queue");

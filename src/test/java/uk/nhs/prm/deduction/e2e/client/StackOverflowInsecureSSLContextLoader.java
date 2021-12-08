@@ -3,8 +3,9 @@ package uk.nhs.prm.deduction.e2e.client;
 import javax.net.ssl.*;
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.security.*;
+import java.security.KeyFactory;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -18,7 +19,7 @@ public class StackOverflowInsecureSSLContextLoader {
 
     public SSLContext getClientAuthSslContext(String clientCertInPemFormat, String clientKeyInPemFormat){
 
-        log("** initialising SSL context to make request to Mesh Mailbox");
+       // log("** initialising SSL context to make request to Mesh Mailbox");
         SSLContext sslContext = null;
         try {
             sslContext = SSLContext.getInstance("TLS");
@@ -53,7 +54,7 @@ public class StackOverflowInsecureSSLContextLoader {
 
             sslContext.init(km, new TrustManager[]{acceptAll}, null);
 
-            log("** SSL context initialised");
+         //   log("** SSL context initialised");
 
         }catch (Exception e){
             log("** encountered exception %s",e.getMessage());
