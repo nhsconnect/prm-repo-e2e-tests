@@ -16,10 +16,8 @@ import java.util.Map;
 public class Helper {
 
     public String randomNhsNumber() {
-        return "99120" + (System.currentTimeMillis() % 100000);
+        return "9691234567" ;
     }
-
-
 
     public NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber) throws IOException {
         return new NemsEventMessage(readTestResourceFile(nemsEventFilename).replaceAll("__NHS_NUMBER__", nhsNumber));

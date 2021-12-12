@@ -1,7 +1,14 @@
 package uk.nhs.prm.deduction.e2e.nems;
 
+import org.awaitility.core.ThrowingRunnable;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.sqs.model.Message;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
 
 @Component
 public class NemsEventMessageQueue {
@@ -14,12 +21,23 @@ public class NemsEventMessageQueue {
         this.queueUri = queueUri;
     }
 
-    public NemsEventMessage readMessage() {
-        log("** Reading message from the queue");
+    public List<Message> readMessages() {
+        log(String.format("** Reading message from %s", this.queueUri));
+        List<Message> messages = sqsQueue.readMessageBody(this.queueUri);
+        return messages;
+    }
 
-        log(String.format("** Queue Uri is %s", this.queueUri));
-        String messageBody = sqsQueue.readMessageBody(this.queueUri);
-        return NemsEventMessage.parseMessage(messageBody);
+    public boolean containsMessage(List<Message> messages,String NemsMessage) {
+
+        for (Message message: messages) {
+           if(message.body().contains(NemsMessage))
+           {
+               log("Message present on queue");
+               sqsQueue.deleteMessage(queueUri,message);
+               return true
+                       ;}
+        }
+        return false;
     }
 
     public void log(String messageBody) {
