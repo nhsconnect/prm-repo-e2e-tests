@@ -4,6 +4,7 @@ import org.awaitility.core.ThrowingRunnable;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import software.amazon.awssdk.services.sqs.model.Message;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
@@ -24,8 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest(classes = {
@@ -66,14 +66,23 @@ public class EndToEndTest {
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
+        log("Posted msg id is "+postedMessageId);
 
-        then(() -> assertThat(meshForwarderQueue.readMessage().body()).contains(nemsSuspension.body()));
-
+        log("Waiting for Forwarder to poll Mailbox for message");
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        then(() -> assertEquals(suspensionsMessageQueue.readMessage().nhsNumber(), nhsNumber));
+        final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
 
-        then(() -> assertEquals(notReallySuspensionsMessageQueue.readMessage().nhsNumber(), nhsNumber));
+        log("Checking if message is present on the queue");
+
+        then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsSuspension.body())));
+
+        final List<Message> NemsSuspensionQueueMessages = suspensionsMessageQueue.readMessages();
+
+            then(() -> assertTrue(suspensionsMessageQueue.containsMessage(NemsSuspensionQueueMessages, nhsNumber)));
+            final List<Message> suspensionQueueMessage = notReallySuspensionsMessageQueue.readMessages();
+            then(() -> assertTrue(notReallySuspensionsMessageQueue.containsMessage(suspensionQueueMessage, nhsNumber)));
+
     }
 
     @Test
@@ -82,11 +91,20 @@ public class EndToEndTest {
         NemsEventMessage nemsNonSuspension = helper.createNemsEventFromTemplate("change-of-gp-non-suspension.xml", nhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsNonSuspension);
+        log("Posted msg id is "+postedMessageId);
 
-        then(() -> assertThat(meshForwarderQueue.readMessage().body()).contains(nemsNonSuspension.body()));
+        log("Waiting for Forwarder to poll Mailbox for message");
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        then(() -> assertEquals(nemsEventProcessorUnhandledQueue.readMessage().body(), nemsNonSuspension.body()));
+        final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
+
+        log("Checking if message is present on the queue");
+
+        then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsNonSuspension.body())));
+
+        final List<Message> nonSuspensionUnhandledMessages = nemsEventProcessorUnhandledQueue.readMessages();
+        log("Checking if message is present on the queue");
+        then(() -> assertTrue(nemsEventProcessorUnhandledQueue.containsMessage(nonSuspensionUnhandledMessages,nemsNonSuspension.body())));
     }
 
     @Test
@@ -95,16 +113,14 @@ public class EndToEndTest {
         for (Map.Entry<String,NemsEventMessage> message :dlqMessages.entrySet()) {
             log("Message to be posted is "+ message.getKey());
             String postedMessageId = meshMailbox.postMessage(message.getValue());
-
             assertMessageOnTheQueue(message.getValue(), postedMessageId, nemsEventProcessorDeadLetterQueue);
         }
-
     }
 
     private void assertMessageOnTheQueue(NemsEventMessage message, String postedMessageId, NemsEventMessageQueue queue) {
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
-
-        then(() -> assertEquals(queue.readMessage().body(), message.body()));
+        final List<Message> dlqMessages = queue.readMessages();
+        then(() -> assertTrue(queue.containsMessage(dlqMessages, message.body())));
     }
 
     private void then(ThrowingRunnable assertion) {

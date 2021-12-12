@@ -55,8 +55,6 @@ public class MeshClient {
                     .build()
                     .send(request, HttpResponse.BodyHandlers.ofString());
 
-            log("** Message posted to Mesh mail box %s", getMessageIdFromMessage(response.body()));
-
             return getMessageIdFromMessage(response.body());
         } catch (Exception e) {
             log("Exception posting message on mailbox %s", e.getMessage());
@@ -85,7 +83,6 @@ public class MeshClient {
     }
 
     private String getAuthToken() throws Exception {
-      //  log("** generating authorisation token to query mailbox");
         return authTokenGenerator.getAuthorizationToken();
     }
 
@@ -104,7 +101,6 @@ public class MeshClient {
         if (jsonArray != null) {
             int len = jsonArray.length();
             for (int i = 0; i < len; i++) {
-                System.out.println(String.format("Message Id for the posted message on the inbox %s", jsonArray.get(i).toString()));
                 list.add(jsonArray.get(i).toString());
             }
         }
