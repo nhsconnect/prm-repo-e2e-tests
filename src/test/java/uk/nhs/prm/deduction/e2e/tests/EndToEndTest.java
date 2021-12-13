@@ -1,7 +1,9 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.awaitility.core.ThrowingRunnable;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -43,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
         MeshForwarderQueue.class,
         Helper.class
 })
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EndToEndTest {
 
     @Autowired
@@ -59,6 +62,16 @@ public class EndToEndTest {
     private MeshMailbox meshMailbox;
     @Autowired
     private Helper helper;
+
+    @BeforeAll
+    void init(){
+        meshForwarderQueue.deleteAllMessages();
+        nemsEventProcessorDeadLetterQueue.deleteAllMessages();
+        suspensionsMessageQueue.deleteAllMessages();
+        nemsEventProcessorUnhandledQueue.deleteAllMessages();
+        notReallySuspensionsMessageQueue.deleteAllMessages();
+    }
+
     @Test
     public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
         String nhsNumber = helper.randomNhsNumber();
@@ -113,12 +126,12 @@ public class EndToEndTest {
         for (Map.Entry<String,NemsEventMessage> message :dlqMessages.entrySet()) {
             log("Message to be posted is "+ message.getKey());
             String postedMessageId = meshMailbox.postMessage(message.getValue());
-            assertMessageOnTheQueue(message.getValue(), postedMessageId, nemsEventProcessorDeadLetterQueue);
+            then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+            assertMessageOnTheQueue(message.getValue(), nemsEventProcessorDeadLetterQueue);
         }
     }
 
-    private void assertMessageOnTheQueue(NemsEventMessage message, String postedMessageId, NemsEventMessageQueue queue) {
-        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+    private void assertMessageOnTheQueue(NemsEventMessage message, NemsEventMessageQueue queue) {
         final List<Message> dlqMessages = queue.readMessages();
         then(() -> assertTrue(queue.containsMessage(dlqMessages, message.body())));
     }

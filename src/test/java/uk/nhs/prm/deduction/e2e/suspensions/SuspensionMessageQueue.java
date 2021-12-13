@@ -19,12 +19,14 @@ public class SuspensionMessageQueue {
         List<Message> messages = sqsQueue.readMessageBody(this.queueUri);
         return messages;
     }
-
+    public void deleteAllMessages(){
+        sqsQueue.deleteAllMessage(queueUri);
+    }
 
 
     public boolean containsMessage(List<Message> messages,String nhsNumber) throws JSONException {
         for (Message message: messages) {
-            if(SuspensionMessage.parseMessage(message.body()).nhsNumber().equalsIgnoreCase(nhsNumber))
+            if(SuspensionMessage.parseMessage(message.body()).nhsNumber().contains(nhsNumber))
             {
                 log("Message present on queue");
                 sqsQueue.deleteMessage(queueUri,message);
