@@ -120,16 +120,16 @@ public class EndToEndTest {
         then(() -> assertTrue(nemsEventProcessorUnhandledQueue.containsMessage(nonSuspensionUnhandledMessages,nemsNonSuspension.body())));
     }
 
-    @Test
-    public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
-        Map<String, NemsEventMessage> dlqMessages = helper.getDLQNemsEventMessages();
-        for (Map.Entry<String,NemsEventMessage> message :dlqMessages.entrySet()) {
-            log("Message to be posted is "+ message.getKey());
-            String postedMessageId = meshMailbox.postMessage(message.getValue());
-            then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
-            assertMessageOnTheQueue(message.getValue(), nemsEventProcessorDeadLetterQueue);
-        }
-    }
+//    @Test
+//    public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
+//        Map<String, NemsEventMessage> dlqMessages = helper.getDLQNemsEventMessages();
+//        for (Map.Entry<String,NemsEventMessage> message :dlqMessages.entrySet()) {
+//            log("Message to be posted is "+ message.getKey());
+//            String postedMessageId = meshMailbox.postMessage(message.getValue());
+//            then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+//            assertMessageOnTheQueue(message.getValue(), nemsEventProcessorDeadLetterQueue);
+//        }
+//    }
 
     private void assertMessageOnTheQueue(NemsEventMessage message, NemsEventMessageQueue queue) {
         final List<Message> dlqMessages = queue.readMessages();
