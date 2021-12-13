@@ -15,12 +15,6 @@
                     <profile value="https://fhir.nhs.uk/STU3/StructureDefinition/Event-MessageHeader-1"/>
                 </meta>
                 <extension url="https://fhir.nhs.uk/STU3/StructureDefinition/Extension-RoutingDemographics-1">
-                    <extension url="nhsNumber">
-                        <valueIdentifier>
-                            <system value="https://fhir.nhs.uk/Id/nhs-number"/>
-                            <value value="9691234567"/>
-                        </valueIdentifier>
-                    </extension>
                     <extension url="name">
                         <valueHumanName>
                             <use value="official"/>
@@ -132,8 +126,6 @@
                             </coding>
                         </valueCodeableConcept>
                     </extension>
-                    <system value="https://fhir.nhs.uk/Id/nhs-number"/>
-                    <value value="9691234567"/>
                 </identifier>
                 <name>
                     <use value="official"/>
@@ -152,10 +144,6 @@
                     <line value="LEEDS"/>
                     <postalCode value="LS17 7DF"/>
                 </address>
-                <generalPractitioner>
-                    <reference value="urn:uuid:59a63170-b769-44f7-acb1-95cc3a0cb067"/>
-                    <display value="SHADWELL MEDICAL CENTRE"/>
-                </generalPractitioner>
             </Patient>
         </resource>
     </entry><!--Entry for organisation for current GP with ODS identifier for the primary care organisation with which the patient is registered (GP Practice code)-->

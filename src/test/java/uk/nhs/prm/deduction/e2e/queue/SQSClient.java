@@ -3,6 +3,7 @@ package uk.nhs.prm.deduction.e2e.queue;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 import java.util.List;
@@ -22,12 +23,17 @@ public class SQSClient {
             log("** No messages found on the queue");
             throw new AssertionError("No messages found on the queue: " +  queueUrl);
         }
-        log("** Read messages from queue count : "+messages.size());
+        log("** Read message from queue");
         return messages;//messages.get(0).body();
     }
 
     public void deleteMessageFrom(String queueUrl, Message message) {
         sqsClient.deleteMessage(DeleteMessageRequest.builder().queueUrl(queueUrl).receiptHandle(message.receiptHandle()).build());
+
+    }
+
+    public void deleteAllMessageFrom(String queueUrl) {
+        sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(queueUrl).build());
 
     }
 

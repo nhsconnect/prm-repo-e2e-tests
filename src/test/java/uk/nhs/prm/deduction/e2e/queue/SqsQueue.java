@@ -21,4 +21,7 @@ public class SqsQueue {
     public void deleteMessage(String queueUri,Message message) {
         sqsClient.deleteMessageFrom(queueUri,message);
     }
+    public void deleteAllMessage(String queueUri) {
+        sqsClient.deleteAllMessageFrom(queueUri);
+    }
 }

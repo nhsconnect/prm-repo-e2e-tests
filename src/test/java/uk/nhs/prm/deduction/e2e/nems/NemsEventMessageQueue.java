@@ -6,9 +6,6 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.awaitility.Awaitility.await;
 
 @Component
 public class NemsEventMessageQueue {
@@ -39,6 +36,9 @@ public class NemsEventMessageQueue {
         }
         return false;
     }
+public void deleteAllMessages(){
+    sqsQueue.deleteAllMessage(queueUri);
+}
 
     public void log(String messageBody) {
         System.out.println(messageBody);
