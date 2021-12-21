@@ -12,6 +12,7 @@ import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
 
@@ -36,7 +37,8 @@ import static org.junit.jupiter.api.Assertions.*;
         MeshForwarderQueue.class,
         NemsEventProcessorUnhandledQueue.class,
         NemsEventProcessorSuspensionsMessageQueue.class,
-        SuspensionServiceNotReallySuspensionsMessageQueue.class
+        SuspensionServiceNotReallySuspensionsMessageQueue.class,
+        MofUpdatedMessageQueue.class
 })
 public class EndToEndTest {
 
@@ -49,12 +51,33 @@ public class EndToEndTest {
     @Autowired
     private SuspensionServiceNotReallySuspensionsMessageQueue notReallySuspensionsMessageQueue;
     @Autowired
+    private MofUpdatedMessageQueue mofUpdatedMessageQueue;
+    @Autowired
     private MeshMailbox meshMailbox;
 
     @Test
-    public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
-        String nhsNumber = randomNhsNumber();
+    public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
+//        String nhsNumber = randomNhsNumber();
+        //Suspended patient nhs number
+        String nhsNumber = "9693797515";
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
 
+        String postedMessageId = meshMailbox.postMessage(nemsSuspension);
+
+        then(() -> assertThat(meshForwarderQueue.readMessage().body()).contains(nemsSuspension.body()));
+
+        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+
+        then(() -> assertEquals(suspensionsMessageQueue.readMessage().nhsNumber(), nhsNumber));
+
+        then(() -> assertEquals(mofUpdatedMessageQueue.readMessage().nhsNumber(), nhsNumber));
+    }
+
+    @Test
+    public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
+//        String nhsNumber = randomNhsNumber();
+        //Not-Suspended patient nhs number
+        String nhsNumber = "9692294994";
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);

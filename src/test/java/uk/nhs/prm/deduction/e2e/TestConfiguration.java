@@ -40,6 +40,10 @@ public class TestConfiguration {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-not-suspended-observability-queue", getAwsAccountNo(), getEnvironmentName());
     }
 
+    public String mofUpdatedQueueUri() {
+        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-mof-updated-queue", getAwsAccountNo(), getEnvironmentName());
+    }
+
     private String getAwsAccountNo() {
         return getRequiredEnvVar("AWS_ACCOUNT_ID");
     }
