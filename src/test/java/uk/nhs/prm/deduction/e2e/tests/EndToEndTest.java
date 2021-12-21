@@ -50,6 +50,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EndToEndTest {
 
+    public static final String PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = "9692294994";
+    public static final String PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9693797515";
     @Autowired
     private MeshForwarderQueue meshForwarderQueue;
     @Autowired
@@ -78,33 +80,33 @@ public class EndToEndTest {
 
     @Test
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
-//        String nhsNumber = randomNhsNumber();
-        //Suspended patient nhs number
-        String nhsNumber = "9693797515";
-        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
+        String suspendedPatientNhsNumber = PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
+        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
 
+        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
         final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
 
         then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsSuspension.body())));
-
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        final List<Message> suspensionMessages = suspensionsMessageQueue.readMessages();
-        then(() -> assertTrue(suspensionsMessageQueue.containsMessage(suspensionMessages, nhsNumber)));
+        then(() -> {
+            final List<Message> suspensionMessages = suspensionsMessageQueue.readMessages();
+            assertTrue(suspensionsMessageQueue.containsMessage(suspensionMessages, suspendedPatientNhsNumber));
+        });
 
-        final List<Message> mofUpdatedMessages = mofUpdatedMessageQueue.readMessages();
-        then(() -> assertTrue(mofUpdatedMessageQueue.containsMessage(mofUpdatedMessages, nhsNumber)));
+        then(() -> {
+            final List<Message> mofUpdatedMessages = mofUpdatedMessageQueue.readMessages();
+            assertTrue(mofUpdatedMessageQueue.containsMessage(mofUpdatedMessages, suspendedPatientNhsNumber));
+        });
     }
 
     @Test
-    public void shouldMoveSuspensionMessageFromNemsToSuspensionsObservabilityQueue() throws Exception {
-//        String nhsNumber = randomNhsNumber();
-        //Not-Suspended patient nhs number
-        String nhsNumber = "9692294994";
+    public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() throws Exception {
+        String currentlyRegisteredPatientNhsNumber = PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
 
-        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
+        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
         log("Posted msg id is "+postedMessageId);
@@ -118,12 +120,14 @@ public class EndToEndTest {
 
         then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsSuspension.body())));
 
-        final List<Message> NemsSuspensionQueueMessages = suspensionsMessageQueue.readMessages();
-
-            then(() -> assertTrue(suspensionsMessageQueue.containsMessage(NemsSuspensionQueueMessages, nhsNumber)));
-            final List<Message> suspensionQueueMessage = notReallySuspensionsMessageQueue.readMessages();
-            then(() -> assertTrue(notReallySuspensionsMessageQueue.containsMessage(suspensionQueueMessage, nhsNumber)));
-
+        then(() -> {
+            List<Message> NemsSuspensionQueueMessages = suspensionsMessageQueue.readMessages();
+            assertTrue(suspensionsMessageQueue.containsMessage(NemsSuspensionQueueMessages, currentlyRegisteredPatientNhsNumber));
+        });
+        then(() -> {
+            List<Message> suspensionQueueMessage = notReallySuspensionsMessageQueue.readMessages();
+            assertTrue(notReallySuspensionsMessageQueue.containsMessage(suspensionQueueMessage, currentlyRegisteredPatientNhsNumber));
+        });
     }
 
     @Test
@@ -139,13 +143,12 @@ public class EndToEndTest {
 
         final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
 
-        log("Checking if message is present on the queue");
-
         then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsNonSuspension.body())));
 
-        final List<Message> nonSuspensionUnhandledMessages = nemsEventProcessorUnhandledQueue.readMessages();
-        log("Checking if message is present on the queue");
-        then(() -> assertTrue(nemsEventProcessorUnhandledQueue.containsMessage(nonSuspensionUnhandledMessages,nemsNonSuspension.body())));
+        then(() -> {
+            final List<Message> nonSuspensionUnhandledMessages = nemsEventProcessorUnhandledQueue.readMessages();
+            assertTrue(nemsEventProcessorUnhandledQueue.containsMessage(nonSuspensionUnhandledMessages, nemsNonSuspension.body()));
+        });
     }
 
 //    @Test
