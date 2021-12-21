@@ -84,6 +84,7 @@ public class EndToEndTest {
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
+        log("Posted msg id is "+postedMessageId);
 
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
         final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
