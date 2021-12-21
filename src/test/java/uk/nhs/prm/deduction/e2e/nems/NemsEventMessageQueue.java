@@ -1,9 +1,11 @@
 package uk.nhs.prm.deduction.e2e.nems;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.awaitility.core.ThrowingRunnable;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import software.amazon.awssdk.services.sqs.model.Message;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+
+import java.util.List;
 
 @Component
 public class NemsEventMessageQueue {
@@ -16,13 +18,27 @@ public class NemsEventMessageQueue {
         this.queueUri = queueUri;
     }
 
-    public NemsEventMessage readMessage() {
-        log("** Reading message from the queue");
-
-        log(String.format("** Queue Uri is %s", this.queueUri));
-        String messageBody = sqsQueue.readMessageBody(this.queueUri);
-        return NemsEventMessage.parseMessage(messageBody);
+    public List<Message> readMessages() {
+        log(String.format("** Reading message from %s", this.queueUri));
+        List<Message> messages = sqsQueue.readMessageBody(this.queueUri);
+        return messages;
     }
+
+    public boolean containsMessage(List<Message> messages,String NemsMessage) {
+
+        for (Message message: messages) {
+           if(message.body().contains(NemsMessage))
+           {
+               log("Message present on queue");
+               sqsQueue.deleteMessage(queueUri,message);
+               return true
+                       ;}
+        }
+        return false;
+    }
+public void deleteAllMessages(){
+    sqsQueue.deleteAllMessage(queueUri);
+}
 
     public void log(String messageBody) {
         System.out.println(messageBody);

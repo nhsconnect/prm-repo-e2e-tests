@@ -1,30 +1,34 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.awaitility.core.ThrowingRunnable;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import software.amazon.awssdk.services.sqs.model.Message;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
+import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshClient;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
+import uk.nhs.prm.deduction.e2e.nems.NemsEventMessageQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
+import uk.nhs.prm.deduction.e2e.utility.Helper;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 @SpringBootTest(classes = {
@@ -38,8 +42,12 @@ import static org.junit.jupiter.api.Assertions.*;
         NemsEventProcessorUnhandledQueue.class,
         NemsEventProcessorSuspensionsMessageQueue.class,
         SuspensionServiceNotReallySuspensionsMessageQueue.class,
+        NemsEventProcessorDeadLetterQueue.class,
+        MeshForwarderQueue.class,
+        Helper.class,
         MofUpdatedMessageQueue.class
 })
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EndToEndTest {
 
     @Autowired
@@ -53,24 +61,41 @@ public class EndToEndTest {
     @Autowired
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
     @Autowired
+    private NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue;
+    @Autowired
     private MeshMailbox meshMailbox;
+    @Autowired
+    private Helper helper;
+
+    @BeforeAll
+    void init(){
+        meshForwarderQueue.deleteAllMessages();
+        nemsEventProcessorDeadLetterQueue.deleteAllMessages();
+        suspensionsMessageQueue.deleteAllMessages();
+        nemsEventProcessorUnhandledQueue.deleteAllMessages();
+        notReallySuspensionsMessageQueue.deleteAllMessages();
+    }
 
     @Test
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
 //        String nhsNumber = randomNhsNumber();
         //Suspended patient nhs number
         String nhsNumber = "9693797515";
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
+        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
 
-        then(() -> assertThat(meshForwarderQueue.readMessage().body()).contains(nemsSuspension.body()));
+        final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
+
+        then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsSuspension.body())));
 
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        then(() -> assertEquals(suspensionsMessageQueue.readMessage().nhsNumber(), nhsNumber));
+        final List<Message> suspensionMessages = suspensionsMessageQueue.readMessages();
+        then(() -> assertTrue(suspensionsMessageQueue.containsMessage(suspensionMessages, nhsNumber)));
 
-        then(() -> assertEquals(mofUpdatedMessageQueue.readMessage().nhsNumber(), nhsNumber));
+        final List<Message> mofUpdatedMessages = mofUpdatedMessageQueue.readMessages();
+        then(() -> assertTrue(mofUpdatedMessageQueue.containsMessage(mofUpdatedMessages, nhsNumber)));
     }
 
     @Test
@@ -78,52 +103,72 @@ public class EndToEndTest {
 //        String nhsNumber = randomNhsNumber();
         //Not-Suspended patient nhs number
         String nhsNumber = "9692294994";
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
+
+        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
+        log("Posted msg id is "+postedMessageId);
 
-        then(() -> assertThat(meshForwarderQueue.readMessage().body()).contains(nemsSuspension.body()));
-
+        log("Waiting for Forwarder to poll Mailbox for message");
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        then(() -> assertEquals(suspensionsMessageQueue.readMessage().nhsNumber(), nhsNumber));
+        final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
 
-        then(() -> assertEquals(notReallySuspensionsMessageQueue.readMessage().nhsNumber(), nhsNumber));
+        log("Checking if message is present on the queue");
+
+        then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsSuspension.body())));
+
+        final List<Message> NemsSuspensionQueueMessages = suspensionsMessageQueue.readMessages();
+
+            then(() -> assertTrue(suspensionsMessageQueue.containsMessage(NemsSuspensionQueueMessages, nhsNumber)));
+            final List<Message> suspensionQueueMessage = notReallySuspensionsMessageQueue.readMessages();
+            then(() -> assertTrue(notReallySuspensionsMessageQueue.containsMessage(suspensionQueueMessage, nhsNumber)));
+
     }
 
     @Test
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
-        NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate("change-of-gp-non-suspension.xml", randomNhsNumber());
+        String nhsNumber = helper.randomNhsNumber();
+        NemsEventMessage nemsNonSuspension = helper.createNemsEventFromTemplate("change-of-gp-non-suspension.xml", nhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsNonSuspension);
+        log("Posted msg id is "+postedMessageId);
 
-        then(() -> assertThat(meshForwarderQueue.readMessage().body()).contains(nemsNonSuspension.body()));
+        log("Waiting for Forwarder to poll Mailbox for message");
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
-        then(() -> assertEquals(nemsEventProcessorUnhandledQueue.readMessage().body(), nemsNonSuspension.body()));
+        final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
+
+        log("Checking if message is present on the queue");
+
+        then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsNonSuspension.body())));
+
+        final List<Message> nonSuspensionUnhandledMessages = nemsEventProcessorUnhandledQueue.readMessages();
+        log("Checking if message is present on the queue");
+        then(() -> assertTrue(nemsEventProcessorUnhandledQueue.containsMessage(nonSuspensionUnhandledMessages,nemsNonSuspension.body())));
     }
 
-    private String randomNhsNumber() {
-        return "99120" + (System.currentTimeMillis() % 100000);
+//    @Test
+//    public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
+//        Map<String, NemsEventMessage> dlqMessages = helper.getDLQNemsEventMessages();
+//        for (Map.Entry<String,NemsEventMessage> message :dlqMessages.entrySet()) {
+//            log("Message to be posted is "+ message.getKey());
+//            String postedMessageId = meshMailbox.postMessage(message.getValue());
+//            then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+//            assertMessageOnTheQueue(message.getValue(), nemsEventProcessorDeadLetterQueue);
+//        }
+//    }
+
+    private void assertMessageOnTheQueue(NemsEventMessage message, NemsEventMessageQueue queue) {
+        final List<Message> dlqMessages = queue.readMessages();
+        then(() -> assertTrue(queue.containsMessage(dlqMessages, message.body())));
     }
 
     private void then(ThrowingRunnable assertion) {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(2, TimeUnit.SECONDS).untilAsserted(assertion);
     }
 
-    private NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber) throws IOException {
-        return new NemsEventMessage(readTestResourceFile(nemsEventFilename).replaceAll("__NHS_NUMBER__", nhsNumber));
-    }
-
-    private String readTestResourceFile(String nemsEvent) throws IOException {
-        File file = new File(String.format("src/test/resources/%s", nemsEvent));
-        BufferedReader br = new BufferedReader(new FileReader(file));
-        String line;
-        StringBuilder sb = new StringBuilder();
-
-        while((line=br.readLine())!= null){
-            sb.append(line.trim());
-        }
-        return sb.toString();
+    public void log(String message) {
+        System.out.println(message);
     }
 }
