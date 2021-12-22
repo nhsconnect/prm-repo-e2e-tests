@@ -18,8 +18,9 @@ public class MeshMailbox {
     private MeshClient meshClient;
 
     public String postMessage(NemsEventMessage message) throws Exception {
-
-       return meshClient.postMessage(getMailboxServicOutboxeUri(), message);
+        String messageId = meshClient.postMessage(getMailboxServicOutboxeUri(), message);
+        log("Posted messageId is " + messageId);
+        return messageId;
     }
 
     public boolean hasMessageId(String messageId) throws HttpException, JSONException {
@@ -49,5 +50,7 @@ public class MeshMailbox {
        return false;
     }
 
-
+    public void log(String message) {
+        System.out.println(message);
+    }
 }
