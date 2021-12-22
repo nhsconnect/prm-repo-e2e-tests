@@ -84,12 +84,11 @@ public class EndToEndTest {
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
-        log("Posted msg id is "+postedMessageId);
 
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
-        final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
+        final List <Message> messageFromForwarder = meshForwarderQueue.readMessages();
 
-        then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsSuspension.body())));
+        then(() -> assertThat(meshForwarderQueue.containsMessage(messageFromForwarder, nemsSuspension.body())));
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
 
         then(() -> {
@@ -110,20 +109,18 @@ public class EndToEndTest {
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
-        log("Posted msg id is "+postedMessageId);
 
-        log("Waiting for Forwarder to poll Mailbox for message");
-        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+        waitForMeshMailboxRemovalOf(postedMessageId);
 
         final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
 
-        log("Checking if message is present on the queue");
+
 
         then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsSuspension.body())));
 
         then(() -> {
-            List<Message> NemsSuspensionQueueMessages = suspensionsMessageQueue.readMessages();
-            assertTrue(suspensionsMessageQueue.containsMessage(NemsSuspensionQueueMessages, currentlyRegisteredPatientNhsNumber));
+            List<Message> suspensionQueueMessages = suspensionsMessageQueue.readMessages();
+            assertTrue(suspensionsMessageQueue.containsMessage(suspensionQueueMessages, currentlyRegisteredPatientNhsNumber));
         });
         then(() -> {
             List<Message> suspensionQueueMessage = notReallySuspensionsMessageQueue.readMessages();
@@ -152,6 +149,14 @@ public class EndToEndTest {
         });
     }
 
+    private void waitForMeshMailboxRemovalOf(String postedMessageId) {
+        log("Waiting for forwarder to remove message from mailbox");
+        then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+    }
+
+
+    // This looks like it has been commented out because it was flaky - has left a lot of dead
+    // code around, seems to be coverage over DLQ error cases for nems event processor
 //    @Test
 //    public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
 //        Map<String, NemsEventMessage> dlqMessages = helper.getDLQNemsEventMessages();
