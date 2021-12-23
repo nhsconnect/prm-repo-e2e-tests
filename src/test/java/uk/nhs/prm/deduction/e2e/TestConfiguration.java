@@ -25,6 +25,14 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-password", getEnvironmentName()));
     }
 
+    public String getPdsAdaptorApiKey() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/e2e-test", getEnvironmentName()));
+    }
+
+    public String getPdsAdaptorTestPatient() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/e2e-test/pds-adaptor-test/nhs-number", getEnvironmentName()));
+    }
+
     public String meshForwarderObservabilityQueueUri() {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-mesh-forwarder-nems-events-observability-queue", getAwsAccountNo(), getEnvironmentName());
     }
@@ -45,6 +53,10 @@ public class TestConfiguration {
     }
     public String mofUpdatedQueueUri() {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-mof-updated-queue", getAwsAccountNo(), getEnvironmentName());
+    }
+
+    public String getPdsAdaptorUrl() {
+        return String.format("https://pds-adaptor.%s.non-prod.patient-deductions.nhs.uk/", getEnvironmentName());
     }
 
     private String getAwsAccountNo() {
