@@ -1,6 +1,8 @@
 plugins {
     id 'java'
     id 'org.owasp.dependencycheck' version '6.5.0.1'
+    id 'org.springframework.boot' version '2.5.6'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 }
 
 group 'org.example'
@@ -11,11 +13,14 @@ repositories {
 }
 
 dependencies {
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'software.amazon.awssdk:ssm:2.17.71'
     testImplementation 'software.amazon.awssdk:sqs:2.17.71'
     testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.5.6'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.awaitility:awaitility:4.1.1'
+    testCompileOnly 'org.projectlombok:lombok:1.18.22'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.withType(Test) {

@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.client;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
@@ -8,6 +9,7 @@ import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 import software.amazon.awssdk.services.ssm.model.SsmException;
 
 @Component
+@Slf4j
 public class AwsConfigurationClient {
     private SsmClient ssmClient;
 
