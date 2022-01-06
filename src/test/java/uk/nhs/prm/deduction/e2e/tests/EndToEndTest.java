@@ -16,6 +16,8 @@ import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessageQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
+import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
+import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
@@ -47,7 +49,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         NemsEventProcessorDeadLetterQueue.class,
         MeshForwarderQueue.class,
         Helper.class,
-        MofUpdatedMessageQueue.class
+        MofUpdatedMessageQueue.class,
+        PdsAdaptorClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EndToEndTest {
@@ -90,7 +93,13 @@ public class EndToEndTest {
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
         String suspendedPatientNhsNumber = PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
 
-        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplateWithNhsNumberAndPreviousOdsCode("change-of-gp-suspension.xml", suspendedPatientNhsNumber, odsCodeGenerator());
+        PdsAdaptorClient pdsAdaptorClient = new PdsAdaptorClient(suspendedPatientNhsNumber);
+
+        PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus();
+
+        pdsAdaptorClient.updateManagingOrganisation(odsCodeGenerator(), pdsAdaptorResponse.getRecordETag());
+
+        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber);
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
 

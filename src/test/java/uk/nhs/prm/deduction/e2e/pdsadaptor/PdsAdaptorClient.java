@@ -22,6 +22,12 @@ public class PdsAdaptorClient {
         this.pdsAdaptorUrl = buildUrl(config.getPdsAdaptorUrl(), config.getPdsAdaptorTestPatient());
     }
 
+    public PdsAdaptorClient(String nhsNumber){
+        TestConfiguration config = new TestConfiguration();
+        this.e2eAuthPassword  = config.getPdsAdaptorApiKey();
+        this.pdsAdaptorUrl = buildUrl(config.getPdsAdaptorUrl(), nhsNumber);
+    }
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     public PdsAdaptorResponse getSuspendedPatientStatus() {

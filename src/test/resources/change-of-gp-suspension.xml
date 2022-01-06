@@ -201,7 +201,7 @@
                 </meta>
                 <identifier>
                     <system value="https://fhir.nhs.uk/Id/ods-organization-code"/>
-                    <value value="__PREVIOUS_ODS_CODE__"/>
+                    <value value="B85612"/>
                 </identifier>
                 <name value="LIVERSEDGE MEDICAL CENTRE"/>
                 <partOf>
