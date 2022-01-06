@@ -23,6 +23,10 @@ public class Helper {
         return new NemsEventMessage(readTestResourceFile(nemsEventFilename).replaceAll("__NHS_NUMBER__", nhsNumber));
     }
 
+    public NemsEventMessage createNemsEventFromTemplateWithNhsNumberAndPreviousOdsCode(String nemsEventFilename, String nhsNumber, String previousOdsCode) throws IOException {
+        return new NemsEventMessage(readTestResourceFile(nemsEventFilename).replaceAll("__NHS_NUMBER__", nhsNumber).replaceAll("__PREVIOUS_ODS_CODE__",previousOdsCode ));
+    }
+
     public String readTestResourceFile(String nemsEvent) throws IOException {
         File file = new File(String.format("src/test/resources/%s", nemsEvent));
         BufferedReader br = new BufferedReader(new FileReader(file));

@@ -22,7 +22,9 @@ import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessage
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.utility.Helper;
 
+import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -78,10 +80,17 @@ public class EndToEndTest {
         notReallySuspensionsMessageQueue.deleteAllMessages();
     }
 
+    private String odsCodeGenerator(){
+        byte[] array = new byte[5];
+        new Random().nextBytes(array);
+        return new String(array, Charset.forName("UTF-8"));
+    }
+
     @Test
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
         String suspendedPatientNhsNumber = PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
-        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber);
+
+        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplateWithNhsNumberAndPreviousOdsCode("change-of-gp-suspension.xml", suspendedPatientNhsNumber, odsCodeGenerator());
 
         String postedMessageId = meshMailbox.postMessage(nemsSuspension);
 
