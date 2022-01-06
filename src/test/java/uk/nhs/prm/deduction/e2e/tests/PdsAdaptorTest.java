@@ -29,7 +29,7 @@ public class PdsAdaptorTest {
         assertThat(pdsAdaptorUpdateResponse.getManagingOrganisation()).isEqualTo(newOdsCode);
     }
 
-    private String generateRandomOdsCode() {
+    public static String generateRandomOdsCode() {
         int leftLimit = 48; // numeral '0'
         int rightLimit = 122; // letter 'z'
         int targetStringLength = 5;
