@@ -83,12 +83,6 @@ public class EndToEndTest {
         notReallySuspensionsMessageQueue.deleteAllMessages();
     }
 
-    private String odsCodeGenerator(){
-        byte[] array = new byte[5];
-        new Random().nextBytes(array);
-        return new String(array, Charset.forName("UTF-8"));
-    }
-
     @Test
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
         String suspendedPatientNhsNumber = PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
@@ -97,7 +91,7 @@ public class EndToEndTest {
 
         PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus();
 
-        pdsAdaptorClient.updateManagingOrganisation(odsCodeGenerator(), pdsAdaptorResponse.getRecordETag());
+        pdsAdaptorClient.updateManagingOrganisation(PdsAdaptorTest.generateRandomOdsCode(), pdsAdaptorResponse.getRecordETag());
 
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber);
 
