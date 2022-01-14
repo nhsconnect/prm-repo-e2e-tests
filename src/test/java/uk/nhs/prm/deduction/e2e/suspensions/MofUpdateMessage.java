@@ -22,7 +22,7 @@ public class MofUpdateMessage {
         Map<String, String> response = new HashMap<>();
         JSONObject jsonObject = new JSONObject(responseBody);
         response.put("nhsNumber",jsonObject.get("nhsNumber").toString());
-        response.put("managingOrgainsationOdsCode",jsonObject.get("managingOrgainsationOdsCode").toString());
+        response.put("managingOrganisationOdsCode",jsonObject.get("managingOrganisationOdsCode").toString());
 
         return response;
     }
