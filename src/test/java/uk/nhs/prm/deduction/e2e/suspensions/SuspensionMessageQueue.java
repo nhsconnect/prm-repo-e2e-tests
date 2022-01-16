@@ -16,7 +16,7 @@ public class SuspensionMessageQueue {
     }
     public List<Message> readMessages() {
         log(String.format("** Reading message from %s", this.queueUri));
-        List<Message> messages = sqsQueue.readMessageBody(this.queueUri);
+        List<Message> messages = sqsQueue.readAllMessages(this.queueUri);
         return messages;
     }
     public void deleteAllMessages(){

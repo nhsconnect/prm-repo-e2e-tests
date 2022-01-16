@@ -14,8 +14,8 @@ public class SqsQueue {
         this.sqsClient = new SQSClient();
     }
 
-    public List<Message> readMessageBody(String queueUri) {
-        return sqsClient.readMessageFrom(queueUri);
+    public List<Message> readAllMessages(String queueUri) {
+        return sqsClient.readAllMessageFrom(queueUri);
     }
 
     public void deleteMessage(String queueUri,Message message) {
