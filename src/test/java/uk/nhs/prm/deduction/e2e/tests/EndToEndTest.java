@@ -26,6 +26,7 @@ import uk.nhs.prm.deduction.e2e.utility.Helper;
 
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -102,14 +103,14 @@ public class EndToEndTest {
 
         then(() -> assertThat(meshForwarderQueue.containsMessage(messageFromForwarder, nemsSuspension.body())));
         then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
-
+        final List<Message> suspensionMessages = suspensionsMessageQueue.readMessages();
         then(() -> {
-            final List<Message> suspensionMessages = suspensionsMessageQueue.readMessages();
+
             assertTrue(suspensionsMessageQueue.containsMessage(suspensionMessages, suspendedPatientNhsNumber));
         });
-
+        final List<Message> mofUpdatedMessages = mofUpdatedMessageQueue.readMessages();
         then(() -> {
-            final List<Message> mofUpdatedMessages = mofUpdatedMessageQueue.readMessages();
+
             assertTrue(mofUpdatedMessageQueue.containsMessage(mofUpdatedMessages, suspendedPatientNhsNumber));
         });
     }
@@ -125,8 +126,6 @@ public class EndToEndTest {
         waitForMeshMailboxRemovalOf(postedMessageId);
 
         final List <Message> forwarderQueueMsg = meshForwarderQueue.readMessages();
-
-
 
         then(() -> assertThat(meshForwarderQueue.containsMessage(forwarderQueueMsg, nemsSuspension.body())));
 
@@ -167,18 +166,16 @@ public class EndToEndTest {
     }
 
 
-    // This looks like it has been commented out because it was flaky - has left a lot of dead
-    // code around, seems to be coverage over DLQ error cases for nems event processor
-//    @Test
-//    public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
-//        Map<String, NemsEventMessage> dlqMessages = helper.getDLQNemsEventMessages();
-//        for (Map.Entry<String,NemsEventMessage> message :dlqMessages.entrySet()) {
-//            log("Message to be posted is "+ message.getKey());
-//            String postedMessageId = meshMailbox.postMessage(message.getValue());
-//            then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
-//            assertMessageOnTheQueue(message.getValue(), nemsEventProcessorDeadLetterQueue);
-//        }
-//    }
+    @Test
+    public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
+        Map<String, NemsEventMessage> dlqMessages = helper.getDLQNemsEventMessages();
+        for (Map.Entry<String,NemsEventMessage> message :dlqMessages.entrySet()) {
+            log("Message to be posted is "+ message.getKey());
+            String postedMessageId = meshMailbox.postMessage(message.getValue());
+            then(() -> assertFalse(meshMailbox.hasMessageId(postedMessageId)));
+            assertMessageOnTheQueue(message.getValue(), nemsEventProcessorDeadLetterQueue);
+        }
+    }
 
     private void assertMessageOnTheQueue(NemsEventMessage message, NemsEventMessageQueue queue) {
         final List<Message> dlqMessages = queue.readMessages();
