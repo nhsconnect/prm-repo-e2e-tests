@@ -22,34 +22,9 @@ public class MeshMailbox {
         log("Posted messageId is " + messageId);
         return messageId;
     }
-
-    public boolean hasMessageId(String messageId) throws HttpException, JSONException {
-        List<String> messageIds = meshClient.getMessageIds(getMailboxServicInboxeUri());
-
-        return listContainsMessageID(messageIds,messageId);
-    }
-
-
     private String getMailboxServicOutboxeUri() {
         return String.format("https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox", configuration.getMeshMailBoxID());
     }
-
-    private String getMailboxServicInboxeUri() {
-        return String.format("https://msg.intspineservices.nhs.uk/messageexchange/%s/inbox", configuration.getMeshMailBoxID());
-    }
-
-    private boolean listContainsMessageID(List<String> messageList, String messageId) throws JSONException {
-        if(messageList.isEmpty()){
-            return false;
-        }
-        for (int index = 0;index<messageList.size();index++){
-            if(messageList.get(index).equalsIgnoreCase(messageId)){
-                return true;
-            }
-        }
-       return false;
-    }
-
     public void log(String message) {
         System.out.println(message);
     }
