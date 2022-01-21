@@ -16,6 +16,7 @@ import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
@@ -41,13 +42,15 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
         MeshForwarderQueue.class,
         Helper.class,
         MofUpdatedMessageQueue.class,
+        MofNotUpdatedMessageQueue.class,
         PdsAdaptorClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EndToEndTest {
 
-    public static final String PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = "9692294994";
-    public static final String PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9693797515";
+    public static final String SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = "9693795997";
+    public static final String SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9693797396";
+    public static final String NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
     @Autowired
     private MeshForwarderQueue meshForwarderQueue;
     @Autowired
@@ -58,6 +61,8 @@ public class EndToEndTest {
     private SuspensionServiceNotReallySuspensionsMessageQueue notReallySuspensionsMessageQueue;
     @Autowired
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
+    @Autowired
+    private MofNotUpdatedMessageQueue mofNotUpdatedMessageQueue;
     @Autowired
     private NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue;
     @Autowired
@@ -76,7 +81,7 @@ public class EndToEndTest {
 
     @Test
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
-        String suspendedPatientNhsNumber = PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
+        String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
 
         PdsAdaptorClient pdsAdaptorClient = new PdsAdaptorClient(suspendedPatientNhsNumber);
 
@@ -89,12 +94,11 @@ public class EndToEndTest {
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
         assertThat(suspensionsMessageQueue.hasMessage(suspendedPatientNhsNumber));
         assertThat(mofUpdatedMessageQueue.hasMessage(suspendedPatientNhsNumber));
-
     }
 
     @Test
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() throws Exception {
-        String currentlyRegisteredPatientNhsNumber = PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
+        String currentlyRegisteredPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
 
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber);
 
@@ -114,7 +118,6 @@ public class EndToEndTest {
 
         assertThat(meshForwarderQueue.hasMessage(nemsNonSuspension.body()));
         assertThat(nemsEventProcessorUnhandledQueue.hasMessage(nemsNonSuspension.body()));
-
     }
 
 
@@ -127,6 +130,15 @@ public class EndToEndTest {
             log("Posted " + message.getKey() + " message");
             assertThat(nemsEventProcessorDeadLetterQueue.hasMessage(message.getValue().body()));
         }
+    }
+
+    @Test
+    public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() throws Exception {
+        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER);
+        meshMailbox.postMessage(nemsSuspension);
+        assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
+        assertThat(suspensionsMessageQueue.hasMessage(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
+        assertThat(mofNotUpdatedMessageQueue.hasMessage(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
     }
 
     public void log(String message) {
