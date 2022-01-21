@@ -48,9 +48,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EndToEndTest {
 
-    public static final String SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = "9693795997";
-    public static final String SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9693797396";
-    public static final String NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
+    public static String SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
+    public static String SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
+    public static String NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
     @Autowired
     private MeshForwarderQueue meshForwarderQueue;
     @Autowired
@@ -72,11 +72,20 @@ public class EndToEndTest {
 
     @BeforeAll
     void init() {
+        initializeNhsNumberBasedOnEnvironment();
         meshForwarderQueue.deleteAllMessages();
         nemsEventProcessorDeadLetterQueue.deleteAllMessages();
         suspensionsMessageQueue.deleteAllMessages();
         nemsEventProcessorUnhandledQueue.deleteAllMessages();
         notReallySuspensionsMessageQueue.deleteAllMessages();
+    }
+
+    private void initializeNhsNumberBasedOnEnvironment() {
+        // NHS Number needs to be different in each env as the synthetic patient prefix is different
+        String nhsEnvironment = System.getenv("NHS_ENVIRONMENT");
+        SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693795997" : "9694179254";
+        SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693797396" : "9694179262";
+        NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
     }
 
     @Test
