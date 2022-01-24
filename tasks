@@ -58,30 +58,43 @@ function configure_mesh_access {
   export MESH_CLIENT_CERT=$(dojo -c Dojofile-infra "aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name  ${mesh_client_cert} | jq -r .Parameter.Value")
   export MESH_CLIENT_KEY=$(dojo -c Dojofile-infra "aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name  ${mesh_client_key} | jq -r .Parameter.Value")
 }
+  function get_suspension_service_cluster_name {
+    cluster_ssm_param_name="/repo/${NHS_ENVIRONMENT}/output/suspension-service/suspension-service-ecs-cluster-name"
+    export SUSPENSION_SERVICE_CLUSTER_NAME=$(dojo -c Dojofile-infra "aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name  ${cluster_ssm_param_name} | jq -r .Parameter.Value")
+    echo $SUSPENSION_SERVICE_CLUSTER_NAME
+  }
+
+  function get_running_task_count {
+    echo $(aws ecs describe-clusters \
+          --cluster "$1" \
+          --region "$AWS_REGION" \
+          | jq -r '.clusters[0].runningTasksCount')
+  }
 
 function check_suspension_service {
+  if [[ "$NHS_ENVIRONMENT" != "test" ]]; then
+    echo "We're not checking suspension-service for dev env"
+    return 0
+  fi
   POLLING_ATTEMPTS_LEFT=6
-  CLUSTER_NAME="$NHS_ENVIRONMENT-suspension-service-ecs-cluster"
+  CLUSTER_NAME=$(get_suspension_service_cluster_name)
   while [ "$POLLING_ATTEMPTS_LEFT" -gt "0" ]; do
-    ACTIVE_TASKS=$(aws ecs describe-clusters \
-      --cluster "$CLUSTER_NAME" \
-      --region "$AWS_REGION" \
-      | jq -r '.clusters[0].runningTasksCount')
+    TASKS_COUNT=$(get_running_task_count ${CLUSTER_NAME})
 
-    echo "Number of running tasks found: $ACTIVE_TASKS"
+    echo "Number of running tasks found: $TASKS_COUNT"
 
-    if [[ "$ACTIVE_TASKS" -eq "0" || "$ACTIVE_TASKS" == "null" ]]; then
+    if [[ "$TASKS_COUNT" -eq "0" || "$TASKS_COUNT" == "null" ]]; then
       let POLLING_ATTEMPTS_LEFT--
       echo "No running task found. Making another attempt. Attempts left: $POLLING_ATTEMPTS_LEFT"
       sleep 180 #3 mins
     else
-      echo "Found $ACTIVE_TASKS running tasks in $CLUSTER_NAME"
+      echo "Found $TASKS_COUNT running tasks in $CLUSTER_NAME"
       return 0
     fi
   done
 
   echo "Can't find a running task in $CLUSTER_NAME"
-  exit 0
+  exit 1
 }
 
 ###########
