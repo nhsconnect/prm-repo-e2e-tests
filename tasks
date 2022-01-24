@@ -59,6 +59,31 @@ function configure_mesh_access {
   export MESH_CLIENT_KEY=$(dojo -c Dojofile-infra "aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name  ${mesh_client_key} | jq -r .Parameter.Value")
 }
 
+function check_suspension_service {
+  POLLING_ATTEMPTS_LEFT=6
+  CLUSTER_NAME="$NHS_ENVIRONMENT-suspension-service-ecs-cluster"
+  while [ "$POLLING_ATTEMPTS_LEFT" -gt "0" ]; do
+    ACTIVE_TASKS=$(aws ecs describe-clusters \
+      --cluster "$CLUSTER_NAME" \
+      --region "$AWS_REGION" \
+      | jq -r '.clusters[0].runningTasksCount')
+
+    echo "Number of running tasks found: $ACTIVE_TASKS"
+
+    if [[ "$ACTIVE_TASKS" -eq "0" || "$ACTIVE_TASKS" == "null" ]]; then
+      let POLLING_ATTEMPTS_LEFT--
+      echo "No running task found. Making another attempt. Attempts left: $POLLING_ATTEMPTS_LEFT"
+      sleep 180 #3 mins
+    else
+      echo "Found $ACTIVE_TASKS running tasks in $CLUSTER_NAME"
+      return 0
+    fi
+  done
+
+  echo "Can't find a running task in $CLUSTER_NAME"
+  exit 0
+}
+
 ###########
 ## TASKS ##
 ###########
@@ -85,6 +110,7 @@ case "${command}" in
       check_env
       assume_environment_role $NHS_ENVIRONMENT
       get_aws_account_id
+      check_suspension_service
       dojo "./tasks _test_e2e"
       ;;
   *)
