@@ -1,8 +1,6 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
@@ -46,6 +44,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
         PdsAdaptorClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class EndToEndTest {
 
     public static String SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
@@ -89,6 +88,7 @@ public class EndToEndTest {
     }
 
     @Test
+    @Order(1)
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
 
@@ -106,6 +106,7 @@ public class EndToEndTest {
     }
 
     @Test
+    @Order(2)
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() throws Exception {
         String currentlyRegisteredPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
 
@@ -120,6 +121,7 @@ public class EndToEndTest {
     }
 
     @Test
+    @Order(4)
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
         String nhsNumber = helper.randomNhsNumber();
         NemsEventMessage nemsNonSuspension = helper.createNemsEventFromTemplate("change-of-gp-non-suspension.xml", nhsNumber);
@@ -131,6 +133,7 @@ public class EndToEndTest {
 
 
     @Test
+    @Order(5)
     public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
         Map<String, NemsEventMessage> dlqMessages = helper.getDLQNemsEventMessages();
         log("Posting DLQ messages");
@@ -142,6 +145,7 @@ public class EndToEndTest {
     }
 
     @Test
+    @Order(3)
     public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() throws Exception {
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER);
         meshMailbox.postMessage(nemsSuspension);
