@@ -2,12 +2,15 @@ package uk.nhs.prm.deduction.e2e;
 
 
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.sts.StsClient;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
 
 @Component
 public class TestConfiguration {
 
     private AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
+
+    private String cachedAwsAccountNo;
 
     public String getMeshMailBoxID() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-id", getEnvironmentName()));
@@ -65,7 +68,16 @@ public class TestConfiguration {
     }
 
     private String getAwsAccountNo() {
-        return getRequiredEnvVar("AWS_ACCOUNT_ID");
+        if (cachedAwsAccountNo == null) {
+            cachedAwsAccountNo = fetchAwsAccountNo();
+        }
+        return cachedAwsAccountNo;
+    }
+
+    private String fetchAwsAccountNo() {
+        var client = StsClient.create();
+        var response =  client.getCallerIdentity();
+        return response.account();
     }
 
     private String getEnvironmentName() {

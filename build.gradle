@@ -16,6 +16,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'software.amazon.awssdk:ssm:2.17.71'
     testImplementation 'software.amazon.awssdk:sqs:2.17.71'
+    testImplementation 'software.amazon.awssdk:sts:2.17.71'
     testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.awaitility:awaitility:4.1.1'
