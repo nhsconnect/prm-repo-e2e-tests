@@ -54,18 +54,19 @@ function configure_mesh_access {
   export MESH_CLIENT_CERT=$(dojo -c Dojofile-infra "aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name  ${mesh_client_cert} | jq -r .Parameter.Value")
   export MESH_CLIENT_KEY=$(dojo -c Dojofile-infra "aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name  ${mesh_client_key} | jq -r .Parameter.Value")
 }
-  function get_suspension_service_cluster_name {
-    cluster_ssm_param_name="/repo/${NHS_ENVIRONMENT}/output/suspension-service/suspension-service-ecs-cluster-name"
-    export SUSPENSION_SERVICE_CLUSTER_NAME=$(dojo -c Dojofile-infra "aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name  ${cluster_ssm_param_name} | jq -r .Parameter.Value")
-    echo $SUSPENSION_SERVICE_CLUSTER_NAME
-  }
 
-  function get_running_task_count {
-    echo $(aws ecs describe-clusters \
-          --cluster "$1" \
-          --region "$AWS_REGION" \
-          | jq -r '.clusters[0].runningTasksCount')
-  }
+function get_suspension_service_cluster_name {
+  cluster_ssm_param_name="/repo/${NHS_ENVIRONMENT}/output/suspension-service/suspension-service-ecs-cluster-name"
+  export SUSPENSION_SERVICE_CLUSTER_NAME=$(dojo -c Dojofile-infra "aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name  ${cluster_ssm_param_name} | jq -r .Parameter.Value")
+  echo $SUSPENSION_SERVICE_CLUSTER_NAME
+}
+
+function get_running_task_count {
+  echo $(aws ecs describe-clusters \
+        --cluster "$1" \
+        --region "$AWS_REGION" \
+        | jq -r '.clusters[0].runningTasksCount')
+}
 
 function check_suspension_service {
   if [[ "$NHS_ENVIRONMENT" != "test" ]]; then
