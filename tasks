@@ -114,13 +114,21 @@ case "${command}" in
       dojo "./tasks _dep"
       ;;
   _test_e2e)
-      gradle test
+      gradle test --tests *EndToEndTest
       ;;
   test_e2e)
       check_env
       assume_environment_role $NHS_ENVIRONMENT
       check_suspension_service
       dojo "./tasks _test_e2e"
+      ;;
+  _test_performance)
+      gradle test --tests *PerformanceTest
+      ;;
+  test_performance)
+      check_env
+      assume_environment_role $NHS_ENVIRONMENT
+      dojo "./tasks _test_performance"
       ;;
   *)
       echo "Invalid command: '${command}'"
