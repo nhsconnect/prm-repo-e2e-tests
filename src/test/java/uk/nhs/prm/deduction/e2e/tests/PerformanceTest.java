@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
         MofNotUpdatedMessageQueue.class,
         PdsAdaptorClient.class
 })
+
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class PerformanceTest {
 
@@ -86,6 +89,7 @@ public class PerformanceTest {
         NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
     }
 
+    @Disabled("WIP")
     @Test
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
