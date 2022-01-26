@@ -99,7 +99,7 @@ public class PerformanceTest {
 
         pdsAdaptorClient.updateManagingOrganisation(PdsAdaptorTest.generateRandomOdsCode(), pdsAdaptorResponse.getRecordETag());
 
-        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber);
+        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, helper.randomNemsMessageId());
         meshMailbox.postMessage(nemsSuspension);
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
         assertThat(suspensionsMessageQueue.hasMessage(suspendedPatientNhsNumber));
