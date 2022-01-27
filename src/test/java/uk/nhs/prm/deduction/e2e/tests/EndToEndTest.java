@@ -102,8 +102,8 @@ public class EndToEndTest {
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessage(suspendedPatientNhsNumber));
-        assertThat(mofUpdatedMessageQueue.hasMessage(suspendedPatientNhsNumber));
+        assertThat(suspensionsMessageQueue.hasMessageContaining(suspendedPatientNhsNumber));
+        assertThat(mofUpdatedMessageQueue.hasMessageContaining(suspendedPatientNhsNumber));
     }
 
     @Test
@@ -117,8 +117,8 @@ public class EndToEndTest {
         meshMailbox.postMessage(nemsSuspension);
 
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessage(currentlyRegisteredPatientNhsNumber));
-        assertThat(notReallySuspensionsMessageQueue.hasMessage(currentlyRegisteredPatientNhsNumber));
+        assertThat(suspensionsMessageQueue.hasMessageContaining(currentlyRegisteredPatientNhsNumber));
+        assertThat(notReallySuspensionsMessageQueue.hasMessageContaining(currentlyRegisteredPatientNhsNumber));
 
     }
 
@@ -154,8 +154,8 @@ public class EndToEndTest {
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessage(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
-        assertThat(mofNotUpdatedMessageQueue.hasMessage(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
+        assertThat(suspensionsMessageQueue.hasMessageContaining(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
+        assertThat(mofNotUpdatedMessageQueue.hasMessageContaining(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
     }
 
     public void log(String message) {

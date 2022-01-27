@@ -44,25 +44,28 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class PerformanceTest {
 
     @Autowired
-    private MofUpdatedMessageQueue mofUpdatedMessageQueue;
+    private MofNotUpdatedMessageQueue mofNotUpdatedMessageQueue;
     @Autowired
     private MeshMailbox meshMailbox;
     @Autowired
     private Helper helper;
 
     //    TODO
-    //    ensure we have the minimal test for the suspension route
     //    find a way to run N runs of test
-    //    use nems message id for tracking
     //    add test for non suspended route/journey
-    //    put the result running in a pioeline
+    //    run performance test in the pioeline
     //    reporting! :)
     @Test
-    public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
-        // synthetic patient we should use: 9693797450
+    public void shouldMoveSuspensionMessageFromNemsToMofNotUpdatedQueue() throws Exception {
         var nhsNumberUnderTest = "9693797396"; // taken from e2e tests
-        var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumberUnderTest, helper.randomNemsMessageId());
+        var nemsMessageId = helper.randomNemsMessageId();
+        var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumberUnderTest, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);
-        assertThat(mofUpdatedMessageQueue.hasMessage(nhsNumberUnderTest));
+
+        var message = mofNotUpdatedMessageQueue.getMessageContaining(nemsMessageId);
+        // TODO: reminder on where to get SentTimestamp attribute
+        // System.out.println(message.attributes());
+
+        assertThat(message).isNotNull();
     }
 }
