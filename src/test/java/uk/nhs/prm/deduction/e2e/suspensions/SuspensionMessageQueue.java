@@ -1,6 +1,5 @@
 package uk.nhs.prm.deduction.e2e.suspensions;
 
-import software.amazon.awssdk.services.sqs.model.Message;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
@@ -48,7 +47,7 @@ public class SuspensionMessageQueue {
         var allMessages = sqsQueue.readAllMessages(this.queueUri);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
-                if (message.body.contains(substring)) {
+                if (message.contains(substring)) {
                     return message;
                 } else {
                     return null;
@@ -62,7 +61,7 @@ public class SuspensionMessageQueue {
         List<SqsMessage> allMessages = sqsQueue.readAllMessages(this.queueUri);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
-                if (message.body.contains(messageBodyToCheck)) {
+                if (message.contains(messageBodyToCheck)) {
                     return true;
                 } else {
                     return false;
