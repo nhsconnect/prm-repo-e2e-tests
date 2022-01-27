@@ -1,10 +1,7 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.*;
 
 import java.util.List;
 
@@ -20,8 +17,10 @@ public class SQSClient {
                 .queueUrl(queueUrl)
                 .waitTimeSeconds(5)
                 .maxNumberOfMessages(10)
+                .attributeNames(QueueAttributeName.ALL)
                 .build();
         List<Message> messages = sqsClient.receiveMessage(receiveMessageRequest).messages();
+
         return messages;
     }
 
