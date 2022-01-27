@@ -8,13 +8,13 @@ import java.util.List;
 @Component
 public class SqsQueue {
 
-    private SQSClient sqsClient;
+    private SqsClient sqsClient;
 
     public SqsQueue() {
-        this.sqsClient = new SQSClient();
+        this.sqsClient = new SqsClient();
     }
 
-    public List<Message> readAllMessages(String queueUri) {
+    public List<SqsMessage> readAllMessages(String queueUri) {
         return sqsClient.readAllMessageFrom(queueUri);
     }
 
