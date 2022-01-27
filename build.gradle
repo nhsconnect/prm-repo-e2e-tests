@@ -32,6 +32,8 @@ test {
     testLogging.showStandardStreams = true
 }
 
+test.outputs.upToDateWhen {false}
+
 dependencyCheck {
     failBuildOnCVSS = 7
     suppressionFile = './dependency-checks-suppression.xml'
