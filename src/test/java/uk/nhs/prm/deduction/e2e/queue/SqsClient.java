@@ -18,7 +18,7 @@ public class SqsClient {
         var messages = sqsClient.receiveMessage(receiveMessageRequest)
                 .messages()
                 .stream()
-                .map(m -> new SqsMessage(m.body(), m.attributesAsStrings().get("SentTimestamp")))
+                .map(m -> new SqsMessage(m))
                 .collect(Collectors.toList());
 
         return messages;
