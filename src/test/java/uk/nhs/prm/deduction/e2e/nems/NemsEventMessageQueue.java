@@ -2,6 +2,7 @@ package uk.nhs.prm.deduction.e2e.nems;
 
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.model.Message;
+import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 import java.util.List;
@@ -29,10 +30,10 @@ public class NemsEventMessageQueue {
     }
 
     private boolean messageIsOnQueue(String messageBodyToCheck) {
-        List<Message> allMessages = sqsQueue.readAllMessages(this.queueUri);
+        List<SqsMessage> allMessages = sqsQueue.readAllMessages(this.queueUri);
         if (!allMessages.isEmpty()) {
-            for (Message message : allMessages) {
-                if (message.body().contains(messageBodyToCheck)) {
+            for (var message : allMessages) {
+                if (message.body.contains(messageBodyToCheck)) {
                     return true;
                 } else {
                     return false;

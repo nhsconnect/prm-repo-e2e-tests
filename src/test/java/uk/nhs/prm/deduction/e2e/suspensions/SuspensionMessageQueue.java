@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.suspensions;
 
 import software.amazon.awssdk.services.sqs.model.Message;
+import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class SuspensionMessageQueue {
         System.out.println(messageBody);
     }
 
-    public Message getMessageContaining(String substring) {
+    public SqsMessage getMessageContaining(String substring) {
         log(String.format("Checking if message is present on : %s",  this.queueUri));
         return await().atMost(120, TimeUnit.SECONDS)
                 .with()
@@ -43,11 +44,11 @@ public class SuspensionMessageQueue {
         return true;
     }
 
-    private Message findMessageContaining(String substring) {
-        List<Message> allMessages = sqsQueue.readAllMessages(this.queueUri);
+    private SqsMessage findMessageContaining(String substring) {
+        var allMessages = sqsQueue.readAllMessages(this.queueUri);
         if (!allMessages.isEmpty()) {
-            for (Message message : allMessages) {
-                if (message.body().contains(substring)) {
+            for (var message : allMessages) {
+                if (message.body.contains(substring)) {
                     return message;
                 } else {
                     return null;
@@ -58,10 +59,10 @@ public class SuspensionMessageQueue {
     }
 
     private boolean messageIsOnQueue(String messageBodyToCheck) {
-        List<Message> allMessages = sqsQueue.readAllMessages(this.queueUri);
+        List<SqsMessage> allMessages = sqsQueue.readAllMessages(this.queueUri);
         if (!allMessages.isEmpty()) {
-            for (Message message : allMessages) {
-                if (message.body().contains(messageBodyToCheck)) {
+            for (var message : allMessages) {
+                if (message.body.contains(messageBodyToCheck)) {
                     return true;
                 } else {
                     return false;

@@ -63,8 +63,6 @@ public class PerformanceTest {
         meshMailbox.postMessage(nemsSuspension);
 
         var message = mofNotUpdatedMessageQueue.getMessageContaining(nemsMessageId);
-        // TODO: reminder on where to get SentTimestamp attribute
-        // System.out.println(message.attributes());
 
         assertThat(message).isNotNull();
     }
