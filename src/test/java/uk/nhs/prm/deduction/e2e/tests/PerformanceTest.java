@@ -20,9 +20,10 @@ import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessage
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.utility.Helper;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -60,7 +61,8 @@ public class PerformanceTest {
 //    add test for non suspended route/journey
 //    run performance test in the pioeline
 //    reporting! :)
-//    @Disabled("WIP")
+//    Note: 17,000 a day (X3 for the test - so 51,000); out of the 17k messages 4600 are suspension messages
+    @Disabled("WIP")
     @Test
     public void shouldMoveSuspensionMessageFromNemsToMofNotUpdatedQueue() throws Exception {
         var nhsNumberUnderTest = "9693797396"; // taken from e2e tests
@@ -73,12 +75,38 @@ public class PerformanceTest {
         assertThat(message).isNotNull();
     }
 
-//    @Test
+    @Test
     public void buildingUpCodeToBeExecutedAtDifferentRates() throws InterruptedException {
-        System.out.println("Filling Inbox at a slow rate NOW! " + new Date());
-        sendMessagesToInboxAtRate(1000, 10000);
-        System.out.println("Filling Inbox at a faster rate NOW!" + new Date());
-        sendMessagesToInboxAtRate(1, 10000);
+        final var nhsNumbers = Arrays.asList("one", "two", "three", "four", "five");
+        final var nemsMessageIdToNhsNumberPairs = new Hashtable<>();
+        final var maxItemsToBeProcessed = 5000;
+        final var timeoutInSeconds = 15;
+
+        var timerTask = new TimerTask() {
+            public void run() {
+                var nemsMessageId = helper.randomNemsMessageId();
+                var nhsNumber = getRandomItemFromList(nhsNumbers);
+                nemsMessageIdToNhsNumberPairs.put(nemsMessageId, nhsNumber);
+                // TODO: meshMailbox.postMessage goes here
+                System.out.println("Task performed on " + new Date() + " " + nemsMessageId + " " + nhsNumber);
+            }
+        };
+
+        final var executionStartTime = LocalDateTime.now();
+        final var slowerRateExecutor = triggerTasksExecution(0,1000, timerTask);
+        final var fasterRateExecutor = triggerTasksExecution(5000, 1, timerTask);
+
+        while (nemsMessageIdToNhsNumberPairs.size() <= maxItemsToBeProcessed) {
+            var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTime, LocalDateTime.now());
+            if (secondsElapsed >= timeoutInSeconds) {
+                System.out.println("Timeout! Shutting down tasks");
+                break;
+            }
+            Thread.sleep(1000);
+        }
+
+        slowerRateExecutor.shutdown();
+        fasterRateExecutor.shutdown();
 
         System.out.println("Number of items processed: " + nemsMessageIdToNhsNumberPairs.size());
         System.out.println("Will check if they went through the system...");
@@ -86,29 +114,14 @@ public class PerformanceTest {
         assertThat(true);
     }
 
-    private void sendMessagesToInboxAtRate(long delayBetweenRuns, long forHowLong) throws InterruptedException {
-        var task = new TimerTask() {
-            public void run() {
-                var nemsMessageId = helper.randomNemsMessageId();
-                var nhsNumber = randomNhsNumber();
-                nemsMessageIdToNhsNumberPairs.put(nemsMessageId, nhsNumber);
-                System.out.println("Task performed on " + new Date() + " " + nemsMessageId + " " + nhsNumber);
-            }
-        };
-
-        var executor = Executors.newSingleThreadScheduledExecutor();
-        final long delayForImmediateExecution = 0;
-        executor.scheduleAtFixedRate(task, delayForImmediateExecution, delayBetweenRuns, TimeUnit.MILLISECONDS);
-        // TODO: stop when N number of items are processed, or a timeout is reached
-        Thread.sleep(forHowLong);
-        executor.shutdown();
+    private ScheduledExecutorService triggerTasksExecution(long startAfterDelayOf, long delayBetweenRuns, TimerTask task) {
+        final var executor = Executors.newSingleThreadScheduledExecutor();
+        executor.scheduleAtFixedRate(task, startAfterDelayOf, delayBetweenRuns, TimeUnit.MILLISECONDS);
+        return executor;
     }
 
-    private final List<String> nhsNumbers = Arrays.asList("one", "two", "three", "four", "five");
-    private final Dictionary<String, String> nemsMessageIdToNhsNumberPairs = new Hashtable<>();
-
-    private String randomNhsNumber() {
+    private String getRandomItemFromList(List<String> list) {
         var rand = new Random();
-        return nhsNumbers.get(rand.nextInt(nhsNumbers.size()));
+        return list.get(rand.nextInt(list.size()));
     }
 }
