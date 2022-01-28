@@ -1,13 +1,9 @@
 package uk.nhs.prm.deduction.e2e.mesh;
 
-import org.apache.http.HttpException;
-import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
-
-import java.util.List;
 
 @Component
 public class MeshMailbox {

@@ -1,6 +1,5 @@
 package uk.nhs.prm.deduction.e2e.mesh;
 
-
 import org.apache.http.HttpException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,8 +35,6 @@ public class MeshClient {
 
     public String postMessage(String mailboxServiceUri, NemsEventMessage message) throws Exception {
         try {
-          //  log("** Making post request to Mesh mail box");
-
             HttpRequest.BodyPublisher messageBody = HttpRequest.BodyPublishers.ofString(message.body());
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URL(mailboxServiceUri).toURI())
@@ -64,7 +61,6 @@ public class MeshClient {
 
     public List<String> getMessageIds(String mailboxServiceUri) throws HttpException {
         try {
-          //  log("** Reading message Ids from Mesh mail box");
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URL(mailboxServiceUri).toURI())
                     .GET()
@@ -105,10 +101,6 @@ public class MeshClient {
             }
         }
         return list;
-    }
-
-    public void log(String message) {
-        System.out.println(message);
     }
 
     public void log(String messageBody, String messageValue) {
