@@ -77,24 +77,30 @@ public class PerformanceTest {
 
     @Test
     public void buildingUpCodeToBeExecutedAtDifferentRates() throws InterruptedException {
-        final var nhsNumbers = Arrays.asList("one", "two", "three", "four", "five");
+//        final var nhsNumbers = Arrays.asList("one", "two", "three", "four", "five");
+        final var nhsNumbers = Arrays.asList("9693797477");
         final var nemsMessageIdToNhsNumberPairs = new Hashtable<>();
-        final var maxItemsToBeProcessed = 5000;
-        final var timeoutInSeconds = 15;
+        final var maxItemsToBeProcessed = 100;
+        final var timeoutInSeconds = 30;
 
         var timerTask = new TimerTask() {
             public void run() {
                 var nemsMessageId = helper.randomNemsMessageId();
                 var nhsNumber = getRandomItemFromList(nhsNumbers);
                 nemsMessageIdToNhsNumberPairs.put(nemsMessageId, nhsNumber);
-                // TODO: meshMailbox.postMessage goes here
+                try {
+                    var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber, nemsMessageId);
+                    meshMailbox.postMessage(nemsSuspension);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 System.out.println("Task performed on " + new Date() + " " + nemsMessageId + " " + nhsNumber);
             }
         };
 
         final var executionStartTime = LocalDateTime.now();
         final var slowerRateExecutor = triggerTasksExecution(0,1000, timerTask);
-        final var fasterRateExecutor = triggerTasksExecution(5000, 1, timerTask);
+        final var fasterRateExecutor = triggerTasksExecution(5000, 10, timerTask);
 
         while (nemsMessageIdToNhsNumberPairs.size() <= maxItemsToBeProcessed) {
             var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTime, LocalDateTime.now());
