@@ -32,9 +32,7 @@ public class AuthTokenGenerator {
         return formatter.toString();
     }
 
-    private String calculateHMAC(String data, String key)
-            throws NoSuchAlgorithmException, InvalidKeyException
-    {
+    private String calculateHMAC(String data, String key) throws NoSuchAlgorithmException, InvalidKeyException {
        SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(), HMAC_SHA216);
         Mac mac = Mac.getInstance(HMAC_SHA216);
         mac.init(secretKeySpec);
@@ -42,19 +40,10 @@ public class AuthTokenGenerator {
     }
 
     public String getAuthorizationToken() throws Exception {
-        //log("** creating auth token");
-        String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
-        String hmac_msg = configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count  + ":" + configuration.getMeshMailBoxPassword() + ":" + timeStamp;
-        String hmac = calculateHMAC(hmac_msg, env_shared);
-        String token = AUTHSCHEMANAME+" "+ configuration.getMeshMailBoxID() + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;
-
-       // log("** auth token created");
+        final String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
+        final String hmac_msg = configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count  + ":" + configuration.getMeshMailBoxPassword() + ":" + timeStamp;
+        final String hmac = calculateHMAC(hmac_msg, env_shared);
+        final String token = AUTHSCHEMANAME+" "+ configuration.getMeshMailBoxID() + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;
         return token;
-    }
-
-
-
-    public void log(String message) {
-        System.out.println(message);
     }
 }
