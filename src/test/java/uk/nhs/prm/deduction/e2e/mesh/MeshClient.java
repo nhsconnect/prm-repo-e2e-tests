@@ -39,7 +39,7 @@ public class MeshClient {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URL(mailboxServiceUri).toURI())
                     .method("POST", messageBody)
-                    .header("Authorization", getAuthToken())
+                    .header("Authorization", authTokenGenerator.getAuthorizationToken())
                     .header("Content-Type", "application/octet-stream")
                     .header("Mex-LocalID", "Test")
                     .header("Mex-To", configuration.getMeshMailBoxID())
@@ -64,7 +64,7 @@ public class MeshClient {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URL(mailboxServiceUri).toURI())
                     .GET()
-                    .header("Authorization", getAuthToken())
+                    .header("Authorization", authTokenGenerator.getAuthorizationToken())
                     .build();
 
             HttpResponse<String> response = HttpClient.newBuilder()
@@ -76,10 +76,6 @@ public class MeshClient {
             log("Exception getting message on mailbox %s", e.getMessage());
             throw new HttpException("Exception encountered", e);
         }
-    }
-
-    private String getAuthToken() throws Exception {
-        return authTokenGenerator.getAuthorizationToken();
     }
 
     private String getMessageIdFromMessage(String responseBody) throws JSONException {

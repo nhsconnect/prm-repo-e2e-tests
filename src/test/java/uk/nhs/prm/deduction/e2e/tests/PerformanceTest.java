@@ -1,6 +1,5 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,33 +80,37 @@ public class PerformanceTest {
         assertThat(message).isNotNull();
     }
 
-    @Disabled("WIP")
     @Test
     public void buildingUpCodeToBeExecutedAtDifferentRates() throws InterruptedException {
 //        final var nhsNumbers = Arrays.asList("one", "two", "three", "four", "five");
-        final var nhsNumbers = Arrays.asList("9693797477");
+        final var nhsNumbers = Arrays.asList("9693797477", "9693797396");
         final var nemsMessageIdToNhsNumberPairs = new Hashtable<>();
         final var maxItemsToBeProcessed = 100;
         final var timeoutInSeconds = 30;
 
+        final String[] lastNhsNumber = { nhsNumbers.get(0) };
         var timerTask = new TimerTask() {
             public void run() {
-                var nemsMessageId = helper.randomNemsMessageId();
-                var nhsNumber = getRandomItemFromList(nhsNumbers);
-                nemsMessageIdToNhsNumberPairs.put(nemsMessageId, nhsNumber);
                 try {
+                    System.out.println("starting run()");
+                    var nemsMessageId = helper.randomNemsMessageId();
+                    var nhsNumber = getNextRoundRobinItem(nhsNumbers, lastNhsNumber[0]);
+                    lastNhsNumber[0] = nhsNumber;
+                    nemsMessageIdToNhsNumberPairs.put(nemsMessageId, nhsNumber);
                     var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber, nemsMessageId);
                     meshMailbox.postMessage(nemsSuspension);
+                    System.out.println("Task performed on " + new Date() + " " + nemsMessageId + " " + nhsNumber);
                 } catch (Exception e) {
+                    System.out.println("Failed single run()");
+                    System.out.println(e.getMessage());
                     e.printStackTrace();
                 }
-                System.out.println("Task performed on " + new Date() + " " + nemsMessageId + " " + nhsNumber);
             }
         };
 
         final var executionStartTime = LocalDateTime.now();
-        final var slowerRateExecutor = triggerTasksExecution(0,1000, timerTask);
-        final var fasterRateExecutor = triggerTasksExecution(5000, 10, timerTask);
+        final var slowerRateExecutor = triggerTasksExecution(0, 5000, timerTask);
+        final var fasterRateExecutor = triggerTasksExecution(5000, 1000, timerTask);
 
         while (nemsMessageIdToNhsNumberPairs.size() <= maxItemsToBeProcessed) {
             var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTime, LocalDateTime.now());
@@ -133,8 +136,13 @@ public class PerformanceTest {
         return executor;
     }
 
-    private String getRandomItemFromList(List<String> list) {
-        var rand = new Random();
-        return list.get(rand.nextInt(list.size()));
+    private String getNextRoundRobinItem(List<String> list, String item) {
+        int index = list.indexOf(item);
+        if (index < list.size() - 1) {
+            index += 1;
+        } else {
+            index = 0;
+        }
+        return list.get(index);
     }
 }

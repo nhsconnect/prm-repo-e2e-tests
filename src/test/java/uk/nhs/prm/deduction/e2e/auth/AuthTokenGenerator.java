@@ -18,8 +18,6 @@ public class AuthTokenGenerator {
     private static final String HMAC_SHA216 = "HmacSHA256";
     private static final String AUTHSCHEMANAME = "NHSMESH";
     private static final String env_shared = "BackBone";
-    private static final String nonce = UUID.randomUUID().toString();
-    private static final String nonce_count = "0";
 
     @Autowired
     TestConfiguration configuration;
@@ -41,9 +39,15 @@ public class AuthTokenGenerator {
 
     public String getAuthorizationToken() throws Exception {
         final String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
-        final String hmac_msg = configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count  + ":" + configuration.getMeshMailBoxPassword() + ":" + timeStamp;
+        final String nonce = generateNonce();
+        final String nonce_count = "0";
+        final String hmac_msg = configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count + ":" + configuration.getMeshMailBoxPassword() + ":" + timeStamp;
         final String hmac = calculateHMAC(hmac_msg, env_shared);
-        final String token = AUTHSCHEMANAME+" "+ configuration.getMeshMailBoxID() + ":" + nonce + ":"+nonce_count + ":" + timeStamp+ ":"+ hmac;
+        final String token = AUTHSCHEMANAME + " " + configuration.getMeshMailBoxID() + ":" + nonce + ":" + nonce_count + ":" + timeStamp + ":" + hmac;
         return token;
+    }
+
+    private String generateNonce() {
+        return UUID.randomUUID().toString();
     }
 }
