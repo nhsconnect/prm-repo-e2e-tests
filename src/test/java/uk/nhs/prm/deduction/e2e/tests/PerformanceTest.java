@@ -88,14 +88,12 @@ public class PerformanceTest {
         final var maxItemsToBeProcessed = 100;
         final var timeoutInSeconds = 30;
 
-        final String[] lastNhsNumber = { nhsNumbers.get(0) };
+        var nhsNumberPool = new RoundRobinList(nhsNumbers);
         var timerTask = new TimerTask() {
             public void run() {
                 try {
-                    System.out.println("starting run()");
                     var nemsMessageId = helper.randomNemsMessageId();
-                    var nhsNumber = getNextRoundRobinItem(nhsNumbers, lastNhsNumber[0]);
-                    lastNhsNumber[0] = nhsNumber;
+                    var nhsNumber = nhsNumberPool.next();
                     nemsMessageIdToNhsNumberPairs.put(nemsMessageId, nhsNumber);
                     var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber, nemsMessageId);
                     meshMailbox.postMessage(nemsSuspension);
@@ -136,13 +134,4 @@ public class PerformanceTest {
         return executor;
     }
 
-    private String getNextRoundRobinItem(List<String> list, String item) {
-        int index = list.indexOf(item);
-        if (index < list.size() - 1) {
-            index += 1;
-        } else {
-            index = 0;
-        }
-        return list.get(index);
-    }
 }
