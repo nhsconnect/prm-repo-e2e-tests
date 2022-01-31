@@ -50,7 +50,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class PerformanceTest {
 
     @Autowired
-    private MofNotUpdatedMessageQueue mofNotUpdatedMessageQueue;
+    private MofUpdatedMessageQueue mofUpdatedMessageQueue;
     @Autowired
     private MeshMailbox meshMailbox;
     @Autowired
@@ -62,19 +62,26 @@ public class PerformanceTest {
 //    run performance test in the pioeline
 //    reporting! :)
 //    Note: 17,000 a day (X3 for the test - so 51,000); out of the 17k messages 4600 are suspension messages
-    @Disabled("WIP")
+//    Watch out for auth token
+//    @Disabled("WIP")
     @Test
-    public void shouldMoveSuspensionMessageFromNemsToMofNotUpdatedQueue() throws Exception {
-        var nhsNumberUnderTest = "9693797396"; // taken from e2e tests
+    public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
+        var nhsNumberUnderTest = "9693797396";
         var nemsMessageId = helper.randomNemsMessageId();
-        var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumberUnderTest, nemsMessageId);
+        var previousGP = PdsAdaptorTest.generateRandomOdsCode();
+        var nemsSuspension = helper.createNemsEventFromTemplate(
+                "change-of-gp-suspension.xml",
+                nhsNumberUnderTest,
+                nemsMessageId,
+                previousGP);
         meshMailbox.postMessage(nemsSuspension);
 
-        var message = mofNotUpdatedMessageQueue.getMessageContaining(nemsMessageId);
+        var message = mofUpdatedMessageQueue.getMessageContaining(nemsMessageId);
 
         assertThat(message).isNotNull();
     }
 
+    @Disabled("WIP")
     @Test
     public void buildingUpCodeToBeExecutedAtDifferentRates() throws InterruptedException {
 //        final var nhsNumbers = Arrays.asList("one", "two", "three", "four", "five");

@@ -25,9 +25,14 @@ public class Helper {
     }
 
     public NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId) throws IOException {
+        return  createNemsEventFromTemplate(nemsEventFilename, nhsNumber, nemsMessageId, "B85612");
+    }
+
+    public NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId, String previousGP) throws IOException {
         return new NemsEventMessage(readTestResourceFile(nemsEventFilename)
-            .replaceAll("__NHS_NUMBER__", nhsNumber)
-            .replaceAll("__NEMS_MESSAGE_ID__", nemsMessageId)
+                .replaceAll("__NHS_NUMBER__", nhsNumber)
+                .replaceAll("__NEMS_MESSAGE_ID__", nemsMessageId)
+                .replaceAll("__PREVIOUS_GP_ODS_CODE__", previousGP)
         );
     }
 
