@@ -13,6 +13,9 @@ import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.performance.DoNothingTestListener;
+import uk.nhs.prm.deduction.e2e.performance.NemsPatientEventTestListener;
+import uk.nhs.prm.deduction.e2e.performance.RecordingNemsPatientEventTestListener;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
@@ -54,50 +57,54 @@ public class PerformanceTest {
     private MeshMailbox meshMailbox;
     @Autowired
     private Helper helper;
+    @Autowired
+    private TestConfiguration config;
 
-//    TODO
-//    find a way to run N runs of test
-//    add test for non suspended route/journey
-//    run performance test in the pioeline
-//    reporting! :)
-//    Note: 17,000 a day (X3 for the test - so 51,000); out of the 17k messages 4600 are suspension messages
-//    Watch out for auth token
-//    @Disabled("WIP")
+    //    TODO
+    //    add test for non suspended route/journey
+    //    run performance test in the pipeline
+    //    reporting! :)
+    //    Note: 17,000 a day (X3 for the test - so 51,000); out of the 17k messages 4600 are suspension messages
     @Test
-    public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
-        var nhsNumberUnderTest = "9693797396";
-        var nemsMessageId = helper.randomNemsMessageId();
-        var previousGP = PdsAdaptorTest.generateRandomOdsCode();
-        var nemsSuspension = helper.createNemsEventFromTemplate(
-                "change-of-gp-suspension.xml",
-                nhsNumberUnderTest,
-                nemsMessageId,
-                previousGP);
-        meshMailbox.postMessage(nemsSuspension);
+    public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
+        var nhsNumberPool = new RoundRobinList(config.nhsNumbers());
+
+        var nemsMessageId = injectSingleNemsSuspension(nhsNumberPool, new DoNothingTestListener());
 
         var message = mofUpdatedMessageQueue.getMessageContaining(nemsMessageId);
 
         assertThat(message).isNotNull();
     }
 
+    private String injectSingleNemsSuspension(RoundRobinList nhsNumberPool, NemsPatientEventTestListener listener) throws Exception {
+        var nemsMessageId = helper.randomNemsMessageId();
+        var nhsNumber = nhsNumberPool.next();
+        var previousGP = PdsAdaptorTest.generateRandomOdsCode();
+
+        listener.onStartingTestItem(nemsMessageId, nhsNumber);
+
+        var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml",
+                nhsNumber,
+                nemsMessageId,
+                previousGP);
+        meshMailbox.postMessage(nemsSuspension);
+
+        listener.onStartedTestItem(nemsMessageId, nhsNumber);
+        return nemsMessageId;
+    }
+
     @Test
-    public void buildingUpCodeToBeExecutedAtDifferentRates() throws InterruptedException {
-//        final var nhsNumbers = Arrays.asList("one", "two", "three", "four", "five");
-        final var nhsNumbers = Arrays.asList("9693797477", "9693797396");
-        final var nemsMessageIdToNhsNumberPairs = new Hashtable<>();
+    public void testInjectingSuspensionMessagesAtExpectedRateThenAtHigherRate__NotYetCheckingCompletion() throws InterruptedException {
+        final var recorder = new RecordingNemsPatientEventTestListener();
         final var maxItemsToBeProcessed = 100;
         final var timeoutInSeconds = 30;
 
-        var nhsNumberPool = new RoundRobinList(nhsNumbers);
+        var nhsNumberPool = new RoundRobinList(config.nhsNumbers());
         var timerTask = new TimerTask() {
             public void run() {
                 try {
-                    var nemsMessageId = helper.randomNemsMessageId();
-                    var nhsNumber = nhsNumberPool.next();
-                    nemsMessageIdToNhsNumberPairs.put(nemsMessageId, nhsNumber);
-                    var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", nhsNumber, nemsMessageId);
-                    meshMailbox.postMessage(nemsSuspension);
-                    System.out.println("Task performed on " + new Date() + " " + nemsMessageId + " " + nhsNumber);
+                    injectSingleNemsSuspension(nhsNumberPool, recorder);
+
                 } catch (Exception e) {
                     System.out.println("Failed single run()");
                     System.out.println(e.getMessage());
@@ -110,7 +117,7 @@ public class PerformanceTest {
         final var slowerRateExecutor = triggerTasksExecution(0, 5000, timerTask);
         final var fasterRateExecutor = triggerTasksExecution(5000, 1000, timerTask);
 
-        while (nemsMessageIdToNhsNumberPairs.size() <= maxItemsToBeProcessed) {
+        while (recorder.testItemCount() <= maxItemsToBeProcessed) {
             var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTime, LocalDateTime.now());
             if (secondsElapsed >= timeoutInSeconds) {
                 System.out.println("Timeout! Shutting down tasks");
@@ -118,11 +125,10 @@ public class PerformanceTest {
             }
             Thread.sleep(1000);
         }
-
         slowerRateExecutor.shutdown();
         fasterRateExecutor.shutdown();
 
-        System.out.println("Number of items processed: " + nemsMessageIdToNhsNumberPairs.size());
+        System.out.println("Number of items processed: " + recorder.testItemCount());
         System.out.println("Will check if they went through the system...");
 
         assertThat(true);

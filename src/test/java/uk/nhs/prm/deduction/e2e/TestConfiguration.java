@@ -3,12 +3,21 @@ package uk.nhs.prm.deduction.e2e;
 
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.utils.ImmutableMap;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
+
+import java.util.List;
+
+import static java.util.Arrays.asList;
 
 @Component
 public class TestConfiguration {
 
-    private AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
+    private final ImmutableMap<String, List<String>> nhsNumbersByEnv = ImmutableMap.of(
+            "dev", asList("9693797477", "9693797396")
+    );
+
+    private final AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
 
     private String cachedAwsAccountNo;
 
@@ -90,5 +99,9 @@ public class TestConfiguration {
             throw new RuntimeException("Required environment variable has not been set: " + name);
         }
         return value;
+    }
+
+    public List<String> nhsNumbers() {
+        return nhsNumbersByEnv.get(getEnvironmentName());
     }
 }
