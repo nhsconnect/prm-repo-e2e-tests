@@ -1,4 +1,6 @@
 fileignoreconfig:
 - filename: Dojofile
   checksum: 2c1682b4e1385eb608c9059d14daad9fc004f3f66fe78f5854ae68a6aff3cba3
+- filename: src/test/java/uk/nhs/prm/deduction/e2e/auth/AuthTokenGenerator.java
+  checksum: 2c58ed002613c373781d95af3e2084ad3a60a970cd15ea233cb2547d1f7e4c00
 version: ""

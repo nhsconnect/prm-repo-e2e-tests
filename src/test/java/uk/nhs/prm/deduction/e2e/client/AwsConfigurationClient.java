@@ -21,7 +21,6 @@ public class AwsConfigurationClient {
     }
 
     public String getParamValue(String paramName) {
-
         try {
             GetParameterRequest parameterRequest = GetParameterRequest.builder()
                     .name(paramName)
@@ -32,9 +31,8 @@ public class AwsConfigurationClient {
             return parameterResponse.parameter().value();
 
         } catch (SsmException e) {
-            System.err.println(String.format("Error for ssm parameter %s and error is %s",paramName, e.getMessage()));
-            System.exit(1);
+            System.err.println(String.format("Error for ssm parameter %s and error is %s", paramName, e.getMessage()));
+            throw e;
         }
-        return paramName;
     }
 }
