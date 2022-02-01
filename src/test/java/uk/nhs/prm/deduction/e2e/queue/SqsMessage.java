@@ -37,4 +37,6 @@ public class SqsMessage {
     public String id() {
         return message.messageId();
     }
+
+    public String body() {return body;}
 }

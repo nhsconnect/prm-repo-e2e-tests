@@ -24,6 +24,22 @@ public class SqsClient {
         return messages;
     }
 
+    public List<SqsMessage> readMessageWithVisibilityTimeoutFrom(String queueUrl) {
+        var receiveMessageRequest = ReceiveMessageRequest.builder()
+            .visibilityTimeout(60)
+            .queueUrl(queueUrl)
+            .waitTimeSeconds(5)
+            .maxNumberOfMessages(10)
+            .attributeNames(QueueAttributeName.ALL)
+            .build();
+
+        return sqsClient.receiveMessage(receiveMessageRequest)
+            .messages()
+            .stream()
+            .map(m -> new SqsMessage(m))
+            .collect(Collectors.toList());
+    }
+
     public void deleteMessageFrom(String queueUrl, Message message) {
         sqsClient.deleteMessage(DeleteMessageRequest.builder().queueUrl(queueUrl).receiptHandle(message.receiptHandle()).build());
     }

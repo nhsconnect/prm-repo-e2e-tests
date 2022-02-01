@@ -1,5 +1,8 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +19,7 @@ import uk.nhs.prm.deduction.e2e.performance.DoNothingTestListener;
 import uk.nhs.prm.deduction.e2e.performance.NemsPatientEventTestListener;
 import uk.nhs.prm.deduction.e2e.performance.NemsTestEvent;
 import uk.nhs.prm.deduction.e2e.performance.RecordingNemsPatientEventTestListener;
+import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
@@ -106,7 +110,7 @@ public class PerformanceTest {
     }
 
     @Test
-    public void testInjectingSuspensionMessagesAtExpectedRateThenAtHigherRate__NotYetCheckingCompletion() throws InterruptedException {
+    public void testInjectingSuspensionMessagesAtExpectedRateThenAtHigherRate__NotYetCheckingCompletion() throws InterruptedException, JsonProcessingException {
         final var recorder = new RecordingNemsPatientEventTestListener();
         final var maxItemsToBeProcessed = 100;
         final var timeoutInSeconds = 30;
@@ -143,7 +147,34 @@ public class PerformanceTest {
         System.out.println("Number of items processed: " + recorder.testItemCount());
         System.out.println("Will check if they went through the system...");
 
-        assertThat(true);
+
+        final var executionStartTimeForMessagesReceived = now();
+
+        int countFromTest = 0;
+        int countOutsideOfTest = 0;
+
+        while (recorder.testItemCount() > 0) {
+            var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTimeForMessagesReceived, now());
+            if (secondsElapsed >= 60) {
+                System.out.println("Timeout! Shutting down tasks");
+                break;
+            }
+
+            for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages()) {
+                if (recorder.hasMessage(nextMessage)) {
+                    countFromTest++;
+                } else {
+                    countOutsideOfTest++;
+                }
+
+            }
+        }
+
+        System.out.println("Total messages received: " + (countFromTest + countOutsideOfTest));
+        System.out.println("Total messages received from messages sent in test: " + countFromTest);
+        System.out.println("Total messages received from messasges received outside of test: " + countOutsideOfTest);
+
+//        assertThat(recorder.testItemCount()).isEqualTo(0);
     }
 
     private ScheduledExecutorService triggerTasksExecution(long startAfterDelayOf, long delayBetweenRuns, TimerTask task) {
@@ -151,5 +182,4 @@ public class PerformanceTest {
         executor.scheduleAtFixedRate(task, startAfterDelayOf, delayBetweenRuns, TimeUnit.MILLISECONDS);
         return executor;
     }
-
 }
