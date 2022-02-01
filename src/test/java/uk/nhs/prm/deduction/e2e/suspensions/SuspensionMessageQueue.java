@@ -47,6 +47,7 @@ public class SuspensionMessageQueue {
         var allMessages = sqsQueue.readAllMessages(this.queueUri);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
+                System.out.println("just finding message, checking: " + message.id());
                 if (message.contains(substring)) {
                     return message;
                 } else {
