@@ -12,21 +12,24 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.performance.DoNothingTestListener;
 import uk.nhs.prm.deduction.e2e.performance.NemsPatientEventTestListener;
+import uk.nhs.prm.deduction.e2e.performance.NemsTestEvent;
 import uk.nhs.prm.deduction.e2e.performance.RecordingNemsPatientEventTestListener;
+import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.utility.Helper;
 
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest(classes = {
@@ -69,19 +72,25 @@ public class PerformanceTest {
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
         var nhsNumberPool = new RoundRobinList(config.nhsNumbers());
 
-        var nemsMessageId = injectSingleNemsSuspension(nhsNumberPool, new DoNothingTestListener());
+        var nemsEvent = injectSingleNemsSuspension(nhsNumberPool, new DoNothingTestListener());
 
-        var message = mofUpdatedMessageQueue.getMessageContaining(nemsMessageId);
+        System.out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
-        assertThat(message).isNotNull();
+        var successMessage = mofUpdatedMessageQueue.getMessageContaining(nemsEvent.nemsMessageId());
+
+        assertThat(successMessage).isNotNull();
+
+        nemsEvent.finished(successMessage);
     }
 
-    private String injectSingleNemsSuspension(RoundRobinList nhsNumberPool, NemsPatientEventTestListener listener) throws Exception {
+    private NemsTestEvent injectSingleNemsSuspension(RoundRobinList nhsNumberPool, NemsPatientEventTestListener listener) throws Exception {
         var nemsMessageId = helper.randomNemsMessageId();
         var nhsNumber = nhsNumberPool.next();
         var previousGP = PdsAdaptorTest.generateRandomOdsCode();
 
-        listener.onStartingTestItem(nemsMessageId, nhsNumber);
+        var testEvent = new NemsTestEvent(nemsMessageId, nhsNumber);
+
+        listener.onStartingTestItem(testEvent);
 
         var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml",
                 nhsNumber,
@@ -89,8 +98,11 @@ public class PerformanceTest {
                 previousGP);
         meshMailbox.postMessage(nemsSuspension);
 
-        listener.onStartedTestItem(nemsMessageId, nhsNumber);
-        return nemsMessageId;
+        testEvent.started();
+
+        listener.onStartedTestItem(testEvent);
+
+        return testEvent;
     }
 
     @Test
@@ -113,12 +125,12 @@ public class PerformanceTest {
             }
         };
 
-        final var executionStartTime = LocalDateTime.now();
+        final var executionStartTime = now();
         final var slowerRateExecutor = triggerTasksExecution(0, 5000, timerTask);
-        final var fasterRateExecutor = triggerTasksExecution(5000, 1000, timerTask);
+        final var fasterRateExecutor = triggerTasksExecution(5000, 100, timerTask);
 
         while (recorder.testItemCount() <= maxItemsToBeProcessed) {
-            var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTime, LocalDateTime.now());
+            var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTime, now());
             if (secondsElapsed >= timeoutInSeconds) {
                 System.out.println("Timeout! Shutting down tasks");
                 break;

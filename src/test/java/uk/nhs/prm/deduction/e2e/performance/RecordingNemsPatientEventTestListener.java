@@ -11,12 +11,12 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
     final Hashtable nemsMessageIdToNhsNumberPairs = new Hashtable<>();
 
     @Override
-    public void onStartingTestItem(String nemsMessageId, String nhsNumber) {
-        nemsMessageIdToNhsNumberPairs.put(nemsMessageId, nhsNumber);
+    public void onStartingTestItem(NemsTestEvent testEvent) {
+        nemsMessageIdToNhsNumberPairs.put(testEvent.nemsMessageId(), testEvent);
     }
 
     @Override
-    public void onStartedTestItem(String nemsMessageId, String nhsNumber) {
-        System.out.println("Started test on " + new Date() + " " + nemsMessageId + " " + nhsNumber);
+    public void onStartedTestItem(NemsTestEvent testEvent) {
+        System.out.println("Started test on " + new Date() + " " + testEvent.nemsMessageId() + " " + testEvent.nhsNumber());
     }
 }
