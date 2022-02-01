@@ -43,6 +43,19 @@ public class SuspensionMessageQueue {
         return true;
     }
 
+    public List<SqsMessage> getNextMessages() {
+        log(String.format("Checking if message is present on : %s",  this.queueUri));
+        return await().atMost(120, TimeUnit.SECONDS)
+            .with()
+            .pollInterval(2, TimeUnit.SECONDS)
+            .until(this::findMessagesOnQueue, notNullValue());
+    }
+
+    private List<SqsMessage> findMessagesOnQueue() {
+        List<SqsMessage> messages = sqsQueue.readAllWithVisbilityTimeout(this.queueUri);
+        return messages.isEmpty() ? null : messages;
+    }
+
     private SqsMessage findMessageContaining(String substring) {
         var allMessages = sqsQueue.readAllMessages(this.queueUri);
         if (!allMessages.isEmpty()) {

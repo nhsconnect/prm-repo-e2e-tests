@@ -18,6 +18,10 @@ public class SqsQueue {
         return sqsClient.readAllMessageFrom(queueUri);
     }
 
+    public List<SqsMessage> readAllWithVisbilityTimeout(String queueUri) {
+        return sqsClient.readMessageWithVisibilityTimeoutFrom(queueUri);
+    }
+
     public void deleteMessage(String queueUri,Message message) {
         sqsClient.deleteMessageFrom(queueUri,message);
     }
