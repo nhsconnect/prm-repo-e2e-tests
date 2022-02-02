@@ -23,6 +23,10 @@ common:
                       - ./tasks test_performance
 
 pipelines:
+  e2e-perf-dev:
+    <<: *pipeline-template
+    environment_variables:
+      NHS_ENVIRONMENT: dev
   e2e-perf-pre-prod:
     <<: *pipeline-template
     timer:
