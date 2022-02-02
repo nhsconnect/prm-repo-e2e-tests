@@ -1,0 +1,29 @@
+format_version: 4
+
+common:
+  pipeline-template: &pipeline-template
+    group: performance
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    stages:
+      - performance:
+          clean_workspace: true
+          approval: manual
+          jobs:
+            performance_test:
+              resources:
+                - docker
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_performance
+
+pipelines:
+  e2e-perf-pre-prod:
+    <<: *pipeline-template
+    timer:
+      spec: "0 45 14 * * ?"
