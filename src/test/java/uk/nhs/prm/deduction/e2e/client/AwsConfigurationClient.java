@@ -21,6 +21,7 @@ public class AwsConfigurationClient {
     }
 
     public String getParamValue(String paramName) {
+        System.out.println("Getting param value from ssm: " + paramName);
         try {
             GetParameterRequest parameterRequest = GetParameterRequest.builder()
                     .name(paramName)

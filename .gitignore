@@ -6,3 +6,4 @@ build/
 .project
 bin/
 utils/**/aws-helpers
+.DS_Store

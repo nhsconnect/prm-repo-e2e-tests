@@ -40,9 +40,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
         PerformanceTest.class,
         MeshMailbox.class,
         SqsQueue.class,
-        MeshClient.class,
         TestConfiguration.class,
-        AuthTokenGenerator.class,
         MeshForwarderQueue.class,
         NemsEventProcessorUnhandledQueue.class,
         NemsEventProcessorSuspensionsMessageQueue.class,
@@ -51,8 +49,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
         MeshForwarderQueue.class,
         Helper.class,
         MofUpdatedMessageQueue.class,
-        MofNotUpdatedMessageQueue.class,
-        PdsAdaptorClient.class
+        MofNotUpdatedMessageQueue.class
 })
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
