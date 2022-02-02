@@ -14,7 +14,13 @@ import static java.util.Arrays.asList;
 public class TestConfiguration {
 
     private final ImmutableMap<String, List<String>> nhsNumbersByEnv = ImmutableMap.of(
-            "dev", asList("9693797477", "9693797396"),
+            "dev", asList(
+                    "9693797396",
+                    "9693797426",
+                    "9693642430",
+                    "9693642449",
+                    "9693642457",
+                    "9693797477"),
             "pre-prod", asList(
                     "9693642422",
                     "9693642430",
