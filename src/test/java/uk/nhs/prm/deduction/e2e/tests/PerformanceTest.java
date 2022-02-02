@@ -1,20 +1,16 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
-import uk.nhs.prm.deduction.e2e.mesh.MeshClient;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
-import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.DoNothingTestListener;
 import uk.nhs.prm.deduction.e2e.performance.NemsPatientEventTestListener;
 import uk.nhs.prm.deduction.e2e.performance.NemsTestEvent;
@@ -63,6 +59,12 @@ public class PerformanceTest {
     private Helper helper;
     @Autowired
     private TestConfiguration config;
+
+
+    @BeforeEach
+    void setUp() {
+        mofUpdatedMessageQueue.deleteAllMessages();
+    }
 
     //    TODO
     //    add test for non suspended route/journey
@@ -113,22 +115,7 @@ public class PerformanceTest {
         final var timeoutInSeconds = 30;
 
         var nhsNumberPool = new RoundRobinList(config.nhsNumbers());
-        var timerTask = new TimerTask() {
-            public void run() {
-                try {
-                    injectSingleNemsSuspension(nhsNumberPool, recorder);
-
-                } catch (Exception e) {
-                    System.out.println("Failed single run()");
-                    System.out.println(e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-        };
-
         final var executionStartTime = now();
-        final var slowerRateExecutor = triggerTasksExecution(0, 5000, timerTask);
-        final var fasterRateExecutor = triggerTasksExecution(5000, 100, timerTask);
 
         while (recorder.testItemCount() <= maxItemsToBeProcessed) {
             var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTime, now());
@@ -136,10 +123,15 @@ public class PerformanceTest {
                 System.out.println("Timeout! Shutting down tasks");
                 break;
             }
-            Thread.sleep(1000);
+            try {
+                injectSingleNemsSuspension(nhsNumberPool, recorder);
+
+            } catch (Exception e) {
+                System.out.println("Failed single run()");
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
         }
-        slowerRateExecutor.shutdown();
-        fasterRateExecutor.shutdown();
 
         System.out.println("Number of items processed: " + recorder.testItemCount());
         System.out.println("Will check if they went through the system...");
@@ -152,13 +144,13 @@ public class PerformanceTest {
 
         while (recorder.testItemCount() > 0) {
             var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTimeForMessagesReceived, now());
-            if (secondsElapsed >= 60) {
+            if (secondsElapsed >= 150) {
                 System.out.println("Timeout! Shutting down tasks");
                 break;
             }
 
             for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages()) {
-                if (recorder.hasMessage(nextMessage)) {
+                if (recorder.finishMatchingMessage(nextMessage)) {
                     countFromTest++;
                 } else {
                     countOutsideOfTest++;
@@ -171,7 +163,7 @@ public class PerformanceTest {
         System.out.println("Total messages received from messages sent in test: " + countFromTest);
         System.out.println("Total messages received from messasges received outside of test: " + countOutsideOfTest);
 
-//        assertThat(recorder.testItemCount()).isEqualTo(0);
+        assertThat(recorder.testItemCount()).isEqualTo(0);
     }
 
     private ScheduledExecutorService triggerTasksExecution(long startAfterDelayOf, long delayBetweenRuns, TimerTask task) {

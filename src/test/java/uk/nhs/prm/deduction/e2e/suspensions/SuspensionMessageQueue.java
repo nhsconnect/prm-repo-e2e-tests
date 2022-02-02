@@ -45,7 +45,7 @@ public class SuspensionMessageQueue {
 
     public List<SqsMessage> getNextMessages() {
         log(String.format("Checking if message is present on : %s",  this.queueUri));
-        return await().atMost(120, TimeUnit.SECONDS)
+        return await().atMost(350, TimeUnit.SECONDS)
             .with()
             .pollInterval(2, TimeUnit.SECONDS)
             .until(this::findMessagesOnQueue, notNullValue());
