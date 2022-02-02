@@ -14,7 +14,18 @@ import static java.util.Arrays.asList;
 public class TestConfiguration {
 
     private final ImmutableMap<String, List<String>> nhsNumbersByEnv = ImmutableMap.of(
-            "dev", asList("9693797477", "9693797396")
+            "dev", asList("9693797477", "9693797396"),
+            "pre-prod", asList(
+                    "9693642422",
+                    "9693642430",
+                    "9693642449",
+                    "9693642457",
+                    "9693642465",
+                    "9693642473",
+                    "9693642481",
+                    "9693642503",
+                    "9693642511",
+                    "9693642538")
     );
 
     private final AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
@@ -52,6 +63,7 @@ public class TestConfiguration {
     public String nemsEventProcesorUnhandledQueueUri() {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-unhandled-events-queue", getAwsAccountNo(), getEnvironmentName());
     }
+
     public String suspensionsObservabilityQueueUri() {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-suspensions-observability-queue", getAwsAccountNo(), getEnvironmentName());
     }
@@ -85,7 +97,7 @@ public class TestConfiguration {
 
     private String fetchAwsAccountNo() {
         var client = StsClient.create();
-        var response =  client.getCallerIdentity();
+        var response = client.getCallerIdentity();
         return response.account();
     }
 
