@@ -27,3 +27,5 @@ pipelines:
     <<: *pipeline-template
     timer:
       spec: "0 45 14 * * ?"
+    environment_variables:
+      NHS_ENVIRONMENT: pre-prod
