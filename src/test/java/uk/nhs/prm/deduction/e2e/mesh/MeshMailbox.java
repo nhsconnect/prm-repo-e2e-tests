@@ -8,10 +8,14 @@ import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 @Component
 public class MeshMailbox {
 
-    @Autowired
-    private TestConfiguration configuration;
-    @Autowired
-    private MeshClient meshClient;
+    private final MeshConfig meshConfig;
+    private final MeshClient meshClient;
+
+    public MeshMailbox(@Autowired TestConfiguration testConfiguration) {
+        this.meshConfig =  new MeshConfig(testConfiguration);
+        this.meshClient = new MeshClient(meshConfig);
+    }
+
 
     public String postMessage(NemsEventMessage message) throws Exception {
         String messageId = meshClient.postMessage(getMailboxServicOutboxeUri(), message);
@@ -19,7 +23,7 @@ public class MeshMailbox {
         return messageId;
     }
     private String getMailboxServicOutboxeUri() {
-        return String.format("https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox", configuration.getMeshMailBoxID());
+        return String.format("https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox", meshConfig.getMailboxId());
     }
     public void log(String message) {
         System.out.println(message);

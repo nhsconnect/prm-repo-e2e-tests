@@ -6,7 +6,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
 import uk.nhs.prm.deduction.e2e.client.StackOverflowInsecureSSLContextLoader;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
@@ -18,19 +17,16 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class MeshClient {
 
-    @Autowired
-    private TestConfiguration configuration;
-
-    @Autowired
-    AuthTokenGenerator authTokenGenerator;
-
+    private final MeshConfig meshConfig;
     private StackOverflowInsecureSSLContextLoader contextLoader;
+    private AuthTokenGenerator authTokenGenerator;
 
-    public MeshClient() {
+    public MeshClient(MeshConfig meshConfig) {
+        this.meshConfig = meshConfig;
         this.contextLoader = new StackOverflowInsecureSSLContextLoader();
+        this.authTokenGenerator = new AuthTokenGenerator(meshConfig);
     }
 
     public String postMessage(String mailboxServiceUri, NemsEventMessage message) throws Exception {
@@ -42,13 +38,13 @@ public class MeshClient {
                     .header("Authorization", authTokenGenerator.getAuthorizationToken())
                     .header("Content-Type", "application/octet-stream")
                     .header("Mex-LocalID", "Test")
-                    .header("Mex-To", configuration.getMeshMailBoxID())
-                    .header("Mex-From", configuration.getMeshMailBoxID())
+                    .header("Mex-To", meshConfig.getMailboxId())
+                    .header("Mex-From", meshConfig.getMailboxId())
                     .header("Mex-WorkflowID", "API-DOCS-TEST")
                     .build();
 
             HttpResponse<String> response = HttpClient.newBuilder()
-                    .sslContext(contextLoader.getClientAuthSslContext(configuration.getMeshMailBoxClientCert(), configuration.getMeshMailBoxClientKey()))
+                    .sslContext(contextLoader.getClientAuthSslContext(meshConfig.getClientCert(), meshConfig.getClientKey()))
                     .build()
                     .send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -68,7 +64,7 @@ public class MeshClient {
                     .build();
 
             HttpResponse<String> response = HttpClient.newBuilder()
-                    .sslContext(contextLoader.getClientAuthSslContext(configuration.getMeshMailBoxClientCert(), configuration.getMeshMailBoxClientKey()))
+                    .sslContext(contextLoader.getClientAuthSslContext(meshConfig.getClientCert(), meshConfig.getClientKey()))
                     .build()
                     .send(request, HttpResponse.BodyHandlers.ofString());
             return getListOfMessagesOnMailbox(response.body());
