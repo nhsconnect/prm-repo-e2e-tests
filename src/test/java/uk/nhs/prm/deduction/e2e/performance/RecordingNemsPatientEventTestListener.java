@@ -25,7 +25,7 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
         System.out.println("Started test on " + new Date() + " " + testEvent.nemsMessageId() + " " + testEvent.nhsNumber());
     }
 
-    public boolean finishMatchingMessage(SqsMessage sqsMessage) throws JsonProcessingException {
+    public boolean finishMatchingMessage(SqsMessage sqsMessage)  {
         String nemsMessageIdFromBody = extractNemsMessageIdFromBody(sqsMessage);
         if (nemsMessageIdToNhsNumberPairs.containsKey(nemsMessageIdFromBody)) {
             var testEvent = (NemsTestEvent) nemsMessageIdToNhsNumberPairs.get(nemsMessageIdFromBody);
@@ -38,8 +38,13 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
         }
     }
 
-    private String extractNemsMessageIdFromBody(SqsMessage sqsMessage) throws JsonProcessingException {
-        JsonNode parent = new ObjectMapper().readTree(sqsMessage.body());
+    private String extractNemsMessageIdFromBody(SqsMessage sqsMessage) {
+        JsonNode parent = null;
+        try {
+            parent = new ObjectMapper().readTree(sqsMessage.body());
+        } catch (JsonProcessingException e) {
+            return "failed to grab nemsMessageId";
+        }
         String nemsMessageId = parent.get("nemsMessageId").asText();
         return nemsMessageId;
     }

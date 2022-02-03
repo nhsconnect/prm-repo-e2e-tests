@@ -1,17 +1,19 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import uk.nhs.prm.deduction.e2e.performance.Pool;
+
 import java.util.List;
 
-public class RoundRobinList {
-    public String lastItem;
-    private List<String> items;
+public class RoundRobinPool<T> implements Pool<T> {
+    public T lastItem;
+    private List<T> items;
 
-    public RoundRobinList(List<String> items) {
+    public RoundRobinPool(List<T> items) {
         this.items = items;
         lastItem = items.get(0);
     }
 
-    public String next() {
+    public T next() {
         var list = items;
         int index = list.indexOf(lastItem);
         if (index < list.size() - 1) {

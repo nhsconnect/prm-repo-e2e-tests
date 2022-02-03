@@ -1,6 +1,5 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -11,10 +10,7 @@ import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
-import uk.nhs.prm.deduction.e2e.performance.DoNothingTestListener;
-import uk.nhs.prm.deduction.e2e.performance.NemsPatientEventTestListener;
-import uk.nhs.prm.deduction.e2e.performance.NemsTestEvent;
-import uk.nhs.prm.deduction.e2e.performance.RecordingNemsPatientEventTestListener;
+import uk.nhs.prm.deduction.e2e.performance.*;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
@@ -24,10 +20,6 @@ import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspension
 import uk.nhs.prm.deduction.e2e.utility.Helper;
 
 import java.time.temporal.ChronoUnit;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -73,7 +65,7 @@ public class PerformanceTest {
     //    Note: 17,000 a day (X3 for the test - so 51,000); out of the 17k messages 4600 are suspension messages
     @Test
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
-        var nhsNumberPool = new RoundRobinList(config.nhsNumbers());
+        var nhsNumberPool = new RoundRobinPool(config.nhsNumbers());
 
         var nemsEvent = injectSingleNemsSuspension(nhsNumberPool, new DoNothingTestListener());
 
@@ -86,7 +78,7 @@ public class PerformanceTest {
         nemsEvent.finished(successMessage);
     }
 
-    private NemsTestEvent injectSingleNemsSuspension(RoundRobinList nhsNumberPool, NemsPatientEventTestListener listener) throws Exception {
+    private NemsTestEvent injectSingleNemsSuspension(Pool<String> nhsNumberPool, NemsPatientEventTestListener listener) {
         var nemsMessageId = helper.randomNemsMessageId();
         var nhsNumber = nhsNumberPool.next();
         var previousGP = PdsAdaptorTest.generateRandomOdsCode();
@@ -109,12 +101,12 @@ public class PerformanceTest {
     }
 
     @Test
-    public void testInjectingSuspensionMessagesAtExpectedRateThenAtHigherRate__NotYetCheckingCompletion() throws InterruptedException, JsonProcessingException {
+    public void testInjectingSuspensionMessagesAtExpectedRateThenAtHigherRate__NotYetCheckingCompletion() {
         final var recorder = new RecordingNemsPatientEventTestListener();
         final var maxItemsToBeProcessed = 100;
         final var timeoutInSeconds = 30;
 
-        var nhsNumberPool = new RoundRobinList(config.nhsNumbers());
+        var nhsNumberPool = new TimeRegulatedPool(new RoundRobinPool(config.nhsNumbers()));
         final var executionStartTime = now();
 
         while (recorder.testItemCount() <= maxItemsToBeProcessed) {
@@ -123,14 +115,7 @@ public class PerformanceTest {
                 System.out.println("Timeout! Shutting down tasks");
                 break;
             }
-            try {
-                injectSingleNemsSuspension(nhsNumberPool, recorder);
-
-            } catch (Exception e) {
-                System.out.println("Failed single run()");
-                System.out.println(e.getMessage());
-                e.printStackTrace();
-            }
+            injectSingleNemsSuspension(nhsNumberPool, recorder);
         }
 
         System.out.println("Number of items processed: " + recorder.testItemCount());
@@ -166,9 +151,4 @@ public class PerformanceTest {
         assertThat(recorder.testItemCount()).isEqualTo(0);
     }
 
-    private ScheduledExecutorService triggerTasksExecution(long startAfterDelayOf, long delayBetweenRuns, TimerTask task) {
-        final var executor = Executors.newSingleThreadScheduledExecutor();
-        executor.scheduleAtFixedRate(task, startAfterDelayOf, delayBetweenRuns, TimeUnit.MILLISECONDS);
-        return executor;
-    }
 }

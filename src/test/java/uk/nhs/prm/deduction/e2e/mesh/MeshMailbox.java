@@ -17,12 +17,12 @@ public class MeshMailbox {
     }
 
 
-    public String postMessage(NemsEventMessage message) throws Exception {
-        String messageId = meshClient.postMessage(getMailboxServicOutboxeUri(), message);
+    public String postMessage(NemsEventMessage message) {
+        String messageId = meshClient.postMessage(getMailboxServiceOutboxUri(), message);
         log("Posted messageId is " + messageId);
         return messageId;
     }
-    private String getMailboxServicOutboxeUri() {
+    private String getMailboxServiceOutboxUri() {
         return String.format("https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox", meshConfig.getMailboxId());
     }
     public void log(String message) {
