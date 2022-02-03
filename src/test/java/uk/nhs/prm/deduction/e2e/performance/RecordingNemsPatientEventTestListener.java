@@ -6,18 +6,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 
 import java.io.PrintStream;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public class RecordingNemsPatientEventTestListener implements NemsPatientEventTestListener {
-    private final Map<String, NemsTestEvent> nemsMessageIdToNhsNumberPairs = new HashMap<>();
+    private final Map<String, NemsTestEvent> nemsEventsById = new HashMap<>();
     private int knownEventCount = 0;
     private int unknownEventCount = 0;
 
     @Override
     public void onStartingTestItem(NemsTestEvent testEvent) {
-        nemsMessageIdToNhsNumberPairs.put(testEvent.nemsMessageId(), testEvent);
+        nemsEventsById.put(testEvent.nemsMessageId(), testEvent);
     }
 
     @Override
@@ -26,13 +27,13 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
     }
 
     public int testItemCount() {
-        return nemsMessageIdToNhsNumberPairs.size();
+        return nemsEventsById.size();
     }
 
     public boolean finishMatchingMessage(SqsMessage sqsMessage)  {
         String nemsMessageIdFromBody = extractNemsMessageIdFromBody(sqsMessage);
-        if (nemsMessageIdToNhsNumberPairs.containsKey(nemsMessageIdFromBody)) {
-             if (nemsMessageIdToNhsNumberPairs.get(nemsMessageIdFromBody).finished(sqsMessage)) {
+        if (nemsEventsById.containsKey(nemsMessageIdFromBody)) {
+             if (nemsEventsById.get(nemsMessageIdFromBody).finished(sqsMessage)) {
                  knownEventCount++;
              };
             return true;
@@ -61,5 +62,9 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
 
     public boolean hasUnfinishedEvents() {
         return knownEventCount < testItemCount();
+    }
+
+    public List<NemsTestEvent> testEvents() {
+        return nemsEventsById.values().stream().collect(toList());
     }
 }

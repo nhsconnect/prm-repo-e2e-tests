@@ -13,6 +13,10 @@ common:
           approval: manual
           jobs:
             performance_test:
+              artifacts:
+                - build: build/reports/performance/e2e-durations.png
+              tabs:
+                - performance: build/reports/performance/e2e-durations.png
               resources:
                 - docker
               tasks:
