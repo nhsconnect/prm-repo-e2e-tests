@@ -45,26 +45,24 @@ public class SuspensionMessageQueue {
 
     public List<SqsMessage> getNextMessages() {
         log(String.format("Checking for messages on : %s",  this.queueUri));
-        return await().atMost(350, TimeUnit.SECONDS)
+        return await().atMost(30, TimeUnit.SECONDS)
             .with()
-            .pollInterval(2, TimeUnit.SECONDS)
+            .pollInterval(1, TimeUnit.SECONDS)
             .until(this::findMessagesOnQueue, notNullValue());
     }
 
     private List<SqsMessage> findMessagesOnQueue() {
-        List<SqsMessage> messages = sqsQueue.readAllWithVisbilityTimeout(this.queueUri);
+        List<SqsMessage> messages = sqsQueue.readThroughMessages(this.queueUri);
         return messages.isEmpty() ? null : messages;
     }
 
     private SqsMessage findMessageContaining(String substring) {
-        var allMessages = sqsQueue.readAllMessages(this.queueUri);
+        var allMessages = sqsQueue.readThroughMessages(this.queueUri);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
                 System.out.println("just finding message, checking: " + message.id());
                 if (message.contains(substring)) {
                     return message;
-                } else {
-                    return null;
                 }
             }
         }
@@ -72,13 +70,11 @@ public class SuspensionMessageQueue {
     }
 
     private boolean messageIsOnQueue(String messageBodyToCheck) {
-        List<SqsMessage> allMessages = sqsQueue.readAllMessages(this.queueUri);
+        List<SqsMessage> allMessages = sqsQueue.readMessagesFrom(this.queueUri);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
                 if (message.contains(messageBodyToCheck)) {
                     return true;
-                } else {
-                    return false;
                 }
             }
         }

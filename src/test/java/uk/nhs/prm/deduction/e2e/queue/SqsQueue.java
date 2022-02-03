@@ -14,12 +14,12 @@ public class SqsQueue {
         this.sqsClient = new SqsClient();
     }
 
-    public List<SqsMessage> readAllMessages(String queueUri) {
-        return sqsClient.readAllMessageFrom(queueUri);
+    public List<SqsMessage> readMessagesFrom(String queueUri) {
+        return sqsClient.readMessagesFrom(queueUri);
     }
 
-    public List<SqsMessage> readAllWithVisbilityTimeout(String queueUri) {
-        return sqsClient.readMessageWithVisibilityTimeoutFrom(queueUri);
+    public List<SqsMessage> readThroughMessages(String queueUri) {
+        return sqsClient.readThroughMessages(queueUri);
     }
 
     public void deleteMessage(String queueUri,Message message) {

@@ -29,7 +29,7 @@ public class NemsEventMessageQueue {
     }
 
     private boolean messageIsOnQueue(String messageBodyToCheck) {
-        List<SqsMessage> allMessages = sqsQueue.readAllMessages(this.queueUri);
+        List<SqsMessage> allMessages = sqsQueue.readMessagesFrom(this.queueUri);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
                 if (message.contains(messageBodyToCheck)) {
