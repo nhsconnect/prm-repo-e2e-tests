@@ -16,7 +16,7 @@ common:
               artifacts:
                 - build: build/reports/performance/e2e-durations.png
               tabs:
-                - performance: build/reports/performance/e2e-durations.png
+                performance: build/reports/performance/e2e-durations.png
               resources:
                 - docker
               tasks:
