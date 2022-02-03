@@ -1,10 +1,13 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
+import com.jayway.jsonpath.JsonPath;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 import static java.time.LocalTime.now;
 
@@ -14,6 +17,9 @@ public class NemsTestEvent {
 
     private final LocalTime createdAt;
     private LocalDateTime started;
+    private boolean isFinished = false;
+    private List<String> problems = new ArrayList<>();
+    private boolean isProblematic;
 
     public NemsTestEvent(String nemsMessageId, String nhsNumber) {
         this.nemsMessageId = nemsMessageId;
@@ -33,11 +39,29 @@ public class NemsTestEvent {
         return started;
     }
 
+    public boolean isFinished() {
+        return isFinished;
+    }
+
+    public boolean isProblematic() {
+        return isProblematic;
+    }
+
     public void started() {
         this.started = LocalDateTime.now();
     }
 
-    public void finished(SqsMessage successMessage) {
+    public boolean finished(SqsMessage successMessage) {
+        boolean firstTimeFinisher = false;
+        if (isFinished) {
+            isProblematic = true;
+            System.out.println("Duplicate finisheer!");
+            problems.add("finished() but already isFinished");
+        }
+        else {
+            firstTimeFinisher = true;
+            isFinished = true;
+        }
         var processingTimeMs = startedAt().until(successMessage.queuedAt(), ChronoUnit.MILLIS);
 
         System.out.println(String.format("NEMS suspension %s for %s was injected at %tT and arrived on output queue at %tT after %s ms",
@@ -46,5 +70,7 @@ public class NemsTestEvent {
                 startedAt(),
                 successMessage.queuedAt(),
                 processingTimeMs));
+
+        return firstTimeFinisher;
     }
 }

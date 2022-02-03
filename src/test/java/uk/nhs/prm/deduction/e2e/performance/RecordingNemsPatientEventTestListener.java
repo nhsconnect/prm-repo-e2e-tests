@@ -5,15 +5,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 
+import java.io.PrintStream;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RecordingNemsPatientEventTestListener implements NemsPatientEventTestListener {
-    public int testItemCount() {
-        return nemsMessageIdToNhsNumberPairs.size();
-    }
-
-    final Hashtable nemsMessageIdToNhsNumberPairs = new Hashtable<>();
+    private final Map<String, NemsTestEvent> nemsMessageIdToNhsNumberPairs = new HashMap<>();
+    private int knownEventCount = 0;
+    private int unknownEventCount = 0;
 
     @Override
     public void onStartingTestItem(NemsTestEvent testEvent) {
@@ -25,15 +25,20 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
         System.out.println("Started test on " + new Date() + " " + testEvent.nemsMessageId() + " " + testEvent.nhsNumber());
     }
 
+    public int testItemCount() {
+        return nemsMessageIdToNhsNumberPairs.size();
+    }
+
     public boolean finishMatchingMessage(SqsMessage sqsMessage)  {
         String nemsMessageIdFromBody = extractNemsMessageIdFromBody(sqsMessage);
         if (nemsMessageIdToNhsNumberPairs.containsKey(nemsMessageIdFromBody)) {
-            var testEvent = (NemsTestEvent) nemsMessageIdToNhsNumberPairs.get(nemsMessageIdFromBody);
-            testEvent.finished(sqsMessage);
-            nemsMessageIdToNhsNumberPairs.remove(nemsMessageIdFromBody);
+             if (nemsMessageIdToNhsNumberPairs.get(nemsMessageIdFromBody).finished(sqsMessage)) {
+                 knownEventCount++;
+             };
             return true;
         } else {
             System.out.println("Nems message ID " + nemsMessageIdFromBody + " not sent by performance test");
+            unknownEventCount++;
             return false;
         }
     }
@@ -45,7 +50,16 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
         } catch (JsonProcessingException e) {
             return "failed to grab nemsMessageId";
         }
-        String nemsMessageId = parent.get("nemsMessageId").asText();
-        return nemsMessageId;
+        return parent.get("nemsMessageId").asText();
+    }
+
+    public void summariseTo(PrintStream out) {
+        out.println("Total messages received: " + (knownEventCount + unknownEventCount));
+        out.println("Total messages received from messages sent in test: " + knownEventCount);
+        out.println("Total messages received from messasges received outside of test: " + unknownEventCount);
+    }
+
+    public boolean hasUnfinishedEvents() {
+        return knownEventCount < testItemCount();
     }
 }
