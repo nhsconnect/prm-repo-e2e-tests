@@ -96,7 +96,7 @@ public class PerformanceTest {
     }
 
     @Test
-    public void testInjectingSuspensionMessagesAtExpectedRateThenAtHigherRate__NotYetCheckingCompletion() {
+    public void testInjectingSuspensionMessages___AsFastAsPossible() {
         final var recorder = new RecordingNemsPatientEventTestListener();
         final var maxItemsToBeProcessed = 100;
 

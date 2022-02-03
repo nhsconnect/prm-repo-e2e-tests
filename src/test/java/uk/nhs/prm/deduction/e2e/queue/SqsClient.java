@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 public class SqsClient {
     software.amazon.awssdk.services.sqs.SqsClient sqsClient = software.amazon.awssdk.services.sqs.SqsClient.create();
 
-    public List<SqsMessage> readAllMessageFrom(String queueUrl) {
+    public List<SqsMessage> readMessagesFrom(String queueUrl) {
         var receiveMessageRequest = ReceiveMessageRequest.builder()
                 .visibilityTimeout(0)
                 .queueUrl(queueUrl)
@@ -24,7 +24,7 @@ public class SqsClient {
         return messages;
     }
 
-    public List<SqsMessage> readMessageWithVisibilityTimeoutFrom(String queueUrl) {
+    public List<SqsMessage> readThroughMessages(String queueUrl) {
         var receiveMessageRequest = ReceiveMessageRequest.builder()
             .visibilityTimeout(180)
             .queueUrl(queueUrl)
