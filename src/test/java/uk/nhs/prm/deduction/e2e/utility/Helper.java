@@ -3,10 +3,7 @@ package uk.nhs.prm.deduction.e2e.utility;
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -28,7 +25,7 @@ public class Helper {
         return  createNemsEventFromTemplate(nemsEventFilename, nhsNumber, nemsMessageId, "B85612");
     }
 
-    public NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId, String previousGP) throws IOException {
+    public NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId, String previousGP) {
         return new NemsEventMessage(readTestResourceFile(nemsEventFilename)
                 .replaceAll("__NHS_NUMBER__", nhsNumber)
                 .replaceAll("__NEMS_MESSAGE_ID__", nemsMessageId)
@@ -36,16 +33,24 @@ public class Helper {
         );
     }
 
-    public String readTestResourceFile(String nemsEvent) throws IOException {
-        File file = new File(String.format("src/test/resources/%s", nemsEvent));
-        BufferedReader br = new BufferedReader(new FileReader(file));
-        String line;
-        StringBuilder sb = new StringBuilder();
+    public String readTestResourceFile(String nemsEvent) {
+        try {
+            File file = new File(String.format("src/test/resources/%s", nemsEvent));
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+            StringBuilder sb = new StringBuilder();
 
-        while((line=br.readLine())!= null){
-            sb.append(line.trim());
+            while((line=br.readLine())!= null){
+                sb.append(line.trim());
+            }
+            return sb.toString();
         }
-        return sb.toString();
+        catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Map<String,NemsEventMessage> getDLQNemsEventMessages() throws IOException {

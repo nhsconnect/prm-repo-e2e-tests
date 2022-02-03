@@ -1,11 +1,8 @@
 package uk.nhs.prm.deduction.e2e.mesh;
 
-import org.apache.http.HttpException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
 import uk.nhs.prm.deduction.e2e.client.StackOverflowInsecureSSLContextLoader;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
@@ -29,7 +26,7 @@ public class MeshClient {
         this.authTokenGenerator = new AuthTokenGenerator(meshConfig);
     }
 
-    public String postMessage(String mailboxServiceUri, NemsEventMessage message) throws Exception {
+    public String postMessage(String mailboxServiceUri, NemsEventMessage message) {
         try {
             HttpRequest.BodyPublisher messageBody = HttpRequest.BodyPublishers.ofString(message.body());
             HttpRequest request = HttpRequest.newBuilder()
@@ -49,34 +46,26 @@ public class MeshClient {
                     .send(request, HttpResponse.BodyHandlers.ofString());
 
             return getMessageIdFromMessage(response.body());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log("Exception posting message on mailbox %s", e.getMessage());
-            throw new HttpException("Exception encountered", e);
+            throw new RuntimeException("Exception encountered", e);
         }
     }
 
-    public List<String> getMessageIds(String mailboxServiceUri) throws HttpException {
+    private String getMessageIdFromMessage(String responseBody) {
+        String key = "messageID";
+        Object value = getJsonValue(responseBody, key);
+        return String.valueOf(value);
+    }
+
+    private Object getJsonValue(String json, String key) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URL(mailboxServiceUri).toURI())
-                    .GET()
-                    .header("Authorization", authTokenGenerator.getAuthorizationToken())
-                    .build();
-
-            HttpResponse<String> response = HttpClient.newBuilder()
-                    .sslContext(contextLoader.getClientAuthSslContext(meshConfig.getClientCert(), meshConfig.getClientKey()))
-                    .build()
-                    .send(request, HttpResponse.BodyHandlers.ofString());
-            return getListOfMessagesOnMailbox(response.body());
-        } catch (Exception e) {
-            log("Exception getting message on mailbox %s", e.getMessage());
-            throw new HttpException("Exception encountered", e);
+            return new JSONObject(json).get(key);
         }
-    }
-
-    private String getMessageIdFromMessage(String responseBody) throws JSONException {
-        JSONObject jsonObject = new JSONObject(responseBody);
-        return String.valueOf(jsonObject.get("messageID"));
+        catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private List<String> getListOfMessagesOnMailbox(String responseBody) throws JSONException {
