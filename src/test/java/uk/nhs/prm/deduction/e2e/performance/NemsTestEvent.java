@@ -40,8 +40,9 @@ public class NemsTestEvent {
     public void finished(SqsMessage successMessage) {
         var processingTimeMs = startedAt().until(successMessage.queuedAt(), ChronoUnit.MILLIS);
 
-        System.out.println(String.format("NEMS suspension %s was injected at %tT and arrived on output queue at %tT after %s ms",
+        System.out.println(String.format("NEMS suspension %s for %s was injected at %tT and arrived on output queue at %tT after %s ms",
                 nemsMessageId(),
+                nhsNumber(),
                 startedAt(),
                 successMessage.queuedAt(),
                 processingTimeMs));

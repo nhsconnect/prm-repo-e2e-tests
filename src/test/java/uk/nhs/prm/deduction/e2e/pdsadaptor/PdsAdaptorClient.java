@@ -9,35 +9,31 @@ import uk.nhs.prm.deduction.e2e.TestConfiguration;
 public class PdsAdaptorClient {
 
     private final String e2eAuthPassword;
-    private final String pdsAdaptorUrl;
+    private final String patientRootUrl;
 
     public PdsAdaptorClient() {
         TestConfiguration config = new TestConfiguration();
         this.e2eAuthPassword  = config.getPdsAdaptorApiKey();
-        this.pdsAdaptorUrl = buildUrl(config.getPdsAdaptorUrl(), config.getPdsAdaptorTestPatient());
-    }
-
-    public PdsAdaptorClient(String nhsNumber){
-        TestConfiguration config = new TestConfiguration();
-        this.e2eAuthPassword  = config.getPdsAdaptorApiKey();
-        this.pdsAdaptorUrl = buildUrl(config.getPdsAdaptorUrl(), nhsNumber);
+        this.patientRootUrl = config.getPdsAdaptorUrl();
     }
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public PdsAdaptorResponse getSuspendedPatientStatus() {
-        System.out.printf("Requesting patient suspended patient status from pds adaptor: %s%n", pdsAdaptorUrl);
+    public PdsAdaptorResponse getSuspendedPatientStatus(String nhsNumber) {
+        var patientUrl = buildUrl(patientRootUrl, nhsNumber);
+        System.out.printf("Requesting patient suspended patient status from pds adaptor: %s%n", patientRootUrl);
         ResponseEntity<PdsAdaptorResponse> response =
-            restTemplate.exchange(pdsAdaptorUrl, HttpMethod.GET, new HttpEntity<>(createHeaders()), PdsAdaptorResponse.class);
+            restTemplate.exchange(patientUrl, HttpMethod.GET, new HttpEntity<>(createHeaders()), PdsAdaptorResponse.class);
         System.out.printf("Response received from pds adaptor: %s%n", response.getBody());
         return response.getBody();
     }
 
-    public PdsAdaptorResponse updateManagingOrganisation(String previousGp, String recordETag) {
+    public PdsAdaptorResponse updateManagingOrganisation(String nhsNumber, String previousGp, String recordETag) {
+        var patientUrl = buildUrl(patientRootUrl, nhsNumber);
         PdsAdaptorRequest request = new PdsAdaptorRequest(previousGp, recordETag);
-        System.out.printf("Request to update patient : url - %s , request - %s%n", pdsAdaptorUrl, request);
+        System.out.printf("Request to update patient : url - %s , request - %s%n", patientUrl, request);
         ResponseEntity<PdsAdaptorResponse> response =
-            restTemplate.exchange(pdsAdaptorUrl, HttpMethod.PUT, new HttpEntity<>(request, createHeaders()), PdsAdaptorResponse.class);
+            restTemplate.exchange(patientUrl, HttpMethod.PUT, new HttpEntity<>(request, createHeaders()), PdsAdaptorResponse.class);
         System.out.printf("Response received from pds adaptor update request: %s%n", response.getBody());
         return response.getBody();
     }

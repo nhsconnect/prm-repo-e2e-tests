@@ -13,13 +13,10 @@ import static java.util.Arrays.asList;
 @Component
 public class TestConfiguration {
 
-    private final ImmutableMap<String, List<String>> nhsNumbersByEnv = ImmutableMap.of(
+    private final ImmutableMap<String, List<String>> suspendedNhsNumbersByEnv = ImmutableMap.of(
             "dev", asList(
                     "9693797396",
                     "9693797426",
-                    "9693642430",
-                    "9693642449",
-                    "9693642457",
                     "9693797477"),
             "pre-prod", asList(
                     "9693642422",
@@ -58,7 +55,7 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/e2e-test", getEnvironmentName()));
     }
 
-    public String getPdsAdaptorTestPatient() {
+    public String getPdsAdaptorTestPatientNhsNumber() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/e2e-test/pds-adaptor-test/nhs-number", getEnvironmentName()));
     }
 
@@ -119,7 +116,7 @@ public class TestConfiguration {
         return value;
     }
 
-    public List<String> nhsNumbers() {
-        return nhsNumbersByEnv.get(getEnvironmentName());
+    public List<String> suspendedNhsNumbers() {
+        return suspendedNhsNumbersByEnv.get(getEnvironmentName());
     }
 }
