@@ -1,6 +1,5 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
-import com.jayway.jsonpath.JsonPath;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 
 import java.time.LocalDateTime;
@@ -20,6 +19,7 @@ public class NemsTestEvent {
     private boolean isFinished = false;
     private List<String> problems = new ArrayList<>();
     private boolean isProblematic;
+    private long processingTimeMs;
 
     public NemsTestEvent(String nemsMessageId, String nhsNumber) {
         this.nemsMessageId = nemsMessageId;
@@ -61,8 +61,8 @@ public class NemsTestEvent {
         else {
             firstTimeFinisher = true;
             isFinished = true;
+            processingTimeMs = startedAt().until(successMessage.queuedAt(), ChronoUnit.MILLIS);
         }
-        var processingTimeMs = startedAt().until(successMessage.queuedAt(), ChronoUnit.MILLIS);
 
         System.out.println(String.format("NEMS suspension %s for %s was injected at %tT and arrived on output queue at %tT after %s ms",
                 nemsMessageId(),
@@ -72,5 +72,9 @@ public class NemsTestEvent {
                 processingTimeMs));
 
         return firstTimeFinisher;
+    }
+
+    public long duration() {
+        return processingTimeMs / 1000;
     }
 }

@@ -30,7 +30,7 @@ public class SuspensionMessageQueue {
         log(String.format("Checking if message is present on : %s",  this.queueUri));
         return await().atMost(120, TimeUnit.SECONDS)
                 .with()
-                .pollInterval(2, TimeUnit.SECONDS)
+                .pollInterval(100, TimeUnit.MILLISECONDS)
                 .until(() -> findMessageContaining(substring), notNullValue());
     }
 
@@ -47,7 +47,7 @@ public class SuspensionMessageQueue {
         log(String.format("Checking for messages on : %s",  this.queueUri));
         return await().atMost(30, TimeUnit.SECONDS)
             .with()
-            .pollInterval(1, TimeUnit.SECONDS)
+            .pollInterval(100, TimeUnit.MILLISECONDS)
             .until(this::findMessagesOnQueue, notNullValue());
     }
 

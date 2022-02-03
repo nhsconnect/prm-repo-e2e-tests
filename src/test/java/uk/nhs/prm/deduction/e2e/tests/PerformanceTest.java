@@ -1,5 +1,10 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +24,10 @@ import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessage
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.utility.Helper;
 
-import java.io.PrintStream;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static java.time.LocalDateTime.now;
@@ -98,7 +105,7 @@ public class PerformanceTest {
     @Test
     public void testInjectingSuspensionMessages___AsFastAsPossible() {
         final var recorder = new RecordingNemsPatientEventTestListener();
-        final var maxItemsToBeProcessed = 100;
+        final var maxItemsToBeProcessed = 20;
 
         var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(), maxItemsToBeProcessed);
 
@@ -116,7 +123,9 @@ public class PerformanceTest {
                 recorder.finishMatchingMessage(nextMessage);
             }
         }
+
         recorder.summariseTo(System.out);
+        generateProcessingDurationScatterPlot(recorder);
 
         assertThat(recorder.hasUnfinishedEvents()).isFalse();
     }
@@ -137,6 +146,35 @@ public class PerformanceTest {
             var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);
             System.out.println(nhsNumber + ": " + patientStatus);
             assertThat(patientStatus.getIsSuspended()).isTrue();
+        }
+    }
+
+    private void generateProcessingDurationScatterPlot(RecordingNemsPatientEventTestListener recording) {
+        XYSeriesCollection dataset = new XYSeriesCollection();
+
+        XYSeries startTimeVsDuration = new XYSeries("Event Processing Times");
+        var testEvents = recording.testEvents();
+        var runStartTime = testEvents.get(0).startedAt();
+        for (var event : testEvents) {
+            var secondsSinceRunStart = runStartTime.until(event.startedAt(), ChronoUnit.SECONDS);
+            startTimeVsDuration.add(secondsSinceRunStart, event.duration());
+        }
+        dataset.addSeries(startTimeVsDuration);
+
+        JFreeChart scatterPlot = ChartFactory.createScatterPlot(
+                "End to End Performance Test - Event durations vs start time",
+                "Time since run start (seconds)", // X-Axis Label
+                "Processing duration (seconds)", // Y-Axis Label
+                dataset
+        );
+
+        try {
+            File outputDir = new File("build/reports/performance/");
+            outputDir.mkdirs();
+            ChartUtils.saveChartAsPNG(new File(outputDir, "e2e-durations.png"), scatterPlot, 600, 400);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }
