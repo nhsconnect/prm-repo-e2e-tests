@@ -1,6 +1,5 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,6 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
-import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.performance.*;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
@@ -21,7 +19,8 @@ import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessage
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.utility.Helper;
 
-import java.time.temporal.ChronoUnit;
+import java.io.PrintStream;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static java.time.LocalDateTime.now;
@@ -62,9 +61,9 @@ public class PerformanceTest {
     //    Note: 17,000 a day (X3 for the test - so 51,000); out of the 17k messages 4600 are suspension messages
     @Test
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
-        var nhsNumberPool = new RoundRobinPool(config.suspendedNhsNumbers());
+        var nhsNumberPool = new RoundRobinPool<>(config.suspendedNhsNumbers());
 
-        var nemsEvent = injectSingleNemsSuspension(nhsNumberPool, new DoNothingTestListener());
+        var nemsEvent = injectSingleNemsSuspension(nhsNumberPool.next(), new DoNothingTestListener());
 
         System.out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
@@ -75,9 +74,8 @@ public class PerformanceTest {
         nemsEvent.finished(successMessage);
     }
 
-    private NemsTestEvent injectSingleNemsSuspension(Pool<String> nhsNumberPool, NemsPatientEventTestListener listener) {
+    private NemsTestEvent injectSingleNemsSuspension(String nhsNumber, NemsPatientEventTestListener listener) {
         var nemsMessageId = helper.randomNemsMessageId();
-        var nhsNumber = nhsNumberPool.next();
         var previousGP = PdsAdaptorTest.generateRandomOdsCode();
 
         var testEvent = new NemsTestEvent(nemsMessageId, nhsNumber);
@@ -101,54 +99,33 @@ public class PerformanceTest {
     public void testInjectingSuspensionMessagesAtExpectedRateThenAtHigherRate__NotYetCheckingCompletion() {
         final var recorder = new RecordingNemsPatientEventTestListener();
         final var maxItemsToBeProcessed = 100;
-        final var timeoutInSeconds = 30;
 
-        var nhsNumberPool = new TimeRegulatedPool(suspendedNhsNumbers());
-        final var executionStartTime = now();
+        var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(), maxItemsToBeProcessed);
 
-        while (recorder.testItemCount() <= maxItemsToBeProcessed) {
-            var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTime, now());
-            if (secondsElapsed >= timeoutInSeconds) {
-                System.out.println("Timeout! Shutting down tasks");
-                break;
-            }
-            injectSingleNemsSuspension(nhsNumberPool, recorder);
+        while (nhsNumberSource.unfinished()) {
+            injectSingleNemsSuspension(nhsNumberSource.next(), recorder);
         }
 
-        System.out.println("Number of items processed: " + recorder.testItemCount());
-        System.out.println("Will check if they went through the system...");
+        nhsNumberSource.summariseTo(System.out);
 
+        System.out.println("Checking mof updated message queue...");
 
-        final var executionStartTimeForMessagesReceived = now();
-
-        int countFromTest = 0;
-        int countOutsideOfTest = 0;
-
-        while (recorder.testItemCount() > 0) {
-            var secondsElapsed = ChronoUnit.SECONDS.between(executionStartTimeForMessagesReceived, now());
-            if (secondsElapsed >= 150) {
-                System.out.println("Timeout! Shutting down tasks");
-                break;
-            }
-
+        final var timeout = now().plusSeconds(150);
+        while (before(timeout) && recorder.hasUnfinishedEvents()) {
             for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages()) {
-                if (recorder.finishMatchingMessage(nextMessage)) {
-                    countFromTest++;
-                } else {
-                    countOutsideOfTest++;
-                }
-
+                recorder.finishMatchingMessage(nextMessage);
             }
         }
+        recorder.summariseTo(System.out);
 
-        System.out.println("Total messages received: " + (countFromTest + countOutsideOfTest));
-        System.out.println("Total messages received from messages sent in test: " + countFromTest);
-        System.out.println("Total messages received from messasges received outside of test: " + countOutsideOfTest);
-
-        assertThat(recorder.testItemCount()).isEqualTo(0);
+        assertThat(recorder.hasUnfinishedEvents()).isFalse();
     }
 
-    private RoundRobinPool suspendedNhsNumbers() {
+    private boolean before(LocalDateTime timeout) {
+        return now().isBefore(timeout);
+    }
+
+    private RoundRobinPool<String> suspendedNhsNumbers() {
         List<String> suspendedNhsNumbers = config.suspendedNhsNumbers();
         checkSuspended(suspendedNhsNumbers);
         return new RoundRobinPool(suspendedNhsNumbers);
