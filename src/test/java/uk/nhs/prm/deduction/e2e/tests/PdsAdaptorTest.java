@@ -1,10 +1,8 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 
@@ -12,19 +10,25 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(classes = PdsAdaptorClient.class)
-@ExtendWith(SpringExtension.class)
 public class PdsAdaptorTest {
 
-    @Autowired
     private PdsAdaptorClient pdsAdaptorClient;
+    private TestConfiguration config;
+    private String nhsNumber;
+
+    @BeforeEach
+    public void setup() {
+        config = new TestConfiguration();
+        pdsAdaptorClient = new PdsAdaptorClient();
+        nhsNumber = config.getPdsAdaptorTestPatientNhsNumber();
+    }
 
     @Test
     void shouldUpdateManagingOrganisationOfPatient() {
-        PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus();
+        PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
         String newOdsCode = generateRandomOdsCode();
         PdsAdaptorResponse pdsAdaptorUpdateResponse =
-            pdsAdaptorClient.updateManagingOrganisation(newOdsCode, pdsAdaptorResponse.getRecordETag());
+            pdsAdaptorClient.updateManagingOrganisation(nhsNumber, newOdsCode, pdsAdaptorResponse.getRecordETag());
         assertThat(pdsAdaptorUpdateResponse.getManagingOrganisation()).isEqualTo(newOdsCode);
     }
 

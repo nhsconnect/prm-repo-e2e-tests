@@ -4,9 +4,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
-import uk.nhs.prm.deduction.e2e.mesh.MeshClient;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
@@ -91,11 +89,10 @@ public class EndToEndTest {
         String nemsMessageId = helper.randomNemsMessageId();
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
 
-        PdsAdaptorClient pdsAdaptorClient = new PdsAdaptorClient(suspendedPatientNhsNumber);
+        PdsAdaptorClient pdsAdaptorClient = new PdsAdaptorClient();
+        PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus(suspendedPatientNhsNumber);
 
-        PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus();
-
-        pdsAdaptorClient.updateManagingOrganisation(PdsAdaptorTest.generateRandomOdsCode(), pdsAdaptorResponse.getRecordETag());
+        pdsAdaptorClient.updateManagingOrganisation(suspendedPatientNhsNumber, PdsAdaptorTest.generateRandomOdsCode(), pdsAdaptorResponse.getRecordETag());
 
         NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);
