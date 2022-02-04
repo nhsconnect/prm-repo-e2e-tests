@@ -7,11 +7,10 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 
 import java.io.PrintStream;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
-public class RecordingNemsPatientEventTestListener implements NemsPatientEventTestListener {
+public class RecordingNemsPatientEventTestListener implements NemsPatientEventTestListener, NemsTestRecording {
     private final Map<String, NemsTestEvent> nemsEventsById = new HashMap<>();
     private int knownEventCount = 0;
     private int unknownEventCount = 0;
@@ -26,6 +25,7 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
         System.out.println("Started test on " + new Date() + " " + testEvent.nemsMessageId() + " " + testEvent.nhsNumber());
     }
 
+    @Override
     public int testItemCount() {
         return nemsEventsById.size();
     }
@@ -54,16 +54,19 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
         return parent.get("nemsMessageId").asText();
     }
 
+    @Override
     public void summariseTo(PrintStream out) {
         out.println("Total messages received: " + (knownEventCount + unknownEventCount));
         out.println("Total messages received from messages sent in test: " + knownEventCount);
         out.println("Total messages received from messasges received outside of test: " + unknownEventCount);
     }
 
+    @Override
     public boolean hasUnfinishedEvents() {
         return knownEventCount < testItemCount();
     }
 
+    @Override
     public List<NemsTestEvent> testEvents() {
         return nemsEventsById.values().stream().collect(toList());
     }
