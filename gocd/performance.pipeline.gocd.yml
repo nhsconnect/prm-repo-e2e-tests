@@ -14,7 +14,8 @@ common:
           jobs:
             performance_test:
               artifacts:
-                - build: build/reports/performance/e2e-durations.png
+                - build:
+                    source: build/reports/performance/
               tabs:
                 performance: build/reports/performance/e2e-durations.png
               resources:
