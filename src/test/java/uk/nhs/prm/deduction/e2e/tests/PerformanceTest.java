@@ -93,7 +93,7 @@ public class PerformanceTest {
 
     @Test
     public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
-        final int OVERALL_TEST_TIMEOUT_SECONDS = 180;
+        final int OVERALL_TEST_TIMEOUT_SECONDS = 600;
         final var recorder = new RecordingNemsPatientEventTestListener();
         var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(), config.getPerfLoadPhases(List.<LoadPhase>of(
                 atFlatRate("0.2", 20),
