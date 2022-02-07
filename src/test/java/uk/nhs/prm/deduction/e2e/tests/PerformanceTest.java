@@ -54,10 +54,6 @@ public class PerformanceTest {
     @Autowired
     private TestConfiguration config;
 
-    //    TODO
-    //    add test for non suspended route/journey
-    //    run performance test in the pipeline
-    //    reporting! :)
     //    Note: 17,000 a day (X3 for the test - so 51,000); out of the 17k messages 4600 are suspension messages
     @Test
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
@@ -98,11 +94,8 @@ public class PerformanceTest {
     @Test
     public void testInjectingSuspensionMessages___AsFastAsPossible() {
         final var recorder = new RecordingNemsPatientEventTestListener();
-        final var maxItemsToBeProcessed = 20;
-
         var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(),
-                List.<LoadPhase>of(atFlatRate(100, "0.2")),
-                maxItemsToBeProcessed);
+                List.<LoadPhase>of(atFlatRate("0.2", 20)));
 
         while (nhsNumberSource.unfinished()) {
             injectSingleNemsSuspension(nhsNumberSource.next(), recorder);

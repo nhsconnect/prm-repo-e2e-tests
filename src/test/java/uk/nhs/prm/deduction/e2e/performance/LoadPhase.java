@@ -4,16 +4,16 @@ import java.math.BigDecimal;
 
 public class LoadPhase {
 
-    public final int durationSeconds;
+    public final int maxItems;
     public final BigDecimal ratePerSecond;
     public final BigDecimal rampRatePerSecondSquared;
 
-    public static LoadPhase atFlatRate(int durationSeconds, String ratePerSecond) {
-        return new LoadPhase(durationSeconds, new BigDecimal(ratePerSecond), BigDecimal.ZERO);
+    public static LoadPhase atFlatRate(String ratePerSecond, int count) {
+        return new LoadPhase(count, new BigDecimal(ratePerSecond), BigDecimal.ZERO);
     }
 
-    private LoadPhase(int durationSeconds, BigDecimal ratePerSecond, BigDecimal rampRatePerSecondSquared) {
-        this.durationSeconds = durationSeconds;
+    private LoadPhase(int maxItems, BigDecimal ratePerSecond, BigDecimal rampRatePerSecondSquared) {
+        this.maxItems = maxItems;
         this.ratePerSecond = ratePerSecond;
         this.rampRatePerSecondSquared = rampRatePerSecondSquared;
     }

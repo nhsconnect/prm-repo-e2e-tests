@@ -8,7 +8,6 @@ import uk.nhs.prm.deduction.e2e.timng.Sleeper;
 import uk.nhs.prm.deduction.e2e.tests.RoundRobinPool;
 import uk.nhs.prm.deduction.e2e.timing.Timer;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static java.util.List.of;
@@ -43,7 +42,7 @@ class LoadRegulatingPoolTest {
         var ratePerSecond = "1";
         long startTimeMillis = 2000L;
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, 10)));
 
         when(timer.milliseconds()).thenReturn(startTimeMillis);
         pool.next();
@@ -60,7 +59,7 @@ class LoadRegulatingPoolTest {
     public void shouldProvideSubsequentItemsAfterAppropriateSleepsToAchieveFlatRateLoad() {
         var ratePerSecond = "1";
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, 10)));
 
         when(timer.milliseconds()).thenReturn(0L);
         pool.next();
@@ -80,22 +79,19 @@ class LoadRegulatingPoolTest {
     }
 
     @Test
-    public void shouldBeFinishedIfPhasesCompleted() {
+    public void shouldBeFinishedIfSinglePhaseCompleted() {
         var ratePerSecond = "1";
 
-        int durationSeconds = 10;
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(durationSeconds, ratePerSecond)));
+        int phaseCount = 3;
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, phaseCount)));
 
         when(timer.milliseconds()).thenReturn(0L);
-        pool.next();
 
-        when(timer.milliseconds()).thenReturn(9 * 1000L);
         pool.next();
-
         assertThat(pool.unfinished()).isTrue();
-
-        when(timer.milliseconds()).thenReturn(10 * 1000L);
-
+        pool.next();
+        assertThat(pool.unfinished()).isTrue();
+        pool.next();
         assertThat(pool.unfinished()).isFalse();
     }
 
@@ -104,7 +100,7 @@ class LoadRegulatingPoolTest {
         var ratePerSecond = "10";
         long startTimeMillis = 3000L;
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, 10)));
 
         when(timer.milliseconds()).thenReturn(startTimeMillis);
         pool.next();
@@ -122,7 +118,7 @@ class LoadRegulatingPoolTest {
         var ratePerSecond = "10";
         long startTimeMillis = 1000L;
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, 10)));
 
         when(timer.milliseconds()).thenReturn(startTimeMillis);
         pool.next();
@@ -139,7 +135,7 @@ class LoadRegulatingPoolTest {
     public void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateSlowerThanOnePerSecond() {
         var oneEvery100SecondsRatePerSecond = "0.01";
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, oneEvery100SecondsRatePerSecond)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(oneEvery100SecondsRatePerSecond, 10)));
 
         when(timer.milliseconds()).thenReturn(0l);
         pool.next();
@@ -151,7 +147,7 @@ class LoadRegulatingPoolTest {
     }
 
     private LoadRegulatingPool createPool(List<Integer> items, Timer timer, Sleeper sleeper, List<LoadPhase> phases) {
-        return new LoadRegulatingPool(new RoundRobinPool(items), phases, 99, timer, sleeper);
+        return new LoadRegulatingPool(new RoundRobinPool(items), phases, timer, sleeper);
     }
 
 }
