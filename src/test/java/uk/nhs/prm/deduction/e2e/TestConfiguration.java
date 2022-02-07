@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.utils.ImmutableMap;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
+import uk.nhs.prm.deduction.e2e.performance.LoadPhase;
+import uk.nhs.prm.deduction.e2e.performance.LoadSpecParser;
 
 import java.util.List;
 
@@ -118,5 +120,13 @@ public class TestConfiguration {
 
     public List<String> suspendedNhsNumbers() {
         return suspendedNhsNumbersByEnv.get(getEnvironmentName());
+    }
+
+    public List<LoadPhase> getPerfLoadPhases(List<LoadPhase> defaultLoadPhases) {
+        String loadSpec = System.getenv("PERFORMANCE_LOAD_SPEC");
+        if (loadSpec == null) {
+            return defaultLoadPhases;
+        }
+        return LoadSpecParser.parsePhases(loadSpec);
     }
 }
