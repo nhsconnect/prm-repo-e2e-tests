@@ -32,6 +32,7 @@ pipelines:
     <<: *pipeline-template
     environment_variables:
       NHS_ENVIRONMENT: dev
+      PERFORMANCE_LOAD_SPEC: "12@0.2,30@0.5,60@1"
   e2e-perf-pre-prod:
     <<: *pipeline-template
     timer:

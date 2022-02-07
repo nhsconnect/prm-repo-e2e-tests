@@ -7,28 +7,26 @@ import java.math.BigDecimal;
 public class LoadPhase {
     private static final BigDecimal ONE_THOUSAND = new BigDecimal(1000);
 
-    public final int maxItems;
+    public final int totalCount;
     public final BigDecimal ratePerSecond;
-    public final BigDecimal rampRatePerSecondSquared;
-    public int count;
+    public int runningCount;
 
     public static LoadPhase atFlatRate(String ratePerSecond, int count) {
-        return new LoadPhase(count, new BigDecimal(ratePerSecond), BigDecimal.ZERO);
+        return new LoadPhase(count, new BigDecimal(ratePerSecond));
     }
 
-    private LoadPhase(int maxItems, BigDecimal ratePerSecond, BigDecimal rampRatePerSecondSquared) {
-        this.maxItems = maxItems;
+    private LoadPhase(int totalCount, BigDecimal ratePerSecond) {
+        this.totalCount = totalCount;
         this.ratePerSecond = ratePerSecond;
-        this.rampRatePerSecondSquared = rampRatePerSecondSquared;
-        count = 0;
+        runningCount = 0;
     }
 
     public void incrementPhaseCount() {
-        count++;
+        runningCount++;
     }
 
     public boolean finished() {
-        return count >= maxItems;
+        return runningCount >= totalCount;
     }
 
     private int targetDelayMilliseconds() {
