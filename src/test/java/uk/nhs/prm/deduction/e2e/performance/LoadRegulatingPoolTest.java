@@ -29,7 +29,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldProvideFirstItemWithoutDelay() {
-        pool = createPool(integers, timer, sleeper, of());
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate("1", 1)));
 
         int item = pool.next();
 
@@ -144,6 +144,49 @@ class LoadRegulatingPoolTest {
         pool.next();
 
         verify(sleeper, times(1)).sleep(100 * 1000);
+    }
+
+    @Test
+    public void shouldMoveToSecondPhaseAndOnlyBeFinishedIfThatRunsOut() {
+        var ratePerSecond = "1";
+
+        pool = createPool(integers, timer, sleeper, of(
+                LoadPhase.atFlatRate(ratePerSecond, 3),
+                LoadPhase.atFlatRate(ratePerSecond, 2)
+        ));
+
+        when(timer.milliseconds()).thenReturn(0L);
+
+        pool.next();
+        pool.next();
+        pool.next();
+        assertThat(pool.unfinished()).isTrue();
+        pool.next();
+        assertThat(pool.unfinished()).isTrue();
+        pool.next();
+        assertThat(pool.unfinished()).isFalse();
+    }
+
+
+    @Test
+    public void shouldMoveToSecondPhaseAndUseItsRateAfterFirstPhaseCompletes() {
+        var initialRatePerSecond = "1";
+        var secondRatePerSecondFor200msDelay = "5";
+        pool = createPool(integers, timer, sleeper, of(
+                LoadPhase.atFlatRate(initialRatePerSecond, 2),
+                LoadPhase.atFlatRate(secondRatePerSecondFor200msDelay, 2)
+        ));
+
+        when(timer.milliseconds()).thenReturn(0L);
+        pool.next();
+        pool.next();
+        verify(sleeper, times(1)).sleep(1000);
+        when(timer.milliseconds()).thenReturn(1000L);
+        pool.next();
+        verify(sleeper, times(1)).sleep(200); // first 200ms delay
+        when(timer.milliseconds()).thenReturn(1300L);
+        pool.next();
+        verify(sleeper, times(1)).sleep(100); // second 200ms delay
     }
 
     private LoadRegulatingPool createPool(List<Integer> items, Timer timer, Sleeper sleeper, List<LoadPhase> phases) {

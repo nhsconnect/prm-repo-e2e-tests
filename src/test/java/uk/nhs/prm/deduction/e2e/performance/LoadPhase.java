@@ -7,6 +7,7 @@ public class LoadPhase {
     public final int maxItems;
     public final BigDecimal ratePerSecond;
     public final BigDecimal rampRatePerSecondSquared;
+    public int count;
 
     public static LoadPhase atFlatRate(String ratePerSecond, int count) {
         return new LoadPhase(count, new BigDecimal(ratePerSecond), BigDecimal.ZERO);
@@ -16,5 +17,10 @@ public class LoadPhase {
         this.maxItems = maxItems;
         this.ratePerSecond = ratePerSecond;
         this.rampRatePerSecondSquared = rampRatePerSecondSquared;
+        count = 0;
+    }
+
+    public void incrementPhaseCount() {
+        count++;
     }
 }

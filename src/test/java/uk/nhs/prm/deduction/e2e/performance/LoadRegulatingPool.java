@@ -13,9 +13,8 @@ public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
     private int count;
     private final Pool<T> sourcePool;
     private List<LoadPhase> phases;
-    private final int phaseIndex;
+    private int phaseIndex;
     private Long lastItemTimeMillis = null;
-    private int phaseCount;
     private Timer timer;
     private Sleeper sleeper;
 
@@ -29,7 +28,6 @@ public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
         this.timer = timer;
         this.sleeper = sleeper;
         this.count = 0;
-        this.phaseCount = 0;
         this.phaseIndex = 0;
     }
 
@@ -38,7 +36,7 @@ public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
         long nowMilliseconds = timer.milliseconds();
         applyDelay(nowMilliseconds);
         count++;
-        phaseCount++;
+        currentPhase().incrementPhaseCount();
         return sourcePool.next();
     }
 
@@ -61,11 +59,11 @@ public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
 
     @Override
     public boolean unfinished() {
-        return !phaseFinished();
+        return currentPhase() != null;
     }
 
     private boolean phaseFinished() {
-        return phaseCount >= currentPhase().maxItems;
+        return currentPhase().count >= currentPhase().maxItems;
     }
 
     @Override
@@ -74,6 +72,15 @@ public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
     }
 
     private LoadPhase currentPhase() {
-        return phases.get(phaseIndex);
+        LoadPhase phase = phases.get(phaseIndex);
+        if (phase.count >= phase.maxItems) {
+            // oops next phase
+            if (phases.size() > phaseIndex + 1) {
+                phaseIndex++;
+                return phases.get(phaseIndex);
+            }
+            return null;
+        }
+        return phase;
     }
 }
