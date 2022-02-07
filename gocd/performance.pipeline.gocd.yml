@@ -16,6 +16,8 @@ common:
               artifacts:
                 - build:
                     source: build/reports/performance/
+                - build:
+                    source: build/reports/tests/
               tabs:
                 performance: build/reports/performance/e2e-durations.png
               resources:
