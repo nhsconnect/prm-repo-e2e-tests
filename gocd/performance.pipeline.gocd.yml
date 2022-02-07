@@ -39,3 +39,4 @@ pipelines:
       spec: "0 45 14 * * ?"
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
+      PERFORMANCE_LOAD_SPEC: "24@0.2,60@0.5,30@0.6,30@0.7,30@0.8,120@2"
