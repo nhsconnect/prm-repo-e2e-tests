@@ -68,6 +68,6 @@ public class RecordingNemsPatientEventTestListener implements NemsPatientEventTe
 
     @Override
     public List<NemsTestEvent> testEvents() {
-        return nemsEventsById.values().stream().collect(toList());
+        return nemsEventsById.values().stream().sorted().collect(toList());
     }
 }
