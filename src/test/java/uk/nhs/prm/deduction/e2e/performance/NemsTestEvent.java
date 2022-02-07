@@ -10,7 +10,7 @@ import java.util.List;
 
 import static java.time.LocalTime.now;
 
-public class NemsTestEvent {
+public class NemsTestEvent implements Comparable {
     private final String nemsMessageId;
     private final String nhsNumber;
 
@@ -76,5 +76,15 @@ public class NemsTestEvent {
 
     public long duration() {
         return processingTimeMs / 1000;
+    }
+
+
+    @Override
+    public int compareTo(Object o) {
+        if (o.getClass().equals(NemsTestEvent.class)) {
+            var otherEvent = (NemsTestEvent) o;
+            return startedAt().compareTo(otherEvent.startedAt());
+        }
+        return 0;
     }
 }
