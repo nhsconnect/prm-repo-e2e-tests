@@ -45,7 +45,7 @@ public class SuspensionMessageQueue {
 
     public List<SqsMessage> getNextMessages() {
         log(String.format("Checking for messages on : %s",  this.queueUri));
-        return await().atMost(30, TimeUnit.SECONDS)
+        return await().atMost(120, TimeUnit.SECONDS)
             .with()
             .pollInterval(100, TimeUnit.MILLISECONDS)
             .until(this::findMessagesOnQueue, notNullValue());

@@ -92,7 +92,8 @@ public class PerformanceTest {
     }
 
     @Test
-    public void testInjectingSuspensionMessages___AsFastAsPossible() {
+    public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
+        final int OVERALL_TEST_TIMEOUT_SECONDS = 180;
         final var recorder = new RecordingNemsPatientEventTestListener();
         var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(), config.getPerfLoadPhases(List.<LoadPhase>of(
                 atFlatRate("0.2", 20),
@@ -108,7 +109,7 @@ public class PerformanceTest {
 
         System.out.println("Checking mof updated message queue...");
 
-        final var timeout = now().plusSeconds(150);
+        final var timeout = now().plusSeconds(OVERALL_TEST_TIMEOUT_SECONDS);
         while (before(timeout) && recorder.hasUnfinishedEvents()) {
             for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages()) {
                 recorder.finishMatchingMessage(nextMessage);
@@ -116,13 +117,10 @@ public class PerformanceTest {
         }
 
         recorder.summariseTo(System.out);
+
         ScatterPlotGenerator.generateProcessingDurationScatterPlot(recorder);
 
         assertThat(recorder.hasUnfinishedEvents()).isFalse();
-    }
-
-    private boolean before(LocalDateTime timeout) {
-        return now().isBefore(timeout);
     }
 
     private RoundRobinPool<String> suspendedNhsNumbers() {
@@ -140,4 +138,7 @@ public class PerformanceTest {
         }
     }
 
+    private boolean before(LocalDateTime timeout) {
+        return now().isBefore(timeout);
+    }
 }
