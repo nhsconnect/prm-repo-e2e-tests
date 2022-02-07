@@ -15,31 +15,30 @@ public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
     private List<LoadPhase> phases;
     private final int phaseIndex;
     private Long lastItemTimeMillis = null;
-    private Long phaseStartTimeMillis = null;
-    private final int maxItems;
+    private int phaseCount;
     private Timer timer;
     private Sleeper sleeper;
 
-    public LoadRegulatingPool(Pool<T> sourcePool, List<LoadPhase> phases, int maxItems) {
-        this(sourcePool, phases, maxItems, new Timer(), new Sleeper());
+    public LoadRegulatingPool(Pool<T> sourcePool, List<LoadPhase> phases) {
+        this(sourcePool, phases, new Timer(), new Sleeper());
     }
 
-    public LoadRegulatingPool(Pool<T> sourcePool, List<LoadPhase> phases, int maxItems, Timer timer, Sleeper sleeper) {
+    public LoadRegulatingPool(Pool<T> sourcePool, List<LoadPhase> phases, Timer timer, Sleeper sleeper) {
         this.sourcePool = sourcePool;
         this.phases = phases;
-        this.maxItems = maxItems;
         this.timer = timer;
         this.sleeper = sleeper;
         this.count = 0;
+        this.phaseCount = 0;
         this.phaseIndex = 0;
     }
 
     @Override
     public T next() {
         long nowMilliseconds = timer.milliseconds();
-        capturePhaseStartTime(nowMilliseconds);
         applyDelay(nowMilliseconds);
         count++;
+        phaseCount++;
         return sourcePool.next();
     }
 
@@ -62,24 +61,11 @@ public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
 
     @Override
     public boolean unfinished() {
-        if (phaseFinished(timer.milliseconds())) {
-            return false;
-        }
-        return count < maxItems;
+        return !phaseFinished();
     }
 
-    private boolean phaseFinished(long nowMilliseconds) {
-        if (phaseStartTimeMillis == null) {
-            return false;
-        }
-        long elapsed = nowMilliseconds - phaseStartTimeMillis;
-        return elapsed >= (long) (currentPhase().durationSeconds * 1000);
-    }
-
-    private void capturePhaseStartTime(long nowMilliseconds) {
-        if (phaseStartTimeMillis == null) {
-            phaseStartTimeMillis = nowMilliseconds;
-        }
+    private boolean phaseFinished() {
+        return phaseCount >= currentPhase().maxItems;
     }
 
     @Override
