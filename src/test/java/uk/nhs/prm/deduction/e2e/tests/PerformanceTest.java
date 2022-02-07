@@ -94,8 +94,11 @@ public class PerformanceTest {
     @Test
     public void testInjectingSuspensionMessages___AsFastAsPossible() {
         final var recorder = new RecordingNemsPatientEventTestListener();
-        var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(),
-                List.<LoadPhase>of(atFlatRate("0.2", 20)));
+        var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(), List.<LoadPhase>of(
+                atFlatRate("0.2", 20),
+                atFlatRate("0.5", 40),
+                atFlatRate("1.0", 60),
+                atFlatRate("2.0", 120)));
 
         while (nhsNumberSource.unfinished()) {
             injectSingleNemsSuspension(nhsNumberSource.next(), recorder);
