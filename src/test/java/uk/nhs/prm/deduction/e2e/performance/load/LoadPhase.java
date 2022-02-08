@@ -21,6 +21,10 @@ public class LoadPhase {
         runningCount = 0;
     }
 
+    public String toString() {
+        return totalCount + " events @" + ratePerSecond + "/s";
+    }
+
     public void incrementPhaseCount() {
         runningCount++;
     }
