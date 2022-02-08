@@ -1,10 +1,10 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
-import uk.nhs.prm.deduction.e2e.performance.load.Pool;
+import uk.nhs.prm.deduction.e2e.performance.load.FinitePool;
 
 import java.util.List;
 
-public class RoundRobinPool<T> implements Pool<T> {
+public class RoundRobinPool<T> implements FinitePool<T> {
     private final List<T> items;
     private int nextIndex = 0;
 
@@ -21,4 +21,8 @@ public class RoundRobinPool<T> implements Pool<T> {
         return item;
     }
 
+    @Override
+    public boolean unfinished() {
+        return true;
+    }
 }
