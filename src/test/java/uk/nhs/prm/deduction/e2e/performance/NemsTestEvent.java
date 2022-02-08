@@ -18,19 +18,25 @@ public class NemsTestEvent implements Comparable {
     private final String nemsMessageId;
     private final String nhsNumber;
 
-    private final LocalTime createdAt;
-    private final Helper helper = new Helper();
+    private final boolean suspension;
     private LocalDateTime started;
     private boolean isFinished = false;
     private List<String> problems = new ArrayList<>();
     private boolean isProblematic;
     private long processingTimeMs;
-    private boolean suspension = true;
 
-    public NemsTestEvent(String nemsMessageId, String nhsNumber) {
+    private NemsTestEvent(String nemsMessageId, String nhsNumber, boolean suspension) {
         this.nemsMessageId = nemsMessageId;
         this.nhsNumber = nhsNumber;
-        this.createdAt = now();
+        this.suspension = suspension;
+    }
+
+    public static NemsTestEvent suspensionEvent(String nhsNumber, String nemsMessageId) {
+        return new NemsTestEvent(nemsMessageId, nhsNumber, true);
+    }
+
+    public static NemsTestEvent nonSuspensionEvent(String nhsNumber, String nemsMessageId) {
+        return new NemsTestEvent(nemsMessageId, nhsNumber, false);
     }
 
     public String nemsMessageId() {
@@ -84,7 +90,6 @@ public class NemsTestEvent implements Comparable {
         return processingTimeMs / 1000;
     }
 
-
     @Override
     public int compareTo(Object o) {
         if (o.getClass().equals(NemsTestEvent.class)) {
@@ -100,10 +105,18 @@ public class NemsTestEvent implements Comparable {
 
     public NemsEventMessage createMessage() {
         var previousGP = NhsIdentityGenerator.generateRandomOdsCode();
-        var nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-suspension.xml",
-                nhsNumber(),
-                nemsMessageId(),
-                previousGP);
+        NemsEventMessage nemsSuspension;
+        if (isSuspension()) {
+            nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-suspension.xml",
+                    nhsNumber(),
+                    nemsMessageId(),
+                    previousGP);
+        }
+        else {
+            nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-non-suspension.xml",
+                    nhsNumber(),
+                    nemsMessageId());
+        }
         return nemsSuspension;
     }
 }
