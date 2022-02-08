@@ -19,7 +19,8 @@ common:
                 - build:
                     source: build/reports/tests/
               tabs:
-                performance: build/reports/performance/e2e-durations.png
+                durations: build/reports/performance/e2e-durations.png
+                throughput: build/reports/performance/e2e-throughput.png
               resources:
                 - docker
               tasks:

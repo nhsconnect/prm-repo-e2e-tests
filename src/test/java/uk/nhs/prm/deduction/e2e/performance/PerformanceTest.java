@@ -11,7 +11,7 @@ import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.load.*;
-import uk.nhs.prm.deduction.e2e.performance.reporting.ScatterPlotGenerator;
+import uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
@@ -29,7 +29,8 @@ import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessag
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNhsNumber;
 import static uk.nhs.prm.deduction.e2e.performance.NemsTestEvent.nonSuspensionEvent;
 import static uk.nhs.prm.deduction.e2e.performance.load.LoadPhase.atFlatRate;
-import static uk.nhs.prm.deduction.e2e.performance.reporting.ScatterPlotGenerator.generateProcessingDurationScatterPlot;
+import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGenerator.generateProcessingDurationScatterPlot;
+import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGenerator.generateThroughputPlot;
 
 @SpringBootTest(classes = {
         PerformanceTest.class,
@@ -53,6 +54,7 @@ public class PerformanceTest {
     public static final int TOTAL_MESSAGES_PER_DAY = 17000;
     public static final int SUSPENSION_MESSAGES_PER_DAY = 4600;
     public static final int NON_SUSPENSION_MESSAGES_PER_DAY = TOTAL_MESSAGES_PER_DAY - SUSPENSION_MESSAGES_PER_DAY;
+    public static final int THROUGHPUT_BUCKET_SECONDS = 30;
 
     @Autowired
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
@@ -127,6 +129,7 @@ public class PerformanceTest {
         recorder.summariseTo(System.out);
 
         generateProcessingDurationScatterPlot(recorder, "End to End Performance Test - Event durations vs start time (suspensions only, full load includes non-suspensions)");
+        generateThroughputPlot(recorder, THROUGHPUT_BUCKET_SECONDS, "End to End Performance Test - Throughput per second per " + THROUGHPUT_BUCKET_SECONDS + "seconds");
 
         assertThat(recorder.hasUnfinishedEvents()).isFalse();
     }
