@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.tests;
+package uk.nhs.prm.deduction.e2e.performance;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -10,10 +10,6 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
-import uk.nhs.prm.deduction.e2e.performance.DoNothingTestListener;
-import uk.nhs.prm.deduction.e2e.performance.NemsPatientEventTestListener;
-import uk.nhs.prm.deduction.e2e.performance.NemsTestEvent;
-import uk.nhs.prm.deduction.e2e.performance.RecordingNemsPatientEventTestListener;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadRegulatingPool;
 import uk.nhs.prm.deduction.e2e.performance.load.SuspensionCreatorPool;

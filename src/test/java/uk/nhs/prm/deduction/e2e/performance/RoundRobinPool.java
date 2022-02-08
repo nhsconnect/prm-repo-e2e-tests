@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.tests;
+package uk.nhs.prm.deduction.e2e.performance;
 
 import uk.nhs.prm.deduction.e2e.performance.load.Pool;
 
