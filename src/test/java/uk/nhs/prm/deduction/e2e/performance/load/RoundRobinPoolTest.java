@@ -1,7 +1,7 @@
 package uk.nhs.prm.deduction.e2e.performance.load;
 
 import org.junit.jupiter.api.Test;
-import uk.nhs.prm.deduction.e2e.tests.RoundRobinPool;
+import uk.nhs.prm.deduction.e2e.performance.RoundRobinPool;
 
 import java.util.List;
 

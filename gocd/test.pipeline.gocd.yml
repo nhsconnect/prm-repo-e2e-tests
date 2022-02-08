@@ -11,6 +11,7 @@ pipelines:
         type: configrepo
         ignore:
           - docs/**/*.*
+          - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
       pds-adaptor:
         pipeline: prm-deductions-pds-adaptor.dev
         stage: deploy
@@ -50,6 +51,7 @@ pipelines:
         type: configrepo
         ignore:
           - docs/**/*.*
+          - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
       pds-adaptor:
         pipeline: prm-deductions-pds-adaptor.test
         stage: deploy
