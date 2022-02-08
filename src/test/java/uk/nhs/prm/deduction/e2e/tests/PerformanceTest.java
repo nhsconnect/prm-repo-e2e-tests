@@ -8,12 +8,15 @@ import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
-import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
-import uk.nhs.prm.deduction.e2e.performance.*;
+import uk.nhs.prm.deduction.e2e.performance.DoNothingTestListener;
+import uk.nhs.prm.deduction.e2e.performance.NemsPatientEventTestListener;
+import uk.nhs.prm.deduction.e2e.performance.NemsTestEvent;
+import uk.nhs.prm.deduction.e2e.performance.RecordingNemsPatientEventTestListener;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadRegulatingPool;
+import uk.nhs.prm.deduction.e2e.performance.load.SuspensionCreatorPool;
 import uk.nhs.prm.deduction.e2e.performance.reporting.ScatterPlotGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
@@ -64,7 +67,7 @@ public class PerformanceTest {
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
         var nhsNumberPool = new RoundRobinPool<>(config.suspendedNhsNumbers());
 
-        var nemsEvent = injectSingleNemsSuspension(nhsNumberPool.next(), new DoNothingTestListener());
+        var nemsEvent = injectSingleNemsSuspension(new DoNothingTestListener(), new SuspensionCreatorPool(nhsNumberPool));
 
         System.out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
@@ -75,18 +78,13 @@ public class PerformanceTest {
         nemsEvent.finished(successMessage);
     }
 
-    private NemsTestEvent injectSingleNemsSuspension(String nhsNumber, NemsPatientEventTestListener listener) {
-        var nemsMessageId = helper.randomNemsMessageId();
-        var previousGP = PdsAdaptorTest.generateRandomOdsCode();
+    private NemsTestEvent injectSingleNemsSuspension(NemsPatientEventTestListener listener, SuspensionCreatorPool suspensionSource) {
+        NemsTestEvent testEvent = suspensionSource.next();
 
-        var testEvent = new NemsTestEvent(nemsMessageId, nhsNumber);
+        var nemsSuspension = testEvent.createMessage();
 
         listener.onStartingTestItem(testEvent);
 
-        var nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml",
-                nhsNumber,
-                nemsMessageId,
-                previousGP);
         meshMailbox.postMessage(nemsSuspension);
 
         testEvent.started();
@@ -107,7 +105,7 @@ public class PerformanceTest {
                 atFlatRate("2.0", 120))));
 
         while (nhsNumberSource.unfinished()) {
-            injectSingleNemsSuspension(nhsNumberSource.next(), recorder);
+            injectSingleNemsSuspension(recorder, new SuspensionCreatorPool(nhsNumberSource));
         }
 
         nhsNumberSource.summariseTo(System.out);
