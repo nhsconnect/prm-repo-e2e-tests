@@ -5,4 +5,6 @@ fileignoreconfig:
   checksum: 2c58ed002613c373781d95af3e2084ad3a60a970cd15ea233cb2547d1f7e4c00
 - filename: src/test/java/uk/nhs/prm/deduction/e2e/mesh/MeshClient.java
   checksum: acfaf4550f535fa7a98b37920796e45e9e8d7ac6edb0ea72f9a5b3efa44b50fb
+- filename: src/test/java/uk/nhs/prm/deduction/e2e/pdsadaptor/PdsAdaptorClient.java
+  checksum: b877bab289d8cd3726f5878e52bcd694d9bf661ec5a1c06f24c053f8a360668e
 version: ""

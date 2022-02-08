@@ -12,12 +12,19 @@ public class PdsAdaptorClient {
     private final String patientRootUrl;
 
     public PdsAdaptorClient() {
-        TestConfiguration config = new TestConfiguration();
-        this.e2eAuthPassword  = config.getPdsAdaptorApiKey();
-        this.patientRootUrl = config.getPdsAdaptorUrl();
+        this(new TestConfiguration());
+    }
+
+    public PdsAdaptorClient(TestConfiguration config) {
+        this(config.getPdsAdaptorApiKey(), config.getPdsAdaptorUrl());
     }
 
     private final RestTemplate restTemplate = new RestTemplate();
+
+    public PdsAdaptorClient(String pdsAdaptorApiKey, String pdsAdaptorUrl) {
+        this.e2eAuthPassword  = pdsAdaptorApiKey;
+        this.patientRootUrl = pdsAdaptorUrl;
+    }
 
     public PdsAdaptorResponse getSuspendedPatientStatus(String nhsNumber) {
         var patientUrl = buildUrl(patientRootUrl, nhsNumber);
