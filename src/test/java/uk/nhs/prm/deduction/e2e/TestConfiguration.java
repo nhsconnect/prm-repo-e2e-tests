@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.utils.ImmutableMap;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
-import uk.nhs.prm.deduction.e2e.performance.LoadPhase;
-import uk.nhs.prm.deduction.e2e.performance.LoadSpecParser;
+import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
+import uk.nhs.prm.deduction.e2e.performance.load.LoadSpecParser;
 
 import java.util.List;
 

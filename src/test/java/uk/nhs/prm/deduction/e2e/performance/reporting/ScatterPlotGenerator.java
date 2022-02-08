@@ -1,10 +1,11 @@
-package uk.nhs.prm.deduction.e2e.performance;
+package uk.nhs.prm.deduction.e2e.performance.reporting;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import uk.nhs.prm.deduction.e2e.performance.NemsTestRecording;
 
 import java.io.File;
 import java.io.IOException;

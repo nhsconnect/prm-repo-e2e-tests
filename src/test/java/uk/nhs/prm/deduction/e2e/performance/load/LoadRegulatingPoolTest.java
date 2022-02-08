@@ -1,18 +1,17 @@
-package uk.nhs.prm.deduction.e2e.performance;
+package uk.nhs.prm.deduction.e2e.performance.load;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.prm.deduction.e2e.timng.Sleeper;
 import uk.nhs.prm.deduction.e2e.tests.RoundRobinPool;
+import uk.nhs.prm.deduction.e2e.timing.Sleeper;
 import uk.nhs.prm.deduction.e2e.timing.Timer;
 
 import java.util.List;
 
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 

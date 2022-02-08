@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.timng;
+package uk.nhs.prm.deduction.e2e.timing;
 
 public class Sleeper {
     public void sleep(int milliseconds) {

@@ -1,6 +1,6 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
-import uk.nhs.prm.deduction.e2e.performance.Pool;
+import uk.nhs.prm.deduction.e2e.performance.load.Pool;
 
 import java.util.List;
 

@@ -1,7 +1,8 @@
-package uk.nhs.prm.deduction.e2e.performance;
+package uk.nhs.prm.deduction.e2e.performance.load;
 
+import uk.nhs.prm.deduction.e2e.performance.reporting.Reportable;
 import uk.nhs.prm.deduction.e2e.timing.Timer;
-import uk.nhs.prm.deduction.e2e.timng.Sleeper;
+import uk.nhs.prm.deduction.e2e.timing.Sleeper;
 
 import java.io.PrintStream;
 import java.util.List;

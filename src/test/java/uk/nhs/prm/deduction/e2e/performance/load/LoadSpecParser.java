@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.performance;
+package uk.nhs.prm.deduction.e2e.performance.load;
 
 import java.util.ArrayList;
 import java.util.List;
