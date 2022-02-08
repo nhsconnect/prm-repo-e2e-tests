@@ -145,7 +145,7 @@ public class PerformanceTest {
     }
 
     private void checkSuspended(List<String> suspendedNhsNumbers) {
-        PdsAdaptorClient pds = new PdsAdaptorClient();
+        PdsAdaptorClient pds = new PdsAdaptorClient(config.getPdsAdaptorPerformanceApiKey(), config.getPdsAdaptorUrl());
         for (String nhsNumber: suspendedNhsNumbers) {
             var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);
             System.out.println(nhsNumber + ": " + patientStatus);
