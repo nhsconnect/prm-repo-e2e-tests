@@ -29,6 +29,7 @@ import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessag
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNhsNumber;
 import static uk.nhs.prm.deduction.e2e.performance.NemsTestEvent.nonSuspensionEvent;
 import static uk.nhs.prm.deduction.e2e.performance.load.LoadPhase.atFlatRate;
+import static uk.nhs.prm.deduction.e2e.performance.reporting.ScatterPlotGenerator.generateProcessingDurationScatterPlot;
 
 @SpringBootTest(classes = {
         PerformanceTest.class,
@@ -125,7 +126,7 @@ public class PerformanceTest {
 
         recorder.summariseTo(System.out);
 
-        ScatterPlotGenerator.generateProcessingDurationScatterPlot(recorder);
+        generateProcessingDurationScatterPlot(recorder, "End to End Performance Test - Event durations vs start time (suspensions only, full load includes non-suspensions)");
 
         assertThat(recorder.hasUnfinishedEvents()).isFalse();
     }

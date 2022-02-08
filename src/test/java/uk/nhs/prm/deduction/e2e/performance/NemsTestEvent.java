@@ -2,6 +2,8 @@ package uk.nhs.prm.deduction.e2e.performance;
 
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
+import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
+import uk.nhs.prm.deduction.e2e.performance.load.Phased;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 
@@ -10,16 +12,18 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NemsTestEvent implements Comparable {
+public class NemsTestEvent implements Comparable, Phased {
     private final String nemsMessageId;
     private final String nhsNumber;
     private final boolean suspension;
 
+    private LoadPhase phase;
     private LocalDateTime started;
     private boolean isFinished = false;
+    private long processingTimeMs;
+
     private List<String> problems = new ArrayList<>();
     private boolean isProblematic;
-    private long processingTimeMs;
 
     private NemsTestEvent(String nemsMessageId, String nhsNumber, boolean suspension) {
         this.nemsMessageId = nemsMessageId;
@@ -63,8 +67,9 @@ public class NemsTestEvent implements Comparable {
         boolean firstTimeFinisher = false;
         if (isFinished) {
             isProblematic = true;
-            System.out.println("Duplicate finisheer!");
+            System.out.println("Duplicate finisher!");
             problems.add("finished() but already isFinished");
+            throw new RuntimeException("If you're seeing this message, we're finishing perf test events more than once :/");
         }
         else {
             firstTimeFinisher = true;
@@ -114,5 +119,15 @@ public class NemsTestEvent implements Comparable {
                     nemsMessageId());
         }
         return nemsSuspension;
+    }
+
+    @Override
+    public void setPhase(LoadPhase phase) {
+        this.phase = phase;
+    }
+
+    @Override
+    public LoadPhase phase() {
+        return phase;
     }
 }

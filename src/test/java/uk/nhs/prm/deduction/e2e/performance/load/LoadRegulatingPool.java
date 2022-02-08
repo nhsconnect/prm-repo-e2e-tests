@@ -7,7 +7,7 @@ import uk.nhs.prm.deduction.e2e.timing.Sleeper;
 import java.io.PrintStream;
 import java.util.List;
 
-public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
+public class LoadRegulatingPool<T extends Phased> implements FinitePool<T>, Reportable {
     private int count;
     private final Pool<T> sourcePool;
     private List<LoadPhase> phases;
@@ -32,10 +32,14 @@ public class LoadRegulatingPool<T> implements FinitePool<T>, Reportable {
     @Override
     public T next() {
         long nowMilliseconds = timer.milliseconds();
-        lastItemTimeMillis = currentPhase().applyDelay(nowMilliseconds, sleeper, lastItemTimeMillis);
+        LoadPhase loadPhase = currentPhase();
+        lastItemTimeMillis = loadPhase.applyDelay(nowMilliseconds, sleeper, lastItemTimeMillis);
         count++;
-        currentPhase().incrementPhaseCount();
-        return sourcePool.next();
+        loadPhase.incrementPhaseCount();
+
+        T next = sourcePool.next();
+        next.setPhase(loadPhase);
+        return next;
     }
 
     @Override
