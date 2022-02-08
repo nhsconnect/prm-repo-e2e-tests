@@ -8,21 +8,23 @@ import uk.nhs.prm.deduction.e2e.TestConfiguration;
 @Component
 public class PdsAdaptorClient {
 
-    private final String e2eAuthPassword;
+    private final String apiKey;
     private final String patientRootUrl;
+    private final String username;
 
     public PdsAdaptorClient() {
         this(new TestConfiguration());
     }
 
     public PdsAdaptorClient(TestConfiguration config) {
-        this(config.getPdsAdaptorApiKey(), config.getPdsAdaptorUrl());
+        this("e2e-test", config.getPdsAdaptorApiKey(), config.getPdsAdaptorUrl());
     }
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public PdsAdaptorClient(String pdsAdaptorApiKey, String pdsAdaptorUrl) {
-        this.e2eAuthPassword  = pdsAdaptorApiKey;
+    public PdsAdaptorClient(String username, String apiKey, String pdsAdaptorUrl) {
+        this.username = username;
+        this.apiKey = apiKey;
         this.patientRootUrl = pdsAdaptorUrl;
     }
 
@@ -30,7 +32,7 @@ public class PdsAdaptorClient {
         var patientUrl = buildUrl(patientRootUrl, nhsNumber);
         System.out.printf("Requesting patient suspended patient status from pds adaptor: %s%n", patientRootUrl);
         ResponseEntity<PdsAdaptorResponse> response =
-            restTemplate.exchange(patientUrl, HttpMethod.GET, new HttpEntity<>(createHeaders()), PdsAdaptorResponse.class);
+            restTemplate.exchange(patientUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(username, apiKey)), PdsAdaptorResponse.class);
         System.out.printf("Response received from pds adaptor: %s%n", response.getBody());
         return response.getBody();
     }
@@ -40,7 +42,7 @@ public class PdsAdaptorClient {
         PdsAdaptorRequest request = new PdsAdaptorRequest(previousGp, recordETag);
         System.out.printf("Request to update patient : url - %s , request - %s%n", patientUrl, request);
         ResponseEntity<PdsAdaptorResponse> response =
-            restTemplate.exchange(patientUrl, HttpMethod.PUT, new HttpEntity<>(request, createHeaders()), PdsAdaptorResponse.class);
+            restTemplate.exchange(patientUrl, HttpMethod.PUT, new HttpEntity<>(request, createHeaders(username, apiKey)), PdsAdaptorResponse.class);
         System.out.printf("Response received from pds adaptor update request: %s%n", response.getBody());
         return response.getBody();
     }
@@ -49,11 +51,10 @@ public class PdsAdaptorClient {
         return baseUrl + "suspended-patient-status/" + nhsNumber;
     }
 
-    private HttpHeaders createHeaders() {
+    private HttpHeaders createHeaders(String username, String apiKey) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth("e2e-test", e2eAuthPassword);
+        headers.setBasicAuth(username, apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
-
         return headers;
     }
 }
