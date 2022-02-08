@@ -1,6 +1,9 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
+import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
+import uk.nhs.prm.deduction.e2e.tests.PdsAdaptorTest;
+import uk.nhs.prm.deduction.e2e.utility.Helper;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -93,4 +96,12 @@ public class NemsTestEvent implements Comparable {
         return suspension;
     }
 
+    public NemsEventMessage createMessage() {
+        var previousGP = PdsAdaptorTest.generateRandomOdsCode();
+        var nemsSuspension = new Helper().createNemsEventFromTemplate("change-of-gp-suspension.xml",
+                nhsNumber(),
+                nemsMessageId(),
+                previousGP);
+        return nemsSuspension;
+    }
 }
