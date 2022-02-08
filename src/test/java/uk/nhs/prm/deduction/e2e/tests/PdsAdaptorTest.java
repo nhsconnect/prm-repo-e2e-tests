@@ -18,7 +18,7 @@ public class PdsAdaptorTest {
     @BeforeEach
     public void setup() {
         config = new TestConfiguration();
-        pdsAdaptorClient = new PdsAdaptorClient(config);
+        pdsAdaptorClient = new PdsAdaptorClient();
         nhsNumber = config.getPdsAdaptorTestPatientNhsNumber();
     }
 
