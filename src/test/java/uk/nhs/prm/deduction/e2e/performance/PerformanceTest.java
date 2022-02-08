@@ -92,9 +92,9 @@ public class PerformanceTest {
 
     @Test
     public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
-        final int OVERALL_TEST_TIMEOUT_SECONDS = 600;
+        final int overallTimeout = config.performanceTestTimeout();
         final var recorder = new RecordingNemsPatientEventTestListener();
-        var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(), config.getPerfLoadPhases(List.<LoadPhase>of(
+        var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(), config.performanceTestLoadPhases(List.<LoadPhase>of(
                 atFlatRate("0.2", 20),
                 atFlatRate("0.5", 40),
                 atFlatRate("1.0", 60),
@@ -108,7 +108,7 @@ public class PerformanceTest {
 
         System.out.println("Checking mof updated message queue...");
 
-        final var timeout = now().plusSeconds(OVERALL_TEST_TIMEOUT_SECONDS);
+        final var timeout = now().plusSeconds(overallTimeout);
         while (before(timeout) && recorder.hasUnfinishedEvents()) {
             for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages()) {
                 recorder.finishMatchingMessage(nextMessage);

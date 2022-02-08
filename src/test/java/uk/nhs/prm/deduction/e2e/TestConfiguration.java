@@ -10,6 +10,7 @@ import uk.nhs.prm.deduction.e2e.performance.load.LoadSpecParser;
 
 import java.util.List;
 
+import static java.lang.Integer.parseInt;
 import static java.util.Arrays.asList;
 
 @Component
@@ -100,6 +101,26 @@ public class TestConfiguration {
         return cachedAwsAccountNo;
     }
 
+    public List<String> suspendedNhsNumbers() {
+        return suspendedNhsNumbersByEnv.get(getEnvironmentName());
+    }
+
+    public List<LoadPhase> performanceTestLoadPhases(List<LoadPhase> defaultLoadPhases) {
+        String loadSpec = System.getenv("PERFORMANCE_LOAD_SPEC");
+        if (loadSpec == null) {
+            return defaultLoadPhases;
+        }
+        return LoadSpecParser.parsePhases(loadSpec);
+    }
+
+    public int performanceTestTimeout() {
+        String timeout = System.getenv("PERFORMANCE_TEST_TIMEOUT");
+        if (timeout == null) {
+            return 600;
+        }
+        return parseInt(timeout);
+    }
+
     private String fetchAwsAccountNo() {
         var client = StsClient.create();
         var response = client.getCallerIdentity();
@@ -116,17 +137,5 @@ public class TestConfiguration {
             throw new RuntimeException("Required environment variable has not been set: " + name);
         }
         return value;
-    }
-
-    public List<String> suspendedNhsNumbers() {
-        return suspendedNhsNumbersByEnv.get(getEnvironmentName());
-    }
-
-    public List<LoadPhase> getPerfLoadPhases(List<LoadPhase> defaultLoadPhases) {
-        String loadSpec = System.getenv("PERFORMANCE_LOAD_SPEC");
-        if (loadSpec == null) {
-            return defaultLoadPhases;
-        }
-        return LoadSpecParser.parsePhases(loadSpec);
     }
 }
