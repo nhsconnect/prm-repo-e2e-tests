@@ -22,4 +22,22 @@ class MixerPoolTest {
         assertThat(mixerPool.next()).isEqualTo(eventOne);
         assertThat(mixerPool.next()).isEqualTo(eventTwo);
     }
+
+    @Test
+    public void shouldProvideFirstAndEveryFourFromFirstPoolForOneQuarterMix() {
+        NemsTestEvent eventOne = NemsTestEvent.nonSuspensionEvent("1111" , "111");
+        NemsTestEvent eventTwo = NemsTestEvent.nonSuspensionEvent("2222" , "222");
+
+        Pool sourceOne = new BoringNemsTestEventPool(eventOne);
+        Pool sourceTwo = new BoringNemsTestEventPool(eventTwo);
+
+        MixerPool mixerPool = new MixerPool(1000, sourceOne, 3000, sourceTwo);
+
+        assertThat(mixerPool.next()).isEqualTo(eventOne);
+        assertThat(mixerPool.next()).isEqualTo(eventTwo);
+        assertThat(mixerPool.next()).isEqualTo(eventTwo);
+        assertThat(mixerPool.next()).isEqualTo(eventTwo);
+        assertThat(mixerPool.next()).isEqualTo(eventOne);
+        assertThat(mixerPool.next()).isEqualTo(eventTwo);
+    }
 }
