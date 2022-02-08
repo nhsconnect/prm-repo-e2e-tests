@@ -3,22 +3,18 @@ package uk.nhs.prm.deduction.e2e.performance;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
-import uk.nhs.prm.deduction.e2e.utility.Helper;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.time.LocalTime.now;
-
 public class NemsTestEvent implements Comparable {
     private final String nemsMessageId;
     private final String nhsNumber;
-
     private final boolean suspension;
+
     private LocalDateTime started;
     private boolean isFinished = false;
     private List<String> problems = new ArrayList<>();
