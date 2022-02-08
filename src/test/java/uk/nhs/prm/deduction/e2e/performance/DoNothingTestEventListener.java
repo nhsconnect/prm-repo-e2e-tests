@@ -1,6 +1,6 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
-public class DoNothingTestListener implements NemsPatientEventTestListener {
+public class DoNothingTestEventListener implements NemsTestEventListener {
     @Override
     public void onStartingTestItem(NemsTestEvent testEvent) {
         // nop

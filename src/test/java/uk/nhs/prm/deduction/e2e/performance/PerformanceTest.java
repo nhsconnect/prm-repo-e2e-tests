@@ -10,10 +10,7 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
-import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
-import uk.nhs.prm.deduction.e2e.performance.load.LoadRegulatingPool;
-import uk.nhs.prm.deduction.e2e.performance.load.Pool;
-import uk.nhs.prm.deduction.e2e.performance.load.SuspensionCreatorPool;
+import uk.nhs.prm.deduction.e2e.performance.load.*;
 import uk.nhs.prm.deduction.e2e.performance.reporting.ScatterPlotGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
@@ -28,6 +25,9 @@ import java.util.List;
 
 import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNhsNumber;
+import static uk.nhs.prm.deduction.e2e.performance.NemsTestEvent.nonSuspensionEvent;
 import static uk.nhs.prm.deduction.e2e.performance.load.LoadPhase.atFlatRate;
 
 @SpringBootTest(classes = {
@@ -49,7 +49,10 @@ import static uk.nhs.prm.deduction.e2e.performance.load.LoadPhase.atFlatRate;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class PerformanceTest {
 
-    private static final double LOAD_FRACTION_OF_SUSPENSIONS = 4600 / 17000;
+    public static final int TOTAL_MESSAGES_PER_DAY = 17000;
+    public static final int SUSPENSION_MESSAGES_PER_DAY = 4600;
+    public static final int NON_SUSPENSION_MESSAGES_PER_DAY = TOTAL_MESSAGES_PER_DAY - SUSPENSION_MESSAGES_PER_DAY;
+
     @Autowired
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
     @Autowired
@@ -65,7 +68,7 @@ public class PerformanceTest {
         var nhsNumberPool = new RoundRobinPool<>(config.suspendedNhsNumbers());
         var suspensions = new SuspensionCreatorPool(nhsNumberPool);
 
-        var nemsEvent = injectSingleNemsSuspension(new DoNothingTestListener(), suspensions);
+        var nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions);
 
         System.out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
@@ -76,7 +79,7 @@ public class PerformanceTest {
         nemsEvent.finished(successMessage);
     }
 
-    private NemsTestEvent injectSingleNemsSuspension(NemsPatientEventTestListener listener, Pool<NemsTestEvent> testEventSource) {
+    private NemsTestEvent injectSingleNemsSuspension(NemsTestEventListener listener, Pool<NemsTestEvent> testEventSource) {
         NemsTestEvent testEvent = testEventSource.next();
 
         var nemsSuspension = testEvent.createMessage();
@@ -95,20 +98,26 @@ public class PerformanceTest {
     @Test
     public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
         final int overallTimeout = config.performanceTestTimeout();
-        final var recorder = new RecordingNemsPatientEventTestListener();
-        var nhsNumberSource = new LoadRegulatingPool<>(suspendedNhsNumbers(), config.performanceTestLoadPhases(List.<LoadPhase>of(
+        final var recorder = new RecordingNemsTestEventListener();
+
+        var suspensionsSource = new SuspensionCreatorPool(suspendedNhsNumbers());
+        var nonSuspensionsSource = new BoringNemsTestEventPool(nonSuspensionEvent(randomNhsNumber(), randomNemsMessageId()));
+        var mixedSource = new MixerPool<>(
+                SUSPENSION_MESSAGES_PER_DAY, suspensionsSource,
+                NON_SUSPENSION_MESSAGES_PER_DAY, nonSuspensionsSource);
+
+        var loadSource = new LoadRegulatingPool<>(mixedSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
                 atFlatRate("0.2", 20),
                 atFlatRate("0.5", 40),
                 atFlatRate("1.0", 60),
                 atFlatRate("2.0", 120))));
 
-        var suspensions = new SuspensionCreatorPool(nhsNumberSource);
-
-        while (suspensions.unfinished()) {
-            injectSingleNemsSuspension(recorder, suspensions);
+        var suspensionsOnlyRecorder = new SuspensionsOnlyEventListener(recorder);
+        while (loadSource.unfinished()) {
+            injectSingleNemsSuspension(suspensionsOnlyRecorder, suspensionsSource);
         }
 
-        nhsNumberSource.summariseTo(System.out);
+        loadSource.summariseTo(System.out);
 
         System.out.println("Checking mof updated message queue...");
 

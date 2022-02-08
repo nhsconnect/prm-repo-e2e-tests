@@ -36,7 +36,7 @@ public class LoadPhase {
     /*
      * @return Time after delay applied
      */
-    Long applyDelay(long now, Sleeper sleeper, Long lastItemTimeMillis) {
+    public Long applyDelay(long now, Sleeper sleeper, Long lastItemTimeMillis) {
         if (lastItemTimeMillis == null) {
             return now;
         }
