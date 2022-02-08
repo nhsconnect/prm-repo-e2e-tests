@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.performance.load;
 
+import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
 import uk.nhs.prm.deduction.e2e.performance.NemsTestEvent;
 import uk.nhs.prm.deduction.e2e.utility.Helper;
 
@@ -13,7 +14,7 @@ public class SuspensionCreatorPool implements Pool<NemsTestEvent> {
 
     public NemsTestEvent next() {
         var nhsNumber = nhsNumberPool.next();
-        var nemsMessageId = helper.randomNemsMessageId();
+        var nemsMessageId = NhsIdentityGenerator.randomNemsMessageId();
         var testEvent = new NemsTestEvent(nemsMessageId, nhsNumber);
         return testEvent;
     }
