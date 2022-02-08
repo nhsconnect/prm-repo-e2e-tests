@@ -100,13 +100,8 @@ public class PerformanceTest {
         final int overallTimeout = config.performanceTestTimeout();
         final var recorder = new RecordingNemsTestEventListener();
 
-        var suspensionsSource = new SuspensionCreatorPool(suspendedNhsNumbers());
-        var nonSuspensionsSource = new BoringNemsTestEventPool(nonSuspensionEvent(randomNhsNumber(), randomNemsMessageId()));
-        var mixedSource = new MixerPool<>(
-                SUSPENSION_MESSAGES_PER_DAY, suspensionsSource,
-                NON_SUSPENSION_MESSAGES_PER_DAY, nonSuspensionsSource);
-
-        var loadSource = new LoadRegulatingPool<>(mixedSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
+        var eventSource = createMixedTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
+        var loadSource = new LoadRegulatingPool<>(eventSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
                 atFlatRate("0.2", 20),
                 atFlatRate("0.5", 40),
                 atFlatRate("1.0", 60),
@@ -114,7 +109,7 @@ public class PerformanceTest {
 
         var suspensionsOnlyRecorder = new SuspensionsOnlyEventListener(recorder);
         while (loadSource.unfinished()) {
-            injectSingleNemsSuspension(suspensionsOnlyRecorder, suspensionsSource);
+            injectSingleNemsSuspension(suspensionsOnlyRecorder, loadSource);
         }
 
         loadSource.summariseTo(System.out);
@@ -133,6 +128,14 @@ public class PerformanceTest {
         ScatterPlotGenerator.generateProcessingDurationScatterPlot(recorder);
 
         assertThat(recorder.hasUnfinishedEvents()).isFalse();
+    }
+
+    private MixerPool<NemsTestEvent> createMixedTestEventSource(int suspensionMessagesPerDay, int nonSuspensionMessagesPerDay) {
+        var suspensionsSource = new SuspensionCreatorPool(suspendedNhsNumbers());
+        var nonSuspensionsSource = new BoringNemsTestEventPool(nonSuspensionEvent(randomNhsNumber(), randomNemsMessageId()));
+        return new MixerPool<>(
+                suspensionMessagesPerDay, suspensionsSource,
+                nonSuspensionMessagesPerDay, nonSuspensionsSource);
     }
 
     private RoundRobinPool<String> suspendedNhsNumbers() {
