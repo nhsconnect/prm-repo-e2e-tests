@@ -10,7 +10,7 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
-public class RecordingNemsPatientEventTestListener implements NemsPatientEventTestListener, NemsTestRecording {
+public class RecordingNemsTestEventListener implements NemsTestEventListener, NemsTestRecording {
     private final Map<String, NemsTestEvent> nemsEventsById = new HashMap<>();
     private int knownEventCount = 0;
     private int unknownEventCount = 0;
