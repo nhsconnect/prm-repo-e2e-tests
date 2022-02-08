@@ -9,6 +9,7 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
+import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
@@ -17,10 +18,14 @@ import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.utility.Helper;
+import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNhsNumber;
+import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventFromTemplate;
 
 
 @SpringBootTest(classes = {
@@ -86,15 +91,15 @@ public class EndToEndTest {
     @Test
     @Order(1)
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
-        String nemsMessageId = helper.randomNemsMessageId();
+        String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
 
         PdsAdaptorClient pdsAdaptorClient = new PdsAdaptorClient();
         PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus(suspendedPatientNhsNumber);
 
-        pdsAdaptorClient.updateManagingOrganisation(suspendedPatientNhsNumber, PdsAdaptorTest.generateRandomOdsCode(), pdsAdaptorResponse.getRecordETag());
+        pdsAdaptorClient.updateManagingOrganisation(suspendedPatientNhsNumber, NhsIdentityGenerator.generateRandomOdsCode(), pdsAdaptorResponse.getRecordETag());
 
-        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId);
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
         assertThat(suspensionsMessageQueue.hasMessageContaining(suspendedPatientNhsNumber));
@@ -104,10 +109,10 @@ public class EndToEndTest {
     @Test
     @Order(2)
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() throws Exception {
-        String nemsMessageId = helper.randomNemsMessageId();
+        String nemsMessageId = randomNemsMessageId();
         String currentlyRegisteredPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
 
-        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId);
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId);
 
         meshMailbox.postMessage(nemsSuspension);
 
@@ -120,9 +125,9 @@ public class EndToEndTest {
     @Test
     @Order(4)
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
-        String nemsMessageId = helper.randomNemsMessageId();
-        String nhsNumber = helper.randomNhsNumber();
-        NemsEventMessage nemsNonSuspension = helper.createNemsEventFromTemplate("change-of-gp-non-suspension.xml", nhsNumber, nemsMessageId);
+        String nemsMessageId = randomNemsMessageId();
+        String nhsNumber = randomNhsNumber();
+        NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate("change-of-gp-non-suspension.xml", nhsNumber, nemsMessageId);
         meshMailbox.postMessage(nemsNonSuspension);
 
         assertThat(meshForwarderQueue.hasMessage(nemsNonSuspension.body()));
@@ -133,7 +138,7 @@ public class EndToEndTest {
     @Test
     @Order(5)
     public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
-        Map<String, NemsEventMessage> dlqMessages = helper.getDLQNemsEventMessages();
+        Map<String, NemsEventMessage> dlqMessages = NemsEventFactory.getDLQNemsEventMessages();
         log("Posting DLQ messages");
         for (Map.Entry<String, NemsEventMessage> message : dlqMessages.entrySet()) {
             meshMailbox.postMessage(message.getValue());
@@ -145,8 +150,8 @@ public class EndToEndTest {
     @Test
     @Order(3)
     public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() throws Exception {
-        String nemsMessageId = helper.randomNemsMessageId();
-        NemsEventMessage nemsSuspension = helper.createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER, nemsMessageId);
+        String nemsMessageId = randomNemsMessageId();
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
         assertThat(suspensionsMessageQueue.hasMessageContaining(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
