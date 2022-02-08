@@ -12,6 +12,7 @@ import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadRegulatingPool;
+import uk.nhs.prm.deduction.e2e.performance.load.Pool;
 import uk.nhs.prm.deduction.e2e.performance.load.SuspensionCreatorPool;
 import uk.nhs.prm.deduction.e2e.performance.reporting.ScatterPlotGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
@@ -62,8 +63,9 @@ public class PerformanceTest {
     @Test
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
         var nhsNumberPool = new RoundRobinPool<>(config.suspendedNhsNumbers());
+        var suspensions = new SuspensionCreatorPool(nhsNumberPool);
 
-        var nemsEvent = injectSingleNemsSuspension(new DoNothingTestListener(), new SuspensionCreatorPool(nhsNumberPool));
+        var nemsEvent = injectSingleNemsSuspension(new DoNothingTestListener(), suspensions);
 
         System.out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
@@ -74,8 +76,8 @@ public class PerformanceTest {
         nemsEvent.finished(successMessage);
     }
 
-    private NemsTestEvent injectSingleNemsSuspension(NemsPatientEventTestListener listener, SuspensionCreatorPool suspensionSource) {
-        NemsTestEvent testEvent = suspensionSource.next();
+    private NemsTestEvent injectSingleNemsSuspension(NemsPatientEventTestListener listener, Pool<NemsTestEvent> testEventSource) {
+        NemsTestEvent testEvent = testEventSource.next();
 
         var nemsSuspension = testEvent.createMessage();
 
@@ -100,8 +102,10 @@ public class PerformanceTest {
                 atFlatRate("1.0", 60),
                 atFlatRate("2.0", 120))));
 
-        while (nhsNumberSource.unfinished()) {
-            injectSingleNemsSuspension(recorder, new SuspensionCreatorPool(nhsNumberSource));
+        var suspensions = new SuspensionCreatorPool(nhsNumberSource);
+
+        while (suspensions.unfinished()) {
+            injectSingleNemsSuspension(recorder, suspensions);
         }
 
         nhsNumberSource.summariseTo(System.out);
