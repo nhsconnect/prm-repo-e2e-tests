@@ -21,8 +21,8 @@ public class Helper {
         return nemsMessageId;
     }
 
-    public NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId) throws IOException {
-        return  createNemsEventFromTemplate(nemsEventFilename, nhsNumber, nemsMessageId, "B85612");
+    public NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId) {
+        return createNemsEventFromTemplate(nemsEventFilename, nhsNumber, nemsMessageId, "B85612");
     }
 
     public NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId, String previousGP) {

@@ -20,6 +20,7 @@ public class NemsTestEvent implements Comparable {
     private List<String> problems = new ArrayList<>();
     private boolean isProblematic;
     private long processingTimeMs;
+    private boolean suspension = true;
 
     public NemsTestEvent(String nemsMessageId, String nhsNumber) {
         this.nemsMessageId = nemsMessageId;
@@ -87,4 +88,9 @@ public class NemsTestEvent implements Comparable {
         }
         return 0;
     }
+
+    public boolean isSuspension() {
+        return suspension;
+    }
+
 }

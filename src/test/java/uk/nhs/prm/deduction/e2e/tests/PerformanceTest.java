@@ -8,9 +8,13 @@ import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
+import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.*;
+import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
+import uk.nhs.prm.deduction.e2e.performance.load.LoadRegulatingPool;
+import uk.nhs.prm.deduction.e2e.performance.reporting.ScatterPlotGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
@@ -24,7 +28,7 @@ import java.util.List;
 
 import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static uk.nhs.prm.deduction.e2e.performance.LoadPhase.atFlatRate;
+import static uk.nhs.prm.deduction.e2e.performance.load.LoadPhase.atFlatRate;
 
 @SpringBootTest(classes = {
         PerformanceTest.class,
@@ -45,6 +49,7 @@ import static uk.nhs.prm.deduction.e2e.performance.LoadPhase.atFlatRate;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class PerformanceTest {
 
+    private static final double LOAD_FRACTION_OF_SUSPENSIONS = 4600 / 17000;
     @Autowired
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
     @Autowired
