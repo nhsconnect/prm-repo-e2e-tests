@@ -12,6 +12,7 @@ pipelines:
         ignore:
           - docs/**/*.*
           - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
+          - gocd/performance.pipeline.gocd.yml
       pds-adaptor:
         pipeline: prm-deductions-pds-adaptor.dev
         stage: deploy
@@ -52,6 +53,7 @@ pipelines:
         ignore:
           - docs/**/*.*
           - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
+          - gocd/performance.pipeline.gocd.yml
       pds-adaptor:
         pipeline: prm-deductions-pds-adaptor.test
         stage: deploy
