@@ -24,6 +24,7 @@ public class NemsTestEvent implements Comparable, Phased {
 
     private List<String> problems = new ArrayList<>();
     private boolean isProblematic;
+    private LocalDateTime finishedAt;
 
     private NemsTestEvent(String nemsMessageId, String nhsNumber, boolean suspension) {
         this.nemsMessageId = nemsMessageId;
@@ -74,7 +75,8 @@ public class NemsTestEvent implements Comparable, Phased {
         else {
             firstTimeFinisher = true;
             isFinished = true;
-            processingTimeMs = startedAt().until(successMessage.queuedAt(), ChronoUnit.MILLIS);
+            finishedAt = successMessage.queuedAt();
+            processingTimeMs = startedAt().until(finishedAt, ChronoUnit.MILLIS);
         }
 
         System.out.println(String.format("NEMS suspension %s for %s was injected at %tT and arrived on output queue at %tT after %s ms",
@@ -85,6 +87,10 @@ public class NemsTestEvent implements Comparable, Phased {
                 processingTimeMs));
 
         return firstTimeFinisher;
+    }
+
+    public LocalDateTime finishedAt() {
+        return finishedAt;
     }
 
     public long duration() {

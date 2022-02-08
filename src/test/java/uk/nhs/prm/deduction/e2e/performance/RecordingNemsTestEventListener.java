@@ -25,11 +25,6 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
         System.out.println("Started test on " + new Date() + " " + testEvent.nemsMessageId() + " " + testEvent.nhsNumber());
     }
 
-    @Override
-    public int testItemCount() {
-        return nemsEventsById.size();
-    }
-
     public boolean finishMatchingMessage(SqsMessage sqsMessage)  {
         String nemsMessageIdFromBody = extractNemsMessageIdFromBody(sqsMessage);
         if (nemsEventsById.containsKey(nemsMessageIdFromBody)) {
