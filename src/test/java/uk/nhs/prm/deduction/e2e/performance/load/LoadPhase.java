@@ -3,6 +3,7 @@ package uk.nhs.prm.deduction.e2e.performance.load;
 import uk.nhs.prm.deduction.e2e.timing.Sleeper;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class LoadPhase {
     private static final BigDecimal ONE_THOUSAND = new BigDecimal(1000);
@@ -34,7 +35,7 @@ public class LoadPhase {
     }
 
     private int targetDelayMilliseconds() {
-        return ONE_THOUSAND.multiply(BigDecimal.ONE.divide(ratePerSecond)).intValue();
+        return ONE_THOUSAND.multiply(BigDecimal.ONE.divide(ratePerSecond, RoundingMode.HALF_UP)).intValue();
     }
 
     /*
