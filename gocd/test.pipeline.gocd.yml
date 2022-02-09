@@ -35,6 +35,11 @@ pipelines:
               timeout: 15
               resources:
                 - docker
+              artifacts:
+                - build:
+                    source: build/reports/tests/
+              tabs:
+                TestReport: build/reports/tests/index.html
               tasks:
                 - exec:
                     command: /bin/bash
@@ -76,6 +81,11 @@ pipelines:
               timeout: 15
               resources:
                 - docker
+              artifacts:
+                - build:
+                    source: build/reports/tests/
+              tabs:
+                TestReport: build/reports/tests/index.html
               tasks:
                 - exec:
                     command: /bin/bash
