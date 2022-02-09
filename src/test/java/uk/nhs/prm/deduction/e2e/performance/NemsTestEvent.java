@@ -22,8 +22,7 @@ public class NemsTestEvent implements Comparable, Phased {
     private boolean isFinished = false;
     private long processingTimeMs;
 
-    private List<String> problems = new ArrayList<>();
-    private boolean isProblematic;
+    private List<String> warnings = new ArrayList<>();
     private LocalDateTime finishedAt;
 
     private NemsTestEvent(String nemsMessageId, String nhsNumber, boolean suspension) {
@@ -48,6 +47,16 @@ public class NemsTestEvent implements Comparable, Phased {
         return nhsNumber;
     }
 
+    @Override
+    public void setPhase(LoadPhase phase) {
+        this.phase = phase;
+    }
+
+    @Override
+    public LoadPhase phase() {
+        return phase;
+    }
+
     public LocalDateTime startedAt() {
         return started;
     }
@@ -56,8 +65,8 @@ public class NemsTestEvent implements Comparable, Phased {
         return isFinished;
     }
 
-    public boolean isProblematic() {
-        return isProblematic;
+    public boolean hasWarnings() {
+        return !warnings.isEmpty();
     }
 
     public void started() {
@@ -67,10 +76,9 @@ public class NemsTestEvent implements Comparable, Phased {
     public boolean finished(SqsMessage successMessage) {
         boolean firstTimeFinisher = false;
         if (isFinished) {
-            isProblematic = true;
-            System.out.println("Duplicate finisher!");
-            problems.add("finished() but already isFinished");
-            throw new RuntimeException("If you're seeing this message, we're finishing perf test events more than once :/");
+            String warning = "Warning: Duplicate finisher! finished() but already isFinished";
+            System.out.println(warning);
+            warnings.add(warning);
         }
         else {
             firstTimeFinisher = true;
@@ -79,12 +87,7 @@ public class NemsTestEvent implements Comparable, Phased {
             processingTimeMs = startedAt().until(finishedAt, ChronoUnit.MILLIS);
         }
 
-        System.out.println(String.format("NEMS suspension %s for %s was injected at %tT and arrived on output queue at %tT after %s ms",
-                nemsMessageId(),
-                nhsNumber(),
-                startedAt(),
-                successMessage.queuedAt(),
-                processingTimeMs));
+        System.out.println(this);
 
         return firstTimeFinisher;
     }
@@ -95,6 +98,21 @@ public class NemsTestEvent implements Comparable, Phased {
 
     public long duration() {
         return processingTimeMs / 1000;
+    }
+
+    @Override
+    public String toString() {
+        return "NemsTestEvent{" +
+                "nemsMessageId='" + nemsMessageId + '\'' +
+                ", nhsNumber='" + nhsNumber + '\'' +
+                ", suspension=" + suspension +
+                ", phase=" + phase +
+                ", started=" + started +
+                ", isFinished=" + isFinished +
+                ", processingTimeMs=" + processingTimeMs +
+                ", warnings=" + warnings +
+                ", finishedAt=" + finishedAt +
+                '}';
     }
 
     @Override
@@ -125,15 +143,5 @@ public class NemsTestEvent implements Comparable, Phased {
                     nemsMessageId());
         }
         return nemsSuspension;
-    }
-
-    @Override
-    public void setPhase(LoadPhase phase) {
-        this.phase = phase;
-    }
-
-    @Override
-    public LoadPhase phase() {
-        return phase;
     }
 }
