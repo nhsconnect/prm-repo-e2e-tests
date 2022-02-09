@@ -1,8 +1,7 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import software.amazon.awssdk.services.sqs.model.*;
-import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
-import uk.nhs.prm.deduction.e2e.performance.StsSessionTokenClient;
+import uk.nhs.prm.deduction.e2e.performance.AssumeRoleAuthAutoRefreshSqsClientFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,7 +9,7 @@ import java.util.stream.Collectors;
 public class SqsClient {
     software.amazon.awssdk.services.sqs.SqsClient sqsClient = software.amazon.awssdk.services.sqs.SqsClient.create();
 
-    private final StsSessionTokenClient stsSessionTokenClient = new StsSessionTokenClient();
+    private final AssumeRoleAuthAutoRefreshSqsClientFactory autoRefreshClientFactory = new AssumeRoleAuthAutoRefreshSqsClientFactory();
 
     public List<SqsMessage> readMessagesFrom(String queueUrl) {
         var receiveMessageRequest = ReceiveMessageRequest.builder()
@@ -57,15 +56,10 @@ public class SqsClient {
         }
         catch (SqsException e) {
             System.out.println("Updating client to use assume role refresh request");
-            sqsClient = software.amazon.awssdk.services.sqs.SqsClient.builder().credentialsProvider(StsAssumeRoleCredentialsProvider
-                    .builder()
-                    .refreshRequest(() -> {
-                        System.out.println("Creating refresh session token request");
-                        return stsSessionTokenClient.refreshAssumeRoleRequest("performance-test");
-                    })
-                    .build()).build();
+            sqsClient = autoRefreshClientFactory.createAssumeRoleAutoRefreshSqsClient();
             System.out.println("Attempting receive messages with updated assume role credentials provider");
             return sqsClient.receiveMessage(receiveMessageRequest);
         }
     }
+
 }
