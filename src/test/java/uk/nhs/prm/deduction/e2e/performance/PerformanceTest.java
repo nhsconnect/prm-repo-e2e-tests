@@ -54,7 +54,7 @@ public class PerformanceTest {
     public static final int TOTAL_MESSAGES_PER_DAY = 17000;
     public static final int SUSPENSION_MESSAGES_PER_DAY = 4600;
     public static final int NON_SUSPENSION_MESSAGES_PER_DAY = TOTAL_MESSAGES_PER_DAY - SUSPENSION_MESSAGES_PER_DAY;
-    public static final int THROUGHPUT_BUCKET_SECONDS = 30;
+    public static final int THROUGHPUT_BUCKET_SECONDS = 60;
 
     @Autowired
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
