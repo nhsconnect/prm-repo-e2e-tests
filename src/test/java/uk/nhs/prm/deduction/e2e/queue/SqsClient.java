@@ -24,9 +24,9 @@ public class SqsClient {
         return messages;
     }
 
-    public List<SqsMessage> readThroughMessages(String queueUrl) {
+    public List<SqsMessage> readThroughMessages(String queueUrl, int visibilityTimeout) {
         var receiveMessageRequest = ReceiveMessageRequest.builder()
-            .visibilityTimeout(180)
+            .visibilityTimeout(visibilityTimeout)
             .queueUrl(queueUrl)
             .waitTimeSeconds(5)
             .maxNumberOfMessages(10)

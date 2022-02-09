@@ -3,6 +3,8 @@ package uk.nhs.prm.deduction.e2e.suspensions;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -43,21 +45,22 @@ public class SuspensionMessageQueue {
         return true;
     }
 
-    public List<SqsMessage> getNextMessages() {
+    public List<SqsMessage> getNextMessages(LocalDateTime timeoutAt) {
         log(String.format("Checking for messages on : %s",  this.queueUri));
-        return await().atMost(120, TimeUnit.SECONDS)
+        var timeoutSeconds = LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS);
+        return await().atMost(timeoutSeconds, TimeUnit.SECONDS)
             .with()
-            .pollInterval(100, TimeUnit.MILLISECONDS)
-            .until(this::findMessagesOnQueue, notNullValue());
+            .pollInterval(5, TimeUnit.SECONDS)
+            .until(() -> findMessagesOnQueue((int) timeoutSeconds), notNullValue());
     }
 
-    private List<SqsMessage> findMessagesOnQueue() {
-        List<SqsMessage> messages = sqsQueue.readThroughMessages(this.queueUri);
+    private List<SqsMessage> findMessagesOnQueue(int visibilityTimeout) {
+        List<SqsMessage> messages = sqsQueue.readThroughMessages(this.queueUri, visibilityTimeout);
         return messages.isEmpty() ? null : messages;
     }
 
     private SqsMessage findMessageContaining(String substring) {
-        var allMessages = sqsQueue.readThroughMessages(this.queueUri);
+        var allMessages = sqsQueue.readThroughMessages(this.queueUri, 180);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
                 System.out.println("just finding message, checking: " + message.id());
