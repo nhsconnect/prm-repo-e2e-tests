@@ -88,9 +88,6 @@ public class NemsTestEvent implements Comparable, Phased {
             finishedAt = successMessage.queuedAt();
             processingTimeMs = startedAt().until(finishedAt, ChronoUnit.MILLIS);
         }
-
-        System.out.println(this);
-
         return firstTimeFinisher;
     }
 

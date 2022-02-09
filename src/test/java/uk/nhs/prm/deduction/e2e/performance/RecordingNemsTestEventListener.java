@@ -18,9 +18,9 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
     @Override
     public void onStartingTestItem(NemsTestEvent testEvent) {
         nemsEventsById.put(testEvent.nemsMessageId(), testEvent);
-        if (nemsEventsById.size() % 100 == 0) {
+        if (nemsEventsById.size() % 20 == 0) {
             System.out.println();
-            System.out.println("Created " + nemsEventsById.size() + " test events at " + new Date());
+            System.out.println("Recorded " + nemsEventsById.size() + " test events at " + new Date());
         }
     }
 
@@ -32,12 +32,13 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
     public boolean finishMatchingMessage(SqsMessage sqsMessage)  {
         String nemsMessageIdFromBody = extractNemsMessageIdFromBody(sqsMessage);
         if (nemsEventsById.containsKey(nemsMessageIdFromBody)) {
-             if (nemsEventsById.get(nemsMessageIdFromBody).finished(sqsMessage)) {
-                 knownEventCount++;
-             };
+            if (nemsEventsById.get(nemsMessageIdFromBody).finished(sqsMessage)) {
+                knownEventCount++;
+            };
+            System.out.print("F");
             return true;
         } else {
-            System.out.println("Nems message ID " + nemsMessageIdFromBody + " not sent by performance test");
+            System.out.print(".");
             unknownEventCount++;
             return false;
         }
