@@ -54,6 +54,11 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
         out.println("Total messages received: " + (knownEventCount + unknownEventCount));
         out.println("Total messages received from messages sent in test: " + knownEventCount);
         out.println("Total messages received from messasges received outside of test: " + unknownEventCount);
+        for (var event : testEvents()) {
+            if (event.hasWarnings()) {
+                System.out.println("An event had warnings: " + event);
+            }
+        }
     }
 
     @Override

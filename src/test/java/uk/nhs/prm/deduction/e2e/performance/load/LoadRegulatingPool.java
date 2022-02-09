@@ -49,7 +49,7 @@ public class LoadRegulatingPool<T extends Phased> implements FinitePool<T>, Repo
 
     @Override
     public void summariseTo(PrintStream out) {
-        out.println("Number of items of load provided: " + count);
+        out.println("Total number of items of load provided: " + count);
     }
 
     private LoadPhase currentPhase() {

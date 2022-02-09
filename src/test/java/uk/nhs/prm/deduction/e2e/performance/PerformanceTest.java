@@ -11,7 +11,6 @@ import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.load.*;
-import uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
@@ -65,13 +64,12 @@ public class PerformanceTest {
     @Autowired
     private TestConfiguration config;
 
-    //    Note: 17,000 a day (X3 for the test - so 51,000); out of the 17k messages 4600 are suspension messages
     @Test
-    public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
+    public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
         var nhsNumberPool = new RoundRobinPool<>(config.suspendedNhsNumbers());
         var suspensions = new SuspensionCreatorPool(nhsNumberPool);
 
-        var nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions);
+        var nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
 
         System.out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
@@ -82,9 +80,46 @@ public class PerformanceTest {
         nemsEvent.finished(successMessage);
     }
 
-    private NemsTestEvent injectSingleNemsSuspension(NemsTestEventListener listener, Pool<NemsTestEvent> testEventSource) {
-        NemsTestEvent testEvent = testEventSource.next();
+    @Test
+    public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
+        final int overallTimeout = config.performanceTestTimeout();
+        final var recorder = new RecordingNemsTestEventListener();
 
+        var eventSource = createMixedSuspensionsAndNonSuspensionsTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
+        var loadSource = new LoadRegulatingPool<>(eventSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
+                atFlatRate("0.2", 20),
+                atFlatRate("0.5", 40),
+                atFlatRate("1.0", 60),
+                atFlatRate("2.0", 120))));
+
+        var suspensionsOnlyRecorder = new SuspensionsOnlyEventListener(recorder);
+        while (loadSource.unfinished()) {
+            injectSingleNemsSuspension(suspensionsOnlyRecorder, loadSource.next());
+        }
+
+        loadSource.summariseTo(System.out);
+
+        System.out.println("Checking mof updated message queue...");
+
+        try {
+            final var timeout = now().plusSeconds(overallTimeout);
+            while (before(timeout) && recorder.hasUnfinishedEvents()) {
+                for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages()) {
+                    recorder.finishMatchingMessage(nextMessage);
+                }
+            }
+        }
+        finally {
+            recorder.summariseTo(System.out);
+
+            generateProcessingDurationScatterPlot(recorder, "End to End Performance Test - Event durations vs start time (suspensions only, full load includes non-suspensions)");
+            generateThroughputPlot(recorder, THROUGHPUT_BUCKET_SECONDS, "End to End Performance Test - Throughput per second per " + THROUGHPUT_BUCKET_SECONDS + "seconds");
+        }
+
+        assertThat(recorder.hasUnfinishedEvents()).isFalse();
+    }
+
+    private NemsTestEvent injectSingleNemsSuspension(NemsTestEventListener listener, NemsTestEvent testEvent) {
         var nemsSuspension = testEvent.createMessage();
 
         listener.onStartingTestItem(testEvent);
@@ -98,43 +133,7 @@ public class PerformanceTest {
         return testEvent;
     }
 
-    @Test
-    public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
-        final int overallTimeout = config.performanceTestTimeout();
-        final var recorder = new RecordingNemsTestEventListener();
-
-        var eventSource = createMixedTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
-        var loadSource = new LoadRegulatingPool<>(eventSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
-                atFlatRate("0.2", 20),
-                atFlatRate("0.5", 40),
-                atFlatRate("1.0", 60),
-                atFlatRate("2.0", 120))));
-
-        var suspensionsOnlyRecorder = new SuspensionsOnlyEventListener(recorder);
-        while (loadSource.unfinished()) {
-            injectSingleNemsSuspension(suspensionsOnlyRecorder, loadSource);
-        }
-
-        loadSource.summariseTo(System.out);
-
-        System.out.println("Checking mof updated message queue...");
-
-        final var timeout = now().plusSeconds(overallTimeout);
-        while (before(timeout) && recorder.hasUnfinishedEvents()) {
-            for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages()) {
-                recorder.finishMatchingMessage(nextMessage);
-            }
-        }
-
-        recorder.summariseTo(System.out);
-
-        generateProcessingDurationScatterPlot(recorder, "End to End Performance Test - Event durations vs start time (suspensions only, full load includes non-suspensions)");
-        generateThroughputPlot(recorder, THROUGHPUT_BUCKET_SECONDS, "End to End Performance Test - Throughput per second per " + THROUGHPUT_BUCKET_SECONDS + "seconds");
-
-        assertThat(recorder.hasUnfinishedEvents()).isFalse();
-    }
-
-    private MixerPool<NemsTestEvent> createMixedTestEventSource(int suspensionMessagesPerDay, int nonSuspensionMessagesPerDay) {
+    private MixerPool<NemsTestEvent> createMixedSuspensionsAndNonSuspensionsTestEventSource(int suspensionMessagesPerDay, int nonSuspensionMessagesPerDay) {
         var suspensionsSource = new SuspensionCreatorPool(suspendedNhsNumbers());
         var nonSuspensionsSource = new BoringNemsTestEventPool(nonSuspensionEvent(randomNhsNumber(), randomNemsMessageId()));
         return new MixerPool<>(
