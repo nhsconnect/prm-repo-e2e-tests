@@ -61,8 +61,6 @@ public class PerformanceTest {
     @Autowired
     private MeshMailbox meshMailbox;
     @Autowired
-    private Helper helper;
-    @Autowired
     private TestConfiguration config;
 
     @Test

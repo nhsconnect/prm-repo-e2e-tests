@@ -74,13 +74,15 @@ public class PerformanceChartGenerator {
         var bucketEndTime = bucketStartTime;
         var bucketFinishedCount = 0;
         for (var event : timeOrderedTestEvents) {
-            while (bucketEndTime.isBefore(event.finishedAt())) {
-                addThroughputToSeries(series, throughputBucketSeconds, bucketEndTime, bucketFinishedCount, recording.runStartTime());
-                bucketStartTime = bucketEndTime;
-                bucketEndTime = bucketStartTime.plusSeconds(throughputBucketSeconds);
-                bucketFinishedCount = 0;
+            if (event.isFinished()) {
+                while (bucketEndTime.isBefore(event.finishedAt())) {
+                    addThroughputToSeries(series, throughputBucketSeconds, bucketEndTime, bucketFinishedCount, recording.runStartTime());
+                    bucketStartTime = bucketEndTime;
+                    bucketEndTime = bucketStartTime.plusSeconds(throughputBucketSeconds);
+                    bucketFinishedCount = 0;
+                }
+                bucketFinishedCount++;
             }
-            bucketFinishedCount++;
         }
         addThroughputToSeries(series, throughputBucketSeconds, bucketEndTime, bucketFinishedCount, recording.runStartTime());
         return series;
