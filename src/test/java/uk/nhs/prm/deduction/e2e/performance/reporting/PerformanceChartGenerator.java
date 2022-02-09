@@ -31,7 +31,7 @@ public class PerformanceChartGenerator {
                 dataset
         );
 
-        savePlotAsPngTo(scatterPlot, "build/reports/performance/", "e2e-durations.png");
+        savePlotAsPngTo(scatterPlot, "build/reports/performance/", "durations.png");
     }
 
     public static void generateThroughputPlot(NemsTestRecording recording, int throughputBucketSeconds, String title) {
@@ -46,7 +46,7 @@ public class PerformanceChartGenerator {
                 dataset
         );
 
-        savePlotAsPngTo(scatterPlot, "build/reports/performance/", "e2e-throughput.png");
+        savePlotAsPngTo(scatterPlot, "build/reports/performance/", "throughput.png");
     }
 
     private static List<XYSeries> createPerPhaseDataSerieses(NemsTestRecording recording) {

@@ -19,8 +19,8 @@ common:
                 - build:
                     source: build/reports/tests/
               tabs:
-                durations: build/reports/performance/e2e-durations.png
-                throughput: build/reports/performance/e2e-throughput.png
+                durations: build/reports/performance/durations.png
+                throughput: build/reports/performance/throughput.png
               resources:
                 - docker
               tasks:
@@ -35,8 +35,8 @@ pipelines:
     <<: *pipeline-template
     environment_variables:
       NHS_ENVIRONMENT: dev
-      PERFORMANCE_TEST_TIMEOUT: 300
-      PERFORMANCE_LOAD_SPEC: "12@0.2,30@0.5,60@1"
+      PERFORMANCE_TEST_TIMEOUT: 900
+      PERFORMANCE_LOAD_SPEC: "60@1,120@2,180@3,240@4"
   e2e-perf-pre-prod:
     <<: *pipeline-template
     timer:
