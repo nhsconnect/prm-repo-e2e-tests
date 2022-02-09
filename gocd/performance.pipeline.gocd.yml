@@ -19,8 +19,9 @@ common:
                 - build:
                     source: build/reports/tests/
               tabs:
-                durations: build/reports/performance/durations.png
-                throughput: build/reports/performance/throughput.png
+                TestReport: build/reports/tests/index.html
+                Durations: build/reports/performance/durations.png
+                Throughput: build/reports/performance/throughput.png
               resources:
                 - docker
               tasks:
