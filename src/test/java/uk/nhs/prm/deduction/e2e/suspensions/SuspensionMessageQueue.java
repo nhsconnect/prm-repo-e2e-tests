@@ -47,10 +47,11 @@ public class SuspensionMessageQueue {
 
     public List<SqsMessage> getNextMessages(LocalDateTime timeoutAt) {
         log(String.format("Checking for messages on : %s",  this.queueUri));
-        var timeoutSeconds = LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS);
+        int pollInterval = 5;
+        var timeoutSeconds = Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval);
         return await().atMost(timeoutSeconds, TimeUnit.SECONDS)
             .with()
-            .pollInterval(5, TimeUnit.SECONDS)
+            .pollInterval(pollInterval, TimeUnit.SECONDS)
             .until(() -> findMessagesOnQueue((int) timeoutSeconds), notNullValue());
     }
 
