@@ -16,16 +16,19 @@ public class MeshMailbox {
         this.meshClient = new MeshClient(meshConfig);
     }
 
-
     public String postMessage(NemsEventMessage message) {
+        return postMessage(message, true);
+    }
+
+    public String postMessage(NemsEventMessage message, boolean shouldLog) {
         String messageId = meshClient.postMessage(getMailboxServiceOutboxUri(), message);
-        log("Posted messageId is " + messageId);
+        if (shouldLog) {
+            System.out.println("Posted messageId is " + messageId);
+        }
         return messageId;
     }
+
     private String getMailboxServiceOutboxUri() {
         return String.format("https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox", meshConfig.getMailboxId());
-    }
-    public void log(String message) {
-        System.out.println(message);
     }
 }

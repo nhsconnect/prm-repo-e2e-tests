@@ -8,6 +8,7 @@ import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.generateRandomOdsCode;
 
 public class PdsAdaptorTest {
 
@@ -25,7 +26,7 @@ public class PdsAdaptorTest {
     @Test
     void shouldUpdateManagingOrganisationOfPatient() {
         PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
-        String newOdsCode = NhsIdentityGenerator.generateRandomOdsCode();
+        String newOdsCode = generateRandomOdsCode();
         PdsAdaptorResponse pdsAdaptorUpdateResponse =
             pdsAdaptorClient.updateManagingOrganisation(nhsNumber, newOdsCode, pdsAdaptorResponse.getRecordETag());
         assertThat(pdsAdaptorUpdateResponse.getManagingOrganisation()).isEqualTo(newOdsCode);

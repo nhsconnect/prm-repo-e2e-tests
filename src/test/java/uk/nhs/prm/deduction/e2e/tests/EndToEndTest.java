@@ -23,8 +23,7 @@ import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
-import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNhsNumber;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
 import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventFromTemplate;
 
 
@@ -97,7 +96,9 @@ public class EndToEndTest {
         PdsAdaptorClient pdsAdaptorClient = new PdsAdaptorClient();
         PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus(suspendedPatientNhsNumber);
 
-        pdsAdaptorClient.updateManagingOrganisation(suspendedPatientNhsNumber, NhsIdentityGenerator.generateRandomOdsCode(), pdsAdaptorResponse.getRecordETag());
+        String previousGp = generateRandomOdsCode();
+        System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
+        pdsAdaptorClient.updateManagingOrganisation(suspendedPatientNhsNumber, previousGp, pdsAdaptorResponse.getRecordETag());
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);

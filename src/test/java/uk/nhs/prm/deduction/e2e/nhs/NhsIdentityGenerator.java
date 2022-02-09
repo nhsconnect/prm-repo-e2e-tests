@@ -16,7 +16,6 @@ public class NhsIdentityGenerator {
                 .limit(targetStringLength)
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
-        System.out.printf("Generating random ods code: %s%n", generatedString);
         return generatedString;
     }
 
@@ -25,8 +24,14 @@ public class NhsIdentityGenerator {
     }
 
     public static String randomNemsMessageId() {
+        return randomNemsMessageId(true);
+    }
+
+    public static String randomNemsMessageId(boolean shouldLog) {
         String nemsMessageId = UUID.randomUUID().toString();
-        System.out.println("Generated Nems Message ID " + nemsMessageId);
+        if (shouldLog) {
+            System.out.println("Generated Nems Message ID " + nemsMessageId);
+        }
         return nemsMessageId;
     }
 }
