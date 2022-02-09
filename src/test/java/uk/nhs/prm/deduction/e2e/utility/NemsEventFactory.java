@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNhsNumber;
+
 public class NemsEventFactory {
 
     public static NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId) {
@@ -22,15 +25,15 @@ public class NemsEventFactory {
     }
 
     public static Map<String, NemsEventMessage> getDLQNemsEventMessages() throws IOException {
-        NemsEventMessage nhsNumberVerification = createNemsEventFromTemplate("nhs-number-verification-fail.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
-        NemsEventMessage nhsNumberFieldNotPresent = createNemsEventFromTemplate("nhs-number-field-not-present.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
-        NemsEventMessage nhsNumberVerificationFieldNotPresent = createNemsEventFromTemplate("nhs-number-verification-field-not-present.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
-        NemsEventMessage episodeOfCareFieldNotPresent = createNemsEventFromTemplate("no-finished-episode-of-care.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
-        NemsEventMessage managingOrganizationFieldNotPresent = createNemsEventFromTemplate("no-managing-organization.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
-        NemsEventMessage odsCodeForFinishedPractiseNotPresent = createNemsEventFromTemplate("no-ods-code-for-finished-practise.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
-        NemsEventMessage odsCodeIdentifierForManagingOrganizationNotPresent = createNemsEventFromTemplate("no-ods-code-identifier-for-managing-organization.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
-        NemsEventMessage referenceForManagingOrganizationNotPresent = createNemsEventFromTemplate("no-reference-for-managing-organization.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
-        NemsEventMessage uriForManagingOrganizationNotPresent = createNemsEventFromTemplate("no-reference-for-uri-for-managing-organization.xml", NhsIdentityGenerator.randomNhsNumber(), NhsIdentityGenerator.randomNemsMessageId());
+        NemsEventMessage nhsNumberVerification = createNemsEventFromTemplate("nhs-number-verification-fail.xml", randomNhsNumber(), randomNemsMessageId());
+        NemsEventMessage nhsNumberFieldNotPresent = createNemsEventFromTemplate("nhs-number-field-not-present.xml", randomNhsNumber(), randomNemsMessageId());
+        NemsEventMessage nhsNumberVerificationFieldNotPresent = createNemsEventFromTemplate("nhs-number-verification-field-not-present.xml", randomNhsNumber(), randomNemsMessageId());
+        NemsEventMessage episodeOfCareFieldNotPresent = createNemsEventFromTemplate("no-finished-episode-of-care.xml", randomNhsNumber(), randomNemsMessageId());
+        NemsEventMessage managingOrganizationFieldNotPresent = createNemsEventFromTemplate("no-managing-organization.xml", randomNhsNumber(), randomNemsMessageId());
+        NemsEventMessage odsCodeForFinishedPractiseNotPresent = createNemsEventFromTemplate("no-ods-code-for-finished-practise.xml", randomNhsNumber(), randomNemsMessageId());
+        NemsEventMessage odsCodeIdentifierForManagingOrganizationNotPresent = createNemsEventFromTemplate("no-ods-code-identifier-for-managing-organization.xml", randomNhsNumber(), randomNemsMessageId());
+        NemsEventMessage referenceForManagingOrganizationNotPresent = createNemsEventFromTemplate("no-reference-for-managing-organization.xml", randomNhsNumber(), randomNemsMessageId());
+        NemsEventMessage uriForManagingOrganizationNotPresent = createNemsEventFromTemplate("no-reference-for-uri-for-managing-organization.xml", randomNhsNumber(), randomNemsMessageId());
         Map<String, NemsEventMessage> messages = new HashMap<>();
         messages.put("nhsNumberVerification", nhsNumberVerification);//p
         messages.put("nhsNumberFieldNotPresent", nhsNumberFieldNotPresent);//p

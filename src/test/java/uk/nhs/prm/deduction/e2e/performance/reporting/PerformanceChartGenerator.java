@@ -74,7 +74,7 @@ public class PerformanceChartGenerator {
         var bucketEndTime = bucketStartTime;
         var bucketFinishedCount = 0;
         for (var event : timeOrderedTestEvents) {
-            while (event.finishedAt().isAfter(bucketEndTime)) {
+            while (bucketEndTime.isBefore(event.finishedAt())) {
                 addThroughputToSeries(series, throughputBucketSeconds, bucketEndTime, bucketFinishedCount, recording.runStartTime());
                 bucketStartTime = bucketEndTime;
                 bucketEndTime = bucketStartTime.plusSeconds(throughputBucketSeconds);

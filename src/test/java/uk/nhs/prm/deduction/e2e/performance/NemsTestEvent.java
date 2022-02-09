@@ -12,6 +12,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.generateRandomOdsCode;
+
 public class NemsTestEvent implements Comparable, Phased {
     private final String nemsMessageId;
     private final String nhsNumber;
@@ -129,7 +131,7 @@ public class NemsTestEvent implements Comparable, Phased {
     }
 
     public NemsEventMessage createMessage() {
-        var previousGP = NhsIdentityGenerator.generateRandomOdsCode();
+        var previousGP = generateRandomOdsCode();
         NemsEventMessage nemsSuspension;
         if (isSuspension()) {
             nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-suspension.xml",

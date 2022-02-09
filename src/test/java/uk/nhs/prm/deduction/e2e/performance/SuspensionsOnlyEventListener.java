@@ -19,5 +19,8 @@ public class SuspensionsOnlyEventListener implements NemsTestEventListener {
         if (testEvent.isSuspension()) {
             recorder.onStartedTestItem(testEvent);
         }
+        else {
+            System.out.print(".");
+        }
     }
 }

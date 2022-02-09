@@ -124,7 +124,7 @@ public class PerformanceTest {
 
         listener.onStartingTestItem(testEvent);
 
-        meshMailbox.postMessage(nemsSuspension);
+        meshMailbox.postMessage(nemsSuspension, false);
 
         testEvent.started();
 

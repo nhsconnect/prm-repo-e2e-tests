@@ -19,6 +19,7 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
     public void onStartingTestItem(NemsTestEvent testEvent) {
         nemsEventsById.put(testEvent.nemsMessageId(), testEvent);
         if (nemsEventsById.size() % 100 == 0) {
+            System.out.println();
             System.out.println("Created " + nemsEventsById.size() + " test events at " + new Date());
         }
     }
@@ -59,7 +60,10 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
         out.println("Total messages received from messasges received outside of test: " + unknownEventCount);
         for (var event : testEvents()) {
             if (event.hasWarnings()) {
-                System.out.println("An event had warnings: " + event);
+                System.out.println("Event had warnings: " + event);
+            }
+            if (!event.isFinished()) {
+                System.out.println("Event was never finished: " + event);
             }
         }
     }
