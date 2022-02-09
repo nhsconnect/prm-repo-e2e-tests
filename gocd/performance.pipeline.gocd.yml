@@ -42,8 +42,8 @@ pipelines:
   e2e-perf-pre-prod:
     <<: *pipeline-template
     timer:
-      spec: "0 45 14 * * ?"
+      spec: "0 0 22 * * ?"
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
-      PERFORMANCE_TEST_TIMEOUT: 600
-      PERFORMANCE_LOAD_SPEC: "24@0.2,60@0.5,30@0.6,30@0.7,30@0.8,120@2"
+      PERFORMANCE_TEST_TIMEOUT: 39600
+      PERFORMANCE_LOAD_SPEC: "17000@1"
