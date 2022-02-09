@@ -22,6 +22,7 @@ import uk.nhs.prm.deduction.e2e.utility.Helper;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static java.lang.System.out;
 import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
@@ -71,7 +72,7 @@ public class PerformanceTest {
 
         var nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
 
-        System.out.println("looking for message containing: " + nemsEvent.nemsMessageId());
+        out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
         var successMessage = mofUpdatedMessageQueue.getMessageContaining(nemsEvent.nemsMessageId());
 
@@ -97,9 +98,9 @@ public class PerformanceTest {
             injectSingleNemsSuspension(suspensionsOnlyRecorder, loadSource.next());
         }
 
-        loadSource.summariseTo(System.out);
+        loadSource.summariseTo(out);
 
-        System.out.println("Checking mof updated message queue...");
+        out.println("Checking mof updated message queue...");
 
         try {
             final var timeout = now().plusSeconds(overallTimeout);
@@ -110,7 +111,7 @@ public class PerformanceTest {
             }
         }
         finally {
-            recorder.summariseTo(System.out);
+            recorder.summariseTo(out);
 
             generateProcessingDurationScatterPlot(recorder, "End to End Performance Test - Event durations vs start time (suspensions only, full load includes non-suspensions)");
             generateThroughputPlot(recorder, THROUGHPUT_BUCKET_SECONDS, "End to End Performance Test - Throughput per second per " + THROUGHPUT_BUCKET_SECONDS + "seconds");
@@ -151,7 +152,7 @@ public class PerformanceTest {
         PdsAdaptorClient pds = new PdsAdaptorClient("performance-test", config.getPdsAdaptorPerformanceApiKey(), config.getPdsAdaptorUrl());
         for (String nhsNumber: suspendedNhsNumbers) {
             var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);
-            System.out.println(nhsNumber + ": " + patientStatus);
+            out.println(nhsNumber + ": " + patientStatus);
             assertThat(patientStatus.getIsSuspended()).isTrue();
         }
     }
