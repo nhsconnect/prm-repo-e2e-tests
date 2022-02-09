@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import software.amazon.awssdk.services.sqs.model.*;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import uk.nhs.prm.deduction.e2e.performance.StsSessionTokenClient;
 
 import java.util.List;
@@ -55,8 +56,15 @@ public class SqsClient {
             return sqsClient.receiveMessage(receiveMessageRequest);
         }
         catch (SqsException e) {
-            System.out.println("Refreshing session token and retrying request");
-            stsSessionTokenClient.refreshSessionToken( "performance-test");
+            System.out.println("Updating client to use assume role refresh request");
+            sqsClient = software.amazon.awssdk.services.sqs.SqsClient.builder().credentialsProvider(StsAssumeRoleCredentialsProvider
+                    .builder()
+                    .refreshRequest(() -> {
+                        System.out.println("Creating refresh session token request");
+                        return stsSessionTokenClient.refreshAssumeRoleRequest("performance-test");
+                    })
+                    .build()).build();
+            System.out.println("Attempting receive messages with updated assume role credentials provider");
             return sqsClient.receiveMessage(receiveMessageRequest);
         }
     }
