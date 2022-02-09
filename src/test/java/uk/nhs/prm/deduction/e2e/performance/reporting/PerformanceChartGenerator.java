@@ -60,9 +60,11 @@ public class PerformanceChartGenerator {
             if (!seriesPerPhase.containsKey(phase)) {
                 seriesPerPhase.put(phase, new XYSeries("Phase " + phaseCount++ + ": " + phase));
             }
-            var series = seriesPerPhase.get(phase);
-            var secondsSinceRunStart = recording.runStartTime().until(event.startedAt(), ChronoUnit.SECONDS);
-            series.add(secondsSinceRunStart, event.duration());
+            if (event.duration() > 0) {
+                var series = seriesPerPhase.get(phase);
+                var secondsSinceRunStart = recording.runStartTime().until(event.startedAt(), ChronoUnit.SECONDS);
+                series.add(secondsSinceRunStart, event.duration());
+            }
         }
         return new ArrayList<>(seriesPerPhase.values());
     }

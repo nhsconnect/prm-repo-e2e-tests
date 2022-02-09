@@ -111,8 +111,8 @@ public class PerformanceTest {
         finally {
             recorder.summariseTo(out);
 
-            generateProcessingDurationScatterPlot(recorder, "End to End Performance Test - Event durations vs start time (suspensions only, full load includes non-suspensions)");
-            generateThroughputPlot(recorder, THROUGHPUT_BUCKET_SECONDS, "End to End Performance Test - Throughput per second per " + THROUGHPUT_BUCKET_SECONDS + "seconds");
+            generateProcessingDurationScatterPlot(recorder, "Suspension event processing durations vs start time (non-suspensions not shown)");
+            generateThroughputPlot(recorder, THROUGHPUT_BUCKET_SECONDS, "Suspension event mean throughput per second in " + THROUGHPUT_BUCKET_SECONDS + " second buckets");
         }
 
         assertThat(recorder.hasUnfinishedEvents()).isFalse();
