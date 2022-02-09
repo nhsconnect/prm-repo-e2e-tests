@@ -19,7 +19,7 @@ common:
                 - build:
                     source: build/reports/tests/
               tabs:
-                TestReport: build/reports/tests/index.html
+                TestReport: test/index.html
                 Durations: build/reports/performance/durations.png
                 Throughput: build/reports/performance/throughput.png
               resources:

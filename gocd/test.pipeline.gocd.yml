@@ -39,7 +39,7 @@ pipelines:
                 - build:
                     source: build/reports/tests/
               tabs:
-                TestReport: build/reports/tests/index.html
+                TestReport: test/index.html
               tasks:
                 - exec:
                     command: /bin/bash
