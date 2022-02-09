@@ -104,7 +104,7 @@ public class PerformanceTest {
         try {
             final var timeout = now().plusSeconds(overallTimeout);
             while (before(timeout) && recorder.hasUnfinishedEvents()) {
-                for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages()) {
+                for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages(timeout)) {
                     recorder.finishMatchingMessage(nextMessage);
                 }
             }

@@ -18,8 +18,8 @@ public class SqsQueue {
         return sqsClient.readMessagesFrom(queueUri);
     }
 
-    public List<SqsMessage> readThroughMessages(String queueUri) {
-        return sqsClient.readThroughMessages(queueUri);
+    public List<SqsMessage> readThroughMessages(String queueUri, int visibilityTimeout) {
+        return sqsClient.readThroughMessages(queueUri, visibilityTimeout);
     }
 
     public void deleteMessage(String queueUri,Message message) {

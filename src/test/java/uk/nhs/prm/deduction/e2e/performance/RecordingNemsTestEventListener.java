@@ -18,11 +18,14 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
     @Override
     public void onStartingTestItem(NemsTestEvent testEvent) {
         nemsEventsById.put(testEvent.nemsMessageId(), testEvent);
+        if (nemsEventsById.size() % 100 == 0) {
+            System.out.println("Created " + nemsEventsById.size() + " test events at " + new Date());
+        }
     }
 
     @Override
     public void onStartedTestItem(NemsTestEvent testEvent) {
-        System.out.println("Started test on " + new Date() + " " + testEvent.nemsMessageId() + " " + testEvent.nhsNumber());
+        System.out.print(testEvent.isSuspension() ? "S" : "n");
     }
 
     public boolean finishMatchingMessage(SqsMessage sqsMessage)  {
