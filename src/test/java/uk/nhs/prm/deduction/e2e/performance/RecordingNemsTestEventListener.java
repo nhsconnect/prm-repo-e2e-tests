@@ -35,7 +35,7 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
             if (nemsEventsById.get(nemsMessageIdFromBody).finished(sqsMessage)) {
                 knownEventCount++;
             };
-            System.out.print("F");
+            System.out.print("M");
             return true;
         } else {
             System.out.print(".");
