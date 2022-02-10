@@ -36,9 +36,8 @@ pipelines:
     <<: *pipeline-template
     environment_variables:
       NHS_ENVIRONMENT: dev
-      PERFORMANCE_TEST_TIMEOUT: 1200
-      PERFORMANCE_LOAD_SPEC: "4000@10"
-      ASSUME_ROLE_DURATION: 900
+      PERFORMANCE_TEST_TIMEOUT: 720
+      PERFORMANCE_LOAD_SPEC: "1700@5"
   e2e-perf-pre-prod:
     <<: *pipeline-template
     timer:
