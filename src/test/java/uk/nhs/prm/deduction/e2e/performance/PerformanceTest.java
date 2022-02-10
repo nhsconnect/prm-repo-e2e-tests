@@ -86,10 +86,8 @@ public class PerformanceTest {
 
         var eventSource = createMixedSuspensionsAndNonSuspensionsTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
         var loadSource = new LoadRegulatingPool<>(eventSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
-                atFlatRate("0.2", 20),
-                atFlatRate("0.5", 40),
-                atFlatRate("1.0", 60),
-                atFlatRate("2.0", 120))));
+                atFlatRate("1", 10),
+                atFlatRate("2", 10))));
 
         var suspensionsOnlyRecorder = new SuspensionsOnlyEventListener(recorder);
         while (loadSource.unfinished()) {
@@ -123,9 +121,9 @@ public class PerformanceTest {
 
         listener.onStartingTestItem(testEvent);
 
-        meshMailbox.postMessage(nemsSuspension, false);
+        String meshMessageId = meshMailbox.postMessage(nemsSuspension, false);
 
-        testEvent.started();
+        testEvent.started(meshMessageId);
 
         listener.onStartedTestItem(testEvent);
 
