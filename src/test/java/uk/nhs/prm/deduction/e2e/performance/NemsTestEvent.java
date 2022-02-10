@@ -9,18 +9,19 @@ import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.generateRandomOdsCode;
 
-public class NemsTestEvent implements Comparable, Phased {
+public class NemsTestEvent implements Phased {
     private final String nemsMessageId;
     private final String nhsNumber;
     private final boolean suspension;
 
     private String meshMessageId;
     private LoadPhase phase;
-    private LocalDateTime started;
+    private LocalDateTime startedAt;
     private boolean isFinished = false;
     private long processingTimeMs;
 
@@ -60,7 +61,11 @@ public class NemsTestEvent implements Comparable, Phased {
     }
 
     public LocalDateTime startedAt() {
-        return started;
+        return startedAt;
+    }
+
+    public boolean isStarted() {
+        return startedAt != null;
     }
 
     public boolean isFinished() {
@@ -75,7 +80,7 @@ public class NemsTestEvent implements Comparable, Phased {
         if (meshMessageId == null) {
             addWarning("No mesh message id received. Message may have not arrived in mesh mailbox.");
         }
-        this.started = LocalDateTime.now();
+        this.startedAt = LocalDateTime.now();
         this.meshMessageId = meshMessageId;
     }
 
@@ -114,21 +119,12 @@ public class NemsTestEvent implements Comparable, Phased {
                 ", meshMessageId='" + meshMessageId + '\'' +
                 ", suspension=" + suspension +
                 ", phase=" + phase +
-                ", started=" + started +
+                ", started=" + startedAt +
                 ", isFinished=" + isFinished +
                 ", processingTimeMs=" + processingTimeMs +
                 ", warnings=" + warnings +
                 ", finishedAt=" + finishedAt +
                 '}';
-    }
-
-    @Override
-    public int compareTo(Object o) {
-        if (o.getClass().equals(NemsTestEvent.class)) {
-            var otherEvent = (NemsTestEvent) o;
-            return startedAt().compareTo(otherEvent.startedAt());
-        }
-        return 0;
     }
 
     public boolean isSuspension() {
@@ -151,4 +147,24 @@ public class NemsTestEvent implements Comparable, Phased {
         }
         return nemsSuspension;
     }
+
+
+    public static Comparator<NemsTestEvent> finishedTimeOrder() {
+        return (o1, o2) -> {
+            if (o1.isFinished() && o2.isFinished()) {
+                return o1.finishedAt().compareTo(o2.finishedAt());
+            }
+            return 0;
+        };
+    }
+
+    public static Comparator<NemsTestEvent> startedTimeOrder() {
+        return (o1, o2) -> {
+            if (o1.isStarted() && o2.isStarted()) {
+                return o1.startedAt().compareTo(o2.startedAt());
+            }
+            return 0;
+        };
+    }
+
 }

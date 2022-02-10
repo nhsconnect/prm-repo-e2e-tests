@@ -10,8 +10,10 @@ public interface NemsTestRecording {
     boolean hasUnfinishedEvents();
 
     List<NemsTestEvent> testEvents();
+    List<NemsTestEvent> startOrderedEvents();
+    List<NemsTestEvent> finishOrderedEvents();
 
-    default int testItemCount() {
+    default int testEventCount() {
         return testEvents().size();
     }
 

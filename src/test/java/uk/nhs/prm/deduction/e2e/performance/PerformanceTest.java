@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +64,7 @@ public class PerformanceTest {
     @Autowired
     private TestConfiguration config;
 
+    @Disabled("only used for perf test development not wanted on actual runs")
     @Test
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
         var nhsNumberPool = new RoundRobinPool<>(config.suspendedNhsNumbers());
@@ -82,7 +84,7 @@ public class PerformanceTest {
     @Test
     public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
         final int overallTimeout = config.performanceTestTimeout();
-        final var recorder = new RecordingNemsTestEventListener();
+        final var recorder = new PerformanceTestRecorder();
 
         var eventSource = createMixedSuspensionsAndNonSuspensionsTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
         var loadSource = new LoadRegulatingPool<>(eventSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
