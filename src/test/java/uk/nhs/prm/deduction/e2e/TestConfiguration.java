@@ -106,7 +106,11 @@ public class TestConfiguration {
     }
 
     public List<String> suspendedNhsNumbers() {
-        return suspendedNhsNumbersByEnv.get(getEnvironmentName());
+        List<String> nhsNumbers = suspendedNhsNumbersByEnv.get(getEnvironmentName());
+        if (nhsNumbers == null) {
+            throw new RuntimeException("No NHS Numbers configured for " + getEnvironmentName() + " environment");
+        }
+        return nhsNumbers;
     }
 
     public List<LoadPhase> performanceTestLoadPhases(List<LoadPhase> defaultLoadPhases) {
@@ -120,7 +124,7 @@ public class TestConfiguration {
     public int performanceTestTimeout() {
         String timeout = System.getenv("PERFORMANCE_TEST_TIMEOUT");
         if (timeout == null) {
-            return 600;
+            return 90;
         }
         return parseInt(timeout);
     }

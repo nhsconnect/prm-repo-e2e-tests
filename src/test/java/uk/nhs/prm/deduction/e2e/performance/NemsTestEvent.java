@@ -1,7 +1,6 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
-import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.Phased;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
@@ -19,6 +18,7 @@ public class NemsTestEvent implements Comparable, Phased {
     private final String nhsNumber;
     private final boolean suspension;
 
+    private String meshMessageId;
     private LoadPhase phase;
     private LocalDateTime started;
     private boolean isFinished = false;
@@ -71,16 +71,18 @@ public class NemsTestEvent implements Comparable, Phased {
         return !warnings.isEmpty();
     }
 
-    public void started() {
+    public void started(String meshMessageId) {
+        if (meshMessageId == null) {
+            addWarning("No mesh message id received. Message may have not arrived in mesh mailbox.");
+        }
         this.started = LocalDateTime.now();
+        this.meshMessageId = meshMessageId;
     }
 
     public boolean finished(SqsMessage successMessage) {
         boolean firstTimeFinisher = false;
         if (isFinished) {
-            String warning = "Warning: Duplicate finisher! finished() but already isFinished";
-            System.out.println(warning);
-            warnings.add(warning);
+            addWarning("Warning: Duplicate finisher! finished() but already isFinished");
         }
         else {
             firstTimeFinisher = true;
@@ -89,6 +91,11 @@ public class NemsTestEvent implements Comparable, Phased {
             processingTimeMs = startedAt().until(finishedAt, ChronoUnit.MILLIS);
         }
         return firstTimeFinisher;
+    }
+
+    private void addWarning(String warning) {
+        System.out.println(warning);
+        warnings.add(warning);
     }
 
     public LocalDateTime finishedAt() {
@@ -104,6 +111,7 @@ public class NemsTestEvent implements Comparable, Phased {
         return "NemsTestEvent{" +
                 "nemsMessageId='" + nemsMessageId + '\'' +
                 ", nhsNumber='" + nhsNumber + '\'' +
+                ", meshMessageId='" + meshMessageId + '\'' +
                 ", suspension=" + suspension +
                 ", phase=" + phase +
                 ", started=" + started +

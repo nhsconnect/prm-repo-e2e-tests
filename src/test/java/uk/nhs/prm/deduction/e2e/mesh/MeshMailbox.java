@@ -12,12 +12,15 @@ public class MeshMailbox {
     private final MeshClient meshClient;
 
     public MeshMailbox(@Autowired TestConfiguration testConfiguration) {
-        this.meshConfig =  new MeshConfig(testConfiguration);
+        this.meshConfig = new MeshConfig(testConfiguration);
         this.meshClient = new MeshClient(meshConfig);
     }
 
-    public String postMessage(NemsEventMessage message) {
-        return postMessage(message, true);
+    public void postMessage(NemsEventMessage message) {
+        String messageId = postMessage(message, true);
+        if (messageId == null) {
+            throw new RuntimeException("Failed to send message to Mesh Mailbox");
+        }
     }
 
     public String postMessage(NemsEventMessage message, boolean shouldLog) {

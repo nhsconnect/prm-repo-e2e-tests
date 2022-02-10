@@ -48,7 +48,7 @@ public class SuspensionMessageQueue {
     public List<SqsMessage> getNextMessages(LocalDateTime timeoutAt) {
         log(String.format("Checking for messages on : %s",  this.queueUri));
         int pollInterval = 5;
-        var timeoutSeconds = Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval);
+        var timeoutSeconds = Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval + 1);
         return await().atMost(timeoutSeconds, TimeUnit.SECONDS)
             .with()
             .pollInterval(pollInterval, TimeUnit.SECONDS)
