@@ -7,10 +7,11 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 
 import java.io.PrintStream;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
-public class RecordingNemsTestEventListener implements NemsTestEventListener, NemsTestRecording {
+public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestRecording {
     private final Map<String, NemsTestEvent> nemsEventsById = new HashMap<>();
     private int knownEventCount = 0;
     private int unknownEventCount = 0;
@@ -71,11 +72,31 @@ public class RecordingNemsTestEventListener implements NemsTestEventListener, Ne
 
     @Override
     public boolean hasUnfinishedEvents() {
-        return knownEventCount < testItemCount();
+        return knownEventCount < testEventCount();
     }
 
     @Override
     public List<NemsTestEvent> testEvents() {
-        return nemsEventsById.values().stream().sorted().collect(toList());
+        return eventStream().collect(toList());
+    }
+
+    @Override
+    public List<NemsTestEvent> startOrderedEvents() {
+        return eventStream()
+                .filter(NemsTestEvent::isStarted)
+                .sorted(NemsTestEvent.startedTimeOrder())
+                .collect(toList());
+    }
+
+    @Override
+    public List<NemsTestEvent> finishOrderedEvents() {
+        return eventStream()
+                .filter(NemsTestEvent::isFinished)
+                .sorted(NemsTestEvent.finishedTimeOrder())
+                .collect(toList());
+    }
+
+    private Stream<NemsTestEvent> eventStream() {
+        return nemsEventsById.values().stream();
     }
 }

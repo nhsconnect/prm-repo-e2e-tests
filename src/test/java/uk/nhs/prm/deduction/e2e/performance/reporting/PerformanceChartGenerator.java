@@ -51,7 +51,7 @@ public class PerformanceChartGenerator {
 
     private static List<XYSeries> createPerPhaseDataSerieses(NemsTestRecording recording) {
         var phaseCount = 1;
-        var testEvents = recording.testEvents();
+        var testEvents = recording.startOrderedEvents();
 
         var seriesPerPhase = new HashMap<LoadPhase, XYSeries>();
 
@@ -71,11 +71,11 @@ public class PerformanceChartGenerator {
 
     private static XYSeries createThroughputDataSeries(NemsTestRecording recording, int throughputBucketSeconds) {
         var series = new XYSeries("Throughput in events per second");
-        var timeOrderedTestEvents = recording.testEvents();
+        var finishOrderedEvents = recording.finishOrderedEvents();
         var bucketStartTime = recording.runStartTime();
         var bucketEndTime = bucketStartTime;
         var bucketFinishedCount = 0;
-        for (var event : timeOrderedTestEvents) {
+        for (var event : finishOrderedEvents) {
             if (event.isFinished()) {
                 while (bucketEndTime.isBefore(event.finishedAt())) {
                     addThroughputToSeries(series, throughputBucketSeconds, bucketEndTime, bucketFinishedCount, recording.runStartTime());

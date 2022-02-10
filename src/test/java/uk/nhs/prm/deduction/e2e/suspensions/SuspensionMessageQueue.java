@@ -62,12 +62,10 @@ public class SuspensionMessageQueue {
 
     private SqsMessage findMessageContaining(String substring) {
         var allMessages = sqsQueue.readThroughMessages(this.queueUri, 180);
-        if (!allMessages.isEmpty()) {
-            for (var message : allMessages) {
-                System.out.println("just finding message, checking: " + message.id());
-                if (message.contains(substring)) {
-                    return message;
-                }
+        for (var message : allMessages) {
+            System.out.println("just finding message, checking: " + message.id());
+            if (message.contains(substring)) {
+                return message;
             }
         }
         return null;
@@ -75,11 +73,9 @@ public class SuspensionMessageQueue {
 
     private boolean messageIsOnQueue(String messageBodyToCheck) {
         List<SqsMessage> allMessages = sqsQueue.readMessagesFrom(this.queueUri);
-        if (!allMessages.isEmpty()) {
-            for (var message : allMessages) {
-                if (message.contains(messageBodyToCheck)) {
-                    return true;
-                }
+        for (var message : allMessages) {
+            if (message.contains(messageBodyToCheck)) {
+                return true;
             }
         }
         return false;
