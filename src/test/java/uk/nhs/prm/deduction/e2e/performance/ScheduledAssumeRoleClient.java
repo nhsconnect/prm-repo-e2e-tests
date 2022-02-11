@@ -22,7 +22,7 @@ public class ScheduledAssumeRoleClient {
         this.currentRoleArn = stsClient.getCallerIdentity().arn();
     }
 
-    @Scheduled(fixedRate = 30, initialDelay = 30, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedRate = 30, initialDelay = 30, timeUnit = TimeUnit.MINUTES)
     public void refreshAssumeRole() {
         stsClient.assumeRole(refreshAssumeRoleRequest("performance-test"));
         System.out.println("Assumed Role to refresh credentials");
