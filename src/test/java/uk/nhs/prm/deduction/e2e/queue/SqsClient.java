@@ -1,14 +1,12 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import software.amazon.awssdk.services.sqs.model.*;
-import uk.nhs.prm.deduction.e2e.performance.AssumeRoleAuthAutoRefreshSqsClientFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class SqsClient {
-    private final AssumeRoleAuthAutoRefreshSqsClientFactory autoRefreshClientFactory = new AssumeRoleAuthAutoRefreshSqsClientFactory();
-    private final software.amazon.awssdk.services.sqs.SqsClient sqsClient = autoRefreshClientFactory.createAssumeRoleAutoRefreshSqsClient();
+    private final software.amazon.awssdk.services.sqs.SqsClient sqsClient = software.amazon.awssdk.services.sqs.SqsClient.create();
 
     public List<SqsMessage> readMessagesFrom(String queueUrl) {
         var receiveMessageRequest = ReceiveMessageRequest.builder()
