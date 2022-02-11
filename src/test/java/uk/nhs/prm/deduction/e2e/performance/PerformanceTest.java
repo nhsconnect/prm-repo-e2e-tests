@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
@@ -46,10 +47,12 @@ import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGen
         MeshForwarderQueue.class,
         Helper.class,
         MofUpdatedMessageQueue.class,
-        MofNotUpdatedMessageQueue.class
+        MofNotUpdatedMessageQueue.class,
+        ScheduledAssumeRoleClient.class
 })
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@EnableScheduling
 public class PerformanceTest {
 
     public static final int TOTAL_MESSAGES_PER_DAY = 17000;
