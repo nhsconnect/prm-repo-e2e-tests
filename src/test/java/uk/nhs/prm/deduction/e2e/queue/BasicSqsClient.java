@@ -1,12 +1,23 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
+import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
+import uk.nhs.prm.deduction.e2e.performance.ScheduledSqsClient;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SqsClient {
-    private final software.amazon.awssdk.services.sqs.SqsClient sqsClient = software.amazon.awssdk.services.sqs.SqsClient.create();
+public class BasicSqsClient {
+
+    private SqsClient sqsClient;
+
+    public BasicSqsClient() {
+        this.sqsClient = SqsClient.create();
+    }
+
+    public BasicSqsClient(SqsClient sqsClient) {
+        this.sqsClient = sqsClient;
+    }
 
     public List<SqsMessage> readMessagesFrom(String queueUrl) {
         var receiveMessageRequest = ReceiveMessageRequest.builder()
@@ -49,6 +60,10 @@ public class SqsClient {
 
     private ReceiveMessageResponse receiveMessages(ReceiveMessageRequest receiveMessageRequest) {
         return sqsClient.receiveMessage(receiveMessageRequest);
+    }
+
+    public void setSqsClient(SqsClient sqsClient) {
+        this.sqsClient = sqsClient;
     }
 
 }

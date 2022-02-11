@@ -48,7 +48,7 @@ import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGen
         Helper.class,
         MofUpdatedMessageQueue.class,
         MofNotUpdatedMessageQueue.class,
-        ScheduledAssumeRoleClient.class
+        CredentialsProvider.class
 })
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
