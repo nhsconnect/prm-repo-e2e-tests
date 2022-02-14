@@ -13,6 +13,7 @@ import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
+import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
@@ -42,6 +43,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
         QueueHelper.class,
         MofUpdatedMessageQueue.class,
         MofNotUpdatedMessageQueue.class,
+        BasicSqsClient.class,
         PdsAdaptorClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

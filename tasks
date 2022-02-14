@@ -94,6 +94,12 @@ function check_suspension_service {
   exit 1
 }
 
+function setRequiredRoleArn() {
+    assume_environment_role $NHS_ENVIRONMENT
+    export REQUIRED_ROLE_ARN=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Arn")
+    _clear_aws_env_credentials
+}
+
 ###########
 ## TASKS ##
 ###########
@@ -133,7 +139,7 @@ case "${command}" in
       ;;
   test_performance)
       check_env
-      assume_environment_role $NHS_ENVIRONMENT
+      setRequiredRoleArn
       dojo "./tasks _test_performance"
       ;;
   *)

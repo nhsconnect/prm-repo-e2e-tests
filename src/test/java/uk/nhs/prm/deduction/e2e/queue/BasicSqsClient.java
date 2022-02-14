@@ -1,12 +1,28 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
+import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SqsClient {
-    private final software.amazon.awssdk.services.sqs.SqsClient sqsClient = software.amazon.awssdk.services.sqs.SqsClient.create();
+@Component
+public class BasicSqsClient {
+
+    private volatile SqsClient sqsClient;
+
+    public BasicSqsClient() {
+        this.sqsClient = SqsClient.create();
+    }
+
+    public void setSqsClient(SqsClient sqsClient) {
+        this.sqsClient = sqsClient;
+    }
+
+    public BasicSqsClient(SqsClient sqsClient) {
+        this.sqsClient = sqsClient;
+    }
 
     public List<SqsMessage> readMessagesFrom(String queueUrl) {
         var receiveMessageRequest = ReceiveMessageRequest.builder()

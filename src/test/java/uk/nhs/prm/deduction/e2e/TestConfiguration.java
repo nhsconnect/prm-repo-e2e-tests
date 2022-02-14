@@ -5,16 +5,22 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.utils.ImmutableMap;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
+import uk.nhs.prm.deduction.e2e.client.BasicAwsConfigurationClient;
+import uk.nhs.prm.deduction.e2e.client.RoleAssumingAwsConfigurationClient;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadSpecParser;
 
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
+import static java.lang.System.out;
 import static java.util.Arrays.asList;
 
 @Component
 public class TestConfiguration {
+
+    public static final int SECONDS_IN_AN_HOUR = 3600;
 
     private final ImmutableMap<String, List<String>> suspendedNhsNumbersByEnv = ImmutableMap.of(
             "dev", asList(
@@ -34,9 +40,13 @@ public class TestConfiguration {
                     "9693642538")
     );
 
-    private final AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
+    private final AwsConfigurationClient awsConfigurationClient;
 
     private String cachedAwsAccountNo;
+
+    public TestConfiguration() {
+        this.awsConfigurationClient = createAwsConfigurationClient();
+    }
 
     public String getMeshMailBoxID() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-id", getEnvironmentName()));
@@ -129,6 +139,7 @@ public class TestConfiguration {
         return parseInt(timeout);
     }
 
+
     private String fetchAwsAccountNo() {
         var client = StsClient.create();
         var response = client.getCallerIdentity();
@@ -139,11 +150,41 @@ public class TestConfiguration {
         return getRequiredEnvVar("NHS_ENVIRONMENT");
     }
 
-    private String getRequiredEnvVar(String name) {
+    public static String getRequiredEnvVar(String name) {
         String value = System.getenv(name);
         if (value == null) {
             throw new RuntimeException("Required environment variable has not been set: " + name);
         }
         return value;
+    }
+
+    public boolean useLongRunningAuthRefresh() {
+        String useLongRunAuth = System.getenv("USE_LONG_RUNNING_AUTH_REFRESH");
+        if (useLongRunAuth == null || useLongRunAuth.isBlank() || isFalse(useLongRunAuth) || isNo(useLongRunAuth)) {
+            if (performanceTestTimeout() > SECONDS_IN_AN_HOUR * 0.9) {
+                var authStrategyWarning = "Performance test timeout is configured longer than can be relied on without auth refresh. " +
+                        "Please run in pipeline with USE_LONG_RUNNING_AUTH_REFRESH=true or reduce timeout if test should finish sooner";
+                throw new RuntimeException(authStrategyWarning);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private AwsConfigurationClient createAwsConfigurationClient() {
+        if (useLongRunningAuthRefresh()) {
+            out.println("AUTH STRATEGY: using auto-refresh, role-assuming aws config (ssm) client");
+            return new RoleAssumingAwsConfigurationClient(new AssumeRoleCredentialsProviderFactory());
+        }
+        out.println("AUTH STRATEGY: using non-refreshing, current-role aws config (ssm) client");
+        return new BasicAwsConfigurationClient();
+    }
+
+    private boolean isFalse(String boolString) {
+        return boolString.toLowerCase().contains("f");
+    }
+
+    private boolean isNo(String boolString) {
+        return boolString.toLowerCase().contains("n");
     }
 }

@@ -6,8 +6,7 @@ import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 @Component
-public class MofUpdatedMessageQueue extends SuspensionMessageQueue{
-
+public class MofUpdatedMessageQueue extends SuspensionMessageQueue {
     @Autowired
     public MofUpdatedMessageQueue(SqsQueue sqsQueue, TestConfiguration configuration) {
         super(sqsQueue, configuration.mofUpdatedQueueUri());

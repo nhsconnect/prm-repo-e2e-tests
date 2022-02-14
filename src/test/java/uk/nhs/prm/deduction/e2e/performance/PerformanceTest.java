@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -7,12 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.load.*;
+import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
@@ -48,9 +52,9 @@ import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGen
         QueueHelper.class,
         MofUpdatedMessageQueue.class,
         MofNotUpdatedMessageQueue.class,
-        ScheduledAssumeRoleClient.class
+        AssumeRoleCredentialsProviderFactory.class,
+        BasicSqsClient.class
 })
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableScheduling
 public class PerformanceTest {
@@ -61,11 +65,16 @@ public class PerformanceTest {
     public static final int THROUGHPUT_BUCKET_SECONDS = 60;
 
     @Autowired
-    private MofUpdatedMessageQueue mofUpdatedMessageQueue;
-    @Autowired
     private MeshMailbox meshMailbox;
     @Autowired
     private TestConfiguration config;
+
+    private MofUpdatedMessageQueue mofUpdatedMessageQueue;
+
+    @BeforeEach
+    public void setUp() {
+        mofUpdatedMessageQueue = new MofUpdatedMessageQueue(new SqsQueue(appropriateAuthenticationSqsClient()), config);
+    }
 
     @Disabled("only used for perf test development not wanted on actual runs")
     @Test
@@ -160,5 +169,14 @@ public class PerformanceTest {
 
     private boolean before(LocalDateTime timeout) {
         return now().isBefore(timeout);
+    }
+
+    private BasicSqsClient appropriateAuthenticationSqsClient() {
+        if (config.useLongRunningAuthRefresh()) {
+            out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
+            return new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
+        }
+        out.println("AUTH STRATEGY: using non-refreshing, current-role sqs client");
+        return new BasicSqsClient();
     }
 }
