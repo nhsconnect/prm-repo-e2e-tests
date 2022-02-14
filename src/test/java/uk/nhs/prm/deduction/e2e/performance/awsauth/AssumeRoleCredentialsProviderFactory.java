@@ -19,7 +19,7 @@ public class AssumeRoleCredentialsProviderFactory {
     private final String roleArn;
 
     public AssumeRoleCredentialsProviderFactory() {
-        this.roleArn = determineAssumeRoleArn();
+        this.roleArn = TestConfiguration.determineAssumeRoleArn();
     }
 
     public AwsCredentialsProvider createProvider() {
@@ -39,9 +39,4 @@ public class AssumeRoleCredentialsProviderFactory {
         return StaticCredentialsProvider.create(AwsSessionCredentials.create(creds.accessKeyId(), creds.secretAccessKey(), creds.sessionToken()));
     }
 
-    private String determineAssumeRoleArn() {
-        String requiredAssumedRoleArnExample = TestConfiguration.getRequiredEnvVar("REQUIRED_ROLE_ARN");
-        String role = requiredAssumedRoleArnExample.replace("assumed-role", "role");
-        return role.substring(0, role.lastIndexOf("/"));
-    }
 }

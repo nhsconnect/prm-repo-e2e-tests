@@ -139,11 +139,30 @@ public class TestConfiguration {
         return parseInt(timeout);
     }
 
-
     private String fetchAwsAccountNo() {
-        var client = StsClient.create();
+        StsClient client;
+        if (useLongRunningAuthRefresh()) {
+            client = createStsClientInAccountAfterDoingAssumeRoleToThatAccount();
+        }
+        else {
+            client = createStsClientInCurrentAccount();
+        }
         var response = client.getCallerIdentity();
         return response.account();
+    }
+
+    private StsClient createStsClientInCurrentAccount() {
+        return StsClient.create();
+    }
+
+    private StsClient createStsClientInAccountAfterDoingAssumeRoleToThatAccount() {
+        return StsClient.builder().credentialsProvider(new AssumeRoleCredentialsProviderFactory().createProvider()).build();
+    }
+
+    public static String determineAssumeRoleArn() {
+        String requiredAssumedRoleArnExample = getRequiredEnvVar("REQUIRED_ROLE_ARN");
+        String role = requiredAssumedRoleArnExample.replace("assumed-role", "role");
+        return role.substring(0, role.lastIndexOf("/"));
     }
 
     private String getEnvironmentName() {
