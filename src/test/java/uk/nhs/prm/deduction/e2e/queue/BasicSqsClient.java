@@ -66,7 +66,12 @@ public class BasicSqsClient {
     }
 
     private ReceiveMessageResponse receiveMessages(ReceiveMessageRequest receiveMessageRequest) {
-        return sqsClient.receiveMessage(receiveMessageRequest);
+        try {
+            return sqsClient.receiveMessage(receiveMessageRequest);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Failure receiving messages from: " + receiveMessageRequest.queueUrl(), e);
+        }
     }
 
 }
