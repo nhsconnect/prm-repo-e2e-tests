@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
@@ -53,7 +54,8 @@ import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGen
         MofUpdatedMessageQueue.class,
         MofNotUpdatedMessageQueue.class,
         AssumeRoleCredentialsProviderFactory.class,
-        BasicSqsClient.class
+        BasicSqsClient.class,
+        AutoRefreshingRoleAssumingSqsClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableScheduling
@@ -68,6 +70,8 @@ public class PerformanceTest {
     private MeshMailbox meshMailbox;
     @Autowired
     private TestConfiguration config;
+    @Autowired
+    ApplicationContext context;
 
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
 
@@ -174,7 +178,7 @@ public class PerformanceTest {
     private BasicSqsClient appropriateAuthenticationSqsClient() {
         if (config.useLongRunningAuthRefresh()) {
             out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
-            return new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
+            return context.getBean(AutoRefreshingRoleAssumingSqsClient.class);
         }
         out.println("AUTH STRATEGY: using non-refreshing, current-role sqs client");
         return new BasicSqsClient();

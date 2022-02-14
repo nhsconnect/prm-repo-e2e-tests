@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@Primary
 public class BasicSqsClient {
 
     private volatile SqsClient sqsClient;
