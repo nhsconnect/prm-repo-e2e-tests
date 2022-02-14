@@ -21,7 +21,7 @@ public class AutoRefreshingRoleAssumingSqsClient extends BasicSqsClient {
         setNewSqsClient();
     }
 
-    @Scheduled(fixedRate = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 10, initialDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void setNewSqsClient() {
         System.out.println("Refreshing SQS client in " + getClass());
         AwsCredentialsProvider credentialsProvider = credentialsProviderFactory.createProvider();
