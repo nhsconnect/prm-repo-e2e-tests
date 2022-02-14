@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.utils.ImmutableMap;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
-import uk.nhs.prm.deduction.e2e.performance.CredentialsProvider;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadSpecParser;
 
@@ -35,8 +34,7 @@ public class TestConfiguration {
                     "9693642538")
     );
 
-    private final CredentialsProvider credentialsProvider = new CredentialsProvider();
-    private final AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient(credentialsProvider);
+    private final AwsConfigurationClient awsConfigurationClient = new AwsConfigurationClient();
 
     private String cachedAwsAccountNo;
 
@@ -131,9 +129,8 @@ public class TestConfiguration {
         return parseInt(timeout);
     }
 
-
     private String fetchAwsAccountNo() {
-        var client = StsClient.builder().credentialsProvider(credentialsProvider.loadCredentials()).build();
+        var client = StsClient.create();
         var response = client.getCallerIdentity();
         return response.account();
     }
