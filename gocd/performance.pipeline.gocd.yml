@@ -29,6 +29,11 @@ common:
                     command: /bin/bash
                     arguments:
                       - -c
+                      - ./tasks print_test_performance_role
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
                       - ./tasks test_performance
 
 pipelines:
