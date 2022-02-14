@@ -128,6 +128,12 @@ case "${command}" in
       check_suspension_service
       dojo "./tasks _test_e2e"
       ;;
+  print_test_performance_role)
+      set -o pipefail
+      check_env
+      setRequiredRoleArn
+      echo Required performance test role REQUIRED_ROLE_ARN is $REQUIRED_ROLE_ARN
+      ;;
   _test_performance)
       gradle test --tests *PerformanceTest
       ;;
