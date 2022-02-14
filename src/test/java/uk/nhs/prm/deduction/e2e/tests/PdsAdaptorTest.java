@@ -3,7 +3,6 @@ package uk.nhs.prm.deduction.e2e.tests;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 

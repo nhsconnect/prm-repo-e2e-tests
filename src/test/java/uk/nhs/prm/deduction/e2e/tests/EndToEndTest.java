@@ -6,18 +6,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
+import uk.nhs.prm.deduction.e2e.models.MofUpdatedMessage;
+import uk.nhs.prm.deduction.e2e.models.NoLongerSuspendedMessage;
+import uk.nhs.prm.deduction.e2e.models.NonSensitiveDataMessage;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
-import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
-import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
-import uk.nhs.prm.deduction.e2e.utility.Helper;
+import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 
 import java.util.Map;
@@ -38,7 +39,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
         SuspensionServiceNotReallySuspensionsMessageQueue.class,
         NemsEventProcessorDeadLetterQueue.class,
         MeshForwarderQueue.class,
-        Helper.class,
+        QueueHelper.class,
         MofUpdatedMessageQueue.class,
         MofNotUpdatedMessageQueue.class,
         PdsAdaptorClient.class
@@ -66,8 +67,6 @@ public class EndToEndTest {
     private NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue;
     @Autowired
     private MeshMailbox meshMailbox;
-    @Autowired
-    private Helper helper;
 
     @BeforeAll
     void init() {
@@ -89,37 +88,37 @@ public class EndToEndTest {
 
     @Test
     @Order(1)
-    public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() throws Exception {
+    public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
 
-        PdsAdaptorClient pdsAdaptorClient = new PdsAdaptorClient();
-        PdsAdaptorResponse pdsAdaptorResponse = pdsAdaptorClient.getSuspendedPatientStatus(suspendedPatientNhsNumber);
-
         String previousGp = generateRandomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
-        pdsAdaptorClient.updateManagingOrganisation(suspendedPatientNhsNumber, previousGp, pdsAdaptorResponse.getRecordETag());
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId);
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp);
         meshMailbox.postMessage(nemsSuspension);
+        MofUpdatedMessage expectedMessageOnQueue = new MofUpdatedMessage(nemsMessageId,  "ACTION:UPDATED_MANAGING_ORGANISATION");
+
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessageContaining(nemsMessageId));
-        assertThat(mofUpdatedMessageQueue.hasMessageContaining(nemsMessageId));
+        assertThat(mofUpdatedMessageQueue.hasMessage(expectedMessageOnQueue));
     }
 
     @Test
     @Order(2)
-    public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() throws Exception {
+    public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue(){
         String nemsMessageId = randomNemsMessageId();
+        String previousGp = generateRandomOdsCode();
+
         String currentlyRegisteredPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId);
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp);
+
+        NoLongerSuspendedMessage expectedMessageOnQueue = new NoLongerSuspendedMessage(nemsMessageId,  "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
         meshMailbox.postMessage(nemsSuspension);
 
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessageContaining(nemsMessageId));
-        assertThat(notReallySuspensionsMessageQueue.hasMessageContaining(nemsMessageId));
+        assertThat(notReallySuspensionsMessageQueue.hasMessage(expectedMessageOnQueue));
 
     }
 
@@ -150,13 +149,16 @@ public class EndToEndTest {
 
     @Test
     @Order(3)
-    public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() throws Exception {
+    public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn(){
         String nemsMessageId = randomNemsMessageId();
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER, nemsMessageId);
+        String previousGp = generateRandomOdsCode();
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER, nemsMessageId, previousGp);
         meshMailbox.postMessage(nemsSuspension);
+
+        NonSensitiveDataMessage expectedMessageOnQueue = new NonSensitiveDataMessage(nemsMessageId,  "NO_ACTION:NOT_SYNTHETIC");
+
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessageContaining(nemsMessageId));
-        assertThat(mofNotUpdatedMessageQueue.hasMessageContaining(nemsMessageId));
+        assertThat(mofNotUpdatedMessageQueue.hasMessage(expectedMessageOnQueue));
     }
 
     public void log(String message) {

@@ -1,7 +1,12 @@
 package uk.nhs.prm.deduction.e2e.suspensions;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import uk.nhs.prm.deduction.e2e.models.MofUpdatedMessage;
+import uk.nhs.prm.deduction.e2e.models.NonSensitiveDataMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -36,12 +41,12 @@ public class SuspensionMessageQueue {
                 .until(() -> findMessageContaining(substring), notNullValue());
     }
 
-    public boolean hasMessageContaining(String substring) {
+    public boolean hasMessage(NonSensitiveDataMessage substring) {
         log(String.format("Checking if message is present on : %s",  this.queueUri));
         await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> messageIsOnQueue(substring), equalTo(true));
+                .until(() -> messagePresentOnQueue(substring), equalTo(true));
         return true;
     }
 
@@ -70,14 +75,18 @@ public class SuspensionMessageQueue {
         }
         return null;
     }
-
-    private boolean messageIsOnQueue(String messageBodyToCheck) {
+    private boolean messagePresentOnQueue(NonSensitiveDataMessage messageToCheck) throws JSONException {
         List<SqsMessage> allMessages = sqsQueue.readMessagesFrom(this.queueUri);
         for (var message : allMessages) {
-            if (message.contains(messageBodyToCheck)) {
-                return true;
-            }
+            NonSensitiveDataMessage nonSensitiveDataMessage = QueueHelper.getNonSensitiveDataMessage(message);
+               if(QueueHelper.checkIfMessageIsExpectedMessage(nonSensitiveDataMessage,messageToCheck)){
+                   return true;
+                }
         }
         return false;
     }
+
+
+
+
 }
