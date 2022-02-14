@@ -2,7 +2,7 @@ package uk.nhs.prm.deduction.e2e.mesh;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import uk.nhs.prm.deduction.e2e.auth.AuthTokenGenerator;
+import uk.nhs.prm.deduction.e2e.mesh.auth.AuthTokenGenerator;
 import uk.nhs.prm.deduction.e2e.client.StackOverflowInsecureSSLContextLoader;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 

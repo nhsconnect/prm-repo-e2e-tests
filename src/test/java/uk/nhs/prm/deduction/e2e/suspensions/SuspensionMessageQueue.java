@@ -25,6 +25,7 @@ public class SuspensionMessageQueue {
         this.sqsQueue = sqsQueue;
         this.queueUri = queueUri;
     }
+
     public void deleteAllMessages(){
         sqsQueue.deleteAllMessage(queueUri);
     }

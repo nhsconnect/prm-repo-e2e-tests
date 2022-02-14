@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.auth;
+package uk.nhs.prm.deduction.e2e.mesh.auth;
 
 import uk.nhs.prm.deduction.e2e.mesh.MeshConfig;
 

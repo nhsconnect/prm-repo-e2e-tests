@@ -8,10 +8,10 @@ import java.util.List;
 @Component
 public class SqsQueue {
 
-    private SqsClient sqsClient;
+    private BasicSqsClient sqsClient;
 
-    public SqsQueue() {
-        this.sqsClient = new SqsClient();
+    public SqsQueue(BasicSqsClient sqsClient) {
+        this.sqsClient = sqsClient;
     }
 
     public List<SqsMessage> readMessagesFrom(String queueUri) {

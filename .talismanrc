@@ -7,4 +7,6 @@ fileignoreconfig:
   checksum: acfaf4550f535fa7a98b37920796e45e9e8d7ac6edb0ea72f9a5b3efa44b50fb
 - filename: src/test/java/uk/nhs/prm/deduction/e2e/pdsadaptor/PdsAdaptorClient.java
   checksum: b877bab289d8cd3726f5878e52bcd694d9bf661ec5a1c06f24c053f8a360668e
+- filename: src/test/java/uk/nhs/prm/deduction/e2e/performance/awsauth/AutoRefreshingRoleAssumingSqsClient.java
+  checksum: 6852c3e1828bcf51626719b264e55f422c28d4016befb0ba8a9d26271925a6ba
 version: ""

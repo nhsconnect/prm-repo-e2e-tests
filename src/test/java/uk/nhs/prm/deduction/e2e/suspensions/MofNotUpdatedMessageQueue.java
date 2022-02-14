@@ -10,21 +10,9 @@ import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import java.util.List;
 
 @Component
-public class MofNotUpdatedMessageQueue extends SuspensionMessageQueue{
-
+public class MofNotUpdatedMessageQueue extends SuspensionMessageQueue {
     @Autowired
     public MofNotUpdatedMessageQueue(SqsQueue sqsQueue, TestConfiguration configuration) {
         super(sqsQueue, configuration.mofNotUpdatedQueueUri());
-    }
-
-    public boolean containsMessage(List<Message> messages, String nhsNumber) throws JSONException {
-        for (Message message: messages) {
-            if(MofUpdateMessage.parseMessage(message.body()).nhsNumber().contains(nhsNumber)) {
-                log("Message present on queue");
-                sqsQueue.deleteMessage(queueUri,message);
-                return true;
-            }
-        }
-        return false;
     }
 }
