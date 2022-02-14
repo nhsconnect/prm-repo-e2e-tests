@@ -1,7 +1,6 @@
 package uk.nhs.prm.deduction.e2e.utility;
 
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
-import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
 
 import java.io.IOException;
 import java.util.HashMap;

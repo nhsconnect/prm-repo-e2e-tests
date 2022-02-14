@@ -6,7 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;

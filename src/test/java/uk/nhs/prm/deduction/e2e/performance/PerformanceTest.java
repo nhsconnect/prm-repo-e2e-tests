@@ -19,7 +19,7 @@ import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
-import uk.nhs.prm.deduction.e2e.utility.Helper;
+import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,7 +45,7 @@ import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGen
         SuspensionServiceNotReallySuspensionsMessageQueue.class,
         NemsEventProcessorDeadLetterQueue.class,
         MeshForwarderQueue.class,
-        Helper.class,
+        QueueHelper.class,
         MofUpdatedMessageQueue.class,
         MofNotUpdatedMessageQueue.class,
         ScheduledAssumeRoleClient.class

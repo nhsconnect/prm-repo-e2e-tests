@@ -10,7 +10,6 @@ import uk.nhs.prm.deduction.e2e.timing.Sleeper;
 import uk.nhs.prm.deduction.e2e.timing.Timer;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
