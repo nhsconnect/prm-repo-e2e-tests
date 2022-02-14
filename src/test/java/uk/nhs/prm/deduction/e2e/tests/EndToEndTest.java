@@ -103,8 +103,8 @@ public class EndToEndTest {
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessageContaining(suspendedPatientNhsNumber));
-        assertThat(mofUpdatedMessageQueue.hasMessageContaining(suspendedPatientNhsNumber));
+        assertThat(suspensionsMessageQueue.hasMessageContaining(nemsMessageId));
+        assertThat(mofUpdatedMessageQueue.hasMessageContaining(nemsMessageId));
     }
 
     @Test
@@ -118,8 +118,8 @@ public class EndToEndTest {
         meshMailbox.postMessage(nemsSuspension);
 
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessageContaining(currentlyRegisteredPatientNhsNumber));
-        assertThat(notReallySuspensionsMessageQueue.hasMessageContaining(currentlyRegisteredPatientNhsNumber));
+        assertThat(suspensionsMessageQueue.hasMessageContaining(nemsMessageId));
+        assertThat(notReallySuspensionsMessageQueue.hasMessageContaining(nemsMessageId));
 
     }
 
@@ -155,8 +155,8 @@ public class EndToEndTest {
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER, nemsMessageId);
         meshMailbox.postMessage(nemsSuspension);
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(suspensionsMessageQueue.hasMessageContaining(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
-        assertThat(mofNotUpdatedMessageQueue.hasMessageContaining(NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER));
+        assertThat(suspensionsMessageQueue.hasMessageContaining(nemsMessageId));
+        assertThat(mofNotUpdatedMessageQueue.hasMessageContaining(nemsMessageId));
     }
 
     public void log(String message) {
