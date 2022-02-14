@@ -7,17 +7,15 @@ import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 import software.amazon.awssdk.services.ssm.model.SsmException;
-import uk.nhs.prm.deduction.e2e.performance.CredentialsProvider;
 
 @Component
 @Slf4j
 public class AwsConfigurationClient {
     private SsmClient ssmClient;
 
-    public AwsConfigurationClient(CredentialsProvider credentialsProvider) {
+    public AwsConfigurationClient() {
         Region region =Region.EU_WEST_2;
         ssmClient = SsmClient.builder()
-                .credentialsProvider(credentialsProvider.loadCredentials())
                 .region(region)
                 .build();
     }

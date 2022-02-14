@@ -2,18 +2,16 @@ package uk.nhs.prm.deduction.e2e.queue;
 
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.model.Message;
-import uk.nhs.prm.deduction.e2e.performance.CredentialsProvider;
-import uk.nhs.prm.deduction.e2e.performance.ScheduledSqsClient;
 
 import java.util.List;
 
 @Component
 public class SqsQueue {
 
-    private BasicSqsClient sqsClient;
+    private SqsClient sqsClient;
 
-    public SqsQueue(CredentialsProvider credentialsProvider) {
-        this.sqsClient = new ScheduledSqsClient(credentialsProvider);
+    public SqsQueue() {
+        this.sqsClient = new SqsClient();
     }
 
     public List<SqsMessage> readMessagesFrom(String queueUri) {
