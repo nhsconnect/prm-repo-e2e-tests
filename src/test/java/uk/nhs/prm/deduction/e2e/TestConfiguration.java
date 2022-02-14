@@ -173,10 +173,10 @@ public class TestConfiguration {
 
     private AwsConfigurationClient createAwsConfigurationClient() {
         if (useLongRunningAuthRefresh()) {
-            out.println("AUTH STRATEGY: using auto-refresh, role-assuming aws config (ssm) client");
+            out.println("AUTH STRATEGY: using role-assuming aws config (ssm) client");
             return new RoleAssumingAwsConfigurationClient(new AssumeRoleCredentialsProviderFactory());
         }
-        out.println("AUTH STRATEGY: using non-refreshing, current-role aws config (ssm) client");
+        out.println("AUTH STRATEGY: using current-role aws config (ssm) client");
         return new BasicAwsConfigurationClient();
     }
 

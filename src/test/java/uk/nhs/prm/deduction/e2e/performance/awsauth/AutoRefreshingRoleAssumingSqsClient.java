@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.performance.awsauth;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -9,6 +10,7 @@ import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import java.util.concurrent.TimeUnit;
 
 @Component
+@Lazy
 public class AutoRefreshingRoleAssumingSqsClient extends BasicSqsClient {
 
     private AssumeRoleCredentialsProviderFactory credentialsProviderFactory;
@@ -19,8 +21,9 @@ public class AutoRefreshingRoleAssumingSqsClient extends BasicSqsClient {
         setNewSqsClient();
     }
 
-    @Scheduled(fixedRate = 30, initialDelay = 30, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
     public void setNewSqsClient() {
+        System.out.println("Refreshing SQS client in " + getClass());
         AwsCredentialsProvider credentialsProvider = credentialsProviderFactory.createProvider();
         SqsClient sqsClient = SqsClient.builder()
                 .credentialsProvider(credentialsProvider)
