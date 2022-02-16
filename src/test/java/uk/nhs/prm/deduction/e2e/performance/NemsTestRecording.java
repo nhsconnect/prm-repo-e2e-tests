@@ -18,6 +18,6 @@ public interface NemsTestRecording {
     }
 
     default LocalDateTime runStartTime() {
-        return testEvents().get(0).startedAt();
+        return startOrderedEvents().get(0).startedAt();
     }
 }

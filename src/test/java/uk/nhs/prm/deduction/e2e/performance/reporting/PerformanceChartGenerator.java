@@ -20,7 +20,7 @@ public class PerformanceChartGenerator {
     public static void generateProcessingDurationScatterPlot(NemsTestRecording recording, String title) {
         XYSeriesCollection dataset = new XYSeriesCollection();
 
-        for (var series : createPerPhaseDataSerieses(recording)) {
+        for (var series : createPerPhaseDurationSerieses(recording)) {
             dataset.addSeries(series);
         }
 
@@ -49,7 +49,7 @@ public class PerformanceChartGenerator {
         savePlotAsPngTo(scatterPlot, "build/reports/performance/", "throughput.png");
     }
 
-    private static List<XYSeries> createPerPhaseDataSerieses(NemsTestRecording recording) {
+    private static List<XYSeries> createPerPhaseDurationSerieses(NemsTestRecording recording) {
         var phaseCount = 1;
         var testEvents = recording.startOrderedEvents();
 
