@@ -43,7 +43,6 @@ pipelines:
       NHS_ENVIRONMENT: dev
       PERFORMANCE_TEST_TIMEOUT: 120
       PERFORMANCE_LOAD_SPEC: "40@5"
-      USE_LONG_RUNNING_AUTH_REFRESH: true
   e2e-perf-pre-prod:
     <<: *pipeline-template
     timer:
@@ -51,5 +50,4 @@ pipelines:
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
       PERFORMANCE_TEST_TIMEOUT: 61200
-      USE_LONG_RUNNING_AUTH_REFRESH: true
       PERFORMANCE_LOAD_SPEC: "17000@1"

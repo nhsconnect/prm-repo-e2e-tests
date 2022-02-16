@@ -8,7 +8,7 @@ import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
 import software.amazon.awssdk.services.sts.model.Credentials;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.deduction.e2e.config.BootstrapConfiguration;
 
 import static software.amazon.awssdk.regions.Region.EU_WEST_2;
 
@@ -19,7 +19,7 @@ public class AssumeRoleCredentialsProviderFactory {
     private final String roleArn;
 
     public AssumeRoleCredentialsProviderFactory() {
-        this.roleArn = TestConfiguration.determineAssumeRoleArn();
+        this.roleArn = BootstrapConfiguration.assumeRoleTargetArn();
     }
 
     public AwsCredentialsProvider createProvider() {
@@ -31,7 +31,6 @@ public class AssumeRoleCredentialsProviderFactory {
                 .roleArn(roleArn)
                 .roleSessionName("perf-test")
                 .build();
-
         AssumeRoleResponse assumeRoleResponse = stsClient.assumeRole(assumeRoleRequest);
 
         Credentials creds = assumeRoleResponse.credentials();
