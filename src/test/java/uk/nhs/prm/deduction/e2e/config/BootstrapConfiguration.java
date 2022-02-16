@@ -5,7 +5,7 @@ import software.amazon.awssdk.services.sts.StsClient;
 import static java.lang.System.getenv;
 
 public class BootstrapConfiguration {
-    static ExampleAssumedRoleArn exampleArn = determineExampleAssumedRoleArn();
+    private static ExampleAssumedRoleArn exampleArn = determineExampleAssumedRoleArn();
 
     public static String assumeRoleTargetArn() {
         return exampleArn.assumeRoleTargetArn();
