@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 @Component
 @Primary
 public class BasicSqsClient {
+    private static final int MAX_VISIBILITY_TIMEOUT = 43200;
 
     private volatile SqsClient sqsClient;
 
@@ -43,8 +44,9 @@ public class BasicSqsClient {
     }
 
     public List<SqsMessage> readThroughMessages(String queueUrl, int visibilityTimeout) {
+        int safeVisibilityTimeout = Math.min(visibilityTimeout, MAX_VISIBILITY_TIMEOUT);
         var receiveMessageRequest = ReceiveMessageRequest.builder()
-            .visibilityTimeout(visibilityTimeout)
+            .visibilityTimeout(safeVisibilityTimeout)
             .queueUrl(queueUrl)
             .waitTimeSeconds(5)
             .maxNumberOfMessages(10)
