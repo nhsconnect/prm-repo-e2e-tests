@@ -21,6 +21,9 @@ public class BootstrapConfiguration {
             System.err.println("REQUIRED_ROLE_ARN not set, determining example assume role arn from current identity (expecting already assumed role)");
             exampleAssumedRoleArn = StsClient.create().getCallerIdentity().arn();
         }
+        else {
+            System.err.println("REQUIRED_ROLE_ARN is set and to be used to resolve target role and account for AWS auth");
+        }
         return ExampleAssumedRoleArn.parse(exampleAssumedRoleArn);
     }
 }
