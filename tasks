@@ -94,10 +94,8 @@ function check_suspension_service {
   exit 1
 }
 
-function setRequiredRoleArn() {
-    assume_environment_role $NHS_ENVIRONMENT
-    export REQUIRED_ROLE_ARN=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Arn")
-    _clear_aws_env_credentials
+function set_required_role_arn() {
+  export REQUIRED_ROLE_ARN=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Arn")
 }
 
 ###########
@@ -128,18 +126,19 @@ case "${command}" in
       check_suspension_service
       dojo "./tasks _test_e2e"
       ;;
-  print_test_performance_role)
-      set -o pipefail
-      check_env
-      setRequiredRoleArn
-      echo Required performance test role REQUIRED_ROLE_ARN is $REQUIRED_ROLE_ARN
-      ;;
   _test_performance)
       gradle test --tests *PerformanceTest
       ;;
-  test_performance)
+  test_performance_local) # using local user auth
       check_env
-      setRequiredRoleArn
+      assume_environment_role $NHS_ENVIRONMENT
+      dojo "./tasks _test_performance"
+      ;;
+  test_performance) # in pipeline
+      check_env
+      assume_environment_role $NHS_ENVIRONMENT
+      set_required_role_arn      # the kind of role we'd like to keep assuming - picked up by performance test code
+      _clear_aws_env_credentials # in AWS must allow native credentials pickup (not temp session creds) to allow long running re-auth
       dojo "./tasks _test_performance"
       ;;
   *)
