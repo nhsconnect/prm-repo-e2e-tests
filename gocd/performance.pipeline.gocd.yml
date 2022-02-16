@@ -76,7 +76,7 @@ pipelines:
       spec: "0 0 9 ? * SAT"
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
-      PERFORMANCE_TEST_TIMEOUT: 24000
+      PERFORMANCE_TEST_TIMEOUT: 43200
       PERFORMANCE_LOAD_SPEC: "17000@0.6"
   perf-pre-prod-max-day:
     <<: *pipeline-template
@@ -84,5 +84,5 @@ pipelines:
       spec: "0 0 9 ? * SUN"
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
-      PERFORMANCE_TEST_TIMEOUT: 24000
+      PERFORMANCE_TEST_TIMEOUT: 43200
       PERFORMANCE_LOAD_SPEC: "51000@1.8"
