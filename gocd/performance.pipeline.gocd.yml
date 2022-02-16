@@ -41,8 +41,48 @@ pipelines:
   e2e-perf-pre-prod:
     <<: *pipeline-template
     timer:
-      spec: "0 20 15 * * ?"
+      spec: "0 0 14 * * ?"
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
-      PERFORMANCE_TEST_TIMEOUT: 61200
-      PERFORMANCE_LOAD_SPEC: "17000@1"
+      PERFORMANCE_TEST_TIMEOUT: 14400
+      PERFORMANCE_LOAD_SPEC: "10@1"
+  perf-pre-prod-average-evening:
+    <<: *pipeline-template
+    timer:
+      spec: "0 0 19 * MON,WED ?"
+    environment_variables:
+      NHS_ENVIRONMENT: pre-prod
+      PERFORMANCE_TEST_TIMEOUT: 24000
+      PERFORMANCE_LOAD_SPEC: "17000@5"
+  perf-pre-prod-max-evening:
+    <<: *pipeline-template
+    timer:
+      spec: "0 0 19 * TUE ?"
+    environment_variables:
+      NHS_ENVIRONMENT: pre-prod
+      PERFORMANCE_TEST_TIMEOUT: 24000
+      PERFORMANCE_LOAD_SPEC: "51000@5"
+  perf-pre-prod-ramp-evening:
+    <<: *pipeline-template
+    timer:
+      spec: "0 0 19 * THU ?"
+    environment_variables:
+      NHS_ENVIRONMENT: pre-prod
+      PERFORMANCE_TEST_TIMEOUT: 24000
+      PERFORMANCE_LOAD_SPEC: "1000@0.6,10000@2,40000@5"
+  perf-pre-prod-average-day:
+    <<: *pipeline-template
+    timer:
+      spec: "0 0 9 * SAT ?"
+    environment_variables:
+      NHS_ENVIRONMENT: pre-prod
+      PERFORMANCE_TEST_TIMEOUT: 24000
+      PERFORMANCE_LOAD_SPEC: "17000@0.6"
+  perf-pre-prod-max-day:
+    <<: *pipeline-template
+    timer:
+      spec: "0 0 9 * SUN ?"
+    environment_variables:
+      NHS_ENVIRONMENT: pre-prod
+      PERFORMANCE_TEST_TIMEOUT: 24000
+      PERFORMANCE_LOAD_SPEC: "51000@1.8"
