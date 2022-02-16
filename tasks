@@ -94,7 +94,7 @@ function check_suspension_service {
   exit 1
 }
 
-function set_required_role_arn() {
+function set_required_role_arn_from_assumed_role() {
   export REQUIRED_ROLE_ARN=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Arn")
 }
 
@@ -136,9 +136,14 @@ case "${command}" in
       ;;
   test_performance) # in pipeline
       check_env
+
       assume_environment_role $NHS_ENVIRONMENT
-      set_required_role_arn      # the kind of role we'd like to keep assuming - picked up by performance test code
-      _clear_aws_env_credentials # in AWS must allow native credentials pickup (not temp session creds) to allow long running re-auth
+      set_required_role_arn_from_assumed_role
+      echo "set REQUIRED_ROLE_ARN to $REQUIRED_ROLE_ARN for long-running test process"
+
+      echo "NB: clearing temporary auth session credentials to allow native AWS auth access to re-assume role after expiry"
+      _clear_aws_env_credentials
+
       dojo "./tasks _test_performance"
       ;;
   *)
