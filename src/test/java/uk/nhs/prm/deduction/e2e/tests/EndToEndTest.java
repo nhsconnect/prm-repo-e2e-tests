@@ -148,7 +148,7 @@ public class EndToEndTest {
         log("Posting DLQ messages");
         for (Map.Entry<String, NemsEventMessage> message : dlqMessages.entrySet()) {
             meshMailbox.postMessage(message.getValue());
-            log("Posted " + message.getKey() + " message");
+            log("Posted " + message.getKey() + " messages");
             assertThat(nemsEventProcessorDeadLetterQueue.hasMessage(message.getValue().body()));
         }
     }
