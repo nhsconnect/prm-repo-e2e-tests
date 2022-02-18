@@ -103,7 +103,7 @@ public class EndToEndTest {
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp);
         meshMailbox.postMessage(nemsSuspension);
-        MofUpdatedMessage expectedMessageOnQueue = new MofUpdatedMessage(nemsMessageId,  "ACTION:UPDATED_MANAGING_ORGANISATION");
+        MofUpdatedMessage expectedMessageOnQueue = new MofUpdatedMessage(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
         assertThat(mofUpdatedMessageQueue.hasMessage(expectedMessageOnQueue));
@@ -111,7 +111,7 @@ public class EndToEndTest {
 
     @Test
     @Order(2)
-    public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue(){
+    public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
 
@@ -119,7 +119,7 @@ public class EndToEndTest {
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp);
 
-        NoLongerSuspendedMessage expectedMessageOnQueue = new NoLongerSuspendedMessage(nemsMessageId,  "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
+        NoLongerSuspendedMessage expectedMessageOnQueue = new NoLongerSuspendedMessage(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
         meshMailbox.postMessage(nemsSuspension);
 
@@ -155,13 +155,13 @@ public class EndToEndTest {
 
     @Test
     @Order(3)
-    public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn(){
+    public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER, nemsMessageId, previousGp);
         meshMailbox.postMessage(nemsSuspension);
 
-        NonSensitiveDataMessage expectedMessageOnQueue = new NonSensitiveDataMessage(nemsMessageId,  "NO_ACTION:NOT_SYNTHETIC");
+        NonSensitiveDataMessage expectedMessageOnQueue = new NonSensitiveDataMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC");
 
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
         assertThat(mofNotUpdatedMessageQueue.hasMessage(expectedMessageOnQueue));
