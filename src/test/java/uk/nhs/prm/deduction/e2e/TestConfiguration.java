@@ -22,33 +22,8 @@ public class TestConfiguration {
     public static final int SECONDS_IN_AN_HOUR = 3600;
 
     private final ImmutableMap<String, List<String>> suspendedNhsNumbersByEnv = ImmutableMap.of(
-            "dev", asList(
-                    "9693797396",
-                    "9693797426",
-                    "9693797477",
-                    "9693797418",
-                    "9693797361",
-                    "9693797353",
-                    "9693797345",
-                    "9693797337",
-                    "9693797329",
-                    "9693797310",
-                    "9693797469",
-                    "9693797507",
-                    "9693797434",
-                    "9693797167",
-                    "9693797159"),
-            "pre-prod", asList(
-                    "9693642422",
-                    "9693642430",
-                    "9693642449",
-                    "9693642457",
-                    "9693642465",
-                    "9693642473",
-                    "9693642481",
-                    "9693642503",
-                    "9693642511",
-                    "9693642538")
+            "dev", TestData.dev(),
+            "pre-prod", TestData.preProd()
     );
 
     private final AwsConfigurationClient awsConfigurationClient;
