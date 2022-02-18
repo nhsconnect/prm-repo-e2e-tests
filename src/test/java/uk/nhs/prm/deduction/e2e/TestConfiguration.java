@@ -107,6 +107,10 @@ public class TestConfiguration {
         return String.format("https://pds-adaptor.%s.non-prod.patient-deductions.nhs.uk/", getEnvironmentName());
     }
 
+    public String getNemsEventProcessorLogGroup() {
+        return String.format("/nhs/deductions/%s-%s/nems-event-processor", getEnvironmentName(), getAwsAccountNo());
+    }
+
     private String getAwsAccountNo() {
         if (cachedAwsAccountNo == null) {
             cachedAwsAccountNo = fetchAwsAccountNo();
