@@ -87,7 +87,7 @@ public class EndToEndTest {
     private void initializeNhsNumberBasedOnEnvironment() {
         // NHS Number needs to be different in each env as the synthetic patient prefix is different
         String nhsEnvironment = System.getenv("NHS_ENVIRONMENT");
-        SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693795997" : "9694179254";
+        SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693796284" : "9694179254";
         SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693797396" : "9694179262";
         NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
     }
