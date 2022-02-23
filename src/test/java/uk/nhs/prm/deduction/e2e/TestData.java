@@ -8,10 +8,8 @@ public class TestData {
 
     public static List<String> dev() {
         return asList(
-                "9693797396",
                 "9693797426",
                 "9693797477",
-                "9693797418",
                 "9693797361",
                 "9693797353",
                 "9693797345",
