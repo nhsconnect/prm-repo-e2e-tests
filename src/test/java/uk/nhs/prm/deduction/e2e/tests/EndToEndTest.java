@@ -167,7 +167,7 @@ public class EndToEndTest {
     }
     @Test
     @Order(1)
-    public void shouldMoveDeceasedPatientTo() {
+    public void shouldMoveDeceasedPatientToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_IS_DECEASED;
 
