@@ -148,4 +148,8 @@ public class TestConfiguration {
     private AwsConfigurationClient createAwsConfigurationClient() {
         return new RoleAssumingAwsConfigurationClient(new AssumeRoleCredentialsProviderFactory());
     }
+
+    public String deceasedQueueUri() {
+        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s -suspension-service-deceased-patient-queue", getAwsAccountNo(), getEnvironmentName());
+    }
 }
