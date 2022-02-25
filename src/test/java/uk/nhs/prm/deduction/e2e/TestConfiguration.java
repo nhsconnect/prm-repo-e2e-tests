@@ -150,6 +150,6 @@ public class TestConfiguration {
     }
 
     public String deceasedQueueUri() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s -suspension-service-deceased-patient-queue", getAwsAccountNo(), getEnvironmentName());
+        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-deceased-patient-queue", getAwsAccountNo(), getEnvironmentName());
     }
 }
