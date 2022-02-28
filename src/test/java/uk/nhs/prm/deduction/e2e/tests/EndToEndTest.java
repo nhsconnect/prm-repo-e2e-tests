@@ -91,7 +91,7 @@ public class EndToEndTest {
         // NHS Number needs to be different in each env as the synthetic patient prefix is different
         String nhsEnvironment = System.getenv("NHS_ENVIRONMENT");
         SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693796284" : "9694179254";
-        SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693797418" : "9694179262";
+        SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693795997" : "9694179262";
         NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
     }
 
@@ -131,7 +131,7 @@ public class EndToEndTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
         String nemsMessageId = randomNemsMessageId();
         String nhsNumber = randomNhsNumber();
@@ -142,7 +142,7 @@ public class EndToEndTest {
 
 
     @Test
-    @Order(5)
+    @Order(6)
     public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
         Map<String, NemsEventMessage> dlqMessages = NemsEventFactory.getDLQNemsEventMessages();
         log("Posting DLQ messages");
@@ -154,7 +154,7 @@ public class EndToEndTest {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
@@ -166,7 +166,7 @@ public class EndToEndTest {
         assertThat(mofNotUpdatedMessageQueue.hasMessage(expectedMessageOnQueue));
     }
     @Test
-    @Order(1)
+    @Order(3)
     public void shouldMoveDeceasedPatientToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_IS_DECEASED;
