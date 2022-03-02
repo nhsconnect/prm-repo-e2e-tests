@@ -22,6 +22,9 @@ import uk.nhs.prm.deduction.e2e.suspensions.*;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -57,6 +60,7 @@ public class EndToEndTest {
     public static String SYNTHETIC_PATIENT_WHICH_IS_DECEASED = "9693797264";
     public static String SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
     public static String NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     @Autowired
     private MeshForwarderQueue meshForwarderQueue;
     @Autowired
@@ -91,7 +95,7 @@ public class EndToEndTest {
         // NHS Number needs to be different in each env as the synthetic patient prefix is different
         String nhsEnvironment = System.getenv("NHS_ENVIRONMENT");
         SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693796284" : "9694179254";
-        SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693795997" : "9694179262";
+        SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693795997" : "9694179343";
         NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
     }
 
@@ -100,11 +104,11 @@ public class EndToEndTest {
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
-
+        Timestamp now = new Timestamp(System.currentTimeMillis());
         String previousGp = generateRandomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp);
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, dateFormat.format(now));
         meshMailbox.postMessage(nemsSuspension);
         MofUpdatedMessage expectedMessageOnQueue = new MofUpdatedMessage(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
@@ -118,7 +122,7 @@ public class EndToEndTest {
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
-
+        Timestamp now = Timestamp.from(Instant.now());
         String currentlyRegisteredPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp);
@@ -135,7 +139,8 @@ public class EndToEndTest {
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
         String nemsMessageId = randomNemsMessageId();
         String nhsNumber = randomNhsNumber();
-        NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate("change-of-gp-non-suspension.xml", nhsNumber, nemsMessageId);
+        Timestamp now = Timestamp.from(Instant.now());
+        NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate("change-of-gp-non-suspension.xml", nhsNumber, nemsMessageId,now.toString());
         meshMailbox.postMessage(nemsNonSuspension);
         assertThat(nemsEventProcessorUnhandledQueue.hasMessage("{\"nemsMessageId\":\"" + nemsMessageId + "\",\"messageStatus\":\"NO_ACTION:NON_SUSPENSION\"}"));
     }
@@ -168,6 +173,22 @@ public class EndToEndTest {
     @Test
     @Order(3)
     public void shouldMoveDeceasedPatientToDeceasedQueue() {
+        String nemsMessageId = randomNemsMessageId();
+        String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_IS_DECEASED;
+
+        String previousGp = generateRandomOdsCode();
+        System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
+
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp);
+        meshMailbox.postMessage(nemsSuspension);
+        DeceasedPatientMessage expectedMessageOnQueue = new DeceasedPatientMessage(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
+
+        assertThat(deceasedPatientQueue.hasMessage(expectedMessageOnQueue));
+    }
+
+    @Test
+    @Order(3)
+    public void shouldMoveEventOutOfDateToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_IS_DECEASED;
 

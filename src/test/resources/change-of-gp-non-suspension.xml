@@ -12,7 +12,7 @@
                 <id value="__NEMS_MESSAGE_ID__"/>
                 <meta>
                     <versionId value="1"/>
-                    <lastUpdated value="2017-11-01T15:00:33+00:00"/>
+                    <lastUpdated value="__LAST-UPDATED__"/>
                     <profile value="https://fhir.nhs.uk/STU3/StructureDefinition/Event-MessageHeader-1"/>
                 </meta>
                 <extension url="https://fhir.nhs.uk/STU3/StructureDefinition/Extension-RoutingDemographics-1">
