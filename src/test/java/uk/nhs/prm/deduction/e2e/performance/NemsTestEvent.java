@@ -6,6 +6,8 @@ import uk.nhs.prm.deduction.e2e.performance.load.Phased;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -134,6 +136,7 @@ public class NemsTestEvent implements Phased {
     public NemsEventMessage createMessage() {
         var previousGP = generateRandomOdsCode();
         NemsEventMessage nemsSuspension;
+        Timestamp now = Timestamp.from(Instant.now());
         if (isSuspension()) {
             nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-suspension.xml",
                     nhsNumber(),
@@ -143,7 +146,7 @@ public class NemsTestEvent implements Phased {
         else {
             nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-non-suspension.xml",
                     nhsNumber(),
-                    nemsMessageId());
+                    nemsMessageId(),now.toString());
         }
         return nemsSuspension;
     }
