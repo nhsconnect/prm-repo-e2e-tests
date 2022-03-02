@@ -185,22 +185,6 @@ public class EndToEndTest {
 
         assertThat(deceasedPatientQueue.hasMessage(expectedMessageOnQueue));
     }
-
-    @Test
-    @Order(3)
-    public void shouldMoveEventOutOfDateToDeceasedQueue() {
-        String nemsMessageId = randomNemsMessageId();
-        String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_IS_DECEASED;
-
-        String previousGp = generateRandomOdsCode();
-        System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
-
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp);
-        meshMailbox.postMessage(nemsSuspension);
-        DeceasedPatientMessage expectedMessageOnQueue = new DeceasedPatientMessage(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
-
-        assertThat(deceasedPatientQueue.hasMessage(expectedMessageOnQueue));
-    }
     public void log(String message) {
         System.out.println(message);
     }
