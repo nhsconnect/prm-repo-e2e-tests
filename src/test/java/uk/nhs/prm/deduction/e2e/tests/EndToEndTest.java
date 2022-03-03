@@ -57,7 +57,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
 public class EndToEndTest {
 
     public static String SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
-    public static String SYNTHETIC_PATIENT_WHICH_IS_DECEASED = "9693797264";
+    public static String SYNTHETIC_PATIENT_WHICH_IS_DECEASED ;
     public static String SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
     public static String NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
@@ -96,6 +96,7 @@ public class EndToEndTest {
         String nhsEnvironment = System.getenv("NHS_ENVIRONMENT");
         SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693796284" : "9694179254";
         SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693795997" : "9694179343";
+        SYNTHETIC_PATIENT_WHICH_IS_DECEASED = nhsEnvironment.equals("dev") ? "9693797264" : "9694179394";
         NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
     }
 
