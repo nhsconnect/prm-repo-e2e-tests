@@ -14,7 +14,6 @@ import java.util.List;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getenv;
-import static java.util.Arrays.asList;
 
 @Component
 public class TestConfiguration {
@@ -24,7 +23,7 @@ public class TestConfiguration {
     private final ImmutableMap<String, List<String>> suspendedNhsNumbersByEnv = ImmutableMap.of(
             "dev", TestData.dev(),
             "pre-prod", TestData.preProd(),
-            "perf", TestData.perf(3000)
+            "perf", TestData.perf(numberOfPerfNhsNumbers())
     );
 
     private final AwsConfigurationClient awsConfigurationClient;
@@ -118,6 +117,14 @@ public class TestConfiguration {
         return nhsNumbers;
     }
 
+    private int numberOfPerfNhsNumbers() {
+        String perfPatientsRequested = getenv("NUMBER_OF_PERF_NHS_NUMBERS");
+        if (perfPatientsRequested == null) {
+            return 40;
+        }
+        return parseInt(perfPatientsRequested);
+    }
+
     public List<LoadPhase> performanceTestLoadPhases(List<LoadPhase> defaultLoadPhases) {
         String loadSpec = getenv("PERFORMANCE_LOAD_SPEC");
         if (loadSpec == null) {
@@ -134,7 +141,7 @@ public class TestConfiguration {
         return parseInt(timeout);
     }
 
-    private String getEnvironmentName() {
+    public String getEnvironmentName() {
         return getRequiredEnvVar("NHS_ENVIRONMENT");
     }
 
