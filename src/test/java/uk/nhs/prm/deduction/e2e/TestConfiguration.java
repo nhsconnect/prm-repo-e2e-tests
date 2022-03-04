@@ -23,7 +23,8 @@ public class TestConfiguration {
 
     private final ImmutableMap<String, List<String>> suspendedNhsNumbersByEnv = ImmutableMap.of(
             "dev", TestData.dev(),
-            "pre-prod", TestData.preProd()
+            "pre-prod", TestData.preProd(),
+            "perf", TestData.perf(3000)
     );
 
     private final AwsConfigurationClient awsConfigurationClient;
