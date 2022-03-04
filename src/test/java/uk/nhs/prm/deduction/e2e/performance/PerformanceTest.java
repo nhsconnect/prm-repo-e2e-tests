@@ -163,11 +163,13 @@ public class PerformanceTest {
     }
 
     private void checkSuspended(List<String> suspendedNhsNumbers) {
-        PdsAdaptorClient pds = new PdsAdaptorClient("performance-test", config.getPdsAdaptorPerformanceApiKey(), config.getPdsAdaptorUrl());
-        for (String nhsNumber: suspendedNhsNumbers) {
-            var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);
-            out.println(nhsNumber + ": " + patientStatus);
-            assertThat(patientStatus.getIsSuspended()).isTrue();
+        if (!config.getEnvironmentName().equals("perf")) {
+            PdsAdaptorClient pds = new PdsAdaptorClient("performance-test", config.getPdsAdaptorPerformanceApiKey(), config.getPdsAdaptorUrl());
+            for (String nhsNumber: suspendedNhsNumbers) {
+                var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);
+                out.println(nhsNumber + ": " + patientStatus);
+                assertThat(patientStatus.getIsSuspended()).isTrue();
+            }
         }
     }
 

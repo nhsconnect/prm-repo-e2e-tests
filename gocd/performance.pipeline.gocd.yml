@@ -94,6 +94,7 @@ pipelines:
       NHS_ENVIRONMENT: perf
       PERFORMANCE_TEST_TIMEOUT: 14400
       PERFORMANCE_LOAD_SPEC: "10@1"
+      NUMBER_OF_PERF_NHS_NUMBERS: 40
   perf-perf-average-evening:
     <<: *pipeline-template
     timer:
@@ -102,6 +103,7 @@ pipelines:
       NHS_ENVIRONMENT: perf
       PERFORMANCE_TEST_TIMEOUT: 24000
       PERFORMANCE_LOAD_SPEC: "17000@5"
+      NUMBER_OF_PERF_NHS_NUMBERS: 40
   perf-perf-max-evening:
     <<: *pipeline-template
     timer:
@@ -110,6 +112,7 @@ pipelines:
       NHS_ENVIRONMENT: perf
       PERFORMANCE_TEST_TIMEOUT: 24000
       PERFORMANCE_LOAD_SPEC: "51000@5"
+      NUMBER_OF_PERF_NHS_NUMBERS: 40
   perf-perf-ramp-evening:
     <<: *pipeline-template
     timer:
@@ -118,6 +121,7 @@ pipelines:
       NHS_ENVIRONMENT: perf
       PERFORMANCE_TEST_TIMEOUT: 24000
       PERFORMANCE_LOAD_SPEC: "1000@0.6,10000@2,40000@5"
+      NUMBER_OF_PERF_NHS_NUMBERS: 40
   perf-perf-average-day:
     <<: *pipeline-template
     timer:
@@ -126,6 +130,7 @@ pipelines:
       NHS_ENVIRONMENT: perf
       PERFORMANCE_TEST_TIMEOUT: 43200
       PERFORMANCE_LOAD_SPEC: "17000@0.6"
+      NUMBER_OF_PERF_NHS_NUMBERS: 40
   perf-perf-max-day:
     <<: *pipeline-template
     timer:
@@ -134,3 +139,4 @@ pipelines:
       NHS_ENVIRONMENT: perf
       PERFORMANCE_TEST_TIMEOUT: 43200
       PERFORMANCE_LOAD_SPEC: "51000@1.8"
+      NUMBER_OF_PERF_NHS_NUMBERS: 40
