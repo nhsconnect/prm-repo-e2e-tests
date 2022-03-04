@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -57,5 +58,19 @@ public class TestData {
                 "9693642503",
                 "9693642511",
                 "9693642538");
+    }
+
+    public static List<String> perf(int numberOfNhsNumbers) {
+        var perfList = new ArrayList<String>();
+        for (int i = 0; i < numberOfNhsNumbers ; i++) {
+            var nhsNumber = generateRandomNhsNumber();
+            perfList.add(nhsNumber);
+        }
+        return perfList;
+    }
+
+    private static String generateRandomNhsNumber() {
+        var randonSevenDigitNumber = (long) Math.floor(Math.random() * 9_000_000L) + 1_000_000L;
+        return "969" + randonSevenDigitNumber;
     }
 }
