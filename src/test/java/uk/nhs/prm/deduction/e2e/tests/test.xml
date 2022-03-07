@@ -1,0 +1,232 @@
+<Bundle xmlns="http://hl7.org/fhir">
+    <id value="2cd8b0f6-5f48-4658-8c1e-eeac74196490"/>
+    <meta>
+        <profile value="http://hl7.org/fhir/STU3/StructureDefinition/Bundle"/>
+    </meta>
+    <type value="message"/>
+    <entry>
+        <fullUrl value="urn:uuid:e6fbd310-a858-4dee-8d71-4113cbc732fd"/>
+        <resource>
+            <MessageHeader>
+                <id value="e6fbd310-a858-4dee-8d71-4113cbc732fd"/>
+                <meta>
+                    <versionId value="2"/>
+                    <lastUpdated value="2022-03-03T13:52:29+00:00"/>
+                    <profile value="https://fhir.nhs.uk/STU3/StructureDefinition/Event-MessageHeader-1"/>
+                </meta>
+                <extension url="https://fhir.nhs.uk/STU3/StructureDefinition/Extension-MessageEventType-1">
+                    <valueCodeableConcept>
+                        <coding>
+                            <system value="https://fhir.nhs.uk/STU3/CodeSystem/MessageEventType-1"/>
+                            <code value="new"/>
+                            <display value="New event message"/>
+                        </coding>
+                    </valueCodeableConcept>
+                </extension>
+                <extension url="https://fhir.nhs.uk/STU3/StructureDefinition/Extension-RoutingDemographics-1">
+                    <extension url="nhsNumber">
+                        <valueIdentifier>
+                            <system value="https://fhir.nhs.uk/Id/nhs-number"/>
+                            <value value="9694181399"/>
+                        </valueIdentifier>
+                    </extension>
+                    <extension url="name">
+                        <valueHumanName>
+                            <use value="official"/>
+                            <family value="FERNS"/>
+                            <given value="NAOMI"/>
+                        </valueHumanName>
+                    </extension>
+                    <extension url="birthDateTime">
+                        <valueDateTime value="2016-11-17T00:00:00+00:00"/>
+                    </extension>
+                </extension>
+                <event>
+                    <system value="https://fhir.nhs.uk/STU3/CodeSystem/EventType-1"/>
+                    <code value="pds-change-of-gp-1"/>
+                    <display value="PDS Change of GP"/>
+                </event>
+                <timestamp value="2022-03-03T13:52:29+00:00"/>
+                <source>
+                    <contact>
+                        <system value="phone"/>
+                        <value value="0113 397 3970"/>
+                        <use value="work"/>
+                    </contact>
+                    <endpoint value="urn:nhs:addressing:asid:618729461037"/>
+                </source>
+                <responsible>
+                    <reference value="urn:uuid:b1c5c2fd-771d-4264-a1a9-a1b9ae49a9cf"/>
+                </responsible>
+                <focus>
+                    <reference value="urn:uuid:da0e6608-ddd0-44f5-bdc1-5e78e385f875"/>
+                </focus>
+            </MessageHeader>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:84536ca2-d724-4c9f-8298-c0e5e0c0b0fc"/>
+        <resource>
+            <HealthcareService>
+                <id value="84536ca2-d724-4c9f-8298-c0e5e0c0b0fc"/>
+                <meta>
+                    <profile value="https://fhir.hl7.org.uk/STU3/StructureDefinition/CareConnect-HealthcareService-1"/>
+                </meta>
+                <identifier>
+                    <system value="https://fhir.nhs.uk/Id/ods-organization-code"/>
+                    <value value="X26"/>
+                </identifier>
+                <providedBy>
+                    <reference value="urn:uuid:b1c5c2fd-771d-4264-a1a9-a1b9ae49a9cf"/>
+                    <identifier>
+                        <value value="X26"/>
+                    </identifier>
+                </providedBy>
+                <type>
+                    <coding>
+                        <system value="https://fhir.nhs.uk/STU3/CodeSystem/EMS-HealthcareServiceType-1"/>
+                        <code value="PDS"/>
+                        <display value="Personal Demographics Service"/>
+                    </coding>
+                </type>
+            </HealthcareService>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:da0e6608-ddd0-44f5-bdc1-5e78e385f875"/>
+        <resource>
+            <Communication>
+                <id value="da0e6608-ddd0-44f5-bdc1-5e78e385f875"/>
+                <meta>
+                    <profile value="https://fhir.hl7.org.uk/STU3/StructureDefinition/CareConnect-Communication-1"/>
+                </meta>
+                <status value="completed"/>
+                <subject>
+                    <reference value="urn:uuid:c8833b60-be7e-4abb-95db-5e8f195607b2"/>
+                    <display value="FERNS, NAOMI"/>
+                </subject>
+                <sent value="2022-03-03"/>
+                <payload>
+                    <contentReference>
+                        <reference value="urn:uuid:c8833b60-be7e-4abb-95db-5e8f195607b2"/>
+                        <display value="FERNS, NAOMI"/>
+                    </contentReference>
+                </payload>
+            </Communication>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:c8833b60-be7e-4abb-95db-5e8f195607b2"/>
+        <resource>
+            <Patient>
+                <id value="c8833b60-be7e-4abb-95db-5e8f195607b2"/>
+                <meta>
+                    <versionId value="2"/>
+                    <profile value="https://fhir.hl7.org.uk/STU3/StructureDefinition/CareConnect-Patient-1"/>
+                </meta>
+                <identifier>
+                    <extension url="https://fhir.hl7.org.uk/STU3/StructureDefinition/Extension-CareConnect-NHSNumberVerificationStatus-1">
+                        <valueCodeableConcept>
+                            <coding>
+                                <system value="https://fhir.hl7.org.uk/STU3/CareConnect-NHSNumberVerificationStatus-1"/>
+                                <code value="01"/>
+                                <display value="Number present and verified"/>
+                            </coding>
+                        </valueCodeableConcept>
+                    </extension>
+                    <system value="https://fhir.nhs.uk/Id/nhs-number"/>
+                    <value value="9694181399"/>
+                </identifier>
+                <name>
+                    <use value="official"/>
+                    <family value="FERNS"/>
+                    <given value="NAOMI"/>
+                </name>
+                <gender value="female"/>
+                <birthDate value="2016-11-17">
+                    <extension url="http://hl7.org/fhir/StructureDefinition/patient-birthTime">
+                        <valueDateTime value="2016-11-17T00:00:00+00:00"/>
+                    </extension>
+                </birthDate>
+                <address>
+                    <use value="home"/>
+                    <line value="VALE HOUSE FARM COTTAGE"/>
+                    <line value="BROCKLESBY ROAD"/>
+                    <line value="ULCEBY"/>
+                    <line value="S HUMBERSIDE"/>
+                    <postalCode value="DN39 6SU"/>
+                </address>
+            </Patient>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:fb9518a6-7c58-4818-b1fd-b2c0af08d123"/>
+        <resource>
+            <EpisodeOfCare>
+                <id value="fb9518a6-7c58-4818-b1fd-b2c0af08d123"/>
+                <meta>
+                    <profile value="https://fhir.hl7.org.uk/STU3/StructureDefinition/CareConnect-EpisodeOfCare-1"/>
+                </meta>
+                <status value="finished"/>
+                <type>
+                    <coding>
+                        <system value="http://snomed.info/sct"/>
+                        <code value="408443003"/>
+                        <display value="General medical practice (qualifier value)"/>
+                    </coding>
+                </type>
+                <patient>
+                    <reference value="urn:uuid:c8833b60-be7e-4abb-95db-5e8f195607b2"/>
+                    <display value="FERNS, NAOMI"/>
+                </patient>
+                <managingOrganization>
+                    <reference value="urn:uuid:7d398c3e-8133-4a56-ba63-480bd9bbf2cb"/>
+                    <display value="DR LEGG'S SURGERY"/>
+                </managingOrganization>
+            </EpisodeOfCare>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:7d398c3e-8133-4a56-ba63-480bd9bbf2cb"/>
+        <resource>
+            <Organization>
+                <id value="7d398c3e-8133-4a56-ba63-480bd9bbf2cb"/>
+                <meta>
+                    <profile value="https://fhir.hl7.org.uk/STU3/StructureDefinition/CareConnect-Organization-1"/>
+                </meta>
+                <identifier>
+                    <system value="https://fhir.nhs.uk/Id/ods-organization-code"/>
+                    <value value="A20047"/>
+                </identifier>
+                <name value="DR LEGG'S SURGERY"/>
+                <partOf>
+                    <reference value="https://directory.spineservices.nhs.uk/STU3/Organization/14L"/>
+                    <display value="NHS MANCHESTER CCG"/>
+                </partOf>
+            </Organization>
+        </resource>
+    </entry>
+    <entry>
+        <fullUrl value="urn:uuid:b1c5c2fd-771d-4264-a1a9-a1b9ae49a9cf"/>
+        <resource>
+            <Organization>
+                <id value="b1c5c2fd-771d-4264-a1a9-a1b9ae49a9cf"/>
+                <meta>
+                    <profile value="https://fhir.hl7.org.uk/STU3/StructureDefinition/CareConnect-Organization-1"/>
+                </meta>
+                <identifier>
+                    <system value="https://fhir.nhs.uk/Id/ods-organization-code"/>
+                    <value value="X26"/>
+                </identifier>
+                <name value="NHS DIGITAL"/>
+                <address>
+                    <type value="both"/>
+                    <line value="7 and 8 Wellington Place"/>
+                    <city value="LEEDS"/>
+                    <district value="WEST YORKSHIRE"/>
+                    <postalCode value="LS1 4AP"/>
+                </address>
+            </Organization>
+        </resource>
+    </entry>
+</Bundle>
