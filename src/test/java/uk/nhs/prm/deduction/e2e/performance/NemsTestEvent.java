@@ -141,12 +141,14 @@ public class NemsTestEvent implements Phased {
             nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-suspension.xml",
                     nhsNumber(),
                     nemsMessageId(),
-                    previousGP);
+                    previousGP,
+                    now.toString()); // Timestamp now as a String
         }
         else {
             nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-non-suspension.xml",
                     nhsNumber(),
-                    nemsMessageId(),now.toString());
+                    nemsMessageId(),
+                    now.toString()); // Timestamp now as a String
         }
         return nemsSuspension;
     }
