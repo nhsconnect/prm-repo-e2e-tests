@@ -9,6 +9,8 @@ import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -136,19 +138,20 @@ public class NemsTestEvent implements Phased {
     public NemsEventMessage createMessage() {
         var previousGP = generateRandomOdsCode();
         NemsEventMessage nemsSuspension;
-        Timestamp now = Timestamp.from(Instant.now());
+        var timestamp = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+
         if (isSuspension()) {
             nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-suspension.xml",
                     nhsNumber(),
                     nemsMessageId(),
                     previousGP,
-                    now.toString()); // Timestamp now as a String
+                    timestamp);
         }
         else {
             nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-non-suspension.xml",
                     nhsNumber(),
                     nemsMessageId(),
-                    now.toString()); // Timestamp now as a String
+                    timestamp);
         }
         return nemsSuspension;
     }
@@ -171,5 +174,4 @@ public class NemsTestEvent implements Phased {
             return 0;
         };
     }
-
 }
