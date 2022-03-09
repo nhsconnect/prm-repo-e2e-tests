@@ -1,6 +1,5 @@
 package uk.nhs.prm.deduction.e2e;
 
-
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.utils.ImmutableMap;
 import uk.nhs.prm.deduction.e2e.client.AwsConfigurationClient;
@@ -50,16 +49,8 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-password", getEnvironmentName()));
     }
 
-    public String getPdsAdaptorApiKey() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/e2e-test", getEnvironmentName()));
-    }
-
     public String getPdsAdaptorPerformanceApiKey() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/performance-test", getEnvironmentName()));
-    }
-
-    public String getPdsAdaptorTestPatientNhsNumber() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/e2e-test/pds-adaptor-test/nhs-number", getEnvironmentName()));
     }
 
     public String meshForwarderObservabilityQueueUri() {
@@ -92,10 +83,6 @@ public class TestConfiguration {
 
     public String getPdsAdaptorUrl() {
         return String.format("https://pds-adaptor.%s.non-prod.patient-deductions.nhs.uk/", getEnvironmentName());
-    }
-
-    public String getNemsEventProcessorLogGroup() {
-        return String.format("/nhs/deductions/%s-%s/nems-event-processor", getEnvironmentName(), getAwsAccountNo());
     }
 
     private String getAwsAccountNo() {

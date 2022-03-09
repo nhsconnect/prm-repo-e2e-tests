@@ -104,13 +104,6 @@ function set_required_role_arn_from_assumed_role() {
 
 command="$1"
 case "${command}" in
-  _build)
-      rm -rf build/
-      gradle assemble
-      ;;
-  build)
-      dojo "./tasks _build"
-      ;;
   _dep)
       gradle dependencyCheckAnalyze
       ;;

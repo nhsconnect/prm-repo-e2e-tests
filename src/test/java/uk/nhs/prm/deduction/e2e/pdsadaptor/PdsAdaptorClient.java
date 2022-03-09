@@ -5,21 +5,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 
-@Component
 public class PdsAdaptorClient {
 
     private final String apiKey;
     private final String patientRootUrl;
     private final String username;
-
-    public PdsAdaptorClient() {
-        this(new TestConfiguration());
-    }
-
-    public PdsAdaptorClient(TestConfiguration config) {
-        this("e2e-test", config.getPdsAdaptorApiKey(), config.getPdsAdaptorUrl());
-    }
-
     private final RestTemplate restTemplate = new RestTemplate();
 
     public PdsAdaptorClient(String username, String apiKey, String pdsAdaptorUrl) {
