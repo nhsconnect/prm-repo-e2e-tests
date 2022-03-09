@@ -48,8 +48,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
         MofNotUpdatedMessageQueue.class,
         BasicSqsClient.class,
         AssumeRoleCredentialsProviderFactory.class,
-        AutoRefreshingRoleAssumingSqsClient.class,
-        PdsAdaptorClient.class
+        AutoRefreshingRoleAssumingSqsClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -170,6 +169,7 @@ public class EndToEndTest {
 
         assertThat(mofNotUpdatedMessageQueue.hasMessage(expectedMessageOnQueue));
     }
+
     @Test
     @Order(3)
     public void shouldMoveDeceasedPatientToDeceasedQueue() {
