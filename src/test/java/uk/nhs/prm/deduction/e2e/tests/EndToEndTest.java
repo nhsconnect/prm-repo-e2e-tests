@@ -19,12 +19,9 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSq
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.*;
-import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
+import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
