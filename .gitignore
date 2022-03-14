@@ -7,4 +7,5 @@ build/
 bin/
 utils/**/aws-helpers
 samples/
+docs/perf-reports
 .DS_Store
