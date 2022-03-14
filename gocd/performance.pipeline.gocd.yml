@@ -43,6 +43,9 @@ pipelines:
           clean_workspace: true
           resources:
             - docker
+          artifacts:
+            - build:
+                source: build/reports/tests/
           tasks:
             - exec:
                 command: /bin/bash
