@@ -32,7 +32,7 @@ common:
                       - ./tasks test_performance
 
 pipelines:
-  perf-unit-test
+  perf-unit-test:
     group: performance
     label_template: '${COUNT}-${git[:8]}'
     materials:
