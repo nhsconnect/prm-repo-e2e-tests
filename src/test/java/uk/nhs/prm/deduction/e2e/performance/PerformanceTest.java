@@ -104,8 +104,8 @@ public class PerformanceTest {
 
         var eventSource = createMixedSuspensionsAndNonSuspensionsTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
         var loadSource = new LoadRegulatingPool<>(eventSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
-                atFlatRate("1", 10),
-                atFlatRate("2", 10))));
+                atFlatRate(10, "1"),
+                atFlatRate(10, "2"))));
 
         var suspensionsOnlyRecorder = new SuspensionsOnlyEventListener(recorder);
         while (loadSource.unfinished()) {

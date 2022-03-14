@@ -11,7 +11,7 @@ public class LoadSpecParser {
         String[] phaseSpecs = loadSpecString.split(",");
         for (var phaseSpec : phaseSpecs) {
             var countAndRate = phaseSpec.split("@");
-            phases.add(LoadPhase.atFlatRate(countAndRate[1], parseInt(countAndRate[0])));
+            phases.add(LoadPhase.atFlatRate(parseInt(countAndRate[0]), countAndRate[1]));
         }
         return phases;
     }

@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.performance.load;
 
 import uk.nhs.prm.deduction.e2e.timing.Sleeper;
+import uk.nhs.prm.deduction.e2e.timing.Timer;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -12,7 +13,7 @@ public class LoadPhase {
     public final BigDecimal ratePerSecond;
     public int runningCount;
 
-    public static LoadPhase atFlatRate(String ratePerSecond, int count) {
+    public static LoadPhase atFlatRate(int count, String ratePerSecond) {
         return new LoadPhase(count, new BigDecimal(ratePerSecond));
     }
 
@@ -35,21 +36,25 @@ public class LoadPhase {
     }
 
     private int targetDelayMilliseconds() {
-        return ONE_THOUSAND.multiply(BigDecimal.ONE.divide(ratePerSecond, RoundingMode.HALF_UP)).intValue();
+        return ONE_THOUSAND.multiply(BigDecimal.ONE.divide(ratePerSecond, 3, RoundingMode.HALF_UP)).intValue();
     }
 
     /*
+     * Intention of externalising time after last delay applied (returning and passing in next call) is so that
+     * transitions between load phases work as expected.
+     *
      * @return Time after delay applied
      */
-    public Long applyDelay(long now, Sleeper sleeper, Long lastItemTimeMillis) {
+    public Long applyDelay(Timer timer, Sleeper sleeper, Long lastItemTimeMillis) {
+        var now = timer.milliseconds();
         if (lastItemTimeMillis == null) {
             return now;
         }
         var elapsed = now - lastItemTimeMillis;
         int requiredDelay = (int) (targetDelayMilliseconds() - elapsed);
         if (requiredDelay > 0) {
-            sleeper.sleep(requiredDelay);
+            return sleeper.sleep(requiredDelay);
         }
-        return now + requiredDelay;
+        return now;
     }
 }

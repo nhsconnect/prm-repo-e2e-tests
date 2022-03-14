@@ -119,6 +119,12 @@ case "${command}" in
       check_suspension_service
       dojo "./tasks _test_e2e"
       ;;
+  _test_perf_unit)
+      gradle test --tests *.performance.*.*Test
+      ;;
+  test_perf_unit)
+      dojo "./tasks _test_perf_unit"
+      ;;
   _test_performance)
       gradle test --tests *PerformanceTest
       ;;
