@@ -31,9 +31,8 @@ public class LoadRegulatingPool<T extends Phased> implements FinitePool<T>, Repo
 
     @Override
     public T next() {
-        long nowMilliseconds = timer.milliseconds();
         LoadPhase loadPhase = currentPhase();
-        lastItemTimeMillis = loadPhase.applyDelay(nowMilliseconds, sleeper, lastItemTimeMillis);
+        lastItemTimeMillis = loadPhase.applyDelay(timer, sleeper, lastItemTimeMillis);
         count++;
         loadPhase.incrementPhaseCount();
 

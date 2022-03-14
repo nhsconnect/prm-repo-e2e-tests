@@ -32,6 +32,23 @@ common:
                       - ./tasks test_performance
 
 pipelines:
+  perf-unit-test
+    group: performance
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    stages:
+      - test_unit:
+          clean_workspace: true
+          resources:
+            - docker
+          tasks:
+            - exec:
+                command: /bin/bash
+                arguments:
+                  - -c
+                  - ./tasks test_perf_unit
   e2e-perf:
     <<: *pipeline-template
     timer:

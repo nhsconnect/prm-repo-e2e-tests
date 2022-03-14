@@ -30,7 +30,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldProvideFirstItemWithoutDelay() {
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate("1", 1)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(1, "1")));
 
         var item = pool.next();
 
@@ -43,7 +43,7 @@ class LoadRegulatingPoolTest {
         var ratePerSecond = "1";
         long startTimeMillis = 2000L;
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, 10)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
 
         when(timer.milliseconds()).thenReturn(startTimeMillis);
         assertThat(pool.next()).isEqualTo(new PhasedInteger(1));
@@ -60,22 +60,25 @@ class LoadRegulatingPoolTest {
     public void shouldProvideSubsequentItemsAfterAppropriateSleepsToAchieveFlatRateLoad() {
         var ratePerSecond = "1";
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, 10)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
 
         when(timer.milliseconds()).thenReturn(0L);
         pool.next();
+        verify(sleeper, never()).sleep(anyInt());
 
         when(timer.milliseconds()).thenReturn(800L);
+        when(sleeper.sleep(anyInt())).thenReturn(1000L);
         pool.next();
+        verify(sleeper, times(1)).sleep(200);
 
         when(timer.milliseconds()).thenReturn(1700L);
+        when(sleeper.sleep(anyInt())).thenReturn(2000L);
         pool.next();
+        verify(sleeper, times(1)).sleep(300);
 
         when(timer.milliseconds()).thenReturn(2600L);
+        when(sleeper.sleep(anyInt())).thenReturn(3000L);
         pool.next();
-
-        verify(sleeper, times(1)).sleep(200);
-        verify(sleeper, times(1)).sleep(300);
         verify(sleeper, times(1)).sleep(400);
     }
 
@@ -84,7 +87,7 @@ class LoadRegulatingPoolTest {
         var ratePerSecond = "1";
 
         int phaseCount = 3;
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, phaseCount)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(phaseCount, ratePerSecond)));
 
         when(timer.milliseconds()).thenReturn(0L);
 
@@ -101,13 +104,16 @@ class LoadRegulatingPoolTest {
         var ratePerSecond = "10";
         long startTimeMillis = 3000L;
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, 10)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
 
         when(timer.milliseconds()).thenReturn(startTimeMillis);
         pool.next();
 
+        verify(sleeper, never()).sleep(anyInt());
+
         long elapsedMillisDuringFirstItemLoad = 20L;
         when(timer.milliseconds()).thenReturn(startTimeMillis + elapsedMillisDuringFirstItemLoad);
+        when(sleeper.sleep(anyInt())).thenReturn(startTimeMillis + elapsedMillisDuringFirstItemLoad + 80);
 
         pool.next();
 
@@ -119,10 +125,12 @@ class LoadRegulatingPoolTest {
         var ratePerSecond = "10";
         long startTimeMillis = 1000L;
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(ratePerSecond, 10)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
 
         when(timer.milliseconds()).thenReturn(startTimeMillis);
         pool.next();
+
+        verify(sleeper, never()).sleep(anyInt());
 
         long elapsedMillisDuringFirstItemLoad = 100L;
         when(timer.milliseconds()).thenReturn(startTimeMillis + elapsedMillisDuringFirstItemLoad);
@@ -136,12 +144,15 @@ class LoadRegulatingPoolTest {
     public void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateSlowerThanOnePerSecond() {
         var oneEvery100SecondsRatePerSecond = "0.01";
 
-        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(oneEvery100SecondsRatePerSecond, 10)));
+        pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, oneEvery100SecondsRatePerSecond)));
 
         when(timer.milliseconds()).thenReturn(0l);
         pool.next();
 
+        verify(sleeper, never()).sleep(anyInt());
+
         when(timer.milliseconds()).thenReturn(0L);
+        when(sleeper.sleep(anyInt())).thenReturn(100 * 1000L);
         pool.next();
 
         verify(sleeper, times(1)).sleep(100 * 1000);
@@ -152,8 +163,8 @@ class LoadRegulatingPoolTest {
         var ratePerSecond = "1";
 
         pool = createPool(integers, timer, sleeper, of(
-                LoadPhase.atFlatRate(ratePerSecond, 3),
-                LoadPhase.atFlatRate(ratePerSecond, 2)
+                LoadPhase.atFlatRate(3, ratePerSecond),
+                LoadPhase.atFlatRate(2, ratePerSecond)
         ));
 
         when(timer.milliseconds()).thenReturn(0L);
@@ -174,18 +185,25 @@ class LoadRegulatingPoolTest {
         var initialRatePerSecond = "1";
         var secondRatePerSecondFor200msDelay = "5";
         pool = createPool(integers, timer, sleeper, of(
-                LoadPhase.atFlatRate(initialRatePerSecond, 2),
-                LoadPhase.atFlatRate(secondRatePerSecondFor200msDelay, 2)
+                LoadPhase.atFlatRate(2, initialRatePerSecond),
+                LoadPhase.atFlatRate(2, secondRatePerSecondFor200msDelay)
         ));
 
         when(timer.milliseconds()).thenReturn(0L);
         pool.next();
+        verify(sleeper, never()).sleep(1000);
+
+        when(sleeper.sleep(anyInt())).thenReturn(1000L);
         pool.next();
         verify(sleeper, times(1)).sleep(1000);
+
         when(timer.milliseconds()).thenReturn(1000L);
+        when(sleeper.sleep(anyInt())).thenReturn(1200L);
         pool.next();
         verify(sleeper, times(1)).sleep(200); // first 200ms delay
+
         when(timer.milliseconds()).thenReturn(1300L);
+        when(sleeper.sleep(anyInt())).thenReturn(1400L);
         pool.next();
         verify(sleeper, times(1)).sleep(100); // second 200ms delay
     }
