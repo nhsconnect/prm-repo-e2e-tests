@@ -27,10 +27,14 @@ pipelines:
     environment_variables:
       NHS_ENVIRONMENT: dev
     stages:
-      inject_message:
-        - tasks:
-            - ./tasks livetest_inject
-      <<: *common_stages
+      - inject_message:
+          tasks:
+            - exec:
+                command: /bin/bash
+                arguments:
+                  - -c
+                  - ./tasks livetest_inject
+      - *common_stages
 
   live-technical-test.prod:
     group: continuity-service
