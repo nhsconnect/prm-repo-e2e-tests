@@ -1,7 +1,7 @@
 format_version: 4
 common:
   common_stages: &common_stages
-    - run_live_test:
+    - run_day_1_live_test:
         clean_workspace: true
         tasks:
           - exec:
@@ -9,6 +9,9 @@ common:
             arguments:
               - -c
               - ./tasks livetest_day1_test
+    - run_day_2_live_test:
+        clean_workspace: true
+        tasks:
           - exec:
             command: /bin/bash
             arguments:
