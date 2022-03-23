@@ -119,6 +119,24 @@ case "${command}" in
       check_suspension_service
       dojo "./tasks _test_e2e"
       ;;
+  _livetest_inject)
+      gradle test --tests InjectChangeOfGPMessageTest
+      ;;
+  livetest_inject)
+      dojo "./tasks _livetest_inject"
+      ;;
+  _livetest_day1_test)
+      gradle test --tests ChangeOfGPMessageReceivedTest
+      ;;
+  livetest_day1_test)
+      dojo "./tasks _livetest_day1_test"
+      ;;
+  _livetest_day2_test)
+      gradle test --tests ValidateMOFUpdatedTest
+      ;;
+  livetest_day2_test)
+      dojo "./tasks _livetest_day2_test"
+      ;;
   _test_perf_unit)
       gradle test --tests *.performance.*.*Test
       ;;
