@@ -1,11 +1,18 @@
-common_stages: &common_stages
-  stages:
-    - day-1-test:
-        tasks:
-          - ./tasks livetest_day1_test
-    - day-2-test:
-        tasks:
-          - ./tasks livetest_day2_test
+format_version: 4
+common:
+  common_stages: &common_stages
+    clean_workspace: true
+    tasks:
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks livetest_day1_test
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks livetest_day2_test
 pipelines:
   live-technical-test.dev:
     group: continuity-service
