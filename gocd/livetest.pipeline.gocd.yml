@@ -1,0 +1,35 @@
+common_stages: &common_stages
+  stages:
+    - day-1-test:
+        tasks:
+          - ./tasks livetest_day1_test
+    - day-2-test:
+        tasks:
+          - ./tasks livetest_day2_test
+pipelines:
+  live-technical-test.dev:
+    group: continuity-service
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    environment_variables:
+      NHS_ENVIRONMENT: dev
+    stages:
+      inject_message:
+        - tasks:
+            - ./tasks livetest_inject
+      <<: *common_stages
+
+  live-technical-test.prod:
+    group: continuity-service
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+      dev:
+        pipeline: live-technical-test.dev
+        stage: day-2-test
+    environment_variables:
+      NHS_ENVIRONMENT: prod
+    stages: *common_stages
