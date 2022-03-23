@@ -123,18 +123,21 @@ case "${command}" in
       gradle test --tests InjectChangeOfGPMessageTest
       ;;
   livetest_inject)
+      assume_environment_role $NHS_ENVIRONMENT
       dojo "./tasks _livetest_inject"
       ;;
   _livetest_day1_test)
       gradle test --tests ChangeOfGPMessageReceivedTest
       ;;
   livetest_day1_test)
+      assume_environment_role $NHS_ENVIRONMENT
       dojo "./tasks _livetest_day1_test"
       ;;
   _livetest_day2_test)
       gradle test --tests ValidateMOFUpdatedTest
       ;;
   livetest_day2_test)
+      assume_environment_role $NHS_ENVIRONMENT
       dojo "./tasks _livetest_day2_test"
       ;;
   _test_perf_unit)
