@@ -44,7 +44,7 @@ pipelines:
         type: configrepo
       dev:
         pipeline: live-technical-test.dev
-        stage: day-2-test
+        stage: run_day_2_live_test
     environment_variables:
       NHS_ENVIRONMENT: prod
     stages: *common_stages
