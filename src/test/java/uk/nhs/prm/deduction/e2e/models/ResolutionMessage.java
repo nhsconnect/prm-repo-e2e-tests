@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class NonSensitiveDataMessage {
+public class ResolutionMessage {
     String nemsMessageId;
     String status;
 }

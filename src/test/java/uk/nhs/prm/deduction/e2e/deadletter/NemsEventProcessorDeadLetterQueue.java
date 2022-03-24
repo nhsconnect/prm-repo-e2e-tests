@@ -11,6 +11,6 @@ public class NemsEventProcessorDeadLetterQueue extends NemsEventMessageQueue {
 
     @Autowired
     public NemsEventProcessorDeadLetterQueue(SqsQueue sqsQueue, TestConfiguration configuration) {
-        super(sqsQueue, configuration.NemsEventProcessorDeadLetterQueue());
+        super(sqsQueue, configuration.nemsEventProcessorDeadLetterQueue());
     }
 }

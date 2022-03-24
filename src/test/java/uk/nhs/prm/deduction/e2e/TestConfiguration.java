@@ -70,31 +70,39 @@ public class TestConfiguration {
     }
 
     public String meshForwarderObservabilityQueueUri() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-mesh-forwarder-nems-events-observability-queue", getAwsAccountNo(), getEnvironmentName());
+        return getQueueUri("mesh-forwarder-nems-events-observability-queue");
     }
 
     public String nemsEventProcesorUnhandledQueueUri() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-unhandled-events-queue", getAwsAccountNo(), getEnvironmentName());
+        return getQueueUri("nems-event-processor-unhandled-events-queue");
     }
 
     public String suspensionsObservabilityQueueUri() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-suspensions-observability-queue", getAwsAccountNo(), getEnvironmentName());
+        return getQueueUri("nems-event-processor-suspensions-observability-queue");
     }
 
     public String notReallySuspendedObservabilityQueueUri() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-not-suspended-observability-queue", getAwsAccountNo(), getEnvironmentName());
+        return getQueueUri("suspension-service-not-suspended-observability-queue");
     }
 
-    public String NemsEventProcessorDeadLetterQueue() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-nems-event-processor-dlq", getAwsAccountNo(), getEnvironmentName());
+    public String nemsEventProcessorDeadLetterQueue() {
+        return getQueueUri("nems-event-processor-dlq");
     }
 
     public String mofUpdatedQueueUri() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-mof-updated-queue", getAwsAccountNo(), getEnvironmentName());
+        return getQueueUri("suspension-service-mof-updated-queue");
     }
 
     public String mofNotUpdatedQueueUri() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-mof-not-updated-queue", getAwsAccountNo(), getEnvironmentName());
+        return getQueueUri("suspension-service-mof-not-updated-queue");
+    }
+
+    public String deceasedQueueUri() {
+        return getQueueUri("suspension-service-deceased-patient-queue");
+    }
+
+    private String getQueueUri(String name) {
+        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-%s", getAwsAccountNo(), getEnvironmentName(), name);
     }
 
     public String getPdsAdaptorUrl() {
@@ -160,7 +168,4 @@ public class TestConfiguration {
         return new RoleAssumingAwsConfigurationClient(new AssumeRoleCredentialsProviderFactory());
     }
 
-    public String deceasedQueueUri() {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-suspension-service-deceased-patient-queue", getAwsAccountNo(), getEnvironmentName());
-    }
 }

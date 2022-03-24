@@ -1,5 +1,7 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 import java.time.Instant;
@@ -38,5 +40,34 @@ public class SqsMessage {
         return message.messageId();
     }
 
-    public String body() {return body;}
+    public String body() {
+        return body;
+    }
+
+    public String nemsMessageId() {
+        return getAttribute("nemsMessageId");
+    }
+
+    public String previousGp() {
+        return getAttribute("previousGpOdsCode");
+    }
+
+    private String getAttribute(String key) {
+
+        try {
+            return asJsonObject().get("nemsMessageId").toString();
+        }
+        catch (JSONException e) {
+            throw new RuntimeException("there was no " + key + " on the message.");
+        }
+    }
+
+    private JSONObject asJsonObject() {
+        try {
+            return new JSONObject(body());
+        }
+        catch (JSONException e) {
+            throw new RuntimeException("message was not json");
+        }
+    }
 }

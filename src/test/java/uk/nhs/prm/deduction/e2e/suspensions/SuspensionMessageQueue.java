@@ -1,9 +1,7 @@
 package uk.nhs.prm.deduction.e2e.suspensions;
 
 import org.json.JSONException;
-import org.json.JSONObject;
-import uk.nhs.prm.deduction.e2e.models.MofUpdatedMessage;
-import uk.nhs.prm.deduction.e2e.models.NonSensitiveDataMessage;
+import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
@@ -26,7 +24,7 @@ public class SuspensionMessageQueue {
         this.queueUri = queueUri;
     }
 
-    public void deleteAllMessages(){
+    public void deleteAllMessages() {
         sqsQueue.deleteAllMessage(queueUri);
     }
 
@@ -35,30 +33,30 @@ public class SuspensionMessageQueue {
     }
 
     public SqsMessage getMessageContaining(String substring) {
-        log(String.format("Checking if message is present on : %s",  this.queueUri));
+        log(String.format("Checking if message is present on : %s", this.queueUri));
         return await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS)
                 .until(() -> findMessageContaining(substring), notNullValue());
     }
 
-    public boolean hasMessage(NonSensitiveDataMessage substring) {
-        log(String.format("Checking if message is present on : %s",  this.queueUri));
+    public boolean hasResolutionMessage(ResolutionMessage resolutionMessage) {
+        log(String.format("Checking if message is present on : %s", this.queueUri));
         await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> messagePresentOnQueue(substring), equalTo(true));
+                .until(() -> hasResolutionMessageNow(resolutionMessage), equalTo(true));
         return true;
     }
 
     public List<SqsMessage> getNextMessages(LocalDateTime timeoutAt) {
-        log(String.format("Checking for messages on : %s",  this.queueUri));
+        log(String.format("Checking for messages on : %s", this.queueUri));
         int pollInterval = 5;
         var timeoutSeconds = Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval + 1);
         return await().atMost(timeoutSeconds, TimeUnit.SECONDS)
-            .with()
-            .pollInterval(pollInterval, TimeUnit.SECONDS)
-            .until(() -> findMessagesOnQueue((int) timeoutSeconds), notNullValue());
+                .with()
+                .pollInterval(pollInterval, TimeUnit.SECONDS)
+                .until(() -> findMessagesOnQueue((int) timeoutSeconds), notNullValue());
     }
 
     private List<SqsMessage> findMessagesOnQueue(int visibilityTimeout) {
@@ -76,18 +74,15 @@ public class SuspensionMessageQueue {
         }
         return null;
     }
-    private boolean messagePresentOnQueue(NonSensitiveDataMessage messageToCheck) throws JSONException {
+
+    private boolean hasResolutionMessageNow(ResolutionMessage messageToCheck) throws JSONException {
         List<SqsMessage> allMessages = sqsQueue.readMessagesFrom(this.queueUri);
         for (var message : allMessages) {
-            NonSensitiveDataMessage nonSensitiveDataMessage = QueueHelper.getNonSensitiveDataMessage(message);
-               if(QueueHelper.checkIfMessageIsExpectedMessage(nonSensitiveDataMessage,messageToCheck)){
-                   return true;
-                }
+            ResolutionMessage resolutionMessage = QueueHelper.getNonSensitiveDataMessage(message);
+            if (QueueHelper.checkIfMessageIsExpectedMessage(resolutionMessage, messageToCheck)) {
+                return true;
+            }
         }
         return false;
     }
-
-
-
-
 }

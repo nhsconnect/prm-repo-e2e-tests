@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
+import uk.nhs.prm.deduction.e2e.utility.Files;
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
@@ -29,14 +30,22 @@ public class InjectChangeOfGPMessageTest {
     private TestConfiguration config;
 
     @Test
-    public void shouldMoveSingleSuspensionMessageFromMeshMailBoxToNemsIncomingQueue() {
+    public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
+        String nemsMessageId = randomNemsMessageId();
+        String nhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
+        String previousGP = generateRandomOdsCode();
+
         var nemsSuspension = createNemsEventFromTemplate(
                 "change-of-gp-suspension.xml",
-                config.getNhsNumberForSyntheticPatientWithoutGp(),
-                randomNemsMessageId(),
-                generateRandomOdsCode(),
+                nhsNumber,
+                nemsMessageId,
+                previousGP,
                 now(ofHours(0)).toString());
 
         meshMailbox.postMessage(nemsSuspension);
+
+        System.out.println("injected nemsMessageId: " + nemsMessageId + " of course this will not be known in prod, so should be picked up when change of gp received");
+        Files.outputTestData("live_technical_test_nhs_number", nhsNumber);
+        Files.outputTestData("live_technical_test_previous_gp", previousGP);
     }
 }

@@ -9,7 +9,7 @@ import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.models.DeceasedPatientMessage;
 import uk.nhs.prm.deduction.e2e.models.MofUpdatedMessage;
 import uk.nhs.prm.deduction.e2e.models.NoLongerSuspendedMessage;
-import uk.nhs.prm.deduction.e2e.models.NonSensitiveDataMessage;
+import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
@@ -37,7 +37,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
         TestConfiguration.class,
         MeshForwarderQueue.class,
         NemsEventProcessorUnhandledQueue.class,
-        NemsEventProcessorSuspensionsMessageQueue.class,
+        SuspensionMessageObservabilityQueue.class,
         SuspensionServiceNotReallySuspensionsMessageQueue.class,
         NemsEventProcessorDeadLetterQueue.class,
         MeshForwarderQueue.class,
@@ -58,7 +58,7 @@ public class EndToEndTest {
     @Autowired
     private NemsEventProcessorUnhandledQueue nemsEventProcessorUnhandledQueue;
     @Autowired
-    private NemsEventProcessorSuspensionsMessageQueue suspensionsMessageQueue;
+    private SuspensionMessageObservabilityQueue suspensionsMessageQueue;
     @Autowired
     private SuspensionServiceNotReallySuspensionsMessageQueue notReallySuspensionsMessageQueue;
     @Autowired
@@ -97,7 +97,7 @@ public class EndToEndTest {
         MofUpdatedMessage expectedMessageOnQueue = new MofUpdatedMessage(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
-        assertThat(mofUpdatedMessageQueue.hasMessage(expectedMessageOnQueue));
+        assertThat(mofUpdatedMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
 
@@ -114,7 +114,7 @@ public class EndToEndTest {
         NoLongerSuspendedMessage expectedMessageOnQueue = new NoLongerSuspendedMessage(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
         meshMailbox.postMessage(nemsSuspension);
-        assertThat(notReallySuspensionsMessageQueue.hasMessage(expectedMessageOnQueue));
+        assertThat(notReallySuspensionsMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
 
     }
 
@@ -154,9 +154,9 @@ public class EndToEndTest {
 
         meshMailbox.postMessage(nemsSuspension);
 
-        NonSensitiveDataMessage expectedMessageOnQueue = new NonSensitiveDataMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC");
+        ResolutionMessage expectedMessageOnQueue = new ResolutionMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC");
 
-        assertThat(mofNotUpdatedMessageQueue.hasMessage(expectedMessageOnQueue));
+        assertThat(mofNotUpdatedMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
     @Test
@@ -172,7 +172,7 @@ public class EndToEndTest {
         meshMailbox.postMessage(nemsSuspension);
         DeceasedPatientMessage expectedMessageOnQueue = new DeceasedPatientMessage(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
 
-        assertThat(deceasedPatientQueue.hasMessage(expectedMessageOnQueue));
+        assertThat(deceasedPatientQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
     public void log(String message) {
         System.out.println(message);
