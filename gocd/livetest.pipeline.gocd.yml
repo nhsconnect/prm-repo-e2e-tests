@@ -69,7 +69,7 @@ pipelines:
         type: configrepo
     environment_variables:
       NHS_ENVIRONMENT: dev
-      LIVE_TECHNICAL_TEST_NHS_NUMBER: input from live-technical-test-inject.dev
+      LIVE_TECHNICAL_TEST_NHS_NUMBER: 9693795997
       LIVE_TECHNICAL_TEST_PREVIOUS_GP: input from live-technical-test-inject.dev
     stages:
       - *common_stages

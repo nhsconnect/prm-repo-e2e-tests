@@ -53,9 +53,8 @@ public class SqsMessage {
     }
 
     private String getAttribute(String key) {
-
         try {
-            return asJsonObject().get("nemsMessageId").toString();
+            return asJsonObject().get(key).toString();
         }
         catch (JSONException e) {
             throw new RuntimeException("there was no " + key + " on the message.");
