@@ -49,7 +49,7 @@ public class SqsMessage {
     }
 
     public String previousGp() {
-        return getAttribute("previousGpOdsCode");
+        return getAttribute("previousOdsCode");
     }
 
     private String getAttribute(String key) {
