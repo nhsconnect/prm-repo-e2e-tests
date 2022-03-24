@@ -25,6 +25,22 @@ public class TestConfiguration {
             "perf", TestData.perf(numberOfPerfNhsNumbers())
     );
 
+    public String getNhsNumberForSyntheticPatientWithCurrentGp() {
+        return getEnvironmentName().equals("dev") ? "9693796284" : "9694179254";
+    }
+
+    public String getNhsNumberForSyntheticPatientWithoutGp() {
+        return getEnvironmentName().equals("dev") ? "9693795997" : "9694179343";
+    }
+
+    public String getNhsNumberForSyntheticDeceasedPatient() {
+        return getEnvironmentName().equals("dev") ? "9693797264" : "9694179394";
+    }
+
+    public String getNhsNumberForNonSyntheticPatientWithoutGp() {
+        return "9692295400";
+    }
+
     private final AwsConfigurationClient awsConfigurationClient;
 
     private volatile String cachedAwsAccountNo;
