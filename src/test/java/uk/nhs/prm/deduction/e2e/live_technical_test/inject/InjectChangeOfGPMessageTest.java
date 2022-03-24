@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.live.inject;
+package uk.nhs.prm.deduction.e2e.live_technical_test.inject;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
-import uk.nhs.prm.deduction.e2e.utility.Files;
+import uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters;
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
@@ -45,7 +45,7 @@ public class InjectChangeOfGPMessageTest {
         meshMailbox.postMessage(nemsSuspension);
 
         System.out.println("injected nemsMessageId: " + nemsMessageId + " of course this will not be known in prod, so should be picked up when change of gp received");
-        Files.outputTestData("live_technical_test_nhs_number", nhsNumber);
-        Files.outputTestData("live_technical_test_previous_gp", previousGP);
+        TestParameters.outputTestParameter("live_technical_test_nhs_number", nhsNumber);
+        TestParameters.outputTestParameter("live_technical_test_previous_gp", previousGP);
     }
 }

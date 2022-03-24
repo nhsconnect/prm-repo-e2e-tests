@@ -6,9 +6,8 @@ common:
         approval:
           type: manual
         artifacts:
-          artifacts:
-            - build:
-                source: live_technical_test_nems_message_id
+          - build:
+              source: live_technical_test_nems_message_id
           - build:
               source: build/reports/tests/
         tabs:
@@ -29,13 +28,18 @@ common:
         tabs:
           TestReport: test/index.html
         tasks:
+          - fetch:
+              stage: run_day_1_live_test
+              job: run_day_1_live_test
+              is_file: yes
+              source: live_technical_test_nems_message_id
           - exec:
               command: /bin/bash
               arguments:
                 - -c
-                - ./tasks livetest_day2_test
+                - "LIVE_TECHNICAL_TEST_NEMS_MESSAGE_ID=$(cat live_technical_test_nems_message_id) ./tasks livetest_day2_test"
 pipelines:
-  live-technical-test.dev:
+  live-technical-test-inject.dev:
     group: continuity-service
     label_template: '${COUNT}-${git[:8]}'
     materials:
@@ -43,16 +47,10 @@ pipelines:
         type: configrepo
     environment_variables:
       NHS_ENVIRONMENT: dev
-      LIVE_TECHNICAL_TEST_NHS_NUMBER: xxx
-      LIVE_TECHNICAL_TEST_PREVIOUS_GP: xxx
     stages:
       - inject_message:
           clean_workspace: true
           artifacts:
-            - build:
-                source: live_technical_test_nhs_number
-            - build:
-                source: live_technical_test_previous_gp
             - build:
                 source: build/reports/tests/
           tabs:
@@ -63,8 +61,18 @@ pipelines:
                 arguments:
                   - -c
                   - ./tasks livetest_inject
+  live-technical-test.dev:
+    group: continuity-service
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    environment_variables:
+      NHS_ENVIRONMENT: dev
+      LIVE_TECHNICAL_TEST_NHS_NUMBER: input from live-technical-test-inject.dev
+      LIVE_TECHNICAL_TEST_PREVIOUS_GP: input from live-technical-test-inject.dev
+    stages:
       - *common_stages
-
   live-technical-test.prod:
     group: continuity-service
     label_template: '${COUNT}-${git[:8]}'
@@ -76,7 +84,7 @@ pipelines:
         stage: run_day_2_live_test
     environment_variables:
       NHS_ENVIRONMENT: prod
-      LIVE_TECHNICAL_TEST_NHS_NUMBER: xxx
-      LIVE_TECHNICAL_TEST_PREVIOUS_GP: xxx
+      LIVE_TECHNICAL_TEST_NHS_NUMBER: input prod synthetic patient
+      LIVE_TECHNICAL_TEST_PREVIOUS_GP: input from technical testing real GPP
     stages:
       - *common_stages
