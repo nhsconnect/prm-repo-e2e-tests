@@ -11,6 +11,8 @@ import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageObservabilityQueue;
 import uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters.fetchTestParameter;
+import static uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters.outputTestParameter;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -26,14 +28,15 @@ public class ChangeOfGPMessageReceivedTest {
 
     @Test
     public void shouldHaveReceivedSingleSuspensionChangeOfGpMessageRelatedToTestPatient() {
-        var testPatientNhsNumber = TestParameters.fetchTestParameter("LIVE_TECHNICAL_TEST_NHS_NUMBER");
-        var testPatientPreviousGp = TestParameters.fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
+        var testPatientNhsNumber = fetchTestParameter("LIVE_TECHNICAL_TEST_NHS_NUMBER");
+        var testPatientPreviousGp = fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
+
         System.out.println("expecting test nhs number and previous gp of: " + testPatientNhsNumber + ", " + testPatientPreviousGp);
 
         var suspensionMessage = suspensionMessageObservabilityQueue.getMessageContaining(testPatientNhsNumber);
 
         System.out.println("got message related to test patient");
-        TestParameters.outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.nemsMessageId());
+        outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.nemsMessageId());
 
         assertThat(suspensionMessage.previousGp()).isEqualTo(testPatientPreviousGp);
     }
