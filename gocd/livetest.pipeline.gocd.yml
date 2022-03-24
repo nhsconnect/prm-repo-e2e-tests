@@ -3,6 +3,11 @@ common:
   common_stages: &common_stages
     - run_day_1_live_test:
         clean_workspace: true
+        artifacts:
+          - build:
+              source: build/reports/tests/
+        tabs:
+          TestReport: test/index.html
         tasks:
           - exec:
               command: /bin/bash
@@ -11,6 +16,11 @@ common:
                 - ./tasks livetest_day1_test
     - run_day_2_live_test:
         clean_workspace: true
+        artifacts:
+          - build:
+              source: build/reports/tests/
+        tabs:
+          TestReport: test/index.html
         tasks:
           - exec:
               command: /bin/bash
