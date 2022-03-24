@@ -44,6 +44,8 @@ public class InjectChangeOfGPMessageTest {
 
         meshMailbox.postMessage(nemsSuspension);
 
+        // MAYBE add some extra synthetic patient change of gps to simulate UK-wide synthetic activity??
+
         System.out.println("injected nemsMessageId: " + nemsMessageId + " of course this will not be known in prod, so should be picked up when change of gp received");
         TestParameters.outputTestParameter("live_technical_test_nhs_number", nhsNumber);
         TestParameters.outputTestParameter("live_technical_test_previous_gp", previousGP);
