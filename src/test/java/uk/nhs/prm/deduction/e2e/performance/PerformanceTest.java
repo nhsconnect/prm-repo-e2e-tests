@@ -9,21 +9,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
-import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
-import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
-import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
-import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.performance.load.*;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
-import uk.nhs.prm.deduction.e2e.suspensions.MofNotUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
-import uk.nhs.prm.deduction.e2e.suspensions.NemsEventProcessorSuspensionsMessageQueue;
-import uk.nhs.prm.deduction.e2e.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 
 import java.time.LocalDateTime;
@@ -44,15 +38,8 @@ import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGen
         MeshMailbox.class,
         SqsQueue.class,
         TestConfiguration.class,
-        MeshForwarderQueue.class,
-        NemsEventProcessorUnhandledQueue.class,
-        NemsEventProcessorSuspensionsMessageQueue.class,
-        SuspensionServiceNotReallySuspensionsMessageQueue.class,
-        NemsEventProcessorDeadLetterQueue.class,
-        MeshForwarderQueue.class,
         QueueHelper.class,
         MofUpdatedMessageQueue.class,
-        MofNotUpdatedMessageQueue.class,
         AssumeRoleCredentialsProviderFactory.class,
         BasicSqsClient.class,
         AutoRefreshingRoleAssumingSqsClient.class

@@ -1,7 +1,7 @@
 package uk.nhs.prm.deduction.e2e.models;
 
 
-public class DeceasedPatientMessage extends NonSensitiveDataMessage {
+public class DeceasedPatientMessage extends ResolutionMessage {
 
 
     public DeceasedPatientMessage(String nemsMessageId, String status) {
