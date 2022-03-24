@@ -38,6 +38,11 @@ pipelines:
       NHS_ENVIRONMENT: dev
     stages:
       - inject_message:
+          artifacts:
+            - build:
+                source: build/reports/tests/
+          tabs:
+            TestReport: test/index.html
           tasks:
             - exec:
                 command: /bin/bash
