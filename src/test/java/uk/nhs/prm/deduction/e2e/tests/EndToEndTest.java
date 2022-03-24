@@ -13,7 +13,6 @@ import uk.nhs.prm.deduction.e2e.models.NonSensitiveDataMessage;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
-import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
@@ -54,10 +53,6 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class EndToEndTest {
 
-    public static String SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
-    public static String SYNTHETIC_PATIENT_WHICH_IS_DECEASED ;
-    public static String SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
-    public static String NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
     @Autowired
     private MeshForwarderQueue meshForwarderQueue;
     @Autowired
@@ -76,11 +71,11 @@ public class EndToEndTest {
     private DeceasedPatientQueue deceasedPatientQueue;
     @Autowired
     private MeshMailbox meshMailbox;
-
+    @Autowired
+    private TestConfiguration config;
 
     @BeforeAll
     void init() {
-        initializeNhsNumberBasedOnEnvironment();
         meshForwarderQueue.deleteAllMessages();
         nemsEventProcessorDeadLetterQueue.deleteAllMessages();
         suspensionsMessageQueue.deleteAllMessages();
@@ -88,20 +83,11 @@ public class EndToEndTest {
         notReallySuspensionsMessageQueue.deleteAllMessages();
     }
 
-    private void initializeNhsNumberBasedOnEnvironment() {
-        // NHS Number needs to be different in each env as the synthetic patient prefix is different
-        String nhsEnvironment = System.getenv("NHS_ENVIRONMENT");
-        SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693796284" : "9694179254";
-        SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = nhsEnvironment.equals("dev") ? "9693795997" : "9694179343";
-        SYNTHETIC_PATIENT_WHICH_IS_DECEASED = nhsEnvironment.equals("dev") ? "9693797264" : "9694179394";
-        NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER = "9692295400";
-    }
-
     @Test
     @Order(1)
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();
-        String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER;
+        String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
         var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
         String previousGp = generateRandomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
@@ -121,7 +107,7 @@ public class EndToEndTest {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
         var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
-        String currentlyRegisteredPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_HAS_CURRENT_GP_NHS_NUMBER;
+        String currentlyRegisteredPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp,now);
 
@@ -162,7 +148,10 @@ public class EndToEndTest {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
         var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", NON_SYNTHETIC_PATIENT_WHICH_HAS_NO_CURRENT_GP_NHS_NUMBER, nemsMessageId, previousGp,now);
+        var nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml",
+                config.getNhsNumberForNonSyntheticPatientWithoutGp(),
+                nemsMessageId, previousGp,now);
+
         meshMailbox.postMessage(nemsSuspension);
 
         NonSensitiveDataMessage expectedMessageOnQueue = new NonSensitiveDataMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC");
@@ -174,7 +163,7 @@ public class EndToEndTest {
     @Order(3)
     public void shouldMoveDeceasedPatientToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
-        String suspendedPatientNhsNumber = SYNTHETIC_PATIENT_WHICH_IS_DECEASED;
+        String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticDeceasedPatient();
         var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
         String previousGp = generateRandomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
