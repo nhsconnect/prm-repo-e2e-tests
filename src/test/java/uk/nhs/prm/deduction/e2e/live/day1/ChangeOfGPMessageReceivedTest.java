@@ -13,6 +13,7 @@ public class ChangeOfGPMessageReceivedTest {
     @Test
     public void shouldMoveSingleSuspensionMessageFromMeshMailBoxToNemsIncomingQueue() {
        Assertions.assertThat(true);
+
     }
 
 }
