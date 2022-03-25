@@ -46,23 +46,9 @@ public class ValidateMOFUpdatedTest {
         var patientStatus = fetchPdsPatientStatus(pdsAdaptorUsernameXXX, testPatientNhsNumber);
         assertThat(patientStatus.getManagingOrganisation()).isEqualTo(testPatientPreviousGp);
 
-        var messagesForPatient = getMessagesContaining(expectedNemsMessageId);
-        assertThat(messagesForPatient.size()).isGreaterThan(0);
-
-        // check on messages, e.g. presence of nems message id
-
-    }
-
-    private List<SqsMessage> getMessagesContaining(String nemsMessageId) {
-        var messagesForPatient = new ArrayList<SqsMessage>();
-        SqsMessage matchingMessage;
-        do {
-            matchingMessage = mofUpdatedMessageQueue.getMessageContaining(nemsMessageId);
-            if (matchingMessage != null) {
-                messagesForPatient.add(matchingMessage);
-            }
-        } while (matchingMessage != null);
-        return messagesForPatient;
+        var messageInQueue =  mofUpdatedMessageQueue.getMessageContaining(expectedNemsMessageId);
+        assertThat(messageInQueue.nemsMessageId()).isEqualTo(expectedNemsMessageId);
+        assertThat(messageInQueue).isNotNull();
     }
 
     private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
@@ -71,5 +57,4 @@ public class ValidateMOFUpdatedTest {
 
         return pds.getSuspendedPatientStatus(testPatientNhsNumber);
     }
-
 }
