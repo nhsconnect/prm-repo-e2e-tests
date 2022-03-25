@@ -69,6 +69,10 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/performance-test", getEnvironmentName()));
     }
 
+    public String getPdsAdaptorLiveTestApiKey() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/live-test", getEnvironmentName()));
+    }
+
     public String meshForwarderObservabilityQueueUri() {
         return getQueueUri("mesh-forwarder-nems-events-observability-queue");
     }
