@@ -12,7 +12,7 @@ pipelines:
         ignore:
           - docs/**/*.*
           - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
-          - src/test/java/uk/nhs/prm/deduction/e2e/live/**/*
+          - src/test/java/uk/nhs/prm/deduction/e2e/live_technical_test/**/*
           - gocd/performance.pipeline.gocd.yml
       pds-adaptor:
         pipeline: prm-deductions-pds-adaptor.dev
@@ -59,7 +59,7 @@ pipelines:
         ignore:
           - docs/**/*.*
           - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
-          - src/test/java/uk/nhs/prm/deduction/e2e/live/**/*
+          - src/test/java/uk/nhs/prm/deduction/e2e/live_technical_test/**/*
           - gocd/performance.pipeline.gocd.yml
       pds-adaptor:
         pipeline: prm-deductions-pds-adaptor.test
