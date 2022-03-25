@@ -41,7 +41,7 @@ public class ValidateMOFUpdatedTest {
         System.out.println("expecting test nhs number, previous gp and nems message id of: " + testPatientNhsNumber + ", " + testPatientPreviousGp + ", " + expectedNemsMessageId);
 
         // NEEDS UPDATING FOR TECHNICAL TEST USER IN LIVE XXXXX
-        String pdsAdaptorUsernameXXX = "performance-test";
+        String pdsAdaptorUsernameXXX = "live-test";
 
         var patientStatus = fetchPdsPatientStatus(pdsAdaptorUsernameXXX, testPatientNhsNumber);
 
@@ -69,7 +69,7 @@ public class ValidateMOFUpdatedTest {
 
     private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
         var config = new TestConfiguration();
-        var pds = new PdsAdaptorClient(pdsAdaptorUsername, config.getPdsAdaptorPerformanceApiKey(), config.getPdsAdaptorUrl());
+        var pds = new PdsAdaptorClient(pdsAdaptorUsername, config.getPdsAdaptorLiveTestApiKey(), config.getPdsAdaptorUrl());
 
         return pds.getSuspendedPatientStatus(testPatientNhsNumber);
     }
