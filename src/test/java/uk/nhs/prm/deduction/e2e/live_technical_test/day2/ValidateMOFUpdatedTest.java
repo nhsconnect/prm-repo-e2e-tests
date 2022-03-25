@@ -47,7 +47,7 @@ public class ValidateMOFUpdatedTest {
 
         assertThat(patientStatus.getManagingOrganisation()).isEqualTo(testPatientPreviousGp);
 
-        var messagesForPatient = getMessagesMatchingNhsNumber(testPatientNhsNumber);
+        var messagesForPatient = getMessagesMatchingNhsNumber(expectedNemsMessageId);
 
         assertThat(messagesForPatient.size()).isGreaterThan(0);
 
@@ -55,11 +55,11 @@ public class ValidateMOFUpdatedTest {
 
     }
 
-    private List<SqsMessage> getMessagesMatchingNhsNumber(String testPatientNhsNumber) {
+    private List<SqsMessage> getMessagesMatchingNhsNumber(String nemsMessageId) {
         var messagesForPatient = new ArrayList<SqsMessage>();
         SqsMessage matchingMessage;
         do {
-            matchingMessage = mofUpdatedMessageQueue.getMessageContaining(testPatientNhsNumber);
+            matchingMessage = mofUpdatedMessageQueue.getMessageContaining(nemsMessageId);
             if (matchingMessage != null) {
                 messagesForPatient.add(matchingMessage);
             }
