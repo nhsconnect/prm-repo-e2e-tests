@@ -44,18 +44,16 @@ public class ValidateMOFUpdatedTest {
         String pdsAdaptorUsernameXXX = "live-test";
 
         var patientStatus = fetchPdsPatientStatus(pdsAdaptorUsernameXXX, testPatientNhsNumber);
-
         assertThat(patientStatus.getManagingOrganisation()).isEqualTo(testPatientPreviousGp);
 
-//        var messagesForPatient = getMessagesMatchingNhsNumber(expectedNemsMessageId);
-//
-//        assertThat(messagesForPatient.size()).isGreaterThan(0);
+        var messagesForPatient = getMessagesContaining(expectedNemsMessageId);
+        assertThat(messagesForPatient.size()).isGreaterThan(0);
 
         // check on messages, e.g. presence of nems message id
 
     }
 
-    private List<SqsMessage> getMessagesMatchingNhsNumber(String nemsMessageId) {
+    private List<SqsMessage> getMessagesContaining(String nemsMessageId) {
         var messagesForPatient = new ArrayList<SqsMessage>();
         SqsMessage matchingMessage;
         do {
