@@ -33,7 +33,7 @@ public class InjectChangeOfGPMessageTest {
     @Test
     public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
         String nemsMessageId = randomNemsMessageId();
-        String nhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
+        String nhsNumber = config.getNhsNumberForSyntheticPatientInPreProd();
         String previousGP = generateRandomOdsCode();
 
         var nemsSuspension = createNemsEventFromTemplate(
