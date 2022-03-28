@@ -37,6 +37,10 @@ public class TestConfiguration {
         return getEnvironmentName().equals("dev") ? "9693797264" : "9694179394";
     }
 
+    public String getNhsNumberForSyntheticPatientInPreProd() {
+        return "9693642422";
+    }
+
     public String getNhsNumberForNonSyntheticPatientWithoutGp() {
         return "9692295400";
     }
