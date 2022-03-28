@@ -39,14 +39,14 @@ common:
                 - -c
                 - "LIVE_TECHNICAL_TEST_NEMS_MESSAGE_ID=$(cat live_technical_test_nems_message_id) ./tasks livetest_day2_test"
 pipelines:
-  live-technical-test-inject.dev:
+  live-technical-test-inject.pre-prod:
     group: continuity-service
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
         type: configrepo
     environment_variables:
-      NHS_ENVIRONMENT: dev
+      NHS_ENVIRONMENT: pre-prod
     stages:
       - inject_message:
           clean_workspace: true
@@ -61,16 +61,16 @@ pipelines:
                 arguments:
                   - -c
                   - ./tasks livetest_inject
-  live-technical-test.dev:
+  live-technical-test.pre-prod:
     group: continuity-service
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
         type: configrepo
     environment_variables:
-      NHS_ENVIRONMENT: dev
-      LIVE_TECHNICAL_TEST_NHS_NUMBER: 9693795997
-      LIVE_TECHNICAL_TEST_PREVIOUS_GP: input from live-technical-test-inject.dev
+      NHS_ENVIRONMENT: pre-prod
+      LIVE_TECHNICAL_TEST_NHS_NUMBER: 9693642422
+      LIVE_TECHNICAL_TEST_PREVIOUS_GP: input from live-technical-test-inject.pre-prod
     stages:
       - *common_stages
   live-technical-test.prod:
@@ -80,7 +80,7 @@ pipelines:
       git:
         type: configrepo
       dev:
-        pipeline: live-technical-test.dev
+        pipeline: live-technical-test.pre-prod
         stage: run_day_2_live_test
     environment_variables:
       NHS_ENVIRONMENT: prod
