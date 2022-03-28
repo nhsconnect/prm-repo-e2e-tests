@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.live_technical_test.inject;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
-import uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageObservabilityQueue;
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
@@ -30,11 +34,22 @@ public class InjectChangeOfGPMessageTest {
     @Autowired
     private TestConfiguration config;
 
+    private SuspensionMessageObservabilityQueue suspensionMessageObservabilityQueue;
+
+    @BeforeEach
+    public void setUp() {
+        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
+        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new SqsQueue(sqsClient), new TestConfiguration());
+    }
+
+
     @Test
     public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
         String nemsMessageId = randomNemsMessageId();
         String nhsNumber = config.getNhsNumberForSyntheticPatientInPreProd();
         String previousGP = generateRandomOdsCode();
+
+        suspensionMessageObservabilityQueue.deleteAllMessages();
 
         var nemsSuspension = createNemsEventFromTemplate(
                 "change-of-gp-suspension.xml",
