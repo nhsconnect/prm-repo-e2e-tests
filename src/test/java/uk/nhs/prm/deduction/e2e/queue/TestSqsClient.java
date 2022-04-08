@@ -14,4 +14,6 @@ public interface TestSqsClient {
     void deleteMessageFrom(String queueUrl, Message message);
 
     void deleteAllMessageFrom(String queueUrl);
+
+    void postAMessage(String queueUrl, String message);
 }

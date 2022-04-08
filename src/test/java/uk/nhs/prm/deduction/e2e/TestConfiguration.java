@@ -109,6 +109,14 @@ public class TestConfiguration {
         return getQueueUri("suspension-service-deceased-patient-queue");
     }
 
+    public String repoIncomingQueueUri() {
+        return getQueueUri("ehr-transfer-service-repo-incoming");
+    }
+
+    public String getTransferTrackerDb() {
+        return getEnvironmentName()+"-ehr-transfer-service-transfer-tracker";
+    }
+
     private String getQueueUri(String name) {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-%s", getAwsAccountNo(), getEnvironmentName(), name);
     }

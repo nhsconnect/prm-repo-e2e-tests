@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.TestSqsClient;
@@ -57,10 +58,13 @@ public class AutoRefreshingRoleAssumingSqsClient implements TestSqsClient {
     public List<SqsMessage> readThroughMessages(String queueUrl, int visibilityTimeout) {
         return client.readThroughMessages(queueUrl, visibilityTimeout);
     }
-
     @Override
     public void deleteMessageFrom(String queueUrl, Message message) {
         client.deleteMessageFrom(queueUrl, message);
+    }
+
+    public void postAMessage(String queueUrl, String message) {
+        client.postAMessage(queueUrl, message);
     }
 
     @Override

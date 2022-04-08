@@ -110,7 +110,7 @@ case "${command}" in
       dojo "./tasks _dep"
       ;;
   _test_e2e)
-      gradle test --tests *EndToEndTest
+      gradle test --tests "uk.nhs.prm.deduction.e2e.tests.*"
       ;;
   test_e2e)
       check_env
