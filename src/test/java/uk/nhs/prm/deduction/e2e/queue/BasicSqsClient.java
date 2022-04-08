@@ -62,7 +62,9 @@ public class BasicSqsClient implements TestSqsClient {
     public void deleteAllMessageFrom(String queueUrl) {
         sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(queueUrl).build());
     }
-
+    public void postAMessage(String queueUrl, String message) {
+        sqsClient.sendMessage(SendMessageRequest.builder().queueUrl(queueUrl).messageBody(message).build());
+    }
     private ReceiveMessageResponse receiveMessages(ReceiveMessageRequest receiveMessageRequest) {
         try {
             return sqsClient.receiveMessage(receiveMessageRequest);

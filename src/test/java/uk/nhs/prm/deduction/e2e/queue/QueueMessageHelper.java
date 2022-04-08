@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.suspensions;
+package uk.nhs.prm.deduction.e2e.queue;
 
 import org.json.JSONException;
 import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
@@ -15,11 +15,11 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-public class SuspensionMessageQueue {
+public class QueueMessageHelper {
     protected final SqsQueue sqsQueue;
     protected final String queueUri;
 
-    public SuspensionMessageQueue(SqsQueue sqsQueue, String queueUri) {
+    public QueueMessageHelper(SqsQueue sqsQueue, String queueUri) {
         this.sqsQueue = sqsQueue;
         this.queueUri = queueUri;
     }
@@ -58,7 +58,6 @@ public class SuspensionMessageQueue {
                 .pollInterval(pollInterval, TimeUnit.SECONDS)
                 .until(() -> findMessagesOnQueue((int) timeoutSeconds), notNullValue());
     }
-
     private List<SqsMessage> findMessagesOnQueue(int visibilityTimeout) {
         List<SqsMessage> messages = sqsQueue.readThroughMessages(this.queueUri, visibilityTimeout);
         return messages.isEmpty() ? null : messages;
@@ -84,5 +83,9 @@ public class SuspensionMessageQueue {
             }
         }
         return false;
+    }
+
+    public void postAMessage(String message) {
+        sqsQueue.postAMessage(queueUri,message);
     }
 }
