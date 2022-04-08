@@ -39,7 +39,7 @@ public class RepoE2E {
 
 
     @Test
-    void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueue() {  //this test would expand and change as progress
+    void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueueAndAnEhrRequestIsMadeAndTheDbIsUpdatedWithExpectedStatus() {  //this test would expand and change as progress
         String nhsNumber = "9693795989";
         String nemsMessageId = UUID.randomUUID().toString();
         String conversationId = UUID.randomUUID().toString();
