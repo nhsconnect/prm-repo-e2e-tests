@@ -88,6 +88,7 @@ public class TestConfiguration {
     public String suspensionsObservabilityQueueUri() {
         return getQueueUri("nems-event-processor-suspensions-observability-queue");
     }
+
     public String suspensionsRealQueueUri() {
         return getQueueUri("suspension-service-suspensions-queue");
     }
@@ -117,10 +118,10 @@ public class TestConfiguration {
     }
 
     public String getTransferTrackerDb() {
-        return getEnvironmentName()+"-ehr-transfer-service-transfer-tracker";
+        return getEnvironmentName() + "-ehr-transfer-service-transfer-tracker";
     }
 
-    public String getSyntheticPatientPrefix(){
+    public String getSyntheticPatientPrefix() {
         return getEnvironmentName().equals("prod") ? "999" : "969";
     }
 
@@ -129,6 +130,9 @@ public class TestConfiguration {
     }
 
     public String getPdsAdaptorUrl() {
+        if (getEnvironmentName().equals("prod")) {
+            return String.format("https://pds-adaptor.%s.patient-deductions.nhs.uk/", getEnvironmentName());
+        }
         return String.format("https://pds-adaptor.%s.non-prod.patient-deductions.nhs.uk/", getEnvironmentName());
     }
 
