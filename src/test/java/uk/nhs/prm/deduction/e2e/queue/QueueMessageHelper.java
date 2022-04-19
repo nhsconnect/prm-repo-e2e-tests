@@ -74,6 +74,26 @@ public class QueueMessageHelper {
         return null;
     }
 
+    public SqsMessage getMessageContainingForTechnicalTestRun(String substring) {
+        log(String.format("Checking if message is present on : %s", this.queueUri));
+        return await().atMost(1800, TimeUnit.SECONDS)
+                .with()
+                .pollInterval(100, TimeUnit.MILLISECONDS)
+                .until(() -> findMessageContainingWitHigherVisibilityTimeOut(substring), notNullValue());
+    }
+
+    private SqsMessage findMessageContainingWitHigherVisibilityTimeOut(String substring) {
+        var allMessages = sqsQueue.readThroughMessages(this.queueUri, 1800);
+        for (var message : allMessages) {
+            System.out.println("just finding message, checking: " + message.id());
+            if (message.contains(substring)) {
+                return message;
+            }
+        }
+        return null;
+    }
+
+
     private boolean hasResolutionMessageNow(ResolutionMessage messageToCheck) throws JSONException {
         List<SqsMessage> allMessages = sqsQueue.readMessagesFrom(this.queueUri);
         for (var message : allMessages) {

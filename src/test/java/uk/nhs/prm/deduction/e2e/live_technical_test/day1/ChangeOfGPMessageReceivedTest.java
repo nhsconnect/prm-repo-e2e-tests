@@ -33,7 +33,7 @@ public class ChangeOfGPMessageReceivedTest {
 
         System.out.println("expecting test nhs number and previous gp of: " + testPatientNhsNumber + ", " + testPatientPreviousGp);
 
-        var suspensionMessage = suspensionMessageObservabilityQueue.getMessageContaining(testPatientNhsNumber);
+        var suspensionMessage = suspensionMessageObservabilityQueue.getMessageContainingForTechnicalTestRun(testPatientNhsNumber);
 
         System.out.println("got message related to test patient");
         outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.nemsMessageId());
