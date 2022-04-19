@@ -88,6 +88,9 @@ public class TestConfiguration {
     public String suspensionsObservabilityQueueUri() {
         return getQueueUri("nems-event-processor-suspensions-observability-queue");
     }
+    public String suspensionsRealQueueUri() {
+        return getQueueUri("suspension-service-suspensions-queue");
+    }
 
     public String notReallySuspendedObservabilityQueueUri() {
         return getQueueUri("suspension-service-not-suspended-observability-queue");
