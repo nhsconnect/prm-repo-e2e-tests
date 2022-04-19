@@ -83,7 +83,7 @@ public class QueueMessageHelper {
     }
 
     private SqsMessage findMessageContainingWitHigherVisibilityTimeOut(String substring) {
-        var allMessages = sqsQueue.readThroughMessages(this.queueUri, 1800);
+        var allMessages = sqsQueue.readThroughMessages(this.queueUri, 600);
         for (var message : allMessages) {
             System.out.println("just finding message, checking: " + message.id());
             if (message.contains(substring)) {
