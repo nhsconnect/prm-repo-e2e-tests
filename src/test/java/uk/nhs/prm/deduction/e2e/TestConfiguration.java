@@ -120,6 +120,10 @@ public class TestConfiguration {
         return getEnvironmentName()+"-ehr-transfer-service-transfer-tracker";
     }
 
+    public String getSyntheticPatientPrefix(){
+        return getEnvironmentName().equals("prod") ? "999" : "969";
+    }
+
     private String getQueueUri(String name) {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-%s", getAwsAccountNo(), getEnvironmentName(), name);
     }
