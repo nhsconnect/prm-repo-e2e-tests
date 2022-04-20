@@ -142,6 +142,14 @@ case "${command}" in
       assume_environment_role $NHS_ENVIRONMENT
       dojo "./tasks _livetest_day2_test"
       ;;
+  _livetest_repo_test)
+      gradle test --tests ValidateEhrTransferToRepoUsingMofTest
+      ;;
+  livetest_repo_test)
+      check_env
+      assume_environment_role $NHS_ENVIRONMENT
+      dojo "./tasks _livetest_repo_test"
+      ;;
   _test_perf_unit)
       gradle test --tests *.performance.*.*Test
       ;;
