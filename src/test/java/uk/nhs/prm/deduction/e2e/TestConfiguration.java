@@ -77,6 +77,22 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/live-test", getEnvironmentName()));
     }
 
+    public String getGp2GpMessengerApiKey() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/gp2gp-messenger/live-test", getEnvironmentName()));
+    }
+
+    public String getEhrRepoApiKey() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/live-test", getEnvironmentName()));
+    }
+
+    public String getRepoOdsCode() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/repository-ods-code", getEnvironmentName()));
+    }
+
+    public String getRepoAsid() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/repository-asid", getEnvironmentName()));
+    }
+
     public String meshForwarderObservabilityQueueUri() {
         return getQueueUri("mesh-forwarder-nems-events-observability-queue");
     }
@@ -130,10 +146,15 @@ public class TestConfiguration {
     }
 
     public String getPdsAdaptorUrl() {
-        if (getEnvironmentName().equals("prod")) {
-            return String.format("https://pds-adaptor.%s.patient-deductions.nhs.uk/", getEnvironmentName());
-        }
-        return String.format("https://pds-adaptor.%s.non-prod.patient-deductions.nhs.uk/", getEnvironmentName());
+        return String.format("https://pds-adaptor.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+    }
+
+    public String getGp2GpMessengerUrl() {
+        return String.format("https://gp2gp-messenger.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+    }
+
+    public String getEhrRepoUrl() {
+        return String.format("https://ehr-repo.%s.patient-deductions.nhs.uk/", getEnvSuffix());
     }
 
     private String getAwsAccountNo() {
@@ -193,6 +214,10 @@ public class TestConfiguration {
 
     private AwsConfigurationClient createAwsConfigurationClient() {
         return new RoleAssumingAwsConfigurationClient(new AssumeRoleCredentialsProviderFactory());
+    }
+
+    private String getEnvSuffix() {
+        return getEnvironmentName().equals("prod") ? "prod" : String.format("%s.non-prod", getEnvironmentName());
     }
 
 }
