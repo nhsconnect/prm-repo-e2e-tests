@@ -61,9 +61,13 @@ public class ValidateEhrTransferToRepoUsingMofTest {
     private void updateMofToRepoOdsCode(String testPatientNhsNumber) {
         PdsAdaptorResponse pdsResponse = getPdsAdaptorResponse(testPatientNhsNumber);
         var repoOdsCode = config.getRepoOdsCode();
-        var updatedMofResponse = pdsAdaptorClient.updateManagingOrganisation(testPatientNhsNumber, repoOdsCode, pdsResponse.getRecordETag());
-        System.out.println("Confirming patient managing organisation is set to repo ods code");
-        assertThat(updatedMofResponse.getManagingOrganisation()).isEqualTo(repoOdsCode);
+        if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
+            System.out.println("Not sending update request because managing organisation already set to repo ods code");
+        } else {
+            var updatedMofResponse = pdsAdaptorClient.updateManagingOrganisation(testPatientNhsNumber, repoOdsCode, pdsResponse.getRecordETag());
+            System.out.println("Confirming patient managing organisation is set to repo ods code");
+            assertThat(updatedMofResponse.getManagingOrganisation()).isEqualTo(repoOdsCode);
+        }
     }
 
     private PdsAdaptorResponse getPdsAdaptorResponse(String testPatientNhsNumber) {
@@ -78,6 +82,5 @@ public class ValidateEhrTransferToRepoUsingMofTest {
                 testPatientPreviousGp, conversationId);
         assertThat(healthRecordRequestSentSuccessful).isTrue();
     }
-
 
 }

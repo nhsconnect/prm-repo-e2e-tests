@@ -1,0 +1,44 @@
+format_version: 4
+common:
+  common_stages: &common_stages
+    - run_repo_live_test:
+        clean_workspace: true
+        approval:
+          type: manual
+        artifacts:
+          - build:
+              source: build/reports/tests/
+        tabs:
+          TestReport: test/index.html
+        tasks:
+          - exec:
+              command: /bin/bash
+              arguments:
+                - -c
+                - ./tasks livetest_repo_test
+
+pipelines:
+  live-technical-repo-test.pre-prod:
+    group: continuity-service
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    environment_variables:
+      NHS_ENVIRONMENT: pre-prod
+      LIVE_TECHNICAL_TEST_NHS_NUMBER:
+      LIVE_TECHNICAL_TEST_PREVIOUS_GP:
+    stages:
+      - *common_stages
+  live-technical-repo-test.prod:
+    group: continuity-service
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    environment_variables:
+      NHS_ENVIRONMENT: prod
+      LIVE_TECHNICAL_TEST_NHS_NUMBER:
+      LIVE_TECHNICAL_TEST_PREVIOUS_GP:
+    stages:
+      - *common_stages

@@ -20,13 +20,13 @@ public class Gp2GpMessengerClient {
     public boolean isHealthRecordRequestSentSuccessful(String nhsNumber, String repoOdsCode, String repoAsid, String previousPractiseOdsCode, String conversationId) {
         var healthRecordRequestUrl = buildUrl(rootUrl, nhsNumber);
         try {
-            System.out.printf("Sending health record request to gp2gp messenger: %s%n", healthRecordRequestUrl);
             var healthRecordRequest = new HealthRecordRequest(repoOdsCode, repoAsid, previousPractiseOdsCode, conversationId);
+            System.out.printf("Sending health record request to gp2gp messenger: %s. Request body: %s%n", healthRecordRequestUrl, healthRecordRequest);
             var exchange = restTemplate.exchange(healthRecordRequestUrl, HttpMethod.POST, new HttpEntity<>(healthRecordRequest, createHeaders(apiKey)), String.class);
             System.out.println("Successfully sent ehr request to gp2gp messenger");
             return exchange.getStatusCode().is2xxSuccessful();
         } catch (HttpStatusCodeException e) {
-            System.out.printf("Error sending ehr request from gp2gp-messenger. Status code: %s. Error: %s", e.getStatusCode(), e.getMessage());
+            System.out.printf("Error sending ehr request from gp2gp-messenger. Status code: %s. Error: %s%n", e.getStatusCode(), e.getMessage());
             return false;
         }
     }
