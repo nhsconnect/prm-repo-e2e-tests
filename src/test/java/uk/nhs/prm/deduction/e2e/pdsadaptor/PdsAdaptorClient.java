@@ -20,7 +20,7 @@ public class PdsAdaptorClient {
 
     public PdsAdaptorResponse getSuspendedPatientStatus(String nhsNumber) {
         var patientUrl = buildUrl(patientRootUrl, nhsNumber);
-        System.out.printf("Requesting patient suspended patient status from pds adaptor: %s%n", patientRootUrl);
+        System.out.printf("Requesting patient status from pds adaptor: %s%n", patientRootUrl);
         ResponseEntity<PdsAdaptorResponse> response =
             restTemplate.exchange(patientUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(username, apiKey)), PdsAdaptorResponse.class);
         System.out.printf("Response received from pds adaptor: %s%n", response.getBody());
