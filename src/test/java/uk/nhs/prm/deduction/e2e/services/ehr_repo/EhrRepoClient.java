@@ -25,7 +25,7 @@ public class EhrRepoClient {
             System.out.println("Ehr request successfully stored in ehr repo");
             return exchange.getStatusCode().is2xxSuccessful();
         } catch (HttpStatusCodeException e) {
-            System.out.printf("Error retrieving ehr health record status from ehr repo. Status code: %s. Error: %s", e.getStatusCode(), e.getMessage());
+            System.out.printf("Error retrieving ehr health record status from ehr repo. Status code: %s. Error: %s%n", e.getStatusCode(), e.getMessage());
             return false;
         }
     }
