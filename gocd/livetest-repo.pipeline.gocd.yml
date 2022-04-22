@@ -19,7 +19,7 @@ common:
 
 pipelines:
   live-technical-repo-test.pre-prod:
-    group: continuity-service
+    group: system-tests
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
@@ -31,7 +31,7 @@ pipelines:
     stages:
       - *common_stages
   live-technical-repo-test.prod:
-    group: continuity-service
+    group: system-tests
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
