@@ -2,8 +2,6 @@ package uk.nhs.prm.deduction.e2e.queue;
 
 import org.json.JSONException;
 import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
-import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 
 import java.time.LocalDateTime;
@@ -39,7 +37,13 @@ public class QueueMessageHelper {
                 .pollInterval(100, TimeUnit.MILLISECONDS)
                 .until(() -> findMessageContaining(substring), notNullValue());
     }
-
+    public SqsMessage getMessageContainingAttribute(String attribute,String expectedValue) {
+        log(String.format("Checking if message is present on : %s", this.queueUri));
+        return await().atMost(120, TimeUnit.SECONDS)
+                .with()
+                .pollInterval(100, TimeUnit.MILLISECONDS)
+                .until(() -> findMessageWithAttribute(attribute,expectedValue), notNullValue());
+    }
     public boolean hasResolutionMessage(ResolutionMessage resolutionMessage) {
         log(String.format("Checking if message is present on : %s", this.queueUri));
         await().atMost(120, TimeUnit.SECONDS)
@@ -68,6 +72,17 @@ public class QueueMessageHelper {
         for (var message : allMessages) {
             System.out.println("just finding message, checking: " + message.id());
             if (message.contains(substring)) {
+                return message;
+            }
+        }
+        return null;
+    }
+
+    public SqsMessage findMessageWithAttribute(String attribute, String expectedValue) {
+        var allMessages = sqsQueue.readThroughMessages(this.queueUri, 180);
+        for (var message : allMessages) {
+            System.out.println("just finding message, checking: " + message.id());
+            if (message.attributes().get(attribute).stringValue().equals(expectedValue)) {
                 return message;
             }
         }

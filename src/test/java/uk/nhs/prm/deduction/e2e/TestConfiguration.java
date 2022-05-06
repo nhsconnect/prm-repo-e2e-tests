@@ -157,6 +157,14 @@ public class TestConfiguration {
         return String.format("https://ehr-repo.%s.patient-deductions.nhs.uk/", getEnvSuffix());
     }
 
+    public String getActiveMqEndpoint0() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/output/prm-deductions-infra/openwire-endpoint-0", getEnvironmentName()));
+    }
+    public String getActiveMqEndpoint1() {
+
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/output/prm-deductions-infra/openwire-endpoint-1", getEnvironmentName()));
+    }
+
     private String getAwsAccountNo() {
         if (cachedAwsAccountNo == null) {
             cachedAwsAccountNo = fetchAwsAccountNo();
@@ -220,4 +228,18 @@ public class TestConfiguration {
         return getEnvironmentName().equals("prod") ? "prod" : String.format("%s.non-prod", getEnvironmentName());
     }
 
+    public String smallEhrQueueUri() {
+        return getQueueUri("ehr-transfer-service-small-ehr-observability");
+    }
+
+    public String largeEhrQueueUri() {
+        return getQueueUri("ehr-transfer-service-large-ehr-observability");
+    }
+
+    public String getMqUserName() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-username", getEnvironmentName()));
+    }
+    public String getMqPassword() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-password", getEnvironmentName()));
+    }
 }
