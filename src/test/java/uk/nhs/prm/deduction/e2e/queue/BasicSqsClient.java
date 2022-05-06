@@ -26,6 +26,7 @@ public class BasicSqsClient implements TestSqsClient {
                 .queueUrl(queueUrl)
                 .waitTimeSeconds(5)
                 .maxNumberOfMessages(10)
+                .messageAttributeNames("All")
                 .attributeNames(QueueAttributeName.ALL)
                 .build();
 
@@ -44,6 +45,7 @@ public class BasicSqsClient implements TestSqsClient {
             .queueUrl(queueUrl)
             .waitTimeSeconds(5)
             .maxNumberOfMessages(10)
+            .messageAttributeNames("All")
             .attributeNames(QueueAttributeName.ALL)
             .build();
 
