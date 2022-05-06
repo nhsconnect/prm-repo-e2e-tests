@@ -242,4 +242,8 @@ public class TestConfiguration {
     public String getMqPassword() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-password", getEnvironmentName()));
     }
+
+    public String attachmentQueueUri() {
+        return getQueueUri("ehr-transfer-service-attachments-observability");
+    }
 }
