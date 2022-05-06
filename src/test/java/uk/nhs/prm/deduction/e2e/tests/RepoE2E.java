@@ -5,6 +5,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.deduction.e2e.ehr_transfer.AttachmentQueue;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.LargeEhrQueue;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.SmallEhrQueue;
@@ -36,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         TrackerDb.class,
         SmallEhrQueue.class,
         LargeEhrQueue.class,
+        AttachmentQueue.class,
         DbClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -53,6 +55,8 @@ public class RepoE2E {
     SmallEhrQueue smallEhrQueue;
     @Autowired
     LargeEhrQueue largeEhrQueue;
+    @Autowired
+    AttachmentQueue attachmentQueue;
 
 
     @Test
@@ -66,12 +70,12 @@ public class RepoE2E {
         assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_REQUEST_SENT"));
     }
 
+
     @Test
     void shouldPutSmallEhrOnActiveMQAndObserveItOnSmallEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
-        String message = Resources.readTestResourceFileFromEhrDirectory("unsanitized_small_ehr").replaceAll("__conversationId__", conversationId);
-        mqClient.postAMessageToAQueue("inbound", message);
+        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr",conversationId));
         assertThat(smallEhrQueue.getMessageContaining(conversationId));
     }
 
@@ -79,8 +83,23 @@ public class RepoE2E {
     void shouldPutLargeEhrOnActiveMQAndObserveItOnLargeEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
-        String message = Resources.readTestResourceFileFromEhrDirectory("unsanitized_large_ehr").replaceAll("__conversationId__", conversationId);
-        mqClient.postAMessageToAQueue("inbound", message);
-        assertThat(largeEhrQueue.getMessageContainingAttribute("conversationId",conversationId));
+        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_large_ehr",conversationId));
+        assertThat(largeEhrQueue.getMessageContainingAttribute("conversationId", conversationId));
+    }
+
+    @Test
+    void shouldPutMessageWithAttachmentsOnActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
+        String conversationId = UUID.randomUUID().toString();
+        System.out.println("conversation Id " + conversationId);
+        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("message_with_attachment",conversationId));
+        assertThat(attachmentQueue.getMessageContaining(conversationId));
+    }
+
+    private String GetMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
+        String messageId = UUID.randomUUID().toString();
+        String message = Resources.readTestResourceFileFromEhrDirectory(fileName);
+        message =  message.replaceAll("__conversationId__", conversationId);
+        message = message.replaceAll("__messageId__", messageId);
+        return message;
     }
 }
