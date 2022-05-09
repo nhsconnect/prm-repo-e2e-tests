@@ -31,7 +31,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
 
 
 @SpringBootTest(classes = {
-        EndToEndTest.class,
+        ContinuityE2E.class,
         MeshMailbox.class,
         SqsQueue.class,
         TestConfiguration.class,
@@ -51,7 +51,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class EndToEndTest {
+public class ContinuityE2E {
 
     @Autowired
     private MeshForwarderQueue meshForwarderQueue;
