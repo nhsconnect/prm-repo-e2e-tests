@@ -47,7 +47,7 @@ pipelines:
                     arguments:
                       - -c
                       - ./tasks test_e2e
-  repo-e2e-tests.test:
+  continuity-e2e-tests.test:
     group: continuity-service
     label_template: '${git[:8]}'
     timer:
@@ -94,7 +94,7 @@ pipelines:
                     arguments:
                       - -c
                       - ./tasks test_e2e
-  continuity-e2e-tests.test:
+  repo-e2e-tests.dev:
     group: continuity-service
     label_template: '${git[:8]}'
     timer:
@@ -121,7 +121,7 @@ pipelines:
         pipeline: prm-repo-suspension-service.test
         stage: deploy
     environment_variables:
-      NHS_ENVIRONMENT: test
+      NHS_ENVIRONMENT: dev
     stages:
       - test:
           clean_workspace: true
