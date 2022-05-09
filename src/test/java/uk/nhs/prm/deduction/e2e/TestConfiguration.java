@@ -246,4 +246,8 @@ public class TestConfiguration {
     public String attachmentQueueUri() {
         return getQueueUri("ehr-transfer-service-attachments-observability");
     }
+
+    public String parsingDLQ() {
+        return getQueueUri("ehr-transfer-service-parsing-dlq");
+    }
 }

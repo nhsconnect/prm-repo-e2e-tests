@@ -5,10 +5,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.ehr_transfer.AttachmentQueue;
-import uk.nhs.prm.deduction.e2e.ehr_transfer.LargeEhrQueue;
-import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
-import uk.nhs.prm.deduction.e2e.ehr_transfer.SmallEhrQueue;
+import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.ActiveMqClient;
@@ -38,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         SmallEhrQueue.class,
         LargeEhrQueue.class,
         AttachmentQueue.class,
+        EhrParsingDLQ.class,
         DbClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -57,6 +55,8 @@ public class RepoE2E {
     LargeEhrQueue largeEhrQueue;
     @Autowired
     AttachmentQueue attachmentQueue;
+    @Autowired
+    EhrParsingDLQ parsingDLQ;
 
 
     @Test
@@ -72,33 +72,41 @@ public class RepoE2E {
 
 
     @Test
-    void shouldPutSmallEhrOnActiveMQAndObserveItOnSmallEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
+    void shouldPutSmallEhrFromActiveMQAndObserveItOnSmallEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
-        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr",conversationId));
+        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
         assertThat(smallEhrQueue.getMessageContaining(conversationId));
     }
 
     @Test
-    void shouldPutLargeEhrOnActiveMQAndObserveItOnLargeEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
+    void shouldPutLargeEhrFromActiveMQAndObserveItOnLargeEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
-        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_large_ehr",conversationId));
+        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_large_ehr", conversationId));
         assertThat(largeEhrQueue.getMessageContainingAttribute("conversationId", conversationId));
     }
 
     @Test
-    void shouldPutMessageWithAttachmentsOnActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
+    void shouldPutMessageWithAttachmentsFromActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
-        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("message_with_attachment",conversationId));
+        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("message_with_attachment", conversationId));
         assertThat(attachmentQueue.getMessageContaining(conversationId));
+    }
+
+    @Test
+    void shouldPutAUnprocessableMessageFromActiveMqToDLQ() throws JMSException {  //this test would expand and change as progress
+        String dlqMessage = "A DLQ MESSAGE";
+        System.out.println("dlq message " + dlqMessage);
+        mqClient.postAMessageToAQueue("inbound", dlqMessage);
+        assertThat(parsingDLQ.getMessageContaining(dlqMessage));
     }
 
     private String GetMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
         String messageId = UUID.randomUUID().toString();
         String message = Resources.readTestResourceFileFromEhrDirectory(fileName);
-        message =  message.replaceAll("__conversationId__", conversationId);
+        message = message.replaceAll("__conversationId__", conversationId);
         message = message.replaceAll("__messageId__", messageId);
         return message;
     }
