@@ -47,7 +47,7 @@ pipelines:
                     arguments:
                       - -c
                       - ./tasks test_e2e
-  continuity-e2e-tests.test:
+  repo-e2e-tests.test:
     group: continuity-service
     label_template: '${git[:8]}'
     timer:
@@ -94,3 +94,51 @@ pipelines:
                     arguments:
                       - -c
                       - ./tasks test_e2e
+  continuity-e2e-tests.test:
+    group: continuity-service
+    label_template: '${git[:8]}'
+    timer:
+      spec: "0 0 9,13,17,21 * * ?"
+      only_on_changes: no
+    materials:
+      git:
+        type: configrepo
+        ignore:
+          - docs/**/*.*
+          - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
+          - src/test/java/uk/nhs/prm/deduction/e2e/live_technical_test/**/*
+          - gocd/performance.pipeline.gocd.yml
+      pds-adaptor:
+        pipeline: prm-deductions-pds-adaptor.test
+        stage: deploy
+      nems-event-processor:
+        pipeline: prm-deductions-nems-event-processor.test
+        stage: deploy
+      mesh-forwarder:
+        pipeline: prm-deductions-mesh-forwarder.test
+        stage: deploy
+      suspension-service:
+        pipeline: prm-repo-suspension-service.test
+        stage: deploy
+    environment_variables:
+      NHS_ENVIRONMENT: test
+    stages:
+      - test:
+          clean_workspace: true
+          jobs:
+            test_e2e:
+              timeout: 15
+              resources:
+                - docker
+              artifacts:
+                - build:
+                    source: build/reports/tests/
+              tabs:
+                TestReport: build/reports/tests/index.html
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_repo_e2e
+
