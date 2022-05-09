@@ -46,7 +46,7 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - ./tasks test_e2e
+                      - ./tasks test_continuity_e2e
   continuity-e2e-tests.test:
     group: continuity-service
     label_template: '${git[:8]}'
@@ -93,7 +93,7 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - ./tasks test_e2e
+                      - ./tasks test_continuity_e2e
   repo-e2e-tests.dev:
     group: continuity-service
     label_template: '${git[:8]}'

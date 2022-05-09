@@ -109,10 +109,10 @@ case "${command}" in
   dep)
       dojo "./tasks _dep"
       ;;
-  _test_e2e)
-      gradle test --tests "uk.nhs.prm.deduction.e2e.tests.*"
+  _test_continuity_e2e)
+      gradle test --tests "uk.nhs.prm.deduction.e2e.tests.ContinuityE2E"
       ;;
-  test_e2e)
+  test_continuity_e2e)
       check_env
       assume_environment_role $NHS_ENVIRONMENT
       check_suspension_service
