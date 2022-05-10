@@ -34,11 +34,16 @@ dependencies {
 }
 
 tasks.withType(Test) {
-    useJUnitPlatform()
+    useJUnitPlatform({
+        if (System.getenv().get("NHS_ENVIRONMENT") == 'dev') {
+            excludeTags 'DevOnlyTest'
+        }
+    })
     maxParallelForks = 4
 }
 test {
     testLogging.showStandardStreams = true
+
 }
 
 test.outputs.upToDateWhen {false}
