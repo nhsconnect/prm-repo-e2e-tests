@@ -84,6 +84,7 @@ public class ContinuityE2E {
     }
 
     @Test
+    @Tag("DevOnlyTest")
     @Order(1)
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();

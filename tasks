@@ -110,16 +110,16 @@ case "${command}" in
       dojo "./tasks _dep"
       ;;
   _test_continuity_e2e)
-      gradle test --tests "uk.nhs.prm.deduction.e2e.tests.ContinuityE2E"
+     gradle test --tests "uk.nhs.prm.deduction.e2e.tests.ContinuityE2E"
       ;;
   test_continuity_e2e)
       check_env
       assume_environment_role $NHS_ENVIRONMENT
       check_suspension_service
-      dojo "./tasks _test_e2e"
+      dojo "./tasks _test_continuity_e2e"
       ;;
   _test_repo_e2e)
-      gradle test --tests "uk.nhs.prm.deduction.e2e.tests.RepoE2E"
+      gradle test --test "uk.nhs.prm.deduction.e2e.tests.RepoE2E"
       ;;
   test_repo_e2e)
       check_env
@@ -194,5 +194,6 @@ case "${command}" in
       echo "Invalid command: '${command}'"
       exit 1
       ;;
+
 esac
 set +e
