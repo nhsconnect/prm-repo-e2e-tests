@@ -155,7 +155,7 @@ public class ContinuityE2E {
 
         meshMailbox.postMessage(nemsSuspension);
 
-        ResolutionMessage expectedMessageOnQueue = new ResolutionMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC");
+        ResolutionMessage expectedMessageOnQueue = new ResolutionMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC_OR_SAFE_LISTED");
 
         assertThat(mofNotUpdatedMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
