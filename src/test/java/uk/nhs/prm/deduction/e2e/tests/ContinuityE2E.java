@@ -85,10 +85,9 @@ public class ContinuityE2E {
     }
 
     @Test
-    @DisabledIfEnvironmentVariable(named = "MOF2REPO_SWITCH",matches="true")
+    @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="true")
     @Order(1)
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
-        System.out.println("Switch status for MOF2REPO_SWITCH is : "+getenv("MOF2REPO_SWITCH"));
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
         var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
