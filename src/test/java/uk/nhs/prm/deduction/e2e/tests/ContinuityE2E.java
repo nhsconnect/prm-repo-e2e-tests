@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
@@ -84,7 +85,7 @@ public class ContinuityE2E {
     }
 
     @Test
-    @Tag("DevOnlyTest")
+    @DisabledIfEnvironmentVariable(named = "MOF2REPO_SWITCH",matches="true")
     @Order(1)
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();
