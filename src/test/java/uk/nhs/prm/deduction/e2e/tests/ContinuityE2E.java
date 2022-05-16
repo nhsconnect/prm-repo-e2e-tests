@@ -29,7 +29,7 @@ import java.util.Map;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
 import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventFromTemplate;
-
+import static java.lang.System.getenv;
 
 @SpringBootTest(classes = {
         ContinuityE2E.class,
@@ -88,6 +88,7 @@ public class ContinuityE2E {
     @DisabledIfEnvironmentVariable(named = "MOF2REPO_SWITCH",matches="true")
     @Order(1)
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
+        System.out.println("Switch status for MOF2REPO_SWITCH is : "+getenv("MOF2REPO_SWITCH"));
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
         var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
