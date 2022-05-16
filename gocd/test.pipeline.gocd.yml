@@ -28,7 +28,7 @@ pipelines:
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: dev
-      MOF2REPO_SWITCH: true
+      UPDATE_MOF_TO_REPO: true
     stages:
       - test:
           clean_workspace: true
@@ -76,7 +76,7 @@ pipelines:
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: test
-      MOF2REPO_SWITCH: false
+      UPDATE_MOF_TO_REPO: false
     stages:
       - test:
           clean_workspace: true
@@ -124,7 +124,7 @@ pipelines:
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: dev
-      MOF2REPO_SWITCH: true
+      UPDATE_MOF_TO_REPO: true
     stages:
       - test:
           clean_workspace: true
@@ -172,7 +172,7 @@ pipelines:
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: test
-      MOF2REPO_SWITCH: false
+      UPDATE_MOF_TO_REPO: false
     stages:
       - test:
           clean_workspace: true
