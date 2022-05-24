@@ -36,7 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         LargeEhrQueue.class,
         AttachmentQueue.class,
         EhrParsingDLQ.class,
-        DbClient.class
+        DbClient.class,
+        EhrCompleteQueue.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepoE2E {
@@ -57,6 +58,8 @@ public class RepoE2E {
     AttachmentQueue attachmentQueue;
     @Autowired
     EhrParsingDLQ parsingDLQ;
+    @Autowired
+    EhrCompleteQueue ehrCompleteQueue;
 
 
     @Test
@@ -72,11 +75,12 @@ public class RepoE2E {
 
 
     @Test
-    void shouldPutSmallEhrFromActiveMQAndObserveItOnSmallEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
+    void shouldReadMessageFromActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
         mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
         assertThat(smallEhrQueue.getMessageContaining(conversationId));
+        assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
     }
 
     @Test
