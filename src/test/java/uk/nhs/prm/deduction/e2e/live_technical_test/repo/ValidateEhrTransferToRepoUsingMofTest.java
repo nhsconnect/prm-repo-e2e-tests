@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.deduction.e2e.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.deduction.e2e.services.gp2gp_messenger.Gp2GpMessengerClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
@@ -25,6 +26,7 @@ public class ValidateEhrTransferToRepoUsingMofTest {
     private PdsAdaptorClient pdsAdaptorClient;
     private Gp2GpMessengerClient gp2GpMessengerClient;
     private EhrRepoClient ehrRepoClient;
+    private TestPatientValidator patientValidator = new TestPatientValidator();
 
     @BeforeEach
     void setUp() {
@@ -38,7 +40,7 @@ public class ValidateEhrTransferToRepoUsingMofTest {
         var testPatientNhsNumber = fetchTestParameter("LIVE_TECHNICAL_TEST_NHS_NUMBER");
         var testPatientPreviousGp = fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
 
-        validatePatientIsSynthetic(testPatientNhsNumber);
+        assertThat(isSafeListedOrSynthetic(testPatientNhsNumber)).isTrue();
         updateMofToRepoOdsCode(testPatientNhsNumber);
 
         var conversationId = UUID.randomUUID().toString();
@@ -51,11 +53,6 @@ public class ValidateEhrTransferToRepoUsingMofTest {
                 .until(() -> ehrRepoClient.isPatientHealthRecordStatusComplete(testPatientNhsNumber, conversationId),
                         equalTo(true));
 
-    }
-
-    private void validatePatientIsSynthetic(String testPatientNhsNumber) {
-        System.out.println("Checking if nhs number is synthetic");
-        assertThat(testPatientNhsNumber).startsWith(config.getSyntheticPatientPrefix());
     }
 
     private void updateMofToRepoOdsCode(String testPatientNhsNumber) {
@@ -81,6 +78,9 @@ public class ValidateEhrTransferToRepoUsingMofTest {
         var healthRecordRequestSentSuccessful = gp2GpMessengerClient.isHealthRecordRequestSentSuccessful(testPatientNhsNumber, config.getRepoOdsCode(), config.getRepoAsid(),
                 testPatientPreviousGp, conversationId);
         assertThat(healthRecordRequestSentSuccessful).isTrue();
+    }
+    private boolean isSafeListedOrSynthetic(String testPatientNhsNumber) {
+        return patientValidator.isIncludedInTheTest(testPatientNhsNumber, config.getSafeListedPatientList(), config.getSyntheticPatientPrefix());
     }
 
 }

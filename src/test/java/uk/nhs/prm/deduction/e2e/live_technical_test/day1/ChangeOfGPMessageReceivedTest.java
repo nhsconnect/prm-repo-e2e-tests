@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.deduction.e2e.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
@@ -21,6 +22,7 @@ public class ChangeOfGPMessageReceivedTest {
 
     private SuspensionMessageRealQueue suspensionMessageRealQueue;
     private TestConfiguration config = new TestConfiguration();
+    private TestPatientValidator patientValidator = new TestPatientValidator();
 
     @BeforeEach
     public void setUp() {
@@ -34,8 +36,7 @@ public class ChangeOfGPMessageReceivedTest {
         var testPatientPreviousGp = fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
 
         System.out.println("Checking if nhs number is synthetic");
-
-        assertThat(testPatientNhsNumber).startsWith(config.getSyntheticPatientPrefix());
+        assertThat(isSafeListedOrSynthetic(testPatientNhsNumber)).isTrue();
 
         var pdsResponse = getPatientStatusOnPDSForSyntheticPatient(testPatientNhsNumber);
 
@@ -50,6 +51,10 @@ public class ChangeOfGPMessageReceivedTest {
 
         assertThat(suspensionMessage.previousGp()).isEqualTo(testPatientPreviousGp);
 
+    }
+
+    private boolean isSafeListedOrSynthetic(String testPatientNhsNumber) {
+        return patientValidator.isIncludedInTheTest(testPatientNhsNumber, config.getSafeListedPatientList(), config.getSyntheticPatientPrefix());
     }
 
     private PdsAdaptorResponse getPatientStatusOnPDSForSyntheticPatient(String testPatientNhsNumber) {
