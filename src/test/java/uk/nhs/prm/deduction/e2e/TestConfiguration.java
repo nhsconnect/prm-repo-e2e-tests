@@ -141,6 +141,10 @@ public class TestConfiguration {
         return getEnvironmentName().equals("prod") ? "999" : "969";
     }
 
+    public String getSafeListedPatientList() {
+        return  awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/safe-listed-patients-nhs-numbers", getEnvironmentName()));
+    }
+
     private String getQueueUri(String name) {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-%s", getAwsAccountNo(), getEnvironmentName(), name);
     }
