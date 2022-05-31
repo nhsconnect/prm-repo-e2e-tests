@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,13 @@ public class RepoE2E {
     EhrParsingDLQ parsingDLQ;
     @Autowired
     EhrCompleteQueue ehrCompleteQueue;
-
+    @BeforeAll
+    void init() {
+        smallEhrQueue.deleteAllMessages();
+        largeEhrQueue.deleteAllMessages();
+        attachmentQueue.deleteAllMessages();
+        parsingDLQ.deleteAllMessages();
+    }
 
     @Test
     void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueueAndAnEhrRequestIsMadeAndTheDbIsUpdatedWithExpectedStatus() {  //this test would expand and change as progress
