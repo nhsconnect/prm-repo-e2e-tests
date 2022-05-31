@@ -12,6 +12,8 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSq
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageRealQueue;
 
+import java.util.Arrays;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters.fetchTestParameter;
 import static uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters.outputTestParameter;
@@ -32,21 +34,34 @@ public class ChangeOfGPMessageReceivedTest {
 
     @Test
     public void shouldHaveReceivedSingleSuspensionChangeOfGpMessageRelatedToTestPatient() {
-        var testPatientNhsNumber = fetchTestParameter("LIVE_TECHNICAL_TEST_NHS_NUMBER");
+        var safeListPatients = Arrays.asList(config.getSafeListedPatientList().split(","));
 
-        System.out.println("Checking if nhs number is synthetic");
-        assertThat(isSafeListedOrSynthetic(testPatientNhsNumber)).isTrue();
+        if (safeListPatients.size() > 0) {
 
-        var pdsResponse = getPatientStatusOnPDSForSyntheticPatient(testPatientNhsNumber);
+            System.out.println("Safe list patient has size " + safeListPatients.size());
 
-        assertThat(pdsResponse.getIsSuspended()).isTrue();
+            safeListPatients.forEach(nhsNumber -> {
+                System.out.println("Checking if nhs number is synthetic");
+                assertThat(isSafeListedOrSynthetic(nhsNumber)).isTrue();
 
-        System.out.println("Finding related message for nhs number");
+                var pdsResponse = getPatientStatusOnPDSForSyntheticPatient(nhsNumber);
 
-        var suspensionMessage = suspensionMessageRealQueue.getMessageContainingForTechnicalTestRun(testPatientNhsNumber);
+                assertThat(pdsResponse.getIsSuspended()).isTrue();
 
-        System.out.println("got message related to test patient");
-        outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.nemsMessageId());
+                System.out.println("Finding related message for nhs number");
+
+                var suspensionMessage = suspensionMessageRealQueue.getMessageContainingForTechnicalTestRun(nhsNumber);
+
+                System.out.println("got message related to test patient");
+                outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.nemsMessageId());
+            });
+
+
+        } else {
+            System.out.println("No safe list patients for test");
+        }
+
+
     }
 
     private boolean isSafeListedOrSynthetic(String testPatientNhsNumber) {
