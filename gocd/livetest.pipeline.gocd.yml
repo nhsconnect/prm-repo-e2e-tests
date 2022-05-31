@@ -69,8 +69,9 @@ pipelines:
         type: configrepo
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
-      LIVE_TECHNICAL_TEST_NHS_NUMBER: 9693642422
       LIVE_TECHNICAL_TEST_PREVIOUS_GP: input from live-technical-test-inject.pre-prod
+    secure_variables:
+      LIVE_TECHNICAL_TEST_NHS_NUMBER: 9693642422
     stages:
       - *common_stages
   live-technical-test.prod:
@@ -84,7 +85,8 @@ pipelines:
         stage: run_day_2_live_test
     environment_variables:
       NHS_ENVIRONMENT: prod
-      LIVE_TECHNICAL_TEST_NHS_NUMBER: input prod synthetic patient
       LIVE_TECHNICAL_TEST_PREVIOUS_GP: input from technical testing real GPP
+    secure_variables:
+      LIVE_TECHNICAL_TEST_NHS_NUMBER: input prod synthetic patient
     stages:
       - *common_stages
