@@ -37,8 +37,6 @@ public class ValidateMOFUpdatedTest {
         var testPatientPreviousGp = fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
         var expectedNemsMessageId = fetchTestParameter("LIVE_TECHNICAL_TEST_NEMS_MESSAGE_ID");
 
-        System.out.println("expecting test nhs number, previous gp and nems message id of: " + testPatientNhsNumber + ", " + testPatientPreviousGp + ", " + expectedNemsMessageId);
-
         // NEEDS UPDATING FOR TECHNICAL TEST USER IN LIVE XXXXX
         String pdsAdaptorUsernameXXX = "live-test";
         assertThat(isSafeListedOrSynthetic(testPatientNhsNumber)).isTrue();
