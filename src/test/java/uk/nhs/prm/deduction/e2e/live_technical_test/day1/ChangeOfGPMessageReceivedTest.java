@@ -33,7 +33,6 @@ public class ChangeOfGPMessageReceivedTest {
     @Test
     public void shouldHaveReceivedSingleSuspensionChangeOfGpMessageRelatedToTestPatient() {
         var testPatientNhsNumber = fetchTestParameter("LIVE_TECHNICAL_TEST_NHS_NUMBER");
-        var testPatientPreviousGp = fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
 
         System.out.println("Checking if nhs number is synthetic");
         assertThat(isSafeListedOrSynthetic(testPatientNhsNumber)).isTrue();
@@ -42,15 +41,12 @@ public class ChangeOfGPMessageReceivedTest {
 
         assertThat(pdsResponse.getIsSuspended()).isTrue();
 
-        System.out.println("expecting test nhs number and previous gp of: " + testPatientNhsNumber + ", " + testPatientPreviousGp);
+        System.out.println("Finding related message for nhs number");
 
         var suspensionMessage = suspensionMessageRealQueue.getMessageContainingForTechnicalTestRun(testPatientNhsNumber);
 
         System.out.println("got message related to test patient");
         outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.nemsMessageId());
-
-        assertThat(suspensionMessage.previousGp()).isEqualTo(testPatientPreviousGp);
-
     }
 
     private boolean isSafeListedOrSynthetic(String testPatientNhsNumber) {
