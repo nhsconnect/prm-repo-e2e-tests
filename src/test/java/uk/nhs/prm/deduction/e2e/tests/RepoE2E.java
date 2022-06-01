@@ -38,7 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         AttachmentQueue.class,
         EhrParsingDLQ.class,
         DbClient.class,
-        EhrCompleteQueue.class
+        EhrCompleteQueue.class,
+        TransferCompleteQueue.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepoE2E {
@@ -61,6 +62,8 @@ public class RepoE2E {
     EhrParsingDLQ parsingDLQ;
     @Autowired
     EhrCompleteQueue ehrCompleteQueue;
+    @Autowired
+    TransferCompleteQueue transferCompleteQueue;
     @BeforeAll
     void init() {
         smallEhrQueue.deleteAllMessages();
@@ -74,20 +77,27 @@ public class RepoE2E {
         String nhsNumber = "9693795989";
         String nemsMessageId = UUID.randomUUID().toString();
         String conversationId = UUID.randomUUID().toString();
-        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
-        repoIncomingQueue.postAMessage(message);
+        postMessageToRepoIncomingQueue(nemsMessageId, conversationId, nhsNumber);
         assertTrue(trackerDb.conversationIdExists(conversationId));
         assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_REQUEST_SENT"));
     }
 
+    private void postMessageToRepoIncomingQueue(String nemsMessageId, String conversationId, String nhsNumber) {
+        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
+        repoIncomingQueue.postAMessage(message);
+        System.out.println("Sent message to repo incoming queue");
+    }
 
     @Test
-    void shouldReadMessageFromActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
+    void shouldReadMessageFromActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteAndTransferCompleteQueues() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
+        postMessageToRepoIncomingQueue(UUID.randomUUID().toString(), conversationId, "1234567890");
         System.out.println("conversation Id " + conversationId);
         mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
+
         assertThat(smallEhrQueue.getMessageContaining(conversationId));
         assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId));
     }
 
     @Test
