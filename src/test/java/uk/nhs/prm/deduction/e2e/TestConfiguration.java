@@ -240,6 +240,10 @@ public class TestConfiguration {
         return getQueueUri("ehr-transfer-service-ehr-complete-observability");
     }
 
+    public String transferCompleteQueueUri() {
+        return getQueueUri("ehr-transfer-service-transfer-complete-observability");
+    }
+
     public String largeEhrQueueUri() {
         return getQueueUri("ehr-transfer-service-large-ehr-observability");
     }
