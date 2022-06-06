@@ -83,7 +83,7 @@ public class RepoE2E {
     }
 
     private void postMessageToRepoIncomingQueue(String nemsMessageId, String conversationId, String nhsNumber) {
-        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
+        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\", \"nemsEventLastUpdated\":\"last-updated\",\"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
         repoIncomingQueue.postAMessage(message);
         System.out.println("Sent message to repo incoming queue");
     }
