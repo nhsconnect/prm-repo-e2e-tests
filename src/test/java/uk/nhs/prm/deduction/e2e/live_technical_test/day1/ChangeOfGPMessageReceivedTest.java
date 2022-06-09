@@ -10,6 +10,7 @@ import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.services.gp2gp_messenger.Gp2GpMessengerClient;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageRealQueue;
 
 import java.util.Arrays;
@@ -25,11 +26,13 @@ public class ChangeOfGPMessageReceivedTest {
     private SuspensionMessageRealQueue suspensionMessageRealQueue;
     private TestConfiguration config = new TestConfiguration();
     private TestPatientValidator patientValidator = new TestPatientValidator();
+    private Gp2GpMessengerClient gp2GpMessengerClient;
 
     @BeforeEach
     public void setUp() {
         var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
         suspensionMessageRealQueue = new SuspensionMessageRealQueue(new SqsQueue(sqsClient), config);
+        gp2GpMessengerClient = new Gp2GpMessengerClient(config.getGp2GpMessengerApiKey(), config.getGp2GpMessengerUrl());
     }
 
     @Test
@@ -47,6 +50,9 @@ public class ChangeOfGPMessageReceivedTest {
                 var pdsResponse = getPatientStatusOnPDSForSyntheticPatient(nhsNumber);
 
                 System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
+
+                System.out.println("Checking patient status on HL7 PDs lookup - see gp2gp messenger logs for insights");
+                gp2GpMessengerClient.getPdsRecordViaHlv7(nhsNumber);
 
                 System.out.println("Finding related message for nhs number");
 
