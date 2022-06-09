@@ -18,7 +18,7 @@ public class Gp2GpMessengerClient {
     }
 
     public boolean isHealthRecordRequestSentSuccessful(String nhsNumber, String repoOdsCode, String repoAsid, String previousPractiseOdsCode, String conversationId) {
-        var healthRecordRequestUrl = buildUrl(rootUrl, nhsNumber);
+        var healthRecordRequestUrl = buildHealthRecordUrl(rootUrl, nhsNumber);
         try {
             var healthRecordRequest = new HealthRecordRequest(repoOdsCode, repoAsid, previousPractiseOdsCode, conversationId);
             System.out.printf("Sending health record request to gp2gp messenger: %s. Request body: %s%n", healthRecordRequestUrl, healthRecordRequest);
@@ -31,8 +31,28 @@ public class Gp2GpMessengerClient {
         }
     }
 
-    private String buildUrl(String baseUrl, String nhsNumber) {
-        return baseUrl + "health-record-requests/" + nhsNumber;
+    public void getPdsRecordViaHlv7(String nhsNumber) {
+        var requestUrl = buildPdsUrl(rootUrl, nhsNumber);
+        try {
+            System.out.println("Sending pds hl7 request to gp2gp messenger");
+            restTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(apiKey)), String.class);
+            System.out.println("Successfully sent pds request to gp2gp messenger");
+        } catch (HttpStatusCodeException e) {
+            System.out.printf("Error sending pds request from gp2gp-messenger. Status code: %s. Error: %s%n", e.getStatusCode(), e.getMessage());
+        }
+    }
+
+    private String buildHealthRecordUrl(String baseUrl, String nhsNumber) {
+        return buildUrl(baseUrl, "health-record-requests/", nhsNumber);
+    }
+
+
+    private String buildPdsUrl(String baseUrl, String nhsNumber) {
+        return buildUrl(baseUrl, "patient-demographics/", nhsNumber);
+    }
+
+    private String buildUrl(String baseUrl, String path, String nhsNumber) {
+        return baseUrl + path + nhsNumber;
     }
 
     private HttpHeaders createHeaders(String apiKey) {
