@@ -7,10 +7,10 @@ import uk.nhs.prm.deduction.e2e.queue.QueueMessageHelper;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 @Component
-public class AttachmentQueue extends QueueMessageHelper {
+public class LargeEhrFragmentsQueue extends QueueMessageHelper {
 
     @Autowired
-    public AttachmentQueue(SqsQueue sqsQueue, TestConfiguration configuration) {
+    public LargeEhrFragmentsQueue(SqsQueue sqsQueue, TestConfiguration configuration) {
         super(sqsQueue, configuration.attachmentQueueUri());
     }
 }

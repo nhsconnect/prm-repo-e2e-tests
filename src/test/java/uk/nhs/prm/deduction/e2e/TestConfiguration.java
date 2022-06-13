@@ -260,7 +260,7 @@ public class TestConfiguration {
     }
 
     public String attachmentQueueUri() {
-        return getQueueUri("ehr-transfer-service-attachments-observability");
+        return getQueueUri("ehr-transfer-service-large-message-fragments-observability");
     }
 
     public String parsingDLQ() {
