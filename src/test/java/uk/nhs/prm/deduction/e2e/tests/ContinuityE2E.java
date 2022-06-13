@@ -86,6 +86,7 @@ public class ContinuityE2E {
         suspensionsMessageQueue.deleteAllMessages();
         nemsEventProcessorUnhandledQueue.deleteAllMessages();
         notReallySuspensionsMessageQueue.deleteAllMessages();
+        reRegistrationMessageObservabilityQueue.deleteAllMessages();
     }
 
     @Test
