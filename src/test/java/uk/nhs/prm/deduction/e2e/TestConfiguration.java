@@ -105,6 +105,10 @@ public class TestConfiguration {
         return getQueueUri("nems-event-processor-suspensions-observability-queue");
     }
 
+    public String reRegistrationObservabilityQueueUri() {
+        return getQueueUri("nems-event-processor-re-registration-observability-queue");
+    }
+
     public String suspensionsRealQueueUri() {
         return getQueueUri("suspension-service-suspensions-queue");
     }
