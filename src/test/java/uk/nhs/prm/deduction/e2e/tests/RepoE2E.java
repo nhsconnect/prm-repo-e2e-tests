@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         TrackerDb.class,
         SmallEhrQueue.class,
         LargeEhrQueue.class,
-        AttachmentQueue.class,
+        LargeEhrFragmentsQueue.class,
         EhrParsingDLQ.class,
         DbClient.class,
         EhrCompleteQueue.class,
@@ -57,7 +57,7 @@ public class RepoE2E {
     @Autowired
     LargeEhrQueue largeEhrQueue;
     @Autowired
-    AttachmentQueue attachmentQueue;
+    LargeEhrFragmentsQueue largeEhrFragmentsQueue;
     @Autowired
     EhrParsingDLQ parsingDLQ;
     @Autowired
@@ -68,7 +68,7 @@ public class RepoE2E {
     void init() {
         smallEhrQueue.deleteAllMessages();
         largeEhrQueue.deleteAllMessages();
-        attachmentQueue.deleteAllMessages();
+        largeEhrFragmentsQueue.deleteAllMessages();
         parsingDLQ.deleteAllMessages();
     }
 
@@ -113,7 +113,7 @@ public class RepoE2E {
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
         mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("message_with_attachment", conversationId));
-        assertThat(attachmentQueue.getMessageContaining(conversationId));
+        assertThat(largeEhrFragmentsQueue.getMessageContaining(conversationId));
     }
 
     @Test
