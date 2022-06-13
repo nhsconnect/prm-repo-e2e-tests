@@ -18,6 +18,7 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProvide
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.reregistration.ReRegistrationMessageObservabilityQueue;
 import uk.nhs.prm.deduction.e2e.suspensions.*;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
@@ -45,6 +46,7 @@ import static java.lang.System.getenv;
         QueueHelper.class,
         MofUpdatedMessageQueue.class,
         DeceasedPatientQueue.class,
+        ReRegistrationMessageObservabilityQueue.class,
         MofNotUpdatedMessageQueue.class,
         BasicSqsClient.class,
         AssumeRoleCredentialsProviderFactory.class,
@@ -70,6 +72,8 @@ public class ContinuityE2E {
     private NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue;
     @Autowired
     private DeceasedPatientQueue deceasedPatientQueue;
+    @Autowired
+    private ReRegistrationMessageObservabilityQueue reRegistrationMessageObservabilityQueue;
     @Autowired
     private MeshMailbox meshMailbox;
     @Autowired
@@ -176,6 +180,25 @@ public class ContinuityE2E {
 
         assertThat(deceasedPatientQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
+
+    @Test
+    @Order(7)
+    public void shouldMoveReRegistrationMessageFromNemsToReRegistrationQueue() {
+        String nemsMessageId = randomNemsMessageId();
+        String reRegisteredPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
+        var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-re-registration.xml", reRegisteredPatientNhsNumber, nemsMessageId, now);
+        meshMailbox.postMessage(nemsSuspension);
+        String expectedMessageOnQueue = "{\"nhsNumber\":\"" + reRegisteredPatientNhsNumber + "\"," +
+                "\"newlyRegisteredOdsCode\":\"B86056\"," +
+                "\"nemsMessageId\":\"" + nemsMessageId + "\"," +
+                "\"lastUpdated\":\"" + now + "\"}";
+
+        assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
+        assertThat(reRegistrationMessageObservabilityQueue.hasMessage(expectedMessageOnQueue));
+    }
+
     public void log(String message) {
         System.out.println(message);
     }
