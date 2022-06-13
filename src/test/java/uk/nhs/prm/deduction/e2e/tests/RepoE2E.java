@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +36,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         TrackerDb.class,
         SmallEhrQueue.class,
         LargeEhrQueue.class,
-        LargeEhrFragmentsQueue.class,
+        AttachmentQueue.class,
         EhrParsingDLQ.class,
         DbClient.class,
-        EhrCompleteQueue.class,
-        TransferCompleteQueue.class
+        EhrCompleteQueue.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepoE2E {
@@ -57,47 +57,40 @@ public class RepoE2E {
     @Autowired
     LargeEhrQueue largeEhrQueue;
     @Autowired
-    LargeEhrFragmentsQueue largeEhrFragmentsQueue;
+    AttachmentQueue attachmentQueue;
     @Autowired
     EhrParsingDLQ parsingDLQ;
     @Autowired
     EhrCompleteQueue ehrCompleteQueue;
-    @Autowired
-    TransferCompleteQueue transferCompleteQueue;
     @BeforeAll
     void init() {
         smallEhrQueue.deleteAllMessages();
         largeEhrQueue.deleteAllMessages();
-        largeEhrFragmentsQueue.deleteAllMessages();
+        attachmentQueue.deleteAllMessages();
         parsingDLQ.deleteAllMessages();
     }
 
     @Test
+    @Disabled
     void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueueAndAnEhrRequestIsMadeAndTheDbIsUpdatedWithExpectedStatus() {  //this test would expand and change as progress
         String nhsNumber = "9693795989";
         String nemsMessageId = UUID.randomUUID().toString();
         String conversationId = UUID.randomUUID().toString();
-        postMessageToRepoIncomingQueue(nemsMessageId, conversationId, nhsNumber);
+        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
+        repoIncomingQueue.postAMessage(message);
         assertTrue(trackerDb.conversationIdExists(conversationId));
         assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_REQUEST_SENT"));
     }
 
-    private void postMessageToRepoIncomingQueue(String nemsMessageId, String conversationId, String nhsNumber) {
-        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\", \"nemsEventLastUpdated\":\"2017-11-01T15:00:33+00:00\",\"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
-        repoIncomingQueue.postAMessage(message);
-        System.out.println("Sent message to repo incoming queue");
-    }
 
     @Test
-    void shouldReadMessageFromActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteAndTransferCompleteQueues() throws JMSException {  //this test would expand and change as progress
+    @Disabled
+    void shouldReadMessageFromActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
-        postMessageToRepoIncomingQueue(UUID.randomUUID().toString(), conversationId, "1234567890");
         System.out.println("conversation Id " + conversationId);
         mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
-
         assertThat(smallEhrQueue.getMessageContaining(conversationId));
         assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
-        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId));
     }
 
     @Test
@@ -109,14 +102,16 @@ public class RepoE2E {
     }
 
     @Test
+    @Disabled
     void shouldPutMessageWithAttachmentsFromActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
         mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("message_with_attachment", conversationId));
-        assertThat(largeEhrFragmentsQueue.getMessageContaining(conversationId));
+        assertThat(attachmentQueue.getMessageContaining(conversationId));
     }
 
     @Test
+    @Disabled
     void shouldPutAUnprocessableMessageFromActiveMqToDLQ() throws JMSException {  //this test would expand and change as progress
         String dlqMessage = "A DLQ MESSAGE";
         System.out.println("dlq message " + dlqMessage);
@@ -126,9 +121,13 @@ public class RepoE2E {
 
     private String GetMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
         String messageId = UUID.randomUUID().toString();
+        String attachment1MessageId = UUID.randomUUID().toString();
+        String attachment2MessageId = UUID.randomUUID().toString();
         String message = Resources.readTestResourceFileFromEhrDirectory(fileName);
         message = message.replaceAll("__conversationId__", conversationId);
         message = message.replaceAll("__messageId__", messageId);
+        message = message.replaceAll("__Attachment1_messageId__", attachment1MessageId);
+        message = message.replace("__Attachment2_messageId__", attachment2MessageId);
         return message;
     }
 }
