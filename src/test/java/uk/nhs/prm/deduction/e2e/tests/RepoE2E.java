@@ -1,7 +1,6 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,8 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import javax.jms.JMSException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -75,7 +76,8 @@ public class RepoE2E {
         String nhsNumber = "9693795989";
         String nemsMessageId = UUID.randomUUID().toString();
         String conversationId = UUID.randomUUID().toString();
-        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
+
+        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\",\"nemsEventLastUpdated\":\"" + ZonedDateTime.now(ZoneOffset.ofHours(0)) + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
         repoIncomingQueue.postAMessage(message);
         assertTrue(trackerDb.conversationIdExists(conversationId));
         assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_REQUEST_SENT"));
