@@ -71,7 +71,6 @@ public class RepoE2E {
     }
 
     @Test
-    @Disabled
     void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueueAndAnEhrRequestIsMadeAndTheDbIsUpdatedWithExpectedStatus() {  //this test would expand and change as progress
         String nhsNumber = "9693795989";
         String nemsMessageId = UUID.randomUUID().toString();
@@ -84,7 +83,6 @@ public class RepoE2E {
 
 
     @Test
-    @Disabled
     void shouldReadMessageFromActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
@@ -102,7 +100,6 @@ public class RepoE2E {
     }
 
     @Test
-    @Disabled
     void shouldPutMessageWithAttachmentsFromActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
@@ -111,7 +108,6 @@ public class RepoE2E {
     }
 
     @Test
-    @Disabled
     void shouldPutAUnprocessableMessageFromActiveMqToDLQ() throws JMSException {  //this test would expand and change as progress
         String dlqMessage = "A DLQ MESSAGE";
         System.out.println("dlq message " + dlqMessage);
