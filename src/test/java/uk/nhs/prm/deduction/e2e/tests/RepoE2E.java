@@ -117,6 +117,19 @@ public class RepoE2E {
         assertThat(parsingDLQ.getMessageContaining(dlqMessage));
     }
 
+    @Test
+    void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus() {  //this test would expand and change as progress
+        String nhsNumber = "9693643038";
+        String nemsMessageId = UUID.randomUUID().toString();
+        String conversationId = UUID.randomUUID().toString();
+        System.out.println("conversation Id " + conversationId);
+
+        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\",\"nemsEventLastUpdated\":\"" + ZonedDateTime.now(ZoneOffset.ofHours(0)) + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
+        repoIncomingQueue.postAMessage(message);
+        assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
+        assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+    }
+
     private String GetMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
         String messageId = UUID.randomUUID().toString();
         String attachment1MessageId = UUID.randomUUID().toString();
