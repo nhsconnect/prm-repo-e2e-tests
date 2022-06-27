@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 @Component
@@ -34,4 +35,10 @@ public class TrackerDb {
     }
 
 
+    public String waitForStatusMatching(String conversationId, String partialStatus) {
+        return await().atMost(120, TimeUnit.SECONDS)
+                .with()
+                .pollInterval(2, TimeUnit.SECONDS)
+                .until(() -> dbClient.queryDbWithConversationId(conversationId).item().get("state").s(), containsString(partialStatus));
+    }
 }

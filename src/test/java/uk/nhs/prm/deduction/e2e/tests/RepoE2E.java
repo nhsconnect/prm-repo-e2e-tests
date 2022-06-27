@@ -65,7 +65,7 @@ public class RepoE2E {
     @Autowired
     EhrCompleteQueue ehrCompleteQueue;
     @Autowired
-    NegativeAcknowledgementQueue negativeAcknowledgementQueue;
+    NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
 
     @BeforeAll
     void init() {
@@ -73,7 +73,7 @@ public class RepoE2E {
         largeEhrQueue.deleteAllMessages();
         attachmentQueue.deleteAllMessages();
         parsingDLQ.deleteAllMessages();
-        negativeAcknowledgementQueue.deleteAllMessages();
+        negativeAcknowledgementObservabilityQueue.deleteAllMessages();
     }
 
     @Test
@@ -137,23 +137,34 @@ public class RepoE2E {
 
     @Test
     void shouldPutANegativeAcknowledgmentOnTransferCompleteQueueWhenReceivedNegativeAcknowledgementInInboundActiveMq() throws JMSException {
+        final String REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
+
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
         String nemsMessageId = UUID.randomUUID().toString();
+        // todo - describe state of patient - known or setup
         String nhsNumber = "9693642937";
 
+        // todo - builder
+        // todo - described things, not magic codes
         String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\",\"nemsEventLastUpdated\":\""
                 + ZonedDateTime.now(ZoneOffset.ofHours(0)) + "\", "
                 + "\"sourceGp\":\"M85019\"," +
                 "\"destinationGp\":\"B85002\"," +
                 "\"conversationId\":\"" + conversationId + "\"}";
+
         repoIncomingQueue.postAMessage(message);
 
-//        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("negative_acknowledgement", conversationId));
+        // todo - bring in case sensitivity
+        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(conversationId.toUpperCase()));
+        assertThat(ehrCompleteQueue.getMessageContaining(conversationId.toUpperCase()));
 
-        assertThat(negativeAcknowledgementQueue.getMessageContaining(conversationId));
-        assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
-        assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_FAILED:15"));
+        // todo - magic number
+        // todo - resolve when status becomes resolved, then check code number/state - otherwise hangs around 4 evvaaa
+//        assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_FAILED:15"));
+
+        var status = trackerDb.waitForStatusMatching(conversationId, "ACTION:EHR_TRANSFER_FAILED");
+        assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
     }
 
     private String GetMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
