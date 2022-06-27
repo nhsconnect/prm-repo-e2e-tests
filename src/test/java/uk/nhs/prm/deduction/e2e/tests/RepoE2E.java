@@ -159,8 +159,7 @@ public class RepoE2E {
 
         repoIncomingQueue.postAMessage(message.toJsonString());
 
-        // todo - bring in case sensitivity
-        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(conversationId.toUpperCase()));
+        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(conversationId));
         assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId));
 
         var status = trackerDb.waitForStatusMatching(conversationId, "ACTION:EHR_TRANSFER_FAILED");

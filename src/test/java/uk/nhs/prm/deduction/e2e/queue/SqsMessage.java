@@ -28,7 +28,7 @@ public class SqsMessage {
     }
 
     public boolean contains(String substring) {
-        return body.contains(substring);
+        return body.toLowerCase().contains(substring.toLowerCase());
     }
 
     private LocalDateTime dateFromMillisecondsAsString(String millisecondsAsString) {
