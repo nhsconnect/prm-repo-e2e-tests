@@ -40,7 +40,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         AttachmentQueue.class,
         EhrParsingDLQ.class,
         DbClient.class,
-        EhrCompleteQueue.class
+        EhrCompleteQueue.class,
+        NegativeAcknowledgementQueue.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepoE2E {
@@ -63,12 +64,16 @@ public class RepoE2E {
     EhrParsingDLQ parsingDLQ;
     @Autowired
     EhrCompleteQueue ehrCompleteQueue;
+    @Autowired
+    NegativeAcknowledgementQueue negativeAcknowledgementQueue;
+
     @BeforeAll
     void init() {
         smallEhrQueue.deleteAllMessages();
         largeEhrQueue.deleteAllMessages();
         attachmentQueue.deleteAllMessages();
         parsingDLQ.deleteAllMessages();
+        negativeAcknowledgementQueue.deleteAllMessages();
     }
 
     @Test
@@ -85,7 +90,7 @@ public class RepoE2E {
 
 
     @Test
-    void shouldReadMessageFromActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
+    void shouldReadMessageFromInboundActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
         mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
@@ -94,7 +99,7 @@ public class RepoE2E {
     }
 
     @Test
-    void shouldPutLargeEhrFromActiveMQAndObserveItOnLargeEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
+    void shouldPutLargeEhrFromInboundActiveMQAndObserveItOnLargeEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
         mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_large_ehr", conversationId));
@@ -102,7 +107,7 @@ public class RepoE2E {
     }
 
     @Test
-    void shouldPutMessageWithAttachmentsFromActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
+    void shouldPutMessageWithAttachmentsFromInboundActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
         mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("message_with_attachment", conversationId));
@@ -110,7 +115,7 @@ public class RepoE2E {
     }
 
     @Test
-    void shouldPutAUnprocessableMessageFromActiveMqToDLQ() throws JMSException {  //this test would expand and change as progress
+    void shouldPutAUnprocessableMessageFromInboundActiveMqToDLQ() throws JMSException {  //this test would expand and change as progress
         String dlqMessage = "A DLQ MESSAGE";
         System.out.println("dlq message " + dlqMessage);
         mqClient.postAMessageToAQueue("inbound", dlqMessage);
@@ -128,6 +133,27 @@ public class RepoE2E {
         repoIncomingQueue.postAMessage(message);
         assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
         assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+    }
+
+    @Test
+    void shouldPutANegativeAcknowledgmentOnTransferCompleteQueueWhenReceivedNegativeAcknowledgementInInboundActiveMq() throws JMSException {
+        String conversationId = UUID.randomUUID().toString();
+        System.out.println("conversation Id " + conversationId);
+        String nemsMessageId = UUID.randomUUID().toString();
+        String nhsNumber = "9693642937";
+
+        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\",\"nemsEventLastUpdated\":\""
+                + ZonedDateTime.now(ZoneOffset.ofHours(0)) + "\", "
+                + "\"sourceGp\":\"M85019\"," +
+                "\"destinationGp\":\"B85002\"," +
+                "\"conversationId\":\"" + conversationId + "\"}";
+        repoIncomingQueue.postAMessage(message);
+
+//        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("negative_acknowledgement", conversationId));
+
+        assertThat(negativeAcknowledgementQueue.getMessageContaining(conversationId));
+        assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
+        assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_FAILED:15"));
     }
 
     private String GetMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
