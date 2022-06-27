@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
+import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.ActiveMqClient;
@@ -41,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         EhrParsingDLQ.class,
         DbClient.class,
         EhrCompleteQueue.class,
+        TransferCompleteQueue.class,
         NegativeAcknowledgementQueue.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -64,6 +66,8 @@ public class RepoE2E {
     EhrParsingDLQ parsingDLQ;
     @Autowired
     EhrCompleteQueue ehrCompleteQueue;
+    @Autowired
+    TransferCompleteQueue transferCompleteQueue;
     @Autowired
     NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
 
@@ -137,31 +141,27 @@ public class RepoE2E {
 
     @Test
     void shouldPutANegativeAcknowledgmentOnTransferCompleteQueueWhenReceivedNegativeAcknowledgementInInboundActiveMq() throws JMSException {
-        final String REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
-
-        String conversationId = UUID.randomUUID().toString();
-        System.out.println("conversation Id " + conversationId);
-        String nemsMessageId = UUID.randomUUID().toString();
+        final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
         // todo - describe state of patient - known or setup
-        String nhsNumber = "9693642937";
+        final var NHS_NUMBER = "9693642937";
 
-        // todo - builder
-        // todo - described things, not magic codes
-        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\",\"nemsEventLastUpdated\":\""
-                + ZonedDateTime.now(ZoneOffset.ofHours(0)) + "\", "
-                + "\"sourceGp\":\"M85019\"," +
-                "\"destinationGp\":\"B85002\"," +
-                "\"conversationId\":\"" + conversationId + "\"}";
+        var message = new RepoIncomingMessageBuilder()
+                .withNhsNumber(NHS_NUMBER)
+                .withRandomlyGeneratedNemsMessageId()
+                .withNemsEventLastUpdatedToNow()
+                .withSourceGpSetToTpp()
+                .withDestinationGpSetToRepoDev()
+                .withRandomlyGeneratedConversationId();
 
-        repoIncomingQueue.postAMessage(message);
+        var conversationId =  message.getConversationIdAsString();
+
+        System.out.println("conversation Id " + conversationId);
+
+        repoIncomingQueue.postAMessage(message.toJsonString());
 
         // todo - bring in case sensitivity
         assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(conversationId.toUpperCase()));
-        assertThat(ehrCompleteQueue.getMessageContaining(conversationId.toUpperCase()));
-
-        // todo - magic number
-        // todo - resolve when status becomes resolved, then check code number/state - otherwise hangs around 4 evvaaa
-//        assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_FAILED:15"));
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId));
 
         var status = trackerDb.waitForStatusMatching(conversationId, "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
