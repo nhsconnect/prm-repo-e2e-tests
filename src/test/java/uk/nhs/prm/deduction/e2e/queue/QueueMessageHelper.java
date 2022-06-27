@@ -32,10 +32,12 @@ public class QueueMessageHelper {
 
     public SqsMessage getMessageContaining(String substring) {
         log(String.format("Checking if message is present on : %s", this.queueUri));
-        return await().atMost(120, TimeUnit.SECONDS)
+        SqsMessage found = await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS)
                 .until(() -> findMessageContaining(substring), notNullValue());
+        log(String.format("Found message on : %s", this.queueUri));
+        return found;
     }
     public SqsMessage getMessageContainingAttribute(String attribute,String expectedValue) {
         log(String.format("Checking if message is present on : %s", this.queueUri));
