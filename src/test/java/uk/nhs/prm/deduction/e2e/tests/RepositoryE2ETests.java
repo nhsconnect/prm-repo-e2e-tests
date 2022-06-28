@@ -3,12 +3,13 @@ package uk.nhs.prm.deduction.e2e.tests;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
-import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessage;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
@@ -43,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         DbClient.class,
         EhrCompleteQueue.class,
         TransferCompleteQueue.class,
-        TestConfiguration.class,
         NegativeAcknowledgementQueue.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -66,13 +66,13 @@ public class RepositoryE2ETests {
     @Autowired
     EhrParsingDLQ parsingDLQ;
     @Autowired
-    TestConfiguration config;
-    @Autowired
     EhrCompleteQueue ehrCompleteQueue;
     @Autowired
     TransferCompleteQueue transferCompleteQueue;
     @Autowired
     NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
+    @Autowired
+    TestConfiguration config;
 
     @BeforeAll
     void init() {
@@ -88,7 +88,7 @@ public class RepositoryE2ETests {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.WITH_NO_9693795989_WHATEVER_THAT_MEANS)
                 .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
+                .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
                 .build();
 
         repoIncomingQueue.send(triggerMessage);
@@ -133,20 +133,26 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus() {  //this test would expand and change as progress
-        var triggerMessage = getTriggerMessage();
+        var triggerMessage = new RepoIncomingMessageBuilder()
+                .withPatient(Patient.WITH_NO_9693643038_WHATEVER_THAT_MEANS)
+                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
+                .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
+                .build();
+
         repoIncomingQueue.send(triggerMessage);
         assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
-    @Test
-    void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromTpp() {
+    @ParameterizedTest
+    @ValueSource(strings = { "TPP_PTL_INT", "EMIS_PTL_INT" })
+    void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromGppSystems(String sourceSystem) {
         final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
 
         var message = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
-                .withEhrSourceGp(Gp2GpSystem.TPP_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
+                .withEhrSourceGp(Gp2GpSystem.valueOf(sourceSystem))
+                .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
                 .build();
 
         repoIncomingQueue.send(message);
@@ -156,54 +162,6 @@ public class RepositoryE2ETests {
 
         var status = trackerDb.waitForStatusMatching(message.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
-    }
-
-    @Test
-    void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromEmis() {
-        final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
-
-        var triggerMessage = new RepoIncomingMessageBuilder()
-                .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
-                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
-                .build();
-
-        repoIncomingQueue.send(triggerMessage);
-
-        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(triggerMessage.conversationId()));
-        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId()));
-
-        var status = trackerDb.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
-        assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
-    }
-
-
-    private RepoIncomingMessage getTriggerMessage() {
-        RepoIncomingMessage triggerMessage = null;
-
-        if (config.getEnvironmentName().equals("dev")) {
-            triggerMessage = getTriggerMessageForDevEnvironment();
-        }
-        if (config.getEnvironmentName().equals("test")) {
-            triggerMessage = getTriggerMessageForTestEnvironment();
-        }
-        return triggerMessage;
-    }
-
-    private RepoIncomingMessage getTriggerMessageForDevEnvironment() {
-        return new RepoIncomingMessageBuilder()
-                .withPatient(Patient.PATIENT_WITH_LARGE_EHR_AT_EMIS_WITH_MOF_SET_TO_REPO_DEV_ODS)
-                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
-                .build();
-    }
-
-    private RepoIncomingMessage getTriggerMessageForTestEnvironment() {
-        return new RepoIncomingMessageBuilder()
-                .withPatient(Patient.PATIENT_WITH_LARGE_EHR_AT_EMIS_WITH_MOF_SET_TO_REPO_DEV_ODS)
-                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.REPO_TEST)
-                .build();
     }
 
     private String getMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
