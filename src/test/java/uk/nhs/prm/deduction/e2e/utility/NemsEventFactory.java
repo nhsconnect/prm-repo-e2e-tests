@@ -14,7 +14,7 @@ import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNhsNumber;
 public class NemsEventFactory {
 
     public static NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId,String timestamp) {
-        return createNemsEventFromTemplate(nemsEventFilename, nhsNumber, nemsMessageId, "B85612",timestamp);
+        return createNemsEventFromTemplate(nemsEventFilename, nhsNumber, nemsMessageId, "B85612", timestamp);
     }
 
     public static NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId, String previousGP, String timestamp) {

@@ -21,8 +21,6 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import javax.jms.JMSException;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -73,6 +71,8 @@ public class RepositoryE2ETests {
     TransferCompleteQueue transferCompleteQueue;
     @Autowired
     NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
+    @Autowired
+    TestConfiguration config;
 
     @BeforeAll
     void init() {
@@ -88,7 +88,7 @@ public class RepositoryE2ETests {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.WITH_NO_9693795989_WHATEVER_THAT_MEANS)
                 .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
+                .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
                 .build();
 
         repoIncomingQueue.send(triggerMessage);
@@ -136,7 +136,7 @@ public class RepositoryE2ETests {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.WITH_NO_9693643038_WHATEVER_THAT_MEANS)
                 .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
+                .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
                 .build();
 
         repoIncomingQueue.send(triggerMessage);
@@ -152,7 +152,7 @@ public class RepositoryE2ETests {
         var message = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
                 .withEhrSourceGp(Gp2GpSystem.valueOf(sourceSystem))
-                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
+                .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
                 .build();
 
         repoIncomingQueue.send(message);
