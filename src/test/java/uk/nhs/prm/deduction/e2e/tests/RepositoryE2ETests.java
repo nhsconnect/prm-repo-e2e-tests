@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
+import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
@@ -82,14 +83,16 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueueAndAnEhrRequestIsMadeAndTheDbIsUpdatedWithExpectedStatus() {  //this test would expand and change as progress
-        String nhsNumber = "9693795989";
-        String nemsMessageId = UUID.randomUUID().toString();
-        String conversationId = UUID.randomUUID().toString();
+        var triggerMessage = new RepoIncomingMessageBuilder()
+                .withPatient(Patient.WITH_NO_9693795989_WHATEVER_THAT_MEANS)
+                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
+                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
+                .build();
 
-        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\",\"nemsEventLastUpdated\":\"" + ZonedDateTime.now(ZoneOffset.ofHours(0)) + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
-        repoIncomingQueue.postAMessage(message);
-        assertTrue(trackerDb.conversationIdExists(conversationId));
-        assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_REQUEST_SENT"));
+        repoIncomingQueue.send(triggerMessage);
+
+        assertTrue(trackerDb.conversationIdExists(triggerMessage.conversationId()));
+        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_REQUEST_SENT"));
     }
 
 
@@ -97,7 +100,7 @@ public class RepositoryE2ETests {
     void shouldReadMessageFromInboundActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
-        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
+        mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
         assertThat(smallEhrQueue.getMessageContaining(conversationId));
         assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
     }
@@ -106,7 +109,7 @@ public class RepositoryE2ETests {
     void shouldPutLargeEhrFromInboundActiveMQAndObserveItOnLargeEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
-        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("unsanitized_large_ehr", conversationId));
+        mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("unsanitized_large_ehr", conversationId));
         assertThat(largeEhrQueue.getMessageContainingAttribute("conversationId", conversationId));
     }
 
@@ -114,7 +117,7 @@ public class RepositoryE2ETests {
     void shouldPutMessageWithAttachmentsFromInboundActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
         String conversationId = UUID.randomUUID().toString();
         System.out.println("conversation Id " + conversationId);
-        mqClient.postAMessageToAQueue("inbound", GetMessageWithUniqueConversationIdAndMessageId("message_with_attachment", conversationId));
+        mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("message_with_attachment", conversationId));
         assertThat(attachmentQueue.getMessageContaining(conversationId));
     }
 
@@ -128,66 +131,56 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus() {  //this test would expand and change as progress
-        String nhsNumber = "9693643038";
-        String nemsMessageId = UUID.randomUUID().toString();
-        String conversationId = UUID.randomUUID().toString();
-        System.out.println("conversation Id " + conversationId);
+        var triggerMessage = new RepoIncomingMessageBuilder()
+                .withPatient(Patient.WITH_NO_9693643038_WHATEVER_THAT_MEANS)
+                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
+                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
+                .build();
 
-        String message = "{\"nhsNumber\":\"" + nhsNumber + "\",\"nemsMessageId\":\"" + nemsMessageId + "\",\"nemsEventLastUpdated\":\"" + ZonedDateTime.now(ZoneOffset.ofHours(0)) + "\", \"sourceGp\":\"N82668\",\"destinationGp\":\"B85002\",\"conversationId\":\"" + conversationId + "\"}";
-        repoIncomingQueue.postAMessage(message);
-        assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
-        assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+        repoIncomingQueue.send(triggerMessage);
+        assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
+        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
     @Test
-    void shouldUpdateDbStatusAndMessageToTransferCompleteQueueWhenReceivedNackFromTpp() {
+    void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromTpp() {
         final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
 
         var message = new RepoIncomingMessageBuilder()
-                .withNhsNumber(Patient.SUSPENDED_WITH_EHR_AT_TPP.nhsNumber())
-                .withRandomlyGeneratedNemsMessageId()
-                .withNemsEventLastUpdatedToNow()
-                .withSourceGpSetToTpp()
-                .withDestinationGpSetToRepoDev()
-                .withRandomlyGeneratedConversationId()
+                .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
+                .withEhrSourceGp(Gp2GpSystem.TPP_PTL_INT)
+                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
                 .build();
 
-        var conversationId =  message.getConversationIdAsString();
+        repoIncomingQueue.send(message);
 
-        repoIncomingQueue.postAMessage(message.toJsonString());
+        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(message.conversationId()));
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", message.conversationId()));
 
-        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(conversationId));
-        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId));
-
-        var status = trackerDb.waitForStatusMatching(conversationId, "ACTION:EHR_TRANSFER_FAILED");
+        var status = trackerDb.waitForStatusMatching(message.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
     }
 
     @Test
-    void shouldUpdateDbStatusAndMessageToTransferCompleteQueueWhenReceivedNackFromEmis() {
+    void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromEmis() {
         final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
 
-        var message = new RepoIncomingMessageBuilder()
-                .withNhsNumber(Patient.SUSPENDED_WITH_EHR_AT_TPP.nhsNumber())
-                .withRandomlyGeneratedNemsMessageId()
-                .withNemsEventLastUpdatedToNow()
-                .withSourceGpSetToEmis()
-                .withDestinationGpSetToRepoDev()
-                .withRandomlyGeneratedConversationId()
+        var triggerMessage = new RepoIncomingMessageBuilder()
+                .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
+                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
+                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
                 .build();
 
-        var conversationId =  message.getConversationIdAsString();
+        repoIncomingQueue.send(triggerMessage);
 
-        repoIncomingQueue.postAMessage(message.toJsonString());
+        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(triggerMessage.conversationId()));
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId()));
 
-        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(conversationId));
-        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId));
-
-        var status = trackerDb.waitForStatusMatching(conversationId, "ACTION:EHR_TRANSFER_FAILED");
+        var status = trackerDb.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
     }
 
-    private String GetMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
+    private String getMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
         String messageId = UUID.randomUUID().toString();
         String attachment1MessageId = UUID.randomUUID().toString();
         String attachment2MessageId = UUID.randomUUID().toString();

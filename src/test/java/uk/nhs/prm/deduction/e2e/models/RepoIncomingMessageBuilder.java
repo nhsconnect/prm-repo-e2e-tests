@@ -1,5 +1,7 @@
 package uk.nhs.prm.deduction.e2e.models;
 
+import uk.nhs.prm.deduction.e2e.tests.Patient;
+
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -12,9 +14,19 @@ public class RepoIncomingMessageBuilder {
     private String destinationGp;
     private UUID conversationId;
 
+    public RepoIncomingMessageBuilder() {
+        withRandomlyGeneratedNemsMessageId();
+        withRandomlyGeneratedConversationId();
+        withNemsEventLastUpdatedToNow();
+    }
+
     public RepoIncomingMessageBuilder withNhsNumber(String nhsNumber) {
         this.nhsNumber =  nhsNumber;
         return this;
+    }
+
+    public RepoIncomingMessageBuilder withPatient(Patient patient) {
+        return withNhsNumber(patient.nhsNumber());
     }
 
     public RepoIncomingMessageBuilder withRandomlyGeneratedNemsMessageId() {
@@ -27,18 +39,13 @@ public class RepoIncomingMessageBuilder {
         return this;
     }
 
-    public RepoIncomingMessageBuilder withSourceGpSetToTpp() {
-        sourceGp = Gp2GpSystem.TTP_DEV.odsCode();
+    public RepoIncomingMessageBuilder withEhrSourceGp(Gp2GpSystem ehrSource) {
+        sourceGp = ehrSource.odsCode();
         return this;
     }
 
-    public RepoIncomingMessageBuilder withSourceGpSetToEmis() {
-        sourceGp = Gp2GpSystem.EMIS_DEV.odsCode();
-        return this;
-    }
-
-    public RepoIncomingMessageBuilder withDestinationGpSetToRepoDev() {
-        destinationGp = Gp2GpSystem.REPO_DEV.odsCode();
+    public RepoIncomingMessageBuilder withEhrDestinationGp(Gp2GpSystem ehrDestination) {
+        destinationGp = ehrDestination.odsCode();
         return this;
     }
 
