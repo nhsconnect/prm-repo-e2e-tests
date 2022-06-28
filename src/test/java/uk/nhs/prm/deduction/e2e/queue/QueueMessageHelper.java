@@ -122,7 +122,7 @@ public class QueueMessageHelper {
         return false;
     }
 
-    public void postAMessage(String message) {
+    protected void postAMessage(String message) {
         sqsQueue.postAMessage(queueUri,message);
     }
 }

@@ -32,4 +32,8 @@ public class RepoIncomingMessage {
                 .create()
                 .toJson(this);
     }
+
+    public String conversationId() {
+        return getConversationIdAsString();
+    }
 }
