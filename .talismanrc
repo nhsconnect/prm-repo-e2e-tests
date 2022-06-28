@@ -10,5 +10,5 @@ fileignoreconfig:
 - filename: src/test/java/uk/nhs/prm/deduction/e2e/performance/awsauth/AutoRefreshingRoleAssumingSqsClient.java
   checksum: 6852c3e1828bcf51626719b264e55f422c28d4016befb0ba8a9d26271925a6ba
 - filename: src/test/java/uk/nhs/prm/deduction/e2e/tests/RepositoryE2ETests.java
-  checksum: 97781b841da474448e4cdfb6b37d575e3434e8eb33e36cc05825437d9ce9fbc1
+  checksum: b4d8d46467759c5d327f93ffa9fc097a478261f8097831b585c33a033ffaf7b6
 version: ""
