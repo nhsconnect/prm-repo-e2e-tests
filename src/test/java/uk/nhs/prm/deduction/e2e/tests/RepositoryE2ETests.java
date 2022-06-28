@@ -3,6 +3,8 @@ package uk.nhs.prm.deduction.e2e.tests;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
@@ -142,13 +144,14 @@ public class RepositoryE2ETests {
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
-    @Test
-    void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromTpp() {
+    @ParameterizedTest
+    @ValueSource(strings = { "TPP_PTL_INT", "EMIS_PTL_INT" })
+    void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromGppSystems(String sourceSystem) {
         final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
 
         var message = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
-                .withEhrSourceGp(Gp2GpSystem.TPP_PTL_INT)
+                .withEhrSourceGp(Gp2GpSystem.valueOf(sourceSystem))
                 .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
                 .build();
 
@@ -158,25 +161,6 @@ public class RepositoryE2ETests {
         assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", message.conversationId()));
 
         var status = trackerDb.waitForStatusMatching(message.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
-        assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
-    }
-
-    @Test
-    void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromEmis() {
-        final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
-
-        var triggerMessage = new RepoIncomingMessageBuilder()
-                .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
-                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.REPO_DEV)
-                .build();
-
-        repoIncomingQueue.send(triggerMessage);
-
-        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(triggerMessage.conversationId()));
-        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId()));
-
-        var status = trackerDb.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
     }
 
