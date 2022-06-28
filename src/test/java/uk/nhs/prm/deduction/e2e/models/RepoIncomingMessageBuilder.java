@@ -18,27 +18,33 @@ public class RepoIncomingMessageBuilder {
     }
 
     public RepoIncomingMessageBuilder withRandomlyGeneratedNemsMessageId() {
-        this.nemsMessageId =  UUID.randomUUID();
+        nemsMessageId =  UUID.randomUUID();
         return this;
     }
 
     public RepoIncomingMessageBuilder withNemsEventLastUpdatedToNow() {
-        this.nemsEventLastUpdated = ZonedDateTime.now(ZoneOffset.ofHours(0));
+        nemsEventLastUpdated = ZonedDateTime.now(ZoneOffset.ofHours(0));
         return this;
     }
 
     public RepoIncomingMessageBuilder withSourceGpSetToTpp() {
-        this.sourceGp = Gp2GpSystem.TTP_DEV.odsCode();
+        sourceGp = Gp2GpSystem.TTP_DEV.odsCode();
+        return this;
+    }
+
+    public RepoIncomingMessageBuilder withSourceGpSetToEmis() {
+        sourceGp = Gp2GpSystem.EMIS_DEV.odsCode();
         return this;
     }
 
     public RepoIncomingMessageBuilder withDestinationGpSetToRepoDev() {
-        this.destinationGp = Gp2GpSystem.REPO_DEV.odsCode();
+        destinationGp = Gp2GpSystem.REPO_DEV.odsCode();
         return this;
     }
 
     public RepoIncomingMessageBuilder withRandomlyGeneratedConversationId() {
-        this.conversationId = UUID.randomUUID();
+        conversationId = UUID.randomUUID();
+        System.out.println("generated conversation id " + conversationId);
         return this;
     }
 
