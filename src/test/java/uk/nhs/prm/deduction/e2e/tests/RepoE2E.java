@@ -140,7 +140,7 @@ public class RepoE2E {
     }
 
     @Test
-    void shouldPutANegativeAcknowledgmentOnTransferCompleteQueueWhenReceivedNegativeAcknowledgementInInboundActiveMq() throws JMSException {
+    void shouldPutANegativeAcknowledgmentOnTransferCompleteQueueWhenReceivedNegativeAcknowledgementFromTpp() throws JMSException {
         final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
         // todo - describe state of patient - known or setup
         final var NHS_NUMBER = "9693642937";
@@ -151,7 +151,8 @@ public class RepoE2E {
                 .withNemsEventLastUpdatedToNow()
                 .withSourceGpSetToTpp()
                 .withDestinationGpSetToRepoDev()
-                .withRandomlyGeneratedConversationId();
+                .withRandomlyGeneratedConversationId()
+                .build();
 
         var conversationId =  message.getConversationIdAsString();
 

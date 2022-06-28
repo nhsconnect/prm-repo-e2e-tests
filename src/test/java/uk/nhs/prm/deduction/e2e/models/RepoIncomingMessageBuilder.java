@@ -1,19 +1,13 @@
 package uk.nhs.prm.deduction.e2e.models;
 
-import com.google.gson.GsonBuilder;
-
-import java.lang.reflect.Modifier;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 public class RepoIncomingMessageBuilder {
-    private final String TTP_DEV = "M85019";
-    private final String REPO_DEV = "B85002";
-
     private String nhsNumber;
     private UUID nemsMessageId;
-    private String nemsEventLastUpdated;
+    private ZonedDateTime nemsEventLastUpdated;
     private String sourceGp;
     private String destinationGp;
     private UUID conversationId;
@@ -29,17 +23,17 @@ public class RepoIncomingMessageBuilder {
     }
 
     public RepoIncomingMessageBuilder withNemsEventLastUpdatedToNow() {
-        this.nemsEventLastUpdated = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+        this.nemsEventLastUpdated = ZonedDateTime.now(ZoneOffset.ofHours(0));
         return this;
     }
 
     public RepoIncomingMessageBuilder withSourceGpSetToTpp() {
-        this.sourceGp = TTP_DEV;
+        this.sourceGp = Gp2GpSystem.TTP_DEV.odsCode();
         return this;
     }
 
     public RepoIncomingMessageBuilder withDestinationGpSetToRepoDev() {
-        this.destinationGp = REPO_DEV;
+        this.destinationGp = Gp2GpSystem.REPO_DEV.odsCode();
         return this;
     }
 
@@ -48,15 +42,7 @@ public class RepoIncomingMessageBuilder {
         return this;
     }
 
-    public String getConversationIdAsString() {
-        return this.conversationId.toString();
-    }
-
-    public String toJsonString() {
-        return new GsonBuilder()
-                .disableHtmlEscaping()
-                .excludeFieldsWithModifiers(Modifier.FINAL)
-                .create()
-                .toJson(this);
+    public RepoIncomingMessage build() {
+        return new RepoIncomingMessage(nhsNumber, nemsMessageId, sourceGp, destinationGp, conversationId, nemsEventLastUpdated);
     }
 }
