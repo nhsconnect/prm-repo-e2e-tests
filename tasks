@@ -124,7 +124,6 @@ case "${command}" in
   test_repo_e2e)
       check_env
       assume_environment_role $NHS_ENVIRONMENT
-      check_suspension_service
       dojo "./tasks _test_repo_e2e"
       ;;
   _livetest_inject)
