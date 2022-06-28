@@ -140,13 +140,11 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldPutANegativeAcknowledgmentOnTransferCompleteQueueWhenReceivedNegativeAcknowledgementFromTpp() throws JMSException {
+    void shouldUpdateDbStatusAndMessageToTransferCompleteQueueWhenReceivedNackFromTpp() {
         final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
-        // todo - describe state of patient - known or setup
-        final var NHS_NUMBER = "9693642937";
 
         var message = new RepoIncomingMessageBuilder()
-                .withNhsNumber(NHS_NUMBER)
+                .withNhsNumber(Patient.SUSPENDED_WITH_EHR_AT_TPP.nhsNumber())
                 .withRandomlyGeneratedNemsMessageId()
                 .withNemsEventLastUpdatedToNow()
                 .withSourceGpSetToTpp()
@@ -156,7 +154,29 @@ public class RepositoryE2ETests {
 
         var conversationId =  message.getConversationIdAsString();
 
-        System.out.println("conversation Id " + conversationId);
+        repoIncomingQueue.postAMessage(message.toJsonString());
+
+        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(conversationId));
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId));
+
+        var status = trackerDb.waitForStatusMatching(conversationId, "ACTION:EHR_TRANSFER_FAILED");
+        assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
+    }
+
+    @Test
+    void shouldUpdateDbStatusAndMessageToTransferCompleteQueueWhenReceivedNackFromEmis() {
+        final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
+
+        var message = new RepoIncomingMessageBuilder()
+                .withNhsNumber(Patient.SUSPENDED_WITH_EHR_AT_TPP.nhsNumber())
+                .withRandomlyGeneratedNemsMessageId()
+                .withNemsEventLastUpdatedToNow()
+                .withSourceGpSetToEmis()
+                .withDestinationGpSetToRepoDev()
+                .withRandomlyGeneratedConversationId()
+                .build();
+
+        var conversationId =  message.getConversationIdAsString();
 
         repoIncomingQueue.postAMessage(message.toJsonString());
 
