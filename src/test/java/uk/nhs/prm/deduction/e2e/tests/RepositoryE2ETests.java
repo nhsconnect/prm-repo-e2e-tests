@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 @SpringBootTest(classes = {
-        RepoE2E.class,
+        RepositoryE2ETests.class,
         RepoIncomingQueue.class,
         TestConfiguration.class,
         SqsQueue.class, BasicSqsClient.class,
@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         NegativeAcknowledgementQueue.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class RepoE2E {
+public class RepositoryE2ETests {
 
     @Autowired
     RepoIncomingQueue repoIncomingQueue;
