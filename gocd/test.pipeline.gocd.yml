@@ -97,7 +97,7 @@ pipelines:
                       - -c
                       - ./tasks test_continuity_e2e
   repo-e2e-tests.dev:
-    group: continuity-service
+    group: repository
     label_template: '${git[:8]}'
     timer:
       spec: "0 0 9,13,17,21 * * ?"
@@ -145,7 +145,7 @@ pipelines:
                       - -c
                       - ./tasks test_repo_e2e
   repo-e2e-tests.test:
-    group: continuity-service
+    group: repository
     label_template: '${git[:8]}'
     timer:
       spec: "0 0 9,13,17,21 * * ?"
