@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.models;
 
+import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.tests.Patient;
 
 import java.time.ZoneOffset;
@@ -47,6 +48,10 @@ public class RepoIncomingMessageBuilder {
     public RepoIncomingMessageBuilder withEhrDestinationGp(Gp2GpSystem ehrDestination) {
         destinationGp = ehrDestination.odsCode();
         return this;
+    }
+
+    public RepoIncomingMessageBuilder withEhrDestinationAsRepo(TestConfiguration config) {
+        return withEhrDestinationGp(Gp2GpSystem.repoInEnv(config));
     }
 
     public RepoIncomingMessageBuilder withRandomlyGeneratedConversationId() {
