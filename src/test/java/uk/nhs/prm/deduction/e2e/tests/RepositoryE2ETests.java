@@ -151,18 +151,18 @@ public class RepositoryE2ETests {
     void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromGppSystems(Gp2GpSystem sourceSystem) {
         final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
 
-        var message = new RepoIncomingMessageBuilder()
+        var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
                 .withEhrSourceGp(sourceSystem)
                 .withEhrDestinationAsRepo(config)
                 .build();
 
-        repoIncomingQueue.send(message);
+        repoIncomingQueue.send(triggerMessage);
 
-        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(message.conversationId()));
-        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", message.conversationId()));
+        assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(triggerMessage.conversationId()));
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId()));
 
-        var status = trackerDb.waitForStatusMatching(message.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
+        var status = trackerDb.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
     }
 
