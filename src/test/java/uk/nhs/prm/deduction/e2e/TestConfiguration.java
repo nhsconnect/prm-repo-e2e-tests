@@ -247,7 +247,7 @@ public class TestConfiguration {
     }
 
     public String transferCompleteQueueUri() {
-        return getQueueUri("ehr-transfer-service-transfer-complete-observability");
+        return getQueueUri("end-of-transfer-service-transfer-complete-observability");
     }
 
     public String largeEhrQueueUri() {
