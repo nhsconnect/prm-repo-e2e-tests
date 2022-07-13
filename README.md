@@ -1,6 +1,13 @@
-# continuity-service-e2e-tests
+# e2e-tests
 
-These are end to end tests that run across all microservices that comprise the continuity service.
+End to end tests of the Patient Record Migration (PRM) Repository team, testing each of two service domains:
+1. the Continuity Service - and all its microservices
+2. the Repository - and all its microservices
+
+## Split of test domains
+
+There is a link from the Continuity Service to the Repository - the repo-incoming queue.  This is used as the
+injection point for Repository tests and no Continuity tests look beyond this point.
 
 ## Top level test types
 
