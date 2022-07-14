@@ -111,16 +111,19 @@ pipelines:
           - src/test/java/uk/nhs/prm/deduction/e2e/live_technical_test/**/*
           - gocd/performance.pipeline.gocd.yml
       pds-adaptor:
-        pipeline: prm-deductions-pds-adaptor.test
+        pipeline: prm-deductions-pds-adaptor.dev
         stage: deploy
       nems-event-processor:
-        pipeline: prm-deductions-nems-event-processor.test
+        pipeline: prm-deductions-nems-event-processor.dev
         stage: deploy
       mesh-forwarder:
-        pipeline: prm-deductions-mesh-forwarder.test
+        pipeline: prm-deductions-mesh-forwarder.dev
         stage: deploy
       suspension-service:
-        pipeline: suspension-service.test
+        pipeline: suspension-service.dev
+        stage: deploy
+      ehr-repository:
+        pipeline: prm-deductions-ehr-repository.dev
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: dev
@@ -169,6 +172,9 @@ pipelines:
         stage: deploy
       suspension-service:
         pipeline: suspension-service.test
+        stage: deploy
+      ehr-repository:
+        pipeline: prm-deductions-ehr-repository.test
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: test
