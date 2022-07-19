@@ -26,6 +26,11 @@ public class RepoIncomingMessage {
         return conversationId.toString();
     }
 
+    public String getNemsMessageIdAsString() {
+        return nemsMessageId.toString();
+    }
+
+
     public String toJsonString() {
         return new GsonBuilder()
                 .disableHtmlEscaping()
