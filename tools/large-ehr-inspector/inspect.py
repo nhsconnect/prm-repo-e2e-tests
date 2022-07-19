@@ -30,7 +30,7 @@ def make_dir(dirname):
 
 def print_xpath(context, root, xpath):
   print(context, 'xpath', xpath)
-  print(context, 'results', [ match.text for match in root.findall(xpath)])
+  print(context, 'results', [ match for match in root.findall(xpath)])
 
 
 def inspect_ebxml(ebxml):
