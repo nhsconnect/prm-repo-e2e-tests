@@ -179,7 +179,10 @@ public class RepositoryE2ETests {
 
     private void setOdsCodeToRepo(String nhsNumber) {
         var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
-        pdsAdaptorClient.updateManagingOrganisation(nhsNumber, Gp2GpSystem.repoInEnv(config).odsCode(), pdsResponse.getRecordETag());
+        var repoOdsCode = Gp2GpSystem.repoInEnv(config).odsCode();
+        if (!repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
+            pdsAdaptorClient.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.getRecordETag());
+        }
     }
 
     private static Stream<Arguments> foundationSupplierSystems() {
