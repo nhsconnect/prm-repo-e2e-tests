@@ -77,6 +77,10 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/live-test", getEnvironmentName()));
     }
 
+    public String getPdsAdaptorE2ETestApiKey() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/e2e-test", getEnvironmentName()));
+    }
+
     public String getGp2GpMessengerApiKey() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/gp2gp-messenger/live-test", getEnvironmentName()));
     }
@@ -234,6 +238,10 @@ public class TestConfiguration {
 
     private String getEnvSuffix() {
         return getEnvironmentName().equals("prod") ? "prod" : String.format("%s.non-prod", getEnvironmentName());
+    }
+
+    public String endOfTransferMofUpdatedQueue() {
+        return getQueueUri("end-of-transfer-service-mof-updated-queue");
     }
 
     public String smallEhrQueueUri() {

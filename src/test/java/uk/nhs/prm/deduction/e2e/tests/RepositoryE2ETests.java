@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
+import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
+import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.ActiveMqClient;
@@ -46,7 +48,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         DbClient.class,
         EhrCompleteQueue.class,
         TransferCompleteQueue.class,
-        NegativeAcknowledgementQueue.class
+        NegativeAcknowledgementQueue.class,
+        EndOfTransferMofUpdatedMessageQueue.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepositoryE2ETests {
@@ -74,7 +77,11 @@ public class RepositoryE2ETests {
     @Autowired
     NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
     @Autowired
+    EndOfTransferMofUpdatedMessageQueue endOfTransferMofUpdatedQueue;
+    @Autowired
     TestConfiguration config;
+
+    PdsAdaptorClient pdsAdaptorClient;
 
     @BeforeAll
     void init() {
@@ -83,6 +90,7 @@ public class RepositoryE2ETests {
         attachmentQueue.deleteAllMessages();
         parsingDLQ.deleteAllMessages();
         negativeAcknowledgementObservabilityQueue.deleteAllMessages();
+        pdsAdaptorClient = new PdsAdaptorClient("e2e-test", config.getPdsAdaptorE2ETestApiKey(), config.getPdsAdaptorUrl());
     }
 
     @Test
@@ -135,8 +143,10 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus() {  //this test would expand and change as progress
+        var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(config);
+        setOdsCodeToRepo(largeEhrAtEmisWithRepoMof.nhsNumber());
         var triggerMessage = new RepoIncomingMessageBuilder()
-                .withPatient(Patient.largeEhrAtEmisWithRepoMof(config))
+                .withPatient(largeEhrAtEmisWithRepoMof)
                 .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
                 .withEhrDestinationAsRepo(config)
                 .build();
@@ -144,6 +154,7 @@ public class RepositoryE2ETests {
         repoIncomingQueue.send(triggerMessage);
         assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+//        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString())); TODO change dev patient to dev synthetic patient
     }
 
     @ParameterizedTest
@@ -164,6 +175,11 @@ public class RepositoryE2ETests {
 
         var status = trackerDb.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
+    }
+
+    private void setOdsCodeToRepo(String nhsNumber) {
+        var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
+        pdsAdaptorClient.updateManagingOrganisation(nhsNumber, Gp2GpSystem.repoInEnv(config).odsCode(), pdsResponse.getRecordETag());
     }
 
     private static Stream<Arguments> foundationSupplierSystems() {
