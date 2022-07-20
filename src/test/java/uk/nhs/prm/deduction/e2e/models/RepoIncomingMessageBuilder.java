@@ -57,6 +57,7 @@ public class RepoIncomingMessageBuilder {
     public RepoIncomingMessageBuilder withRandomlyGeneratedConversationId() {
         conversationId = UUID.randomUUID();
         System.out.println("generated conversation id " + conversationId);
+        System.out.flush();
         return this;
     }
 
