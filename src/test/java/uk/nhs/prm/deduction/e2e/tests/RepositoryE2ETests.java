@@ -111,25 +111,29 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldReadMessageFromInboundActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
-        String conversationId = UUID.randomUUID().toString();
-        System.out.println("conversation Id " + conversationId);
+        var conversationId = generateConversationId();
         mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
         assertThat(smallEhrQueue.getMessageContaining(conversationId));
         assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
     }
 
+    private String generateConversationId() {
+        var conversationId = UUID.randomUUID().toString();
+        System.out.println("conversation Id " + conversationId);
+        System.out.flush();
+        return conversationId;
+    }
+
     @Test
     void shouldPutLargeEhrFromInboundActiveMQAndObserveItOnLargeEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
-        String conversationId = UUID.randomUUID().toString();
-        System.out.println("conversation Id " + conversationId);
+        var conversationId = generateConversationId();
         mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("unsanitized_large_ehr", conversationId));
         assertThat(largeEhrQueue.getMessageContainingAttribute("conversationId", conversationId));
     }
 
     @Test
     void shouldPutMessageWithAttachmentsFromInboundActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
-        String conversationId = UUID.randomUUID().toString();
-        System.out.println("conversation Id " + conversationId);
+        String conversationId = generateConversationId();
         mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("message_with_attachment", conversationId));
         assertThat(attachmentQueue.getMessageContaining(conversationId));
     }
