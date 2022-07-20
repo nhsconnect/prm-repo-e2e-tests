@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -155,6 +156,25 @@ public class RepositoryE2ETests {
         assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
 //        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString())); TODO change dev patient to dev synthetic patient
+    }
+
+    @Disabled("small-large-ehr-core-messages not working see PRMT-2712 :/")
+    @ParameterizedTest
+    @MethodSource("varietyOfLargeEhrs")
+    void shouldTransferAllSizesAndTypesOfEhrs(LargeEhrVariant largeEhr) {
+        var triggerMessage = new RepoIncomingMessageBuilder()
+                .withPatient(largeEhr.patient())
+                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT) // and TPP
+                .withEhrDestinationAsRepo(config)
+                .build();
+
+        repoIncomingQueue.send(triggerMessage);
+
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId()));
+    }
+
+    private static Stream<Arguments> varietyOfLargeEhrs() {
+        return Stream.of(Arguments.of(LargeEhrVariant.SINGLE_ATTACHMENT));
     }
 
     @ParameterizedTest
