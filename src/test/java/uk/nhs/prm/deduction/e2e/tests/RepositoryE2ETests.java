@@ -162,7 +162,6 @@ public class RepositoryE2ETests {
 //        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString())); TODO change dev patient to dev synthetic patient
     }
 
-    @Disabled("small-large-ehr-core-messages not working see PRMT-2712 :/")
     @ParameterizedTest
     @MethodSource("varietyOfLargeEhrs")
     void shouldTransferAllSizesAndTypesOfEhrs(LargeEhrVariant largeEhr) {
