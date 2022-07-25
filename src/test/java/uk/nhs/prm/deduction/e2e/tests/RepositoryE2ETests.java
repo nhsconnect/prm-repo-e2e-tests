@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -164,6 +165,7 @@ public class RepositoryE2ETests {
 
     @ParameterizedTest
     @MethodSource("varietyOfLargeEhrs")
+    @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "We have only one set of variants for large ehr")
     void shouldTransferAllSizesAndTypesOfEhrs(LargeEhrVariant largeEhr) {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhr.patient())
