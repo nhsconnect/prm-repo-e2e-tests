@@ -184,10 +184,16 @@ case "${command}" in
 
       dojo "./tasks _test_performance"
       ;;
-    _test_technical)
-          gradle test --tests *ChangeOfGPMessageReceivedTest
-          ;;
-    test_technical)
+  _test_technical)
+      gradle test --tests *ChangeOfGPMessageReceivedTest
+      ;;
+  test_technical)
+      ;;
+  _ehr_tool)
+      gradle ehrTool
+      ;;
+  ehr_tool)
+      dojo './tasks _ehr_tool'
       ;;
   *)
       echo "Invalid command: '${command}'"

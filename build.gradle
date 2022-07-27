@@ -35,16 +35,28 @@ dependencies {
 }
 
 tasks.withType(Test) {
-    useJUnitPlatform({
-        if (System.getenv().get("NHS_ENVIRONMENT") == 'dev') {
-            excludeTags 'DevOnlyTest'
-        }
-    })
+    useJUnitPlatform()
     maxParallelForks = 4
 }
+
 test {
     testLogging.showStandardStreams = true
+}
 
+configurations {
+    groovyScript
+}
+
+dependencies {
+    groovyScript localGroovy()
+}
+
+task ehrTool(type: JavaExec) {
+
+    classpath = configurations.groovyScript
+    mainClass = 'groovy.ui.GroovyMain'
+
+    args 'src/main/groovy/ehr-tool.groovy'
 }
 
 test.outputs.upToDateWhen {false}
