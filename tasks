@@ -190,6 +190,9 @@ case "${command}" in
   test_technical)
       ;;
   _ehr_tool)
+      export MESSAGES_DIR=tools/large-ehr-inspector/samples
+      export TEMPLATE_MESSAGE_ID=9e6f8d45-913a-4c67-89f3-10d131fc332c
+      export TARGET_MESSAGE_ID=ae6f8d45-913a-4c67-89f3-10d131fc332c
       gradle ehrTool
       ;;
   ehr_tool)
