@@ -1,9 +1,11 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
@@ -19,6 +21,7 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSq
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.reregistration.ReRegistrationMessageObservabilityQueue;
+import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.deduction.e2e.suspensions.*;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
@@ -26,8 +29,12 @@ import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
 import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventFromTemplate;
 import static java.lang.System.getenv;
@@ -50,7 +57,7 @@ import static java.lang.System.getenv;
         MofNotUpdatedMessageQueue.class,
         BasicSqsClient.class,
         AssumeRoleCredentialsProviderFactory.class,
-        AutoRefreshingRoleAssumingSqsClient.class
+        AutoRefreshingRoleAssumingSqsClient.class,
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -78,6 +85,7 @@ public class ContinuityE2E {
     private MeshMailbox meshMailbox;
     @Autowired
     private TestConfiguration config;
+    private EhrRepoClient ehrRepoClient;
 
     @BeforeAll
     void init() {
@@ -184,10 +192,14 @@ public class ContinuityE2E {
 
     @Test
     @Order(7)
-    public void shouldMoveReRegistrationMessageFromNemsToReRegistrationQueue() {
+    public void shouldMoveReRegistrationMessageFromNemsToReRegistrationQueue() throws Exception {
         String nemsMessageId = randomNemsMessageId();
         String reRegisteredPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
         var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+        ehrRepoClient = new EhrRepoClient(config.getEhrRepoApiKey(), config.getEhrRepoUrl());
+        ehrRepoClient.createEhr(reRegisteredPatientNhsNumber);
+
+        assertThat(ehrRepoClient.getEhrResponse(reRegisteredPatientNhsNumber)).isEqualTo("200 OK");
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-re-registration.xml", reRegisteredPatientNhsNumber, nemsMessageId, now);
         meshMailbox.postMessage(nemsSuspension);
@@ -195,6 +207,13 @@ public class ContinuityE2E {
                 "\"newlyRegisteredOdsCode\":\"B86056\"," +
                 "\"nemsMessageId\":\"" + nemsMessageId + "\"," +
                 "\"lastUpdated\":\"" + now + "\"}";
+
+
+        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThrows(HttpClientErrorException.class, () -> {
+                ehrRepoClient.getEhrResponse(reRegisteredPatientNhsNumber);
+            });
+        });
 
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
         assertThat(reRegistrationMessageObservabilityQueue.hasMessage(expectedMessageOnQueue));
