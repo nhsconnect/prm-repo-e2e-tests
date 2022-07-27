@@ -7,53 +7,45 @@ println 'running ehr-tool...'
 
 cwd =  new File('.')
 
-println 'current dir: ' + cwd.absolutePath
-
-messagesDir = new File('tools/large-ehr-inspector/samples')
-mhsJsonInDir = new File(messagesDir, 'mhs-json')
-def mhsJsons = mhsJsonInDir.list()
-mhsJsons.sort().each {
-    println it
-}
-
-def recursiveFiles(File dirPath, allFiles = []) {
-    def filesList = dirPath.listFiles()
-    filesList.each {
-        if (it.isFile()) {
-            println "File path: " + it.name
-            allFiles << it
-        } else {
-            return recursiveFiles(it, allFiles)
-        }
+def getParam(name) {
+    def param = System.getenv(name)
+    if (param == null) {
+        throw new Exception('required env var ' + name + ' input parameter not set')
     }
-    allFiles
-}
-def ebxmls = recursiveFiles(messagesDir).findAll {
-    println it
-    it =~ /ebxml.xml$/
+    param
 }
 
-ebxmls.each {ebxml ->
-    println ebxml
-    def fileIS = new FileInputStream(ebxml)
+def messagesDir = getParam('MESSAGES_DIR')
+def templateMessageId = getParam('TEMPLATE_MESSAGE_ID')
+def targetMessageId = getParam('TARGET_MESSAGE_ID')
+
+println 'current dir: ' + cwd.absolutePath
+println 'messages dir: ' + messagesDir
+println 'template message id: ' + templateMessageId
+println 'target message id: ' + targetMessageId
+
+def messagesDirFile = new File((String) messagesDir)
+
+def templateMessageDirFile = new File(messagesDirFile, templateMessageId)
+
+def loadDocument(xmlFile) {
+    def fileIS = new FileInputStream(xmlFile)
     def builderFactory = DocumentBuilderFactory.newInstance()
     builderFactory.setNamespaceAware(true)
     def builder = builderFactory.newDocumentBuilder()
-    def xmlDocument = builder.parse(fileIS)
-    def xpath = XPathFactory.newInstance().newXPath()
+    builder.parse(fileIS)
+}
 
-    // something like
-    xpath.setNamespaceContext(new NamespaceContext() {
+org.w3c.dom.NodeList query(org.w3c.dom.Document xmlDocument, String xpathExpression) {
+    def xpath = XPathFactory.newInstance().newXPath()
+    def namespaceResolver = new NamespaceContext() {
         static final namespaces = [
-            'eb':  'http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd',
-            'hl7':  'urn:hl7-org:v3'
+            'eb' : 'http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd',
+            'hl7': 'urn:hl7-org:v3'
         ]
 
         String getNamespaceURI(String prefix) {
-            println 'prefix: ' + prefix
-
-            def specified = namespaces[prefix]
-            specified ? specified : namespaces['hl7']
+            namespaces[prefix]
         }
 
         String getPrefix(String namespaceURI) {
@@ -64,13 +56,37 @@ ebxmls.each {ebxml ->
         Iterator<String> getPrefixes(String namespaceURI) {
             return null
         }
-    })
+    }
+    xpath.setNamespaceContext(namespaceResolver)
+    return xpath.compile(xpathExpression).evaluate(xmlDocument, XPathConstants.NODESET)
+}
 
-    String expression = '//eb:Reference'
 
-    nodeList = (org.w3c.dom.NodeList) xpath.compile(expression).evaluate(xmlDocument, XPathConstants.NODESET)
-
-    nodeList.each {
+def queryPrint(org.w3c.dom.Document xmlDocument, String xpathExpression) {
+    println xpathExpression + ':'
+    def nodes = query(xmlDocument, xpathExpression)
+    nodes.each {
         println it
     }
 }
+
+def ebxmlFile = new File(templateMessageDirFile, 'ebxml.xml')
+
+println 'ebxml: ' + ebxmlFile
+
+def ebxml = loadDocument(ebxmlFile)
+
+queryPrint(ebxml, '//eb:ConversationId/text()')
+queryPrint(ebxml, '//eb:MessageData/eb:MessageId/text()')
+
+def payloadFile = new File(templateMessageDirFile, 'payload.xml')
+
+println 'payload: ' + payloadFile
+
+def payload = loadDocument(payloadFile)
+
+def firstNarrativeStatementComponent = '(//hl7:EhrExtract/hl7:component/hl7:ehrFolder/hl7:component[.//hl7:NarrativeStatement])[1]'
+queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:id/@root')
+queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement/hl7:id/@root')
+queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:id/@root')
+queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:text/text()')
