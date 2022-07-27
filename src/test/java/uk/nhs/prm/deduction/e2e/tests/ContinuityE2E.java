@@ -196,7 +196,7 @@ public class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String reRegisteredPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
         var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
-        ehrRepoClient = new EhrRepoClient(config.getEhrRepoApiKey(), config.getEhrRepoUrl());
+        ehrRepoClient = new EhrRepoClient(config.getEhrRepoE2EApiKey(), config.getEhrRepoUrl());
         ehrRepoClient.createEhr(reRegisteredPatientNhsNumber);
 
         assertThat(ehrRepoClient.getEhrResponse(reRegisteredPatientNhsNumber)).isEqualTo("200 OK");

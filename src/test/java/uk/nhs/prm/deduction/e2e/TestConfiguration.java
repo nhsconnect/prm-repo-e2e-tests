@@ -89,6 +89,10 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/live-test", getEnvironmentName()));
     }
 
+    public String getEhrRepoE2EApiKey() {
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/e2e-test", getEnvironmentName()));
+    }
+
     public String getRepoOdsCode() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/repository-ods-code", getEnvironmentName()));
     }
