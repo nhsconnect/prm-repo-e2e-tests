@@ -31,8 +31,8 @@ def getParam(String name, defaultValue = null) {
 def messagesDir = getParam('MESSAGES_DIR')
 def templateMessageId = getParam('TEMPLATE_MESSAGE_ID')
 def targetMessageId = getParam('TARGET_MESSAGE_ID')
-def textMultiplier = getParam('TEXT_MULTIPLIER', 10)
-def noteMultiplier = getParam('NOTE_MULTIPLIER', 10)
+def textMultiplier = getParam('TEXT_MULTIPLIER', 100)
+def noteMultiplier = getParam('NOTE_MULTIPLIER', 930)
 
 println 'current dir: ' + cwd.absolutePath
 println 'messages dir: ' + messagesDir
