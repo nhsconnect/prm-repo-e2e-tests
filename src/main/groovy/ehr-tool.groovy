@@ -162,7 +162,7 @@ def originalConsultationNote = queryNode(payload, firstConsultationNoteXpath)
 def noteTextXpath = './hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:text/text()'
 def originalNoteText = queryNode(originalConsultationNote, noteTextXpath).textContent
 println 'original note text: ' + originalNoteText
-def newNoteText = (originalNoteText + '\n') * textMultiplier
+def newNoteText = (originalNoteText + '\n\n') * textMultiplier
 println 'new note text: ' + newNoteText
 
 for (i in 0..< noteMultiplier) {

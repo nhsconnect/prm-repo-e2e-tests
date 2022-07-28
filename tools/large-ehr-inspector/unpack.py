@@ -4,7 +4,6 @@ import json
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
 
-
 def pretty_xml(xml_string):
   dom = xml.dom.minidom.parseString(xml_string)
   return dom.toprettyxml()
