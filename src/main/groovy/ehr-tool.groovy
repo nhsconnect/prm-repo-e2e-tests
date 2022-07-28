@@ -1,3 +1,4 @@
+import org.w3c.dom.Attr
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 
@@ -16,8 +17,11 @@ println 'running ehr-tool...'
 
 cwd =  new File('.')
 
-def getParam(name) {
+def getParam(String name, defaultValue = null) {
     def param = System.getenv(name)
+    if (param == null) {
+        param = defaultValue
+    }
     if (param == null) {
         throw new Exception('required env var ' + name + ' input parameter not set')
     }
@@ -27,6 +31,8 @@ def getParam(name) {
 def messagesDir = getParam('MESSAGES_DIR')
 def templateMessageId = getParam('TEMPLATE_MESSAGE_ID')
 def targetMessageId = getParam('TARGET_MESSAGE_ID')
+def textMultiplier = getParam('TEXT_MULTIPLIER', 10)
+def noteMultiplier = getParam('NOTE_MULTIPLIER', 10)
 
 println 'current dir: ' + cwd.absolutePath
 println 'messages dir: ' + messagesDir
@@ -68,7 +74,7 @@ static void trimWhitespace(Node node)
     }
 }
 
-org.w3c.dom.NodeList query(org.w3c.dom.Document xmlDocument, String xpathExpression) {
+org.w3c.dom.NodeList query(xml, String xpathExpression) {
     def xpath = XPathFactory.newInstance().newXPath()
     def namespaceResolver = new NamespaceContext() {
         static final namespaces = [
@@ -90,19 +96,19 @@ org.w3c.dom.NodeList query(org.w3c.dom.Document xmlDocument, String xpathExpress
         }
     }
     xpath.setNamespaceContext(namespaceResolver)
-    return xpath.compile(xpathExpression).evaluate(xmlDocument, XPathConstants.NODESET)
+    xpath.compile(xpathExpression).evaluate(xml, XPathConstants.NODESET)
 }
 
-def queryPrint(org.w3c.dom.Document xmlDocument, String xpathExpression) {
+def queryPrint(xml, String xpathExpression) {
     println xpathExpression + ':'
-    def nodes = query(xmlDocument, xpathExpression)
+    def nodes = query(xml, xpathExpression)
     nodes.each {
         println it
     }
 }
 
-def queryNode(org.w3c.dom.Document xmlDocument, String xpathExpression) {
-    def nodes = query(xmlDocument, xpathExpression)
+def queryNode(xml, String xpathExpression) {
+    def nodes = query(xml, xpathExpression)
     nodes.item(0)
 }
 
@@ -112,10 +118,24 @@ def updateText(Node node, String newText) {
     println 'new value: ' + node.textContent
 }
 
-def updateText(Document doc, String xpath, String newText) {
+def updateText(xml, String xpath, String newText) {
     println 'updating: ' + xpath
-    def node = queryNode(doc, xpath)
+    def node = queryNode(xml, xpath)
     updateText(node, newText)
+}
+
+private String uuid() {
+    UUID.randomUUID().toString()
+}
+
+private void addNote(Node originalConsultationNote, String noteTextXpath, String newNoteText) {
+    def newComment = originalConsultationNote.cloneNode(true)
+    updateText(newComment, './hl7:ehrComposition/hl7:id/@root', uuid())
+    updateText(newComment, './hl7:ehrComposition/hl7:component/hl7:CompoundStatement/hl7:id/@root', uuid())
+    updateText(newComment, './hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:id/@root', uuid())
+    updateText(newComment, noteTextXpath, newNoteText)
+
+    originalConsultationNote.getParentNode().insertBefore(newComment, originalConsultationNote)
 }
 
 def ebxmlFile = new File(templateDirFile, 'ebxml.xml')
@@ -124,7 +144,7 @@ println 'ebxml: ' + ebxmlFile
 
 def ebxml = loadDocument(ebxmlFile)
 
-updateText(ebxml, '//eb:ConversationId/text()', UUID.randomUUID().toString())
+updateText(ebxml, '//eb:ConversationId/text()', uuid())
 updateText(ebxml, '//eb:MessageData/eb:MessageId/text()', targetMessageId)
 
 def outputEbxmlFile = new File(targetDirFile, 'ebxml.xml')
@@ -136,16 +156,18 @@ println 'payload: ' + payloadFile
 
 def payload = loadDocument(payloadFile)
 
-def firstNarrativeStatementComponent = '(//hl7:EhrExtract/hl7:component/hl7:ehrFolder/hl7:component[.//hl7:NarrativeStatement])[1]'
+def firstConsultationNoteXpath = '(//hl7:EhrExtract/hl7:component/hl7:ehrFolder/hl7:component[.//hl7:NarrativeStatement])[1]'
 
-def originalComment = queryNode(payload, firstNarrativeStatementComponent)
-def newComment = originalComment.cloneNode(true)
-originalComment.getParentNode().insertBefore(newComment, originalComment)
+def originalConsultationNote = queryNode(payload, firstConsultationNoteXpath)
+def noteTextXpath = './hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:text/text()'
+def originalNoteText = queryNode(originalConsultationNote, noteTextXpath).textContent
+println 'original note text: ' + originalNoteText
+def newNoteText = (originalNoteText + '\n') * textMultiplier
+println 'new note text: ' + newNoteText
 
-updateText(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:id/@root')
-queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement/hl7:id/@root')
-queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:id/@root')
-queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:text/text()')
+for (i in 0..< noteMultiplier) {
+    addNote(originalConsultationNote, noteTextXpath, 'copy ' + i + ': ' + newNoteText)
+}
 
 def outputPayloadFile = new File(targetDirFile, 'payload.xml')
 writeDocToFile(payload, outputPayloadFile)
