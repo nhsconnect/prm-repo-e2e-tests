@@ -137,7 +137,12 @@ println 'payload: ' + payloadFile
 def payload = loadDocument(payloadFile)
 
 def firstNarrativeStatementComponent = '(//hl7:EhrExtract/hl7:component/hl7:ehrFolder/hl7:component[.//hl7:NarrativeStatement])[1]'
-queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:id/@root')
+
+def originalComment = queryNode(payload, firstNarrativeStatementComponent)
+def newComment = originalComment.cloneNode(true)
+originalComment.getParentNode().insertBefore(newComment, originalComment)
+
+updateText(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:id/@root')
 queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement/hl7:id/@root')
 queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:id/@root')
 queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:text/text()')
