@@ -1,7 +1,16 @@
+import org.w3c.dom.Document
+import org.w3c.dom.Node
+
 import javax.xml.namespace.NamespaceContext
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.Transformer
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
+import java.nio.file.Files
+import java.nio.file.Paths
 
 println 'running ehr-tool...'
 
@@ -26,7 +35,8 @@ println 'target message id: ' + targetMessageId
 
 def messagesDirFile = new File((String) messagesDir)
 
-def templateMessageDirFile = new File(messagesDirFile, templateMessageId)
+def templateDirFile = new File(messagesDirFile, templateMessageId)
+def targetDirFile = new File(messagesDirFile, targetMessageId)
 
 def loadDocument(xmlFile) {
     def fileIS = new FileInputStream(xmlFile)
@@ -35,6 +45,30 @@ def loadDocument(xmlFile) {
     def builder = builderFactory.newDocumentBuilder()
     builder.parse(fileIS)
 }
+
+def writeDocToFile(Document doc, File outputFile) {
+    Files.createDirectories(Paths.get(outputFile.getParent()))
+    def transformerFactory = TransformerFactory.newDefaultInstance()
+    Transformer transformer = transformerFactory.newTransformer()
+    DOMSource source = new DOMSource(doc)
+    FileWriter writer = new FileWriter(outputFile)
+    StreamResult result = new StreamResult(writer)
+    transformer.transform(source, result)
+}
+
+static void trimWhitespace(Node node)
+{
+    NodeList children = node.getChildNodes();
+    for(int i = 0; i < children.getLength(); ++i) {
+        Node child = children.item(i);
+        if(child.getNodeType() == Node.TEXT_NODE) {
+            child.setTextContent(child.getTextContent().trim());
+        }
+        trimWhitespace(child);
+    }
+}
+
+
 
 org.w3c.dom.NodeList query(org.w3c.dom.Document xmlDocument, String xpathExpression) {
     def xpath = XPathFactory.newInstance().newXPath()
@@ -70,7 +104,7 @@ def queryPrint(org.w3c.dom.Document xmlDocument, String xpathExpression) {
     }
 }
 
-def ebxmlFile = new File(templateMessageDirFile, 'ebxml.xml')
+def ebxmlFile = new File(templateDirFile, 'ebxml.xml')
 
 println 'ebxml: ' + ebxmlFile
 
@@ -79,7 +113,7 @@ def ebxml = loadDocument(ebxmlFile)
 queryPrint(ebxml, '//eb:ConversationId/text()')
 queryPrint(ebxml, '//eb:MessageData/eb:MessageId/text()')
 
-def payloadFile = new File(templateMessageDirFile, 'payload.xml')
+def payloadFile = new File(templateDirFile, 'payload.xml')
 
 println 'payload: ' + payloadFile
 
@@ -90,3 +124,9 @@ queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:
 queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement/hl7:id/@root')
 queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:id/@root')
 queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:text/text()')
+
+def outputEbxmlFile = new File(targetDirFile, 'ebxml.xml')
+def outputPayloadFile = new File(targetDirFile, 'payload.xml')
+
+writeDocToFile(ebxml, outputEbxmlFile)
+writeDocToFile(payload, outputPayloadFile)
