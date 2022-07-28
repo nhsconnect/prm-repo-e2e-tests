@@ -68,8 +68,6 @@ static void trimWhitespace(Node node)
     }
 }
 
-
-
 org.w3c.dom.NodeList query(org.w3c.dom.Document xmlDocument, String xpathExpression) {
     def xpath = XPathFactory.newInstance().newXPath()
     def namespaceResolver = new NamespaceContext() {
@@ -95,7 +93,6 @@ org.w3c.dom.NodeList query(org.w3c.dom.Document xmlDocument, String xpathExpress
     return xpath.compile(xpathExpression).evaluate(xmlDocument, XPathConstants.NODESET)
 }
 
-
 def queryPrint(org.w3c.dom.Document xmlDocument, String xpathExpression) {
     println xpathExpression + ':'
     def nodes = query(xmlDocument, xpathExpression)
@@ -104,14 +101,34 @@ def queryPrint(org.w3c.dom.Document xmlDocument, String xpathExpression) {
     }
 }
 
+def queryNode(org.w3c.dom.Document xmlDocument, String xpathExpression) {
+    def nodes = query(xmlDocument, xpathExpression)
+    nodes.item(0)
+}
+
+def updateText(Node node, String newText) {
+    println 'current value: ' + node.textContent
+    node.setTextContent(newText)
+    println 'new value: ' + node.textContent
+}
+
+def updateText(Document doc, String xpath, String newText) {
+    println 'updating: ' + xpath
+    def node = queryNode(doc, xpath)
+    updateText(node, newText)
+}
+
 def ebxmlFile = new File(templateDirFile, 'ebxml.xml')
 
 println 'ebxml: ' + ebxmlFile
 
 def ebxml = loadDocument(ebxmlFile)
 
-queryPrint(ebxml, '//eb:ConversationId/text()')
-queryPrint(ebxml, '//eb:MessageData/eb:MessageId/text()')
+updateText(ebxml, '//eb:ConversationId/text()', UUID.randomUUID().toString())
+updateText(ebxml, '//eb:MessageData/eb:MessageId/text()', targetMessageId)
+
+def outputEbxmlFile = new File(targetDirFile, 'ebxml.xml')
+writeDocToFile(ebxml, outputEbxmlFile)
 
 def payloadFile = new File(templateDirFile, 'payload.xml')
 
@@ -125,8 +142,5 @@ queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:
 queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:id/@root')
 queryPrint(payload, firstNarrativeStatementComponent + '/hl7:ehrComposition/hl7:component/hl7:CompoundStatement//hl7:NarrativeStatement/hl7:text/text()')
 
-def outputEbxmlFile = new File(targetDirFile, 'ebxml.xml')
 def outputPayloadFile = new File(targetDirFile, 'payload.xml')
-
-writeDocToFile(ebxml, outputEbxmlFile)
 writeDocToFile(payload, outputPayloadFile)
