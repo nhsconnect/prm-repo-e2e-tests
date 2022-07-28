@@ -14,7 +14,7 @@ def make_dir(dirname):
   os.makedirs(dirname, exist_ok=True)
 
 os.chdir('samples/')
-core_message_id_to_repack = 'ae6f8d45-913a-4c67-89f3-10d131fc332c'
+core_message_id_to_repack = os.environ['TARGET_MESSAGE_ID']
 
 id = core_message_id_to_repack
 mhs_json_out_dir = 'mhs-json-out'
