@@ -39,13 +39,19 @@ public class QueueMessageHelper {
         log(String.format("Found message on : %s", this.queueUri));
         return found;
     }
-    public SqsMessage getMessageContainingAttribute(String attribute,String expectedValue) {
+
+    public SqsMessage getMessageContainingAttribute(String attribute, String expectedValue) {
+        return getMessageContainingAttribute(attribute, expectedValue, 120, TimeUnit.SECONDS);
+    }
+
+    public SqsMessage getMessageContainingAttribute(String attribute, String expectedValue, int timeout, TimeUnit timeUnit) {
         log(String.format("Checking if message is present on : %s", this.queueUri));
-        return await().atMost(120, TimeUnit.SECONDS)
+        return await().atMost(timeout, timeUnit)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS)
-                .until(() -> findMessageWithAttribute(attribute,expectedValue), notNullValue());
+                .until(() -> findMessageWithAttribute(attribute, expectedValue), notNullValue());
     }
+
     public boolean hasResolutionMessage(ResolutionMessage resolutionMessage) {
         log(String.format("Checking if message is present on : %s", this.queueUri));
         await().atMost(120, TimeUnit.SECONDS)
