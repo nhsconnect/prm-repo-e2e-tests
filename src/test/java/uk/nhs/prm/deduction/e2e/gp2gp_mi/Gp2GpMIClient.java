@@ -4,10 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
-import uk.nhs.prm.deduction.e2e.gp2gp_mi.registration_started.Payload;
-import uk.nhs.prm.deduction.e2e.gp2gp_mi.registration_started.Registration;
-import uk.nhs.prm.deduction.e2e.gp2gp_mi.registration_started.RegistrationStartedRequest;
-import uk.nhs.prm.deduction.e2e.gp2gp_mi.registration_started.RegistrationStartedResponse;
 
 public class Gp2GpMIClient {
 
@@ -16,7 +12,7 @@ public class Gp2GpMIClient {
 
 
 
-    public <T> String updateManagingOrganisation(T request, String endpoint) throws JsonProcessingException {
+    public <T> String update(T request, String endpoint) throws JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
 
         String json = new ObjectMapper().writer().writeValueAsString(request);
