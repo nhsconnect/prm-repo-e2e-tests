@@ -145,10 +145,11 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldPutAUnprocessableMessageFromInboundActiveMqToDLQ() throws JMSException {  //this test would expand and change as progress
-        String dlqMessage = "A DLQ MESSAGE";
-        System.out.println("dlq message " + dlqMessage);
+        String dlqMessage = "AN UNPROCESSABLE MESSAGE";
+        String defaultForUnprocessableMessages = "NO_ACTION:UNPROCESSABLE_MESSAGE_BODY";
+        System.out.println("dlq message: " + dlqMessage);
         mqClient.postAMessageToAQueue("inbound", dlqMessage);
-        assertThat(parsingDLQ.getMessageContaining(dlqMessage));
+        assertThat(parsingDLQ.getMessageContaining(defaultForUnprocessableMessages));
     }
 
     @Test
