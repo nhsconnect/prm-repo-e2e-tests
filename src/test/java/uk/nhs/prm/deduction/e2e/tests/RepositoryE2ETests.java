@@ -1,7 +1,6 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -26,7 +25,6 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import javax.jms.JMSException;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -80,8 +78,6 @@ public class RepositoryE2ETests {
     @Autowired
     NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
     @Autowired
-    EndOfTransferMofUpdatedMessageQueue endOfTransferMofUpdatedQueue;
-    @Autowired
     TestConfiguration config;
 
     PdsAdaptorClient pdsAdaptorClient;
@@ -110,41 +106,8 @@ public class RepositoryE2ETests {
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_REQUEST_SENT"));
     }
 
-
     @Test
-    @Disabled("Causing errors by the conversation id not being found the ehr tracker db - poison message")
-    void shouldReadMessageFromInboundActiveMQProcessAndPutItOnSmallEhrAndEhrCompleteQueues() throws JMSException {  //this test would expand and change as progress
-        var conversationId = generateConversationId();
-        mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("unsanitized_small_ehr", conversationId));
-        assertThat(smallEhrQueue.getMessageContaining(conversationId));
-        assertThat(ehrCompleteQueue.getMessageContaining(conversationId));
-    }
-
-    private String generateConversationId() {
-        var conversationId = UUID.randomUUID().toString();
-        System.out.println("conversation Id " + conversationId);
-        System.out.flush();
-        return conversationId;
-    }
-
-    @Test
-    @Disabled("Causing errors by the conversation id not being found the ehr tracker db - poison message")
-    void shouldPutLargeEhrFromInboundActiveMQAndObserveItOnLargeEhrObservabilityQueue() throws JMSException {  //this test would expand and change as progress
-        var conversationId = generateConversationId();
-        mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("unsanitized_large_ehr", conversationId));
-        assertThat(largeEhrQueue.getMessageContainingAttribute("conversationId", conversationId));
-    }
-
-    @Test
-    @Disabled("Causing errors by the conversation id not being found the ehr tracker db - poison message")
-    void shouldPutMessageWithAttachmentsFromInboundActiveMQAndObserveItOnAttachmentsObservabilityQueue() throws JMSException {  //this test would expand and change as progress
-        String conversationId = generateConversationId();
-        mqClient.postAMessageToAQueue("inbound", getMessageWithUniqueConversationIdAndMessageId("message_with_attachment", conversationId));
-        assertThat(attachmentQueue.getMessageContaining(conversationId));
-    }
-
-    @Test
-    void shouldPutAUnprocessableMessageFromInboundActiveMqToDLQ() throws JMSException {  //this test would expand and change as progress
+    void shouldPutAUnprocessableMessageFromInboundActiveMqToDLQ() throws JMSException {
         String dlqMessage = "AN UNPROCESSABLE MESSAGE";
         String defaultForUnprocessableMessages = "NO_ACTION:UNPROCESSABLE_MESSAGE_BODY";
         System.out.println("dlq message: " + dlqMessage);
@@ -153,9 +116,11 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus() {  //this test would expand and change as progress
+    void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus_DevAndTest() {
         var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(config);
-        setOdsCodeToRepo(largeEhrAtEmisWithRepoMof.nhsNumber());
+
+        setManagingOrganisationToRepo(largeEhrAtEmisWithRepoMof.nhsNumber());
+
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhrAtEmisWithRepoMof)
                 .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
@@ -165,18 +130,20 @@ public class RepositoryE2ETests {
         repoIncomingQueue.send(triggerMessage);
         assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
-//        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString())); TODO change dev patient to dev synthetic patient
+//        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString())); TODO change dev patient to dev synthetic patient - what's this Jack?
     }
 
     @ParameterizedTest
-    @MethodSource("varietyOfLargeEhrs")
+    @MethodSource("largeEhrScenarios")
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "We have only one set of variants for large ehr")
-    void shouldTransferAllSizesAndTypesOfEhrs(LargeEhrVariant largeEhr) {
+    void shouldTransferAllSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhr.patient())
-                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT) // NB: only EMIS at mo as some failures copying to TPP
+                .withEhrSourceGp(sourceSystem)
                 .withEhrDestinationAsRepo(config)
                 .build();
+
+        setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
 
         repoIncomingQueue.send(triggerMessage);
 
@@ -185,17 +152,29 @@ public class RepositoryE2ETests {
                 triggerMessage.conversationId(),
                 largeEhr.timeoutMinutes(),
                 TimeUnit.MINUTES));
+
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+
+        // assert in ehr-repo? need to check all messages complete?
     }
 
-    private static Stream<Arguments> varietyOfLargeEhrs() {
-        return Stream.of(Arguments.of(
-//                LargeEhrVariant.LARGE_MEDICAL_HISTORY, // NYI
-//                LargeEhrVariant.MULTIPLE_ATTACHMENTS,
-//                LargeEhrVariant.SUPER_LARGE,
-//                LargeEhrVariant.HIGH_ATTACHMENT_COUNT,
-                LargeEhrVariant.SINGLE_ATTACHMENT
-                ));
+    private static Stream<Arguments> largeEhrScenarios() {
+        return Stream.of(
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
+
+                // 5mins + variation -> let's run these overnight
+                // Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
+                // Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
+
+                // could not move it to TPP - Large Message general failure
+                // Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SUPER_LARGE)
+        );
     }
 
     @ParameterizedTest
@@ -218,27 +197,15 @@ public class RepositoryE2ETests {
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
     }
 
-    private void setOdsCodeToRepo(String nhsNumber) {
+    private static Stream<Arguments> foundationSupplierSystems() {
+        return Gp2GpSystem.foundationSupplierSystems();
+    }
+
+    private void setManagingOrganisationToRepo(String nhsNumber) {
         var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
         var repoOdsCode = Gp2GpSystem.repoInEnv(config).odsCode();
         if (!repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorClient.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.getRecordETag());
         }
-    }
-
-    private static Stream<Arguments> foundationSupplierSystems() {
-        return Gp2GpSystem.foundationSupplierSystems();
-    }
-
-    private String getMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
-        String messageId = UUID.randomUUID().toString();
-        String attachment1MessageId = UUID.randomUUID().toString();
-        String attachment2MessageId = UUID.randomUUID().toString();
-        String message = Resources.readTestResourceFileFromEhrDirectory(fileName);
-        message = message.replaceAll("__conversationId__", conversationId);
-        message = message.replaceAll("__messageId__", messageId);
-        message = message.replaceAll("__Attachment1_messageId__", attachment1MessageId);
-        message = message.replace("__Attachment2_messageId__", attachment2MessageId);
-        return message;
     }
 }
