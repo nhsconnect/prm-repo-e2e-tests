@@ -1,6 +1,5 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +32,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
 import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventFromTemplate;
-import static java.lang.System.getenv;
 
 @SpringBootTest(classes = {
         ContinuityE2E.class,
@@ -103,7 +100,7 @@ public class ContinuityE2E {
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
-        var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+        var now = now();
         String previousGp = generateRandomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
@@ -121,7 +118,7 @@ public class ContinuityE2E {
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
-        var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+        var now = now();
         String currentlyRegisteredPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp,now);
@@ -136,11 +133,13 @@ public class ContinuityE2E {
     @Test
     @Order(5)
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
-        String nemsMessageId = randomNemsMessageId();
-        String nhsNumber = randomNhsNumber();
-        var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
-        NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate("change-of-gp-non-suspension.xml", nhsNumber, nemsMessageId,now);
+        var nemsMessageId = randomNemsMessageId();
+
+        var nemsNonSuspension = createNemsEventFromTemplate(
+                "change-of-gp-non-suspension.xml", randomNhsNumber(), nemsMessageId, now());
+
         meshMailbox.postMessage(nemsNonSuspension);
+
         assertThat(nemsEventProcessorUnhandledQueue.hasMessage("{\"nemsMessageId\":\"" + nemsMessageId + "\",\"messageStatus\":\"NO_ACTION:NON_SUSPENSION\"}"));
     }
 
@@ -150,6 +149,7 @@ public class ContinuityE2E {
     public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
         Map<String, NemsEventMessage> dlqMessages = NemsEventFactory.getDLQNemsEventMessages();
         log("Posting DLQ messages");
+
         for (Map.Entry<String, NemsEventMessage> message : dlqMessages.entrySet()) {
             meshMailbox.postMessage(message.getValue());
             log("Posted " + message.getKey() + " messages");
@@ -162,10 +162,11 @@ public class ContinuityE2E {
     public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
-        var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+
+        var suspensionTime = now();
         var nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml",
                 config.getNhsNumberForNonSyntheticPatientWithoutGp(),
-                nemsMessageId, previousGp,now);
+                nemsMessageId, previousGp, suspensionTime);
 
         meshMailbox.postMessage(nemsSuspension);
 
@@ -176,47 +177,63 @@ public class ContinuityE2E {
 
     @Test
     @Order(3)
-    public void shouldMoveDeceasedPatientToDeceasedQueue() {
+    public void shouldMoveDeceasedPatientEventToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
-        String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticDeceasedPatient();
-        var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+        String patientNhsNumber = config.getNhsNumberForSyntheticDeceasedPatient();
+        var eventTime = now();
         String previousGp = generateRandomOdsCode();
+
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp,now);
-        meshMailbox.postMessage(nemsSuspension);
-        DeceasedPatientMessage expectedMessageOnQueue = new DeceasedPatientMessage(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
+        var deceasedEvent = createNemsEventFromTemplate("change-of-gp-suspension.xml",
+                patientNhsNumber, nemsMessageId, previousGp, eventTime);
+
+        meshMailbox.postMessage(deceasedEvent);
+
+        var expectedMessageOnQueue = new DeceasedPatientMessage(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
 
         assertThat(deceasedPatientQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
     @Test
     @Order(7)
-    public void shouldMoveReRegistrationMessageFromNemsToReRegistrationQueue() throws Exception {
-        String nemsMessageId = randomNemsMessageId();
-        String reRegisteredPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
-        var now = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
-        ehrRepoClient = new EhrRepoClient(config.getEhrRepoE2EApiKey(), config.getEhrRepoUrl());
-        ehrRepoClient.createEhr(reRegisteredPatientNhsNumber);
+    @DisabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "Toggled off reregistrations in dev to allow EHR out testing")
+    public void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
+        var nemsMessageId = randomNemsMessageId();
+        String patientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
+        var reregistrationTime = now();
 
-        assertThat(ehrRepoClient.getEhrResponse(reRegisteredPatientNhsNumber)).isEqualTo("200 OK");
+        storeEhrInRepositoryFor(patientNhsNumber);
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-re-registration.xml", reRegisteredPatientNhsNumber, nemsMessageId, now);
-        meshMailbox.postMessage(nemsSuspension);
-        String expectedMessageOnQueue = "{\"nhsNumber\":\"" + reRegisteredPatientNhsNumber + "\"," +
+        var reRegistration = createNemsEventFromTemplate(
+                "change-of-gp-re-registration.xml", patientNhsNumber, nemsMessageId, reregistrationTime);
+
+        meshMailbox.postMessage(reRegistration);
+
+        String expectedMessageOnQueue = "{\"nhsNumber\":\"" + patientNhsNumber + "\"," +
                 "\"newlyRegisteredOdsCode\":\"B86056\"," +
                 "\"nemsMessageId\":\"" + nemsMessageId + "\"," +
-                "\"lastUpdated\":\"" + now + "\"}";
+                "\"lastUpdated\":\"" + reregistrationTime + "\"}";
 
 
-        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> { // check it's a 404?
             assertThrows(HttpClientErrorException.class, () -> {
-                ehrRepoClient.getEhrResponse(reRegisteredPatientNhsNumber);
+                ehrRepoClient.getEhrResponse(patientNhsNumber);
             });
         });
 
-        assertThat(meshForwarderQueue.hasMessage(nemsSuspension.body()));
+        assertThat(meshForwarderQueue.hasMessage(reRegistration.body()));
         assertThat(reRegistrationMessageObservabilityQueue.hasMessage(expectedMessageOnQueue));
+    }
+
+    private static String now() {
+        return ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+    }
+
+    private void storeEhrInRepositoryFor(String patientNhsNumber) throws Exception {
+        ehrRepoClient = new EhrRepoClient(config.getEhrRepoE2EApiKey(), config.getEhrRepoUrl());
+        ehrRepoClient.createEhr(patientNhsNumber);
+        assertThat(ehrRepoClient.getEhrResponse(patientNhsNumber)).isEqualTo("200 OK");
     }
 
     public void log(String message) {

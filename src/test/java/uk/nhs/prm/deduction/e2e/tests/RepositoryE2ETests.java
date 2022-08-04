@@ -93,7 +93,7 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueueAndAnEhrRequestIsMadeAndTheDbIsUpdatedWithExpectedStatus() {  //this test would expand and change as progress
+    void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueueAndAnEhrRequestIsMadeAndTheDbIsUpdatedWithExpectedStatus() {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.WITH_NO_9693795989_WHATEVER_THAT_MEANS)
                 .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
