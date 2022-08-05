@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -107,12 +108,21 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldPutAUnprocessableMessageFromInboundActiveMqToDLQ() throws JMSException {
-        String dlqMessage = "AN UNPROCESSABLE MESSAGE";
-        String defaultForUnprocessableMessages = "NO_ACTION:UNPROCESSABLE_MESSAGE_BODY";
+    void shouldPutAUnprocessableMessageBodyFromInboundActiveMqToDLQ() throws JMSException {
+        var dlqMessage = "AN UNPROCESSABLE MESSAGE";
+        var defaultForUnprocessableMessages = "NO_ACTION:UNPROCESSABLE_MESSAGE_BODY";
         System.out.println("dlq message: " + dlqMessage);
-        mqClient.postAMessageToAQueue("inbound", dlqMessage);
+        mqClient.postBrokenMessageToAQueue("inbound", dlqMessage);
         assertThat(parsingDLQ.getMessageContaining(defaultForUnprocessableMessages));
+    }
+
+    @Disabled("We need to find a way ourself to create properly a message which body can be parsed by amqp message.decode (or whatever we use in ehr transfer service)")
+    @Test
+    void shouldPutAUnprocessableMessageFromInboundActiveMqToDLQ() throws JMSException {
+        var dlqMessage = "Test: can be parsed as string, not as ParsedMessage class";
+        System.out.println("dlq message: " + dlqMessage);
+        mqClient.postMessageToAQueue("inbound", dlqMessage);
+        assertThat(parsingDLQ.getMessageContaining(dlqMessage));
     }
 
     @Test
