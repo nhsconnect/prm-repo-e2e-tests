@@ -26,6 +26,15 @@ pipelines:
       suspension-service:
         pipeline: suspension-service.dev
         stage: deploy
+      ehr-transfer-service:
+        pipeline: ehr-transfer-service.dev
+        stage: deploy
+      prm-deductions-gp2gp-messenger:
+        pipeline: prm-deductions-gp2gp-messenger.dev
+        stage: deploy
+      re-registration-service:
+        pipeline: re-registration-service.dev
+        stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: dev
       UPDATE_MOF_TO_REPO: true
@@ -73,6 +82,15 @@ pipelines:
         stage: deploy
       suspension-service:
         pipeline: suspension-service.test
+        stage: deploy
+      ehr-transfer-service:
+        pipeline: ehr-transfer-service.test
+        stage: deploy
+      prm-deductions-gp2gp-messenger:
+        pipeline: prm-deductions-gp2gp-messenger.test
+        stage: deploy
+      re-registration-service:
+        pipeline: re-registration-service.test
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: test
