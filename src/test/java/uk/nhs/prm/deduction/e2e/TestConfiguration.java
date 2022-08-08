@@ -102,7 +102,7 @@ public class TestConfiguration {
     }
 
     public String meshForwarderObservabilityQueueUri() {
-        return getQueueUri("mesh-forwarder-nems-events-observability-queue");
+        return getQueueUri("mesh-forwarder-nems-events-observability");
     }
 
     public String nemsEventProcesorUnhandledQueueUri() {
