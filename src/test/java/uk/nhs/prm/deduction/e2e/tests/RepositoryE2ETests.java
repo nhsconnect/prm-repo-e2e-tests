@@ -107,12 +107,13 @@ public class RepositoryE2ETests {
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_REQUEST_SENT"));
     }
 
+    // TODO: turn the next 2 test into integ test (to be moved to and implemented in ehr transfer service)
     @Test
     void shouldPutAUnprocessableMessageBodyFromInboundActiveMqToDLQ() throws JMSException {
         var dlqMessage = "AN UNPROCESSABLE MESSAGE";
         var defaultForUnprocessableMessages = "NO_ACTION:UNPROCESSABLE_MESSAGE_BODY";
         System.out.println("dlq message: " + dlqMessage);
-        mqClient.postBrokenMessageToAQueue("inbound", dlqMessage);
+        mqClient.postNonAmqpMessageToAQueue("inbound", dlqMessage);
         assertThat(parsingDLQ.getMessageContaining(defaultForUnprocessableMessages));
     }
 
