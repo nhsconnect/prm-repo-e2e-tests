@@ -26,6 +26,7 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import javax.jms.JMSException;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -167,6 +168,32 @@ public class RepositoryE2ETests {
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
 
         // assert in ehr-repo? need to check all messages complete?
+    }
+
+    @Disabled
+    @ParameterizedTest
+    @MethodSource("largeEhrScenarios") //TODO We need to review which patients data to use in this test.
+    void shouldHandleMultipleEhrsAtOnceLoadTest_PerfTest(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
+
+        var conversationIdsList = new ArrayList<>();
+
+        for (Patient patients : Patient.values()) {
+            var triggerMessage = new RepoIncomingMessageBuilder()
+                    .withPatient(patients)
+                    .withEhrSourceGp(sourceSystem)
+                    .withEhrDestinationAsRepo(config)
+                    .build();
+
+            setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
+
+            repoIncomingQueue.send(triggerMessage);
+
+            conversationIdsList.add(triggerMessage.getConversationIdAsString());
+
+        }
+        conversationIdsList.forEach( conversationIds -> assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationIds.toString())));
+
+        // assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
     private static Stream<Arguments> largeEhrScenarios() {
