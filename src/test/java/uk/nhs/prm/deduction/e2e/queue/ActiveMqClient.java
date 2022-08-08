@@ -39,7 +39,7 @@ public class ActiveMqClient {
         return producer;
     }
 
-    public void postBrokenMessageToAQueue(String queueName, String message) throws JMSException {
+    public void postNonAmqpMessageToAQueue(String queueName, String message) throws JMSException {
         final Session producerSession = getSession();
         final MessageProducer producer = getMessageProducer(producerSession, queueName);
         var producerMessage = producerSession.createTextMessage(message);
