@@ -106,23 +106,23 @@ public class TestConfiguration {
     }
 
     public String nemsEventProcesorUnhandledQueueUri() {
-        return getQueueUri("nems-event-processor-unhandled-events-queue");
+        return getQueueUri("nems-event-processor-unhandled-events");
     }
 
     public String suspensionsObservabilityQueueUri() {
-        return getQueueUri("nems-event-processor-suspensions-observability-queue");
+        return getQueueUri("nems-event-processor-suspensions-observability");
     }
 
     public String reRegistrationObservabilityQueueUri() {
-        return getQueueUri("nems-event-processor-re-registration-observability-queue");
+        return getQueueUri("nems-event-processor-re-registration-observability");
     }
 
     public String suspensionsRealQueueUri() {
-        return getQueueUri("suspension-service-suspensions-queue");
+        return getQueueUri("suspension-service-suspensions");
     }
 
     public String notReallySuspendedObservabilityQueueUri() {
-        return getQueueUri("suspension-service-not-suspended-observability-queue");
+        return getQueueUri("suspension-service-not-suspended-observability");
     }
 
     public String nemsEventProcessorDeadLetterQueue() {
@@ -130,15 +130,15 @@ public class TestConfiguration {
     }
 
     public String mofUpdatedQueueUri() {
-        return getQueueUri("suspension-service-mof-updated-queue");
+        return getQueueUri("suspension-service-mof-updated");
     }
 
     public String mofNotUpdatedQueueUri() {
-        return getQueueUri("suspension-service-mof-not-updated-queue");
+        return getQueueUri("suspension-service-mof-not-updated");
     }
 
     public String deceasedQueueUri() {
-        return getQueueUri("suspension-service-deceased-patient-queue");
+        return getQueueUri("suspension-service-deceased-patient");
     }
 
     public String repoIncomingQueueUri() {
@@ -245,7 +245,7 @@ public class TestConfiguration {
     }
 
     public String endOfTransferMofUpdatedQueue() {
-        return getQueueUri("end-of-transfer-service-mof-updated-queue");
+        return getQueueUri("end-of-transfer-service-mof-updated");
     }
 
     public String smallEhrQueueUri() {
