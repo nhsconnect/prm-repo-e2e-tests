@@ -1,9 +1,6 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -24,6 +21,9 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.DbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
+import javax.jms.JMSException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -83,6 +83,7 @@ public class RepositoryE2ETests {
         largeEhrQueue.deleteAllMessages();
         attachmentQueue.deleteAllMessages();
         parsingDLQ.deleteAllMessages();
+        transferCompleteQueue.deleteAllMessages();
         negativeAcknowledgementObservabilityQueue.deleteAllMessages();
         pdsAdaptorClient = new PdsAdaptorClient("e2e-test", config.getPdsAdaptorE2ETestApiKey(), config.getPdsAdaptorUrl());
     }
@@ -146,10 +147,15 @@ public class RepositoryE2ETests {
 
     @Disabled
     @ParameterizedTest
-    @MethodSource("largeEhrScenarios") //TODO We need to review which patients data to use in this test.
+    @MethodSource("largeEhrScenarios")
+        //TODO We need to review which patients data to use in this test.
     void shouldHandleMultipleEhrsAtOnceLoadTest_PerfTest(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
 
         var conversationIdsList = new ArrayList<>();
+
+        Instant start = null;
+        Instant start2;
+        Instant finish;
 
         for (Patient patients : Patient.values()) {
             var triggerMessage = new RepoIncomingMessageBuilder()
@@ -160,13 +166,21 @@ public class RepositoryE2ETests {
 
             setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
 
+            start = Instant.now();
+            System.out.println("Time before sending the triggerMessage to repoIncomingQueue: " + start);
             repoIncomingQueue.send(triggerMessage);
+            start2 = Instant.now();
+            System.out.println("Time after sending the triggerMessage to repoIncomingQueue: " + start2);
 
             conversationIdsList.add(triggerMessage.getConversationIdAsString());
-
         }
-        conversationIdsList.forEach( conversationIds -> assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationIds.toString())));
 
+        for (Object conversationId : conversationIdsList) {
+            assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId.toString()));
+            finish = Instant.now();
+            long timeElapsed = Duration.between(start, finish).toSeconds();
+            System.out.println("Time taken in seconds : " + timeElapsed);
+        }
         // assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
