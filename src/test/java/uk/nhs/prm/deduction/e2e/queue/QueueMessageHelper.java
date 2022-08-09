@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
@@ -13,6 +14,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
+@Slf4j
 public class QueueMessageHelper {
     protected final SqsQueue sqsQueue;
     protected final String queueUri;
@@ -23,7 +25,13 @@ public class QueueMessageHelper {
     }
 
     public void deleteAllMessages() {
-        sqsQueue.deleteAllMessage(queueUri);
+        log(String.format("Trying to delete all the messages on : %s", this.queueUri));
+        try {
+            sqsQueue.deleteAllMessage(queueUri);
+        }catch (Exception e){
+            log.warn("Error encountered while deleting the messages on the queue : " + queueUri, e);
+        }
+
     }
 
     public void log(String messageBody) {
@@ -78,7 +86,7 @@ public class QueueMessageHelper {
     private SqsMessage findMessageContaining(String substring) {
         var allMessages = sqsQueue.readThroughMessages(this.queueUri, 180);
         for (var message : allMessages) {
-            System.out.println("just finding message, checking: " + message.id());
+            System.out.println("just finding message, checking conversationId: " + substring);
             if (message.contains(substring)) {
                 return message;
             }
@@ -89,7 +97,7 @@ public class QueueMessageHelper {
     public SqsMessage findMessageWithAttribute(String attribute, String expectedValue) {
         var allMessages = sqsQueue.readThroughMessages(this.queueUri, 180);
         for (var message : allMessages) {
-            System.out.println("just finding message, checking: " + message.id());
+            System.out.println("just finding message, checking attribute : " + attribute + " expected value is : " + expectedValue);
             if (message.attributes().get(attribute).stringValue().equals(expectedValue)) {
                 return message;
             }
@@ -108,7 +116,7 @@ public class QueueMessageHelper {
     private SqsMessage findMessageContainingWitHigherVisibilityTimeOut(String substring) {
         var allMessages = sqsQueue.readThroughMessages(this.queueUri, 600);
         for (var message : allMessages) {
-            System.out.println("just finding message, checking: " + message.id());
+            System.out.println("just finding message, checking conversationId: " + substring);
             if (message.contains(substring)) {
                 return message;
             }
