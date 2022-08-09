@@ -18,21 +18,18 @@ import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
-import uk.nhs.prm.deduction.e2e.queue.ActiveMqClient;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.DbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
-import javax.jms.JMSException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 
 @SpringBootTest(classes = {
         RepositoryE2ETests.class,
@@ -42,7 +39,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         AssumeRoleCredentialsProviderFactory.class,
         AutoRefreshingRoleAssumingSqsClient.class,
         Resources.class,
-        ActiveMqClient.class,
         TrackerDb.class,
         SmallEhrQueue.class,
         LargeEhrQueue.class,
@@ -59,9 +55,6 @@ public class RepositoryE2ETests {
 
     @Autowired
     RepoIncomingQueue repoIncomingQueue;
-
-    @Autowired
-    ActiveMqClient mqClient;
 
     @Autowired
     TrackerDb trackerDb;
@@ -106,25 +99,6 @@ public class RepositoryE2ETests {
 
         assertTrue(trackerDb.conversationIdExists(triggerMessage.conversationId()));
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_REQUEST_SENT"));
-    }
-
-    // TODO: turn the next 2 test into integ test (to be moved to and implemented in ehr transfer service)
-    @Test
-    void shouldPutAUnprocessableMessageBodyFromInboundActiveMqToDLQ() throws JMSException {
-        var dlqMessage = "AN UNPROCESSABLE MESSAGE";
-        var defaultForUnprocessableMessages = "NO_ACTION:UNPROCESSABLE_MESSAGE_BODY";
-        System.out.println("dlq message: " + dlqMessage);
-        mqClient.postNonAmqpMessageToAQueue("inbound", dlqMessage);
-        assertThat(parsingDLQ.getMessageContaining(defaultForUnprocessableMessages));
-    }
-
-    @Disabled("We need to find a way ourself to create properly a message which body can be parsed by amqp message.decode (or whatever we use in ehr transfer service)")
-    @Test
-    void shouldPutAUnprocessableMessageFromInboundActiveMqToDLQ() throws JMSException {
-        var dlqMessage = "Test: can be parsed as string, not as ParsedMessage class";
-        System.out.println("dlq message: " + dlqMessage);
-        mqClient.postMessageToAQueue("inbound", dlqMessage);
-        assertThat(parsingDLQ.getMessageContaining(dlqMessage));
     }
 
     @Test
