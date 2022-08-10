@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -26,11 +27,16 @@ public class TrackerDb {
         return false;
     }
 
-    public boolean statusForConversationIdIs(String conversationId, String status) {
+    public boolean statusForConversationIdIs(String conversationId, String status, boolean isActive) {
         await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> dbClient.queryDbWithConversationId(conversationId).item().get("state").s(), equalTo(status));
+                .untilAsserted(() -> {
+                    var dbResponse = dbClient.queryDbWithConversationId(conversationId);
+                    var isActiveAttributeExistsInDb = dbResponse.item().get("is_active") != null;
+                    assertThat(dbResponse.item().get("state").s()).isEqualTo(status);
+                    assertThat(isActiveAttributeExistsInDb).isEqualTo(isActive);
+                });
         return true;
     }
 
