@@ -145,45 +145,6 @@ public class RepositoryE2ETests {
         // assert in ehr-repo? need to check all messages complete?
     }
 
-    @Disabled
-    @ParameterizedTest
-    @MethodSource("largeEhrScenarios")
-        //TODO We need to review which patients data to use in this test.
-    void shouldHandleMultipleEhrsAtOnceLoadTest_PerfTest(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
-
-        var conversationIdsList = new ArrayList<>();
-
-        Instant start = null;
-        Instant start2;
-        Instant finish;
-
-        for (Patient patients : Patient.values()) {
-            var triggerMessage = new RepoIncomingMessageBuilder()
-                    .withPatient(patients)
-                    .withEhrSourceGp(sourceSystem)
-                    .withEhrDestinationAsRepo(config)
-                    .build();
-
-            setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
-
-            start = Instant.now();
-            System.out.println("Time before sending the triggerMessage to repoIncomingQueue: " + start);
-            repoIncomingQueue.send(triggerMessage);
-            start2 = Instant.now();
-            System.out.println("Time after sending the triggerMessage to repoIncomingQueue: " + start2);
-
-            conversationIdsList.add(triggerMessage.getConversationIdAsString());
-        }
-
-        for (Object conversationId : conversationIdsList) {
-            assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId.toString()));
-            finish = Instant.now();
-            long timeElapsed = Duration.between(start, finish).toSeconds();
-            System.out.println("Time taken in seconds : " + timeElapsed);
-        }
-        // assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
-    }
-
     private static Stream<Arguments> largeEhrScenarios() {
         return Stream.of(
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
@@ -199,6 +160,83 @@ public class RepositoryE2ETests {
 
                 // 20mins+ -> let's run this overnight
                 // Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
+
+                // could not move it to TPP - Large Message general failure
+                // Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SUPER_LARGE)
+        );
+    }
+
+    @Test
+    void shouldHandleMultipleEhrsAtOnceLoadTest_PerfTest() {
+        var conversationIdsList = new ArrayList<String>();
+
+        Instant requestedAt = null;
+        var iterationIndex = 1;
+        for (Arguments sourceSystemAndEhr : loadTestScenarios().toList()) {
+            var sourceSystem = (Gp2GpSystem) sourceSystemAndEhr.get()[0];
+            var ehr = (LargeEhrVariant) sourceSystemAndEhr.get()[1];
+            var patient = ehr.patient();
+
+            var triggerMessage = new RepoIncomingMessageBuilder()
+                    .withPatient(ehr.patient())
+                    .withEhrSourceGp(sourceSystem)
+                    .withEhrDestinationAsRepo(config)
+                    .build();
+
+            System.out.println("Trigger message: " + triggerMessage.toJsonString());
+            //System.out.println("NHS Number in " + sourceSystem + " for patient " + patient + " is: " + patient.nhsNumber());
+
+            setManagingOrganisationToRepo(patient.nhsNumber());
+
+            System.out.println("Iteration Scenario : " + iterationIndex + " : Patient " + patient);
+            System.out.println("Sending to repoIncomingQueue...");
+            repoIncomingQueue.send(triggerMessage);
+            requestedAt = Instant.now();
+
+            System.out.println("Time after sending the triggerMessage to repoIncomingQueue: " + requestedAt);
+
+            conversationIdsList.add(triggerMessage.getConversationIdAsString());
+            conversationIdsList.forEach(System.out::println);
+
+            iterationIndex++;
+
+        }
+
+        checkThatTransfersHaveCompletedSuccessfully(conversationIdsList, requestedAt);
+    }
+
+    private void checkThatTransfersHaveCompletedSuccessfully(ArrayList<String> conversationIdsList, Instant timeLastRequestSent) {
+        Instant finishedAt;
+        for (var conversationId : conversationIdsList) {
+            assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId, 5, TimeUnit.MINUTES));
+
+            // get actual transfer time from completion message?
+            finishedAt = Instant.now();
+
+            System.out.println("Time after request sent that completion message found in transferCompleteQueue: " + finishedAt);
+
+            long timeElapsed = Duration.between(timeLastRequestSent, finishedAt).toSeconds();
+            System.out.println("Total time taken for: " + conversationId + " in seconds was no more than : " + timeElapsed);
+
+            assertTrue(trackerDb.statusForConversationIdIs(conversationId.toString(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+        }
+    }
+
+    private static Stream<Arguments> loadTestScenarios() {
+        return Stream.of(
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS)
+//
+//                // 5mins + variation -> let's run these overnight
+//                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
+//                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
+//
+//                // 20mins+ -> let's run this overnight
+//                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
 
                 // could not move it to TPP - Large Message general failure
                 // Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SUPER_LARGE)
