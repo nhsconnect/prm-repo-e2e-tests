@@ -32,16 +32,16 @@ public class DbClient {
         DynamoDbClient client = DynamoDbClient.builder().build();
        tryExample(client);
 
-        Map<String, AttributeValue> expressionAttributeValues =
-                new HashMap<>();
-        expressionAttributeValues.put(":val",    AttributeValue.builder().s("2022-08-08T11:39:01.280559Z").build());
-
-
-        ScanRequest scan = ScanRequest.builder().tableName(testConfiguration.getTransferTrackerDb()).filterExpression("date_time = :val").expressionAttributeValues(expressionAttributeValues).build();
-        ScanIterable response = client.scanPaginator(scan);
-        for(Map<String, AttributeValue> item :  response.items()){
-            System.out.println(item);
-        }
+//        Map<String, AttributeValue> expressionAttributeValues =
+//                new HashMap<>();
+//        expressionAttributeValues.put(":val",    AttributeValue.builder().s("2022-08-08T11:39:01.280559Z").build());
+//
+//
+//        ScanRequest scan = ScanRequest.builder().tableName(testConfiguration.getTransferTrackerDb()).filterExpression("date_time = :val").expressionAttributeValues(expressionAttributeValues).build();
+//        ScanIterable response = client.scanPaginator(scan);
+//        for(Map<String, AttributeValue> item :  response.items()){
+//            System.out.println(item);
+//        }
 
 
     }
@@ -50,18 +50,18 @@ public class DbClient {
 
         Map<String, String> expressionAttributeName =
                 new HashMap<>();
-        expressionAttributeName.put("#state", "state");
+        expressionAttributeName.put("#is_active", "is_active");
+        expressionAttributeName.put("#created_at", "created_at");
 
         Map<String, AttributeValue> expressionAttributeValues =
                 new HashMap<>();
+        expressionAttributeValues.put(":is_active_val", AttributeValue.builder().s("true").build());
+        expressionAttributeValues.put(":created_at_val", AttributeValue.builder().s("2022-08-10T12:14:17.640260Z").build());
 
-
-        expressionAttributeValues.put(":val1",    AttributeValue.builder().s("ACTION:EHR_REQUEST_SENT").build());
-       // expressionAttributeValues.put(":val2",    AttributeValue.builder().s("ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT").build());
-
-        QueryRequest request = QueryRequest.builder().indexName("StateSecondaryIndex")
+        QueryRequest request = QueryRequest.builder().indexName("IsActiveSecondaryIndex")
                 .tableName(testConfiguration.getTransferTrackerDb())
-                .keyConditionExpression("#state :val1")
+                .keyConditionExpression("#is_active = :is_active_val")
+                .filterExpression("#created_at < :created_at_val")
                 .expressionAttributeNames(expressionAttributeName)
                 .expressionAttributeValues(expressionAttributeValues)
                 .build();

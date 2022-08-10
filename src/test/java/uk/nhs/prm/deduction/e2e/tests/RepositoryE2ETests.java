@@ -107,7 +107,7 @@ public class RepositoryE2ETests {
         repoIncomingQueue.send(triggerMessage);
 
         assertTrue(trackerDb.conversationIdExists(triggerMessage.conversationId()));
-        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_REQUEST_SENT"));
+        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_REQUEST_SENT", true));
     }
 
 
@@ -164,7 +164,7 @@ public class RepositoryE2ETests {
 
         repoIncomingQueue.send(triggerMessage);
         assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
-        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE", false));
 //        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString())); TODO change dev patient to dev synthetic patient
     }
 
@@ -185,7 +185,7 @@ public class RepositoryE2ETests {
                 triggerMessage.conversationId(),
                 largeEhr.timeoutMinutes(),
                 TimeUnit.MINUTES));
-        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE", false));
     }
 
     private static Stream<Arguments> varietyOfLargeEhrs() {
