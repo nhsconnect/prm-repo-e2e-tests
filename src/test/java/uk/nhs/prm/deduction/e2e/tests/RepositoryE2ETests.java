@@ -168,6 +168,7 @@ public class RepositoryE2ETests {
         );
     }
 
+    @Disabled("Running manually in dev environment.")
     @Test
     void shouldHandleMultipleEhrsAtOnceLoadTest_PerfTest() {
         var conversationIdsList = new ArrayList<String>();
