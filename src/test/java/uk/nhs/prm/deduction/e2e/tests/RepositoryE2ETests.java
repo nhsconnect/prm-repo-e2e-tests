@@ -26,8 +26,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -172,7 +174,7 @@ public class RepositoryE2ETests {
 
         Instant requestedAt = null;
         var iterationIndex = 1;
-        for (Arguments sourceSystemAndEhr : loadTestScenarios().toList()) {
+        for (Arguments sourceSystemAndEhr : loadTestScenarios().collect(toList())) {
             var sourceSystem = (Gp2GpSystem) sourceSystemAndEhr.get()[0];
             var ehr = (LargeEhrVariant) sourceSystemAndEhr.get()[1];
             var patient = ehr.patient();
