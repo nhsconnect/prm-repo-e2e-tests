@@ -40,6 +40,7 @@ def inspect_ebxml(ebxml):
 def inspect_attachments(id, attachments):
   print('message attachments', len(attachments))
   for attachment in attachments:
+    print('attachment keys', attachment.keys())
     print('attachment content_id', attachment['content_id'])
     print('attachment content_type', attachment['content_type'])
     print('attachment is base 64?', attachment['is_base64'])
