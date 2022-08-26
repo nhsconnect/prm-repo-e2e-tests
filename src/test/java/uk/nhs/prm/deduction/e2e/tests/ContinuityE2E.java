@@ -122,7 +122,7 @@ public class ContinuityE2E {
     }
 
     @Test
-    @EnabledIfEnvironmentVariable(named = "REPO_PROCESS_ONLY_SAFE_LISTED_ODS_CODES", matches = "true")
+    @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="false") //The toggle status for repo_process_only_safe_listed_ods_codes is true in dev and test
     public void shouldPutAMessageForASuspendedPatientWithSafeListedODSCodeOnRepoIncomingWhenTheToggleIsTrue() {
         String nemsMessageId = randomNemsMessageId();
         String safeListedOdsCode = EMIS_PTL_INT;
