@@ -38,6 +38,7 @@ pipelines:
     environment_variables:
       NHS_ENVIRONMENT: dev
       UPDATE_MOF_TO_REPO: true
+      REPO_PROCESS_ONLY_SAFE_LISTED_ODS_CODES: true
     stages:
       - test:
           clean_workspace: true
@@ -95,6 +96,7 @@ pipelines:
     environment_variables:
       NHS_ENVIRONMENT: test
       UPDATE_MOF_TO_REPO: false
+      REPO_PROCESS_ONLY_SAFE_LISTED_ODS_CODES: false
     stages:
       - test:
           clean_workspace: true

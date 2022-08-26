@@ -145,6 +145,10 @@ public class TestConfiguration {
         return getQueueUri("ehr-transfer-service-repo-incoming");
     }
 
+    public String repoIncomingObservabilityQueueUri() {
+        return getQueueUri("suspension-service-repo-incoming-observability");
+    }
+
     public String getTransferTrackerDb() {
         return getEnvironmentName() + "-ehr-transfer-service-transfer-tracker";
     }
@@ -154,7 +158,7 @@ public class TestConfiguration {
     }
 
     public String getSafeListedPatientList() {
-        return  awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/safe-listed-patients-nhs-numbers", getEnvironmentName()));
+        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/safe-listed-patients-nhs-numbers", getEnvironmentName()));
     }
 
     private String getQueueUri(String name) {
@@ -176,6 +180,7 @@ public class TestConfiguration {
     public String getActiveMqEndpoint0() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/output/prm-deductions-infra/openwire-endpoint-0", getEnvironmentName()));
     }
+
     public String getActiveMqEndpoint1() {
 
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/output/prm-deductions-infra/openwire-endpoint-1", getEnvironmentName()));
@@ -252,7 +257,9 @@ public class TestConfiguration {
         return getQueueUri("ehr-transfer-service-small-ehr-observability");
     }
 
-    public String negativeAcknowledgementQueueUri() {return getQueueUri("ehr-transfer-service-negative-acknowledgments-observability"); }
+    public String negativeAcknowledgementQueueUri() {
+        return getQueueUri("ehr-transfer-service-negative-acknowledgments-observability");
+    }
 
     public String ehrCompleteQueueUri() {
         return getQueueUri("ehr-transfer-service-ehr-complete-observability");
@@ -269,6 +276,7 @@ public class TestConfiguration {
     public String getMqUserName() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-username", getEnvironmentName()));
     }
+
     public String getMqPassword() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-password", getEnvironmentName()));
     }

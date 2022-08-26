@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.ehr_transfer;
+package uk.nhs.prm.deduction.e2e.suspensions;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -8,11 +8,11 @@ import uk.nhs.prm.deduction.e2e.queue.QueueMessageHelper;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 @Component
-public class RepoIncomingQueue extends QueueMessageHelper {
+public class RepoIncomingObservabilityQueue extends QueueMessageHelper {
 
     @Autowired
-    public RepoIncomingQueue(SqsQueue sqsQueue, TestConfiguration configuration) {
-        super(sqsQueue, configuration.repoIncomingQueueUri());
+    public RepoIncomingObservabilityQueue(SqsQueue sqsQueue, TestConfiguration configuration) {
+        super(sqsQueue, configuration.repoIncomingObservabilityQueueUri());
     }
 
     public void send(RepoIncomingMessage message) {

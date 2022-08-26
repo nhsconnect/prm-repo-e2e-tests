@@ -2,6 +2,7 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.HttpClientErrorException;
@@ -120,6 +121,22 @@ public class ContinuityE2E {
         assertThat(mofUpdatedMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
+    @Test
+    @EnabledIfEnvironmentVariable(named = "REPO_PROCESS_ONLY_SAFE_LISTED_ODS_CODES", matches = "true")
+    public void shouldPutAMessageForASuspendedPatientWithSafeListedODSCodeOnRepoIncomingWhenTheToggleIsTrue() {
+        String nemsMessageId = randomNemsMessageId();
+        String safeListedOdsCode = EMIS_PTL_INT;
+        var now = now();
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", SUSPENDED_PATIENT_NHS_NUMBER, nemsMessageId, safeListedOdsCode, now);
+
+        setManagingOrganisationToEMISOdsCode(SUSPENDED_PATIENT_NHS_NUMBER);
+
+        meshMailbox.postMessage(nemsSuspension);
+
+        assertThat(repoIncomingObservabilityQueue.getMessageContaining(nemsMessageId));
+
+    }
+
 
     @Test
     @Order(2)
@@ -129,7 +146,7 @@ public class ContinuityE2E {
         var now = now();
         String currentlyRegisteredPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp,now);
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp, now);
 
         NoLongerSuspendedMessage expectedMessageOnQueue = new NoLongerSuspendedMessage(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
