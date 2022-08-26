@@ -8,13 +8,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
-import uk.nhs.prm.deduction.e2e.models.DeceasedPatientMessage;
-import uk.nhs.prm.deduction.e2e.models.MofUpdatedMessage;
-import uk.nhs.prm.deduction.e2e.models.NoLongerSuspendedMessage;
-import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
+import uk.nhs.prm.deduction.e2e.models.*;
 import uk.nhs.prm.deduction.e2e.nems.MeshForwarderQueue;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventProcessorUnhandledQueue;
+import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
@@ -38,6 +36,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
 
 @SpringBootTest(classes = {
         ContinuityE2E.class,
+        RepoIncomingObservabilityQueue.class,
         MeshMailbox.class,
         SqsQueue.class,
         TestConfiguration.class,
@@ -83,6 +82,13 @@ public class ContinuityE2E {
     @Autowired
     private TestConfiguration config;
     private EhrRepoClient ehrRepoClient;
+    @Autowired
+    RepoIncomingObservabilityQueue repoIncomingObservabilityQueue;
+
+    PdsAdaptorClient pdsAdaptorClient;
+
+    private final String EMIS_PTL_INT = "N82668";
+    private final String SUSPENDED_PATIENT_NHS_NUMBER = "9693796047";
 
     @BeforeAll
     void init() {
@@ -92,6 +98,8 @@ public class ContinuityE2E {
         nemsEventProcessorUnhandledQueue.deleteAllMessages();
         notReallySuspensionsMessageQueue.deleteAllMessages();
         reRegistrationMessageObservabilityQueue.deleteAllMessages();
+        repoIncomingObservabilityQueue.deleteAllMessages();
+        pdsAdaptorClient = new PdsAdaptorClient("e2e-test", config.getPdsAdaptorE2ETestApiKey(), config.getPdsAdaptorUrl());
     }
 
     @Test
@@ -159,6 +167,7 @@ public class ContinuityE2E {
 
     @Test
     @Order(4)
+    @Disabled(" 'process_only_synthetic_or_safe_listed_patients' toggle is set to false across all the environments. ")
     public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
@@ -234,6 +243,14 @@ public class ContinuityE2E {
         ehrRepoClient = new EhrRepoClient(config.getEhrRepoE2EApiKey(), config.getEhrRepoUrl());
         ehrRepoClient.createEhr(patientNhsNumber);
         assertThat(ehrRepoClient.getEhrResponse(patientNhsNumber)).isEqualTo("200 OK");
+    }
+
+    private void setManagingOrganisationToEMISOdsCode(String nhsNumber) {
+        var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
+        var repoOdsCode = Gp2GpSystem.repoInEnv(config).odsCode();
+        if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
+            pdsAdaptorClient.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.getRecordETag());
+        }
     }
 
     public void log(String message) {
