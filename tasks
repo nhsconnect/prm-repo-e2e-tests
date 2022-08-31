@@ -165,7 +165,7 @@ case "${command}" in
       dojo "./tasks _test_perf_unit"
       ;;
   _test_performance)
-      gradle test --tests *PerformanceTest
+      gradle test --tests *.PerformanceTest
       ;;
   test_performance_local) # using local user auth
       check_env
