@@ -10,14 +10,20 @@ import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessage;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = {
+        AutoRefreshingRoleAssumingSqsClient.class,
+        AssumeRoleCredentialsProviderFactory.class,
         RepoInPerformanceTest.class,
         RepoIncomingQueue.class,
+        SqsQueue.class,
         TestConfiguration.class,
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
