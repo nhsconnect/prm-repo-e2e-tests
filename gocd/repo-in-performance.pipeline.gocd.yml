@@ -1,0 +1,38 @@
+format_version: 4
+
+common:
+  pipeline-template: &pipeline-template
+    group: performance
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    stages:
+      - performance:
+          clean_workspace: true
+          approval: manual
+          jobs:
+            performance_test:
+              artifacts:
+                - build:
+                    source: build/reports/performance/
+                - build:
+                    source: build/reports/tests/
+              tabs:
+                TestReport: test/index.html
+                Durations: build/reports/performance/durations.png
+                Throughput: build/reports/performance/throughput.png
+              resources:
+                - docker
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_repo_in_performance
+
+pipelines:
+  repo_in_perf:
+    <<: *pipeline-template
+    environment_variables:
+      NHS_ENVIRONMENT: perf

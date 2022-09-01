@@ -184,6 +184,21 @@ case "${command}" in
 
       dojo "./tasks _test_performance"
       ;;
+  _test_repo_in_performance)
+      gradle test --tests *.RepoInPerformanceTest
+      ;;
+  test_repo_in_performance)
+      check_env
+
+      assume_environment_role $NHS_ENVIRONMENT
+      set_required_role_arn_from_assumed_role
+      echo "set REQUIRED_ROLE_ARN to $REQUIRED_ROLE_ARN for long-running test process"
+
+      echo "NB: clearing temporary auth session credentials to allow native AWS auth access to re-assume role after expiry"
+      _clear_aws_env_credentials
+
+      dojo "./tasks _test_repo_in_performance"
+      ;;
   _test_technical)
       gradle test --tests *ChangeOfGPMessageReceivedTest
       ;;
