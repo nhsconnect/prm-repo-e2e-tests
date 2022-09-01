@@ -69,7 +69,7 @@ public class TestData {
         return perfList;
     }
 
-    private static String generateRandomNhsNumber() {
+    public static String generateRandomNhsNumber() {
         var randonSevenDigitNumber = (long) Math.floor(Math.random() * 9_000_000L) + 1_000_000L;
         return "969" + randonSevenDigitNumber;
     }
