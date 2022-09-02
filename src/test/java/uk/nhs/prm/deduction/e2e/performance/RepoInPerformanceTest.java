@@ -13,6 +13,8 @@ import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.DbClient;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 
 import java.util.ArrayList;
 
@@ -21,10 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(classes = {
         AutoRefreshingRoleAssumingSqsClient.class,
         AssumeRoleCredentialsProviderFactory.class,
+        DbClient.class,
         RepoInPerformanceTest.class,
         RepoIncomingQueue.class,
         SqsQueue.class,
         TestConfiguration.class,
+        TrackerDb.class,
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepoInPerformanceTest {
@@ -33,6 +37,9 @@ public class RepoInPerformanceTest {
 
     @Autowired
     TestConfiguration config;
+
+    @Autowired
+    TrackerDb trackerDb;
 
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
@@ -43,20 +50,20 @@ public class RepoInPerformanceTest {
             var message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
                     .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-//                    .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
                     .build();
             repoIncomingMessages.add(message);
         }
 
-//        Send high amount of messages to repo-incoming-queue with unique conversation id and nhs number
+        // Send high amount of messages to repo-incoming-queue with unique conversation id and nhs number
         repoIncomingMessages.forEach(message -> repoIncomingQueue.send(message));
 
-        //... ensure all is in tracker db? Or countdown on the queue?
+        // ... ensure all is in tracker db? Or countdown on the queue?
+        repoIncomingMessages.forEach(message ->
+            assertTrue(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:TRANSFER_TO_REPO_STARTED"))
+        );
 
 //        (after all messages sent) Send small EHR message (~4Mb) to ActiveMQ MHS inbound queue via AMQP with corresponding conversation id
 
-
         // shall we assert on being the records at the other end - transfer complete observability
-        assertTrue(false);
     }
 }
