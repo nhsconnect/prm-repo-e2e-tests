@@ -43,7 +43,7 @@ public class RepoInPerformanceTest {
             var message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
                     .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                    .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
+//                    .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
                     .build();
             repoIncomingMessages.add(message);
         }
