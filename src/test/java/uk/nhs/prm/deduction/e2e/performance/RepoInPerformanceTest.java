@@ -59,7 +59,7 @@ public class RepoInPerformanceTest {
 
         // ... ensure all is in tracker db? Or countdown on the queue?
         repoIncomingMessages.forEach(message ->
-            assertTrue(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:TRANSFER_TO_REPO_STARTED"))
+            assertTrue(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:TRANSFER_TO_REPO_STARTED", 300))
         );
 
 //        (after all messages sent) Send small EHR message (~4Mb) to ActiveMQ MHS inbound queue via AMQP with corresponding conversation id

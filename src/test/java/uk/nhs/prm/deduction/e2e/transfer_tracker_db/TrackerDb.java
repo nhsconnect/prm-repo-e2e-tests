@@ -27,13 +27,16 @@ public class TrackerDb {
     }
 
     public boolean statusForConversationIdIs(String conversationId, String status) {
-        await().atMost(120, TimeUnit.SECONDS)
+        return statusForConversationIdIs(conversationId, status, 120);
+    }
+
+    public boolean statusForConversationIdIs(String conversationId, String status, long timeout) {
+        await().atMost(timeout, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
                 .until(() -> dbClient.queryDbWithConversationId(conversationId).item().get("state").s(), equalTo(status));
         return true;
     }
-
 
     public String waitForStatusMatching(String conversationId, String partialStatus) {
         return await().atMost(120, TimeUnit.SECONDS)
