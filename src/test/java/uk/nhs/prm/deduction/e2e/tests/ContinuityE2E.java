@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.deduction.e2e.active_suspensions_details_db.ActiveSuspensionsDetailsDB;
+import uk.nhs.prm.deduction.e2e.active_suspensions_details_db.DbClient;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.models.*;
@@ -32,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
 import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventFromTemplate;
 
@@ -54,6 +57,8 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
         MofNotUpdatedMessageQueue.class,
         BasicSqsClient.class,
         AssumeRoleCredentialsProviderFactory.class,
+        ActiveSuspensionsDetailsDB.class,
+        DbClient.class,
         AutoRefreshingRoleAssumingSqsClient.class,
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -85,6 +90,8 @@ public class ContinuityE2E {
     private EhrRepoClient ehrRepoClient;
     @Autowired
     RepoIncomingObservabilityQueue repoIncomingObservabilityQueue;
+    @Autowired
+    ActiveSuspensionsDetailsDB activeSuspensionsDetailsDB;
 
     PdsAdaptorClient pdsAdaptorClient;
 
@@ -250,6 +257,21 @@ public class ContinuityE2E {
 
         assertThat(meshForwarderQueue.hasMessage(reRegistration.body()));
         assertThat(reRegistrationMessageObservabilityQueue.hasMessage(expectedMessageOnQueue));
+    }
+
+    @Test
+    @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="true")
+    void shouldSaveActiveSuspensionDetailsInDbWhenMofUpdatedToPreviousGp() {
+        String nemsMessageId = randomNemsMessageId();
+        String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
+        var now = now();
+        String previousGp = generateRandomOdsCode();
+        System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
+
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
+        meshMailbox.postMessage(nemsSuspension);
+
+        assertTrue(activeSuspensionsDetailsDB.nhsNumberExists(suspendedPatientNhsNumber));
     }
 
     private static String now() {
