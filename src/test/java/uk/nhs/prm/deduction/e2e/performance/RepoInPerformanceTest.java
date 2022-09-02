@@ -46,6 +46,8 @@ public class RepoInPerformanceTest {
         var numberOfRecordToBeProcessed = 2;
         var repoIncomingMessages = new ArrayList<RepoIncomingMessage>();
 
+        System.out.println("We are in env " + config.getEnvironmentName());
+
         for (int i = 0; i < numberOfRecordToBeProcessed ; i++) {
             var message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
@@ -56,6 +58,10 @@ public class RepoInPerformanceTest {
 
         // Send high amount of messages to repo-incoming-queue with unique conversation id and nhs number
         repoIncomingMessages.forEach(message -> repoIncomingQueue.send(message));
+
+        System.out.println("About to query first conversation id...");
+        var firstConversationIdExists = trackerDb.conversationIdExists(repoIncomingMessages.get(0).conversationId());
+        System.out.println("Result is: " + firstConversationIdExists);
 
         // ... ensure all is in tracker db? Or countdown on the queue?
         repoIncomingMessages.forEach(message ->

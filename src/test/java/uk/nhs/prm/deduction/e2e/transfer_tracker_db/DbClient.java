@@ -25,7 +25,7 @@ public class DbClient {
                 .tableName(testConfiguration.getTransferTrackerDb())
                 .key(key)
                 .build()));
-        System.out.println("query response is: "+getItemResponse);
+        System.out.println("query response is: " + getItemResponse);
         return getItemResponse;
     }
 }
