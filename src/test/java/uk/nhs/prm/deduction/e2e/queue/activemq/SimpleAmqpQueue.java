@@ -43,7 +43,8 @@ public class SimpleAmqpQueue {
         // perf only
         var activeMqHostname = "b-b7552552-9d19-43a6-91a7-677285f32b04-1.mq.eu-west-2.amazonaws.com";
         var ctx = new AMQPContext(AMQPContext.CLIENT);
-        var connection = new Connection(ctx, activeMqHostname, 5671, config.getMqUserName(), config.getMqPassword());
+//        var connection = new Connection(ctx, activeMqHostname, 5671, config.getMqUserName(), config.getMqPassword());
+        var connection = new Connection(ctx, activeMqHostname, 5671, true);
         try {
             connection.connect();
             var session = connection.createSession(100, 100);
