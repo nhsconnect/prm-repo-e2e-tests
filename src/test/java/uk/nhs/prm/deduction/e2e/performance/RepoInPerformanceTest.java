@@ -75,7 +75,7 @@ public class RepoInPerformanceTest {
 //        System.out.println("dlq message: " + dlqMessage);
 
         var firstConversationId = repoIncomingMessages.get(0).conversationId();
-        var fileName =  "ehr/small-ehr";
+        var fileName =  "small-ehr";
 
         System.out.println("About to read small ehr file...");
         var smallEhr = getMessageWithUniqueConversationIdAndMessageId(fileName, firstConversationId);
