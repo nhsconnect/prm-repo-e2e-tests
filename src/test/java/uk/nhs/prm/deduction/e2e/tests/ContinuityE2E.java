@@ -260,7 +260,6 @@ public class ContinuityE2E {
     }
 
     @Test
-    @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="true")
     void shouldSaveActiveSuspensionDetailsInDbWhenMofUpdatedToPreviousGp() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
