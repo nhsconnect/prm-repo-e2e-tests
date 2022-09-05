@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.queue;
+package uk.nhs.prm.deduction.e2e.queue.activemq;
 
 import com.swiftmq.amqp.AMQPContext;
 import com.swiftmq.amqp.v100.client.*;
