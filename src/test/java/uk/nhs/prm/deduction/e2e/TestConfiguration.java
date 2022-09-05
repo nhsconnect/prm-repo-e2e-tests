@@ -181,15 +181,6 @@ public class TestConfiguration {
         return String.format("https://ehr-repo.%s.patient-deductions.nhs.uk/", getEnvSuffix());
     }
 
-    public String getActiveMqEndpoint0() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/output/prm-deductions-infra/openwire-endpoint-0", getEnvironmentName()));
-    }
-
-    public String getActiveMqEndpoint1() {
-
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/output/prm-deductions-infra/openwire-endpoint-1", getEnvironmentName()));
-    }
-
     private String getAwsAccountNo() {
         if (cachedAwsAccountNo == null) {
             cachedAwsAccountNo = fetchAwsAccountNo();
