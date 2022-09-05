@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    testImplementation 'com.swiftmq:swiftmq-client:12.3.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'software.amazon.awssdk:ssm:2.17.71'
     testImplementation 'software.amazon.awssdk:sqs:2.17.71'
