@@ -283,4 +283,10 @@ public class TestConfiguration {
     public String parsingDLQ() {
         return getQueueUri("ehr-transfer-service-parsing-dlq");
     }
+
+    public String getAmqpEndpoint1() {
+        var devEndpoint = "b-09f25472-2c58-4386-ad2c-675ce15efbd6-1.mq.eu-west-2.amazonaws.com";
+        var perfEndpoint = "b-b7552552-9d19-43a6-91a7-677285f32b04-1.mq.eu-west-2.amazonaws.com";
+        return getEnvironmentName().equals("dev") ? devEndpoint : perfEndpoint;
+    }
 }
