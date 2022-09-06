@@ -13,14 +13,13 @@ import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessage;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.DbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
-import javax.jms.JMSException;
 import java.util.ArrayList;
 
 import static java.util.UUID.randomUUID;
@@ -49,7 +48,7 @@ public class RepoInPerformanceTest {
     TrackerDb trackerDb;
 
     @Test
-    public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() throws JMSException {
+    public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
         var numberOfRecordToBeProcessed = 2;
         var repoIncomingMessages = new ArrayList<RepoIncomingMessage>();
 
@@ -64,15 +63,11 @@ public class RepoInPerformanceTest {
         // Send high amount of messages to repo-incoming-queue with unique conversation id and nhs number
         repoIncomingMessages.forEach(message -> repoIncomingQueue.send(message));
 
-        // TODO: to be fixed
+        // TODO: to be fixed in perf env (ok in dev)
         // ensure messages are in tracker db
-//        repoIncomingMessages.forEach(message ->
-//            assertTrue(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:TRANSFER_TO_REPO_STARTED", 300))
-//        );
-
-//        (after all messages sent) Send small EHR message (~4Mb) to ActiveMQ MHS inbound queue via AMQP with corresponding conversation id
-//        var dlqMessage = "Test: can be parsed as string, not as ParsedMessage class";
-//        System.out.println("dlq message: " + dlqMessage);
+        repoIncomingMessages.forEach(message ->
+            assertTrue(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:TRANSFER_TO_REPO_STARTED", 300))
+        );
 
         var firstConversationId = repoIncomingMessages.get(0).conversationId();
         var fileName =  "small-ehr";
@@ -99,6 +94,4 @@ public class RepoInPerformanceTest {
         message = message.replaceAll("__MESSAGE_ID__", messageId);
         return message;
     }
-
-    //_CONVERSATION_ID_ _MESSAGE_ID_
 }
