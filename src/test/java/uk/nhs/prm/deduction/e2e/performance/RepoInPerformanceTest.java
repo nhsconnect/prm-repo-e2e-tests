@@ -69,7 +69,6 @@ public class RepoInPerformanceTest {
 //            assertTrue(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:TRANSFER_TO_REPO_STARTED", 300))
 //        );
 
-        var firstConversationId = repoIncomingMessages.get(0).conversationId();
         var fileName =  "small-ehr";
 
         System.out.println("About to create SimpleAmqpQueue...");
@@ -79,7 +78,7 @@ public class RepoInPerformanceTest {
         repoIncomingMessages.forEach(message -> {
             var conversationId = message.conversationId();
             var smallEhr = getMessageWithUniqueConversationIdAndMessageId(fileName, conversationId);
-            inboundQueueFromMhs.sendMessage(smallEhr, firstConversationId);
+            inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
         });
         inboundQueueFromMhs.close();
 
