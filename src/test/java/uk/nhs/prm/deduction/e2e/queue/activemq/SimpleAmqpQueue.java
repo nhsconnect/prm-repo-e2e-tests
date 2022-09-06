@@ -15,9 +15,11 @@ import java.util.HashMap;
 
 public class SimpleAmqpQueue {
     private final TestConfiguration config;
+    private final Producer producer;
 
     public SimpleAmqpQueue(TestConfiguration config) {
         this.config = config;
+        this.producer = createProducer();
     }
 
     public void sendMessage(String messageBody, String correlationId) {
@@ -30,16 +32,22 @@ public class SimpleAmqpQueue {
             msg.setApplicationProperties(properties);
             msg.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
 
-            var p = createProducer();
-            p.send(msg);
-            p.close();
+            producer.send(msg);
         }
         catch (AMQPException | IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    // TODO: create producer once, not 1 per message sent
+    public void close() {
+        try {
+            producer.close();
+        }
+        catch (AMQPException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private Producer createProducer() {
         var activeMqHostname = config.getAmqpEndpoint1();
         var ctx = new AMQPContext(AMQPContext.CLIENT);

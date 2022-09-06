@@ -72,19 +72,20 @@ public class RepoInPerformanceTest {
         var firstConversationId = repoIncomingMessages.get(0).conversationId();
         var fileName =  "small-ehr";
 
-        System.out.println("About to read small ehr file...");
-        var smallEhr = getMessageWithUniqueConversationIdAndMessageId(fileName, firstConversationId);
-
         System.out.println("About to create SimpleAmqpQueue...");
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
-        System.out.println("About to send message...");
-        inboundQueueFromMhs.sendMessage(smallEhr, firstConversationId);
+        System.out.println("About to send messages...");
+        repoIncomingMessages.forEach(message -> {
+            var conversationId = message.conversationId();
+            var smallEhr = getMessageWithUniqueConversationIdAndMessageId(fileName, conversationId);
+            inboundQueueFromMhs.sendMessage(smallEhr, firstConversationId);
+        });
+        inboundQueueFromMhs.close();
 
         System.out.println("All good! :)");
-        assertTrue(true);
-
         // shall we assert on being the records at the other end - transfer complete observability
+        assertTrue(true);
     }
 
     private String getMessageWithUniqueConversationIdAndMessageId(String fileName, String conversationId) {
