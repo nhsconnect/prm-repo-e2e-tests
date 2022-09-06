@@ -58,6 +58,7 @@ for filename in mhs_json_filenames:
 
   id = msgid(filename)
   make_dir(id)
+  print('processing message id', id)
 
   inspect_ebxml(data['ebXML'])
   inspect_attachments(id, data['attachments'])
