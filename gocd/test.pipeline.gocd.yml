@@ -56,7 +56,17 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
+                      - ./tasks check_gocd_job
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
                       - ./tasks test_continuity_e2e
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks check_gocd_job
   continuity-e2e-tests.test:
     group: continuity-service
     label_template: '${git[:8]}'
