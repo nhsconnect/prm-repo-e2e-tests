@@ -41,16 +41,16 @@ public class SimpleAmqpQueue {
     // TODO: create producer once, not 1 per message sent
     private Producer createProducer() {
         // perf only
-        var activeMqHostname = "b-b7552552-9d19-43a6-91a7-677285f32b04-1.mq.eu-west-2.amazonaws.com";
+        var activeMqHostname = "b-b7552552-9d19-43a6-91a7-677285f32b04-1.mq.eu-west-2.amazonaws.com"; // PERF
         var ctx = new AMQPContext(AMQPContext.CLIENT);
-//        var connection = new Connection(ctx, activeMqHostname, 5671, config.getMqUserName(), config.getMqPassword());
-        var connection = new Connection(ctx, activeMqHostname, 5671, true);
+        var connection = new Connection(ctx, activeMqHostname, 5671, config.getMqUserName(), config.getMqPassword());
         try {
             connection.connect();
             var session = connection.createSession(100, 100);
             return session.createProducer("inbound", QoS.AT_LEAST_ONCE);
         }
         catch (IOException | AMQPException | AuthenticationException | UnsupportedProtocolVersionException e) {
+            System.out.println(e.getMessage());
             throw new RuntimeException(e);
         }
     }
