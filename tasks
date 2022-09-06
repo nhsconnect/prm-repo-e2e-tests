@@ -226,6 +226,25 @@ case "${command}" in
       GOCD_API_TOKEN_PARAM="/repo/user-input/gocd-access-token"
       GOCD_API_TOKEN=$(aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name ${GOCD_API_TOKEN_PARAM} | jq -r .Parameter.Value)
       GOCD_HOST=prod.gocd.patient-deductions.nhs.uk
+
+      # simplified pipelines next steps:
+
+      # create versions manifest - then can just check is identical at end of tests?
+      # ... well not quite if you want to optimise - as e.g. if one gets scheduled or assigned
+      # but is not building yet, it needn't invalidate run, but for simplicity making sure all are in state completed
+      # at start and end of run, including which pipeline stage and job run number
+
+      # if start and end manifests not identical, fail build due to potential changes while tests running (tests
+      # should then automatically re-run when in-flight or completed change triggers this test job again)
+
+      # next is to find latest previous passing run of this e2e tests job
+
+      # then next is to compare this manifests versions to previous passing manifest, and trigger next stages in those
+      # pipelines that have different version IDs... or maybe actually safer to check latest completed next stage on
+      # each microservice pipeline and trigger next stage if doesn't match? probably the prior - stick to e2e tests
+      # triggering with reference to itself and prebvious runs - if other failures or re-runs occur that is a case for
+      # manual repair
+
       echo mesh-forwarder deploy is $(get_latest_stage_run_status prm-deductions-mesh-forwarder.dev deploy)
       echo nems-event-processor deploy is $(get_latest_stage_run_status prm-deductions-nems-event-processor.dev deploy)
       echo pds-adaptor deploy is $(get_latest_stage_run_status prm-deductions-pds-adaptor.dev deploy)
