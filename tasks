@@ -97,6 +97,18 @@ function set_required_role_arn_from_assumed_role() {
   export REQUIRED_ROLE_ARN=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Arn")
 }
 
+function get_stage_run_history() {
+  curl --silent --fail "https://$GOCD_HOST/go/api/stages/$1/$2/history" \
+        $GOCD_API_CURL_OPTIONS \
+        -H "Authorization: bearer $GOCD_API_TOKEN" \
+        -H 'Accept: application/vnd.go.cd.v3+json'
+}
+
+function get_latest_stage_run_status() {
+  get_stage_run_history $1 $2 | jq -r .stages[0].jobs[0].state
+}
+
+
 ###########
 ## TASKS ##
 ###########
@@ -210,8 +222,18 @@ case "${command}" in
       export TARGET_MESSAGE_ID=be6f8d45-913a-4c67-89f3-10d131fc332c
       gradle ehrTool
       ;;
-  ehr_tool)
-      dojo './tasks _ehr_tool'
+  _check_gocd_job)
+      GOCD_API_TOKEN_PARAM="/repo/user-input/gocd-access-token"
+      GOCD_API_TOKEN=$(aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name ${GOCD_API_TOKEN_PARAM} | jq -r .Parameter.Value)
+      GOCD_HOST=prod.gocd.patient-deductions.nhs.uk
+      echo mesh-forwarder deploy is $(get_latest_stage_run_status prm-deductions-mesh-forwarder.dev deploy)
+      echo nems-event-processor deploy is $(get_latest_stage_run_status prm-deductions-nems-event-processor.dev deploy)
+      echo pds-adaptor deploy is $(get_latest_stage_run_status prm-deductions-pds-adaptor.dev deploy)
+      echo suspension-service deploy is $(get_latest_stage_run_status suspension-service.dev deploy)
+      echo re-registration-service deploy is $(get_latest_stage_run_status re-registration-service.dev deploy)
+      ;;
+  check_gocd_job)
+      dojo -c Dojofile-infra "./tasks _check_gocd_job $2"
       ;;
   *)
       echo "Invalid command: '${command}'"
