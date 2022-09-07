@@ -61,6 +61,11 @@ public class RepoInPerformanceTest {
     }
 
     @Test
+    public void plainAttemptToQueryRecordAlreadyInTrackerDb() {
+        assertTrue(trackerDb.statusForConversationIdIs("079952ba-5b1e-410e-b2dc-1578f5741205", "ACTION:TRANSFER_TO_REPO_STARTED", 300));
+    }
+
+    @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
         var numberOfRecordToBeProcessed = 2;
         var repoIncomingMessages = new ArrayList<RepoIncomingMessage>();
