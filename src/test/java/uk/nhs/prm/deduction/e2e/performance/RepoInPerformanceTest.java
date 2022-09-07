@@ -48,7 +48,7 @@ public class RepoInPerformanceTest {
     TrackerDb trackerDb;
 
     @Test
-    public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
+    public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() throws InterruptedException {
         var numberOfRecordToBeProcessed = 2;
         var repoIncomingMessages = new ArrayList<RepoIncomingMessage>();
 
@@ -68,6 +68,7 @@ public class RepoInPerformanceTest {
 //        repoIncomingMessages.forEach(message ->
 //            assertTrue(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:TRANSFER_TO_REPO_STARTED", 300))
 //        );
+        Thread.sleep(2000); // To be removed when assertion above is fixed
 
         var fileName =  "small-ehr";
 
