@@ -14,9 +14,9 @@ pipelines:
 #      mesh-forwarder:
 #        pipeline: mesh-forwarder
 #        stage: deploy.dev
-#      nems-event-processor:
-#        pipeline: nems-event-processor
-#        stage: deploy.dev
+      nems-event-processor:
+        pipeline: nems-event-processor
+        stage: deploy.dev
       pds-adaptor:
         pipeline: pds-adaptor
         stage: deploy.dev
