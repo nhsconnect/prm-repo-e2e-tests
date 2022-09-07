@@ -2,6 +2,7 @@ package uk.nhs.prm.deduction.e2e.transfer_tracker_db;
 
 
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -31,10 +32,12 @@ public class TrackerDb {
     }
 
     public boolean statusForConversationIdIs(String conversationId, String status, long timeout) {
+        var defaultState = "NOPE-AKA-DEFAULT-VALUE-TO-AVOID-NULL-EXCEPTION";
         await().atMost(timeout, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> transferTrackerDbClient.queryDbWithConversationId(conversationId).item().get("state").s(), equalTo(status));
+                .until(() -> transferTrackerDbClient.queryDbWithConversationId(conversationId)
+                        .item().getOrDefault("state", AttributeValue.builder().s(defaultState).build()).s(), equalTo(status));
         return true;
     }
 
