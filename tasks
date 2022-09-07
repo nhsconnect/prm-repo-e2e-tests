@@ -245,11 +245,19 @@ case "${command}" in
       # triggering with reference to itself and prebvious runs - if other failures or re-runs occur that is a case for
       # manual repair
 
+      # think about / try inline e2e-tests in microservices pipelines? probs need to check only one e2e tests running at
+      # a time as well as no other deploys going on
+
+      # existing microservice pipelines
       echo mesh-forwarder deploy is $(get_latest_stage_run_status prm-deductions-mesh-forwarder.dev deploy)
       echo nems-event-processor deploy is $(get_latest_stage_run_status prm-deductions-nems-event-processor.dev deploy)
-      echo pds-adaptor deploy is $(get_latest_stage_run_status prm-deductions-pds-adaptor.dev deploy)
       echo suspension-service deploy is $(get_latest_stage_run_status suspension-service.dev deploy)
       echo re-registration-service deploy is $(get_latest_stage_run_status re-registration-service.dev deploy)
+
+      # linear spike ones
+      echo spiked pds-adaptor deploy is $(get_latest_stage_run_status pds-adaptor deploy.dev)
+      echo automatic material dependency locator for pds-adaptor material is $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR
+
       ;;
   check_gocd_job)
       dojo -c Dojofile-infra "./tasks _check_gocd_job $2"
