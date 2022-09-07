@@ -263,6 +263,7 @@ public class ContinuityE2E {
     }
 
     @Test
+    @Disabled("WIP for PRMT-2754")
     @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="true")
     void shouldSaveActiveSuspensionDetailsInDbWhenMofUpdatedToPreviousGp() {
         String nemsMessageId = randomNemsMessageId();
