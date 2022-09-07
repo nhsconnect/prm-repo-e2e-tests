@@ -97,11 +97,37 @@ function set_required_role_arn_from_assumed_role() {
   export REQUIRED_ROLE_ARN=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Arn")
 }
 
+function init_gocd_api_access() {
+  if [[ -z "${GOCD_API_TOKEN}" ]]; then
+    export GOCD_API_TOKEN_PARAM="/repo/user-input/gocd-access-token"
+    export GOCD_API_TOKEN=$(aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name ${GOCD_API_TOKEN_PARAM} | jq -r .Parameter.Value)
+    export GOCD_HOST=prod.gocd.patient-deductions.nhs.uk
+  fi
+}
+
 function get_stage_run_history() {
-  curl --silent --fail "https://$GOCD_HOST/go/api/stages/$1/$2/history" \
-        $GOCD_API_CURL_OPTIONS \
-        -H "Authorization: bearer $GOCD_API_TOKEN" \
-        -H 'Accept: application/vnd.go.cd.v3+json'
+  local pipeline_name=$1
+  local stage_name=$2
+
+  init_gocd_api_access
+
+  curl --silent --fail "https://$GOCD_HOST/go/api/stages/$pipeline_name/$stage_name/history" \
+    $GOCD_API_CURL_OPTIONS \
+    -H "Authorization: bearer $GOCD_API_TOKEN" \
+    -H 'Accept: application/vnd.go.cd.v3+json'
+}
+
+function trigger_stage_run() {
+  local stage_spec=$1
+
+  init_gocd_api_access
+
+  curl --silent --fail "https://$GOCD_HOST/go/api/stages/$stage_spec/run" \
+    $GOCD_API_CURL_OPTIONS \
+    -H "Authorization: bearer $GOCD_API_TOKEN" \
+    -H 'Accept: application/vnd.go.cd.v2+json' \
+    -H 'X-GoCD-Confirm: true' \
+    -X POST
 }
 
 function get_latest_stage_run_status() {
@@ -223,10 +249,6 @@ case "${command}" in
       gradle ehrTool
       ;;
   _check_gocd_job)
-      GOCD_API_TOKEN_PARAM="/repo/user-input/gocd-access-token"
-      GOCD_API_TOKEN=$(aws ssm get-parameter --with-decryption --region ${AWS_DEFAULT_REGION} --name ${GOCD_API_TOKEN_PARAM} | jq -r .Parameter.Value)
-      GOCD_HOST=prod.gocd.patient-deductions.nhs.uk
-
       # simplified pipelines next steps:
 
       # create versions manifest - then can just check is identical at end of tests?
@@ -249,18 +271,25 @@ case "${command}" in
       # a time as well as no other deploys going on
 
       # existing microservice pipelines
-      echo mesh-forwarder deploy is $(get_latest_stage_run_status prm-deductions-mesh-forwarder.dev deploy)
-      echo nems-event-processor deploy is $(get_latest_stage_run_status prm-deductions-nems-event-processor.dev deploy)
-      echo suspension-service deploy is $(get_latest_stage_run_status suspension-service.dev deploy)
-      echo re-registration-service deploy is $(get_latest_stage_run_status re-registration-service.dev deploy)
+#      echo mesh-forwarder deploy is $(get_latest_stage_run_status prm-deductions-mesh-forwarder.dev deploy)
+#      echo nems-event-processor deploy is $(get_latest_stage_run_status prm-deductions-nems-event-processor.dev deploy)
+#      echo suspension-service deploy is $(get_latest_stage_run_status suspension-service.dev deploy)
+#      echo re-registration-service deploy is $(get_latest_stage_run_status re-registration-service.dev deploy)
 
       # linear spike ones
       echo spiked pds-adaptor deploy is $(get_latest_stage_run_status pds-adaptor deploy.dev)
-      echo automatic material dependency locator for pds-adaptor material is $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR
-
       ;;
   check_gocd_job)
-      dojo -c Dojofile-infra "./tasks _check_gocd_job $2"
+      dojo -c Dojofile-infra "./tasks _check_gocd_job"
+      ;;
+  _trigger_gocd_job)
+      echo automatic material dependency locator for pds-adaptor material is $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR
+      NEXT_STAGE_TORUN=$(echo $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR | sed 's/deploy.dev\/.*/prepare.test/')
+      echo $NEXT_STAGE_TORUN
+      trigger_stage_run $NEXT_STAGE_TORUN
+      ;;
+  trigger_gocd_job)
+      dojo -c Dojofile-infra "./tasks _trigger_gocd_job"
       ;;
   *)
       echo "Invalid command: '${command}'"
