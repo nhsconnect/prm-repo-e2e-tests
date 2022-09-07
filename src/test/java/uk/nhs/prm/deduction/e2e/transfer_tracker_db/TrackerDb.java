@@ -12,14 +12,14 @@ import static org.hamcrest.core.IsEqual.equalTo;
 @Component
 public class TrackerDb {
 
-    DbClient dbClient;
+    TransferTrackerDbClient transferTrackerDbClient;
 
-    public TrackerDb(DbClient dbClient) {
-        this.dbClient = dbClient;
+    public TrackerDb(TransferTrackerDbClient transferTrackerDbClient) {
+        this.transferTrackerDbClient = transferTrackerDbClient;
     }
 
     public boolean conversationIdExists(String conversationId) {
-        var response = dbClient.queryDbWithConversationId(conversationId);
+        var response = transferTrackerDbClient.queryDbWithConversationId(conversationId);
         if (response != null) {
             return true;
         }
@@ -34,7 +34,7 @@ public class TrackerDb {
         await().atMost(timeout, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> dbClient.queryDbWithConversationId(conversationId).item().get("state").s(), equalTo(status));
+                .until(() -> transferTrackerDbClient.queryDbWithConversationId(conversationId).item().get("state").s(), equalTo(status));
         return true;
     }
 
@@ -42,6 +42,6 @@ public class TrackerDb {
         return await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> dbClient.queryDbWithConversationId(conversationId).item().get("state").s(), containsString(partialStatus));
+                .until(() -> transferTrackerDbClient.queryDbWithConversationId(conversationId).item().get("state").s(), containsString(partialStatus));
     }
 }
