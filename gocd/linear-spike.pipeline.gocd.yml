@@ -46,4 +46,4 @@ pipelines:
                 command: /bin/bash
                 arguments:
                   - -c
-                  - ./tasks check_gocd_job
+                  - ./tasks trigger_gocd_job
