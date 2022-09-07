@@ -120,6 +120,8 @@ function get_stage_run_history() {
 function trigger_stage_run() {
   local stage_spec=$1
 
+  echo triggering $stage_spec
+
   init_gocd_api_access
 
   curl --silent --fail "https://$GOCD_HOST/go/api/stages/$stage_spec/run" \
@@ -284,9 +286,9 @@ case "${command}" in
       ;;
   _trigger_gocd_job)
       echo automatic material dependency locator for pds-adaptor material is $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR
-      NEXT_STAGE_TORUN=$(echo $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR | sed 's/deploy.dev\/.*/prepare.test/')
-      echo $NEXT_STAGE_TORUN
-      trigger_stage_run $NEXT_STAGE_TORUN
+      trigger_stage_run $(echo $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR | sed 's/deploy.dev\/.*/prepare.test/')
+      echo automatic material dependency locator for nems-event-processor material is $GO_DEPENDENCY_LOCATOR_NEMS_EVENT_PROCESSOR
+      trigger_stage_run $(echo $GO_DEPENDENCY_LOCATOR_NEMS_EVENT_PROCESSOR | sed 's/deploy.dev\/.*/prepare.test/')
       ;;
   trigger_gocd_job)
       dojo -c Dojofile-infra "./tasks _trigger_gocd_job"
