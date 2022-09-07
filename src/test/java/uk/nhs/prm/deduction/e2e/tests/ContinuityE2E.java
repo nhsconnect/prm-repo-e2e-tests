@@ -232,6 +232,7 @@ public class ContinuityE2E {
 
     @Test
     @Order(7)
+    @Disabled("Disabling as WIP for PRMT-2765")
     @DisabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "Toggled off reregistrations in dev to allow EHR out testing")
     public void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
         var nemsMessageId = randomNemsMessageId();
