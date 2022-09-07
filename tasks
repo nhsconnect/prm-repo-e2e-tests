@@ -253,10 +253,31 @@ case "${command}" in
   _check_gocd_job)
       # simplified pipelines next steps:
 
+      # note:
       # create versions manifest - then can just check is identical at end of tests?
       # ... well not quite if you want to optimise - as e.g. if one gets scheduled or assigned
-      # but is not building yet, it needn't invalidate run, but for simplicity making sure all are in state completed
-      # at start and end of run, including which pipeline stage and job run number
+      # but is not building yet, it needn't invalidate run, but for simplicity:
+
+      # make sure all are in state completed at start of run
+
+      # pds-adaptor
+      echo spiked pds-adaptor deploy is $(get_latest_stage_run_status pds-adaptor deploy.dev)
+      if [[  $(get_latest_stage_run_status pds-adaptor deploy.dev) -ne "Completed" ]]; then
+        echo "Failing e2e tests fast as PDS adaptor is currently deploying to dev"
+        exit 37
+      fi
+
+
+      # nems-event-processor
+      echo spiked nems-event-processor deploy is $(get_latest_stage_run_status nems-event-processor deploy.dev)
+      if [[  $(get_latest_stage_run_status nems-event-processor deploy.dev) -ne "Completed" ]]; then
+        echo "Failing e2e tests fast as NEMS event processor is currently deploying to dev"
+        exit 37
+      fi
+
+      echo No deployments running into dev. Starting e2e tests
+
+      # make sure all are in state completed at end of run, including which pipeline stage and job run number
 
       # if start and end manifests not identical, fail build due to potential changes while tests running (tests
       # should then automatically re-run when in-flight or completed change triggers this test job again)
@@ -272,14 +293,6 @@ case "${command}" in
       # think about / try inline e2e-tests in microservices pipelines? probs need to check only one e2e tests running at
       # a time as well as no other deploys going on
 
-      # existing microservice pipelines
-#      echo mesh-forwarder deploy is $(get_latest_stage_run_status prm-deductions-mesh-forwarder.dev deploy)
-#      echo nems-event-processor deploy is $(get_latest_stage_run_status prm-deductions-nems-event-processor.dev deploy)
-#      echo suspension-service deploy is $(get_latest_stage_run_status suspension-service.dev deploy)
-#      echo re-registration-service deploy is $(get_latest_stage_run_status re-registration-service.dev deploy)
-
-      # linear spike ones
-      echo spiked pds-adaptor deploy is $(get_latest_stage_run_status pds-adaptor deploy.dev)
       ;;
   check_gocd_job)
       dojo -c Dojofile-infra "./tasks _check_gocd_job"
