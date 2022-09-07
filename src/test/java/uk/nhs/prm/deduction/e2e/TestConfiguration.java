@@ -153,8 +153,8 @@ public class TestConfiguration {
         return getEnvironmentName() + "-ehr-transfer-service-transfer-tracker";
     }
 
-    public String getActiveSupensionsDetailsDb() {
-        return getEnvironmentName() + "-re-registration-service-active-suspensions-details-dynamodb";
+    public String getActiveSuspensionsDb() {
+        return getEnvironmentName() + "-re-registration-service-active-suspensions";
     }
 
     public String getSyntheticPatientPrefix() {

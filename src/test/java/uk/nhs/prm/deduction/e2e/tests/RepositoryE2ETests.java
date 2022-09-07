@@ -22,7 +22,7 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSq
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
-import uk.nhs.prm.deduction.e2e.transfer_tracker_db.DbClient;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         LargeEhrQueue.class,
         AttachmentQueue.class,
         EhrParsingDLQ.class,
-        DbClient.class,
+        TransferTrackerDbClient.class,
         EhrCompleteQueue.class,
         TransferCompleteQueue.class,
         NegativeAcknowledgementQueue.class,

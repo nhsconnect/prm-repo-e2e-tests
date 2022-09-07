@@ -2,14 +2,13 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.active_suspensions_details_db.ActiveSuspensionsDetailsDB;
-import uk.nhs.prm.deduction.e2e.active_suspensions_details_db.DbClient;
+import uk.nhs.prm.deduction.e2e.active_suspensions_db.ActiveSuspensionsDB;
+import uk.nhs.prm.deduction.e2e.active_suspensions_db.ActiveSuspensionsDbClient;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.models.*;
@@ -59,8 +58,8 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
         MofNotUpdatedMessageQueue.class,
         BasicSqsClient.class,
         AssumeRoleCredentialsProviderFactory.class,
-        ActiveSuspensionsDetailsDB.class,
-        DbClient.class,
+        ActiveSuspensionsDB.class,
+        ActiveSuspensionsDbClient.class,
         AutoRefreshingRoleAssumingSqsClient.class,
 })
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
@@ -94,7 +93,7 @@ public class ContinuityE2E {
     @Autowired
     RepoIncomingObservabilityQueue repoIncomingObservabilityQueue;
     @Autowired
-    ActiveSuspensionsDetailsDB activeSuspensionsDetailsDB;
+    ActiveSuspensionsDB activeSuspensionsDB;
 
     PdsAdaptorClient pdsAdaptorClient;
 
@@ -263,9 +262,8 @@ public class ContinuityE2E {
     }
 
     @Test
-    @Disabled("WIP for PRMT-2754")
     @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="true")
-    void shouldSaveActiveSuspensionDetailsInDbWhenMofUpdatedToPreviousGp() {
+    void shouldSaveActiveSuspensionInDbWhenMofUpdatedToPreviousGp() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
         var now = now();
@@ -275,7 +273,7 @@ public class ContinuityE2E {
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
         meshMailbox.postMessage(nemsSuspension);
 
-        assertTrue(activeSuspensionsDetailsDB.nhsNumberExists(suspendedPatientNhsNumber));
+        assertTrue(activeSuspensionsDB.nhsNumberExists(suspendedPatientNhsNumber));
     }
 
     private static String now() {
