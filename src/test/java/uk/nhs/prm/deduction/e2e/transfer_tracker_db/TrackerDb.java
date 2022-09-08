@@ -32,12 +32,12 @@ public class TrackerDb {
     }
 
     public boolean statusForConversationIdIs(String conversationId, String status, long timeout) {
-        var defaultState = "NOPE-AKA-DEFAULT-VALUE-TO-AVOID-NULL-EXCEPTION";
+        var defaultState = AttributeValue.builder().s("NOPE-AKA-DEFAULT-VALUE-TO-AVOID-NULL-EXCEPTION").build();
         await().atMost(timeout, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
                 .until(() -> transferTrackerDbClient.queryDbWithConversationId(conversationId)
-                        .item().getOrDefault("state", AttributeValue.builder().s(defaultState).build()).s(), equalTo(status));
+                        .item().getOrDefault("state", defaultState).s(), equalTo(status));
         return true;
     }
 
