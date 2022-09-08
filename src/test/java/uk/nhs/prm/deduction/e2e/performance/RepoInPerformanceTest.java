@@ -78,7 +78,7 @@ public class RepoInPerformanceTest {
         // TODO: to be fixed in perf env (ok in dev)
         System.out.println("Ensuring records are stored in tracker db...");
         repoIncomingMessages.forEach(message ->
-            assertTrue(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:TRANSFER_TO_REPO_STARTED", 300))
+            assertTrue(trackerDb.conversationIdExists(message.conversationId()))
         );
 
         System.out.println("DB setup completed. About to send messages to mq...");
