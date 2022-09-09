@@ -31,3 +31,4 @@ pipelines:
     <<: *pipeline-template
     environment_variables:
       NHS_ENVIRONMENT: perf
+      NUMBER_OF_MESSAGES_TO_BE_PROCESSED: 2000
