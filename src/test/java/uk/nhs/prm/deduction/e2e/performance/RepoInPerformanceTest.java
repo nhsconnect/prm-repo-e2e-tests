@@ -19,16 +19,14 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
-import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 import static java.time.LocalDateTime.now;
 import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = {
@@ -64,10 +62,10 @@ public class RepoInPerformanceTest {
 
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
-        var numberOfRecordToBeProcessed = 1000;
+        var numberOfMessagesToBeProcessed = 2000;
         var messagesToBeProcessed = new ArrayList<RepoIncomingMessage>();
 
-        for (int i = 0; i < numberOfRecordToBeProcessed ; i++) {
+        for (int i = 0; i < numberOfMessagesToBeProcessed ; i++) {
             var message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
                     .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
@@ -93,7 +91,7 @@ public class RepoInPerformanceTest {
         });
         inboundQueueFromMhs.close();
 
-        var timeout = now().plusMinutes(10);
+        var timeout = now().plusMinutes(20);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
             for (SqsMessage nextMessage : transferCompleteQueue.getNextMessages(timeout)) {
                 var conversationId = nextMessage.attributes().get("conversationId").stringValue();
@@ -104,6 +102,8 @@ public class RepoInPerformanceTest {
                     }
                     return false;
                 });
+                var numberOfMessagesProcessed = numberOfMessagesToBeProcessed - messagesToBeProcessed.size();
+                System.out.println("Processed " + numberOfMessagesProcessed + " messages out of " + numberOfMessagesToBeProcessed);
             }
         }
 
