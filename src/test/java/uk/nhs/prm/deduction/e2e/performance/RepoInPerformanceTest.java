@@ -25,6 +25,8 @@ import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import java.util.ArrayList;
 
+import static java.lang.Integer.parseInt;
+import static java.lang.System.getenv;
 import static java.time.LocalDateTime.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -62,7 +64,7 @@ public class RepoInPerformanceTest {
 
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
-        var numberOfMessagesToBeProcessed = 2000;
+        var numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
         var messagesToBeProcessed = new ArrayList<RepoIncomingMessage>();
 
         for (int i = 0; i < numberOfMessagesToBeProcessed ; i++) {
@@ -75,12 +77,6 @@ public class RepoInPerformanceTest {
 
         messagesToBeProcessed.forEach(message -> repoIncomingQueue.send(message));
 
-        // TODO: to be fixed in perf env (ok in dev)
-//        System.out.println("Ensuring records are stored in tracker db...");
-//        messagesToBeProcessed.forEach(message ->
-//            assertTrue(trackerDb.conversationIdExists(message.conversationId()))
-//        );
-
         System.out.println("DB setup completed. About to send messages to mq...");
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
@@ -91,7 +87,7 @@ public class RepoInPerformanceTest {
         });
         inboundQueueFromMhs.close();
 
-        var timeout = now().plusMinutes(20);
+        var timeout = now().plusMinutes(25);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
             for (SqsMessage nextMessage : transferCompleteQueue.getNextMessages(timeout)) {
                 var conversationId = nextMessage.attributes().get("conversationId").stringValue();
@@ -108,6 +104,11 @@ public class RepoInPerformanceTest {
         }
 
         assertTrue(messagesToBeProcessed.isEmpty());
+    }
+
+    private int getNumberOfMessagesToBeProcessed() {
+        var result = getenv("NUMBER_OF_MESSAGES_TO_BE_PROCESSED");
+        return result == null ? 500 : parseInt(result);
     }
 
     private String getSmallMessageWithUniqueConversationIdAndMessageId(String conversationId) {
