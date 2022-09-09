@@ -11,7 +11,6 @@ import uk.nhs.prm.deduction.e2e.TestData;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.TransferCompleteQueue;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
-import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessage;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
@@ -24,6 +23,7 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getenv;
@@ -65,29 +65,16 @@ public class RepoInPerformanceTest {
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
         var numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
-        var messagesToBeProcessed = new ArrayList<RepoInPerfMessageWrapper>();
+        var messagesToBeProcessed = setupMessagesToBeProcessed(numberOfMessagesToBeProcessed);
 
-        for (int i = 0; i < numberOfMessagesToBeProcessed ; i++) {
-            var message = new RepoIncomingMessageBuilder()
-                    .withNhsNumber(TestData.generateRandomNhsNumber())
-                    .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                    .build();
-            messagesToBeProcessed.add(new RepoInPerfMessageWrapper(message));
-        }
+        System.out.println("Setup completed. About to send messages to mq...");
+        sendMessagesToMq(messagesToBeProcessed);
 
-        messagesToBeProcessed.forEach(message -> repoIncomingQueue.send(message.getMessage()));
+        System.out.println("All messages sent. Ensuring they reached transfer complete queue...");
+        assertMessagesAreInTransferCompleteQueue(numberOfMessagesToBeProcessed, messagesToBeProcessed);
+    }
 
-        System.out.println("DB setup completed. About to send messages to mq...");
-        var inboundQueueFromMhs = new SimpleAmqpQueue(config);
-
-        messagesToBeProcessed.forEach(message -> {
-            var conversationId = message.getMessage().conversationId();
-            var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(conversationId);
-
-            inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-        });
-        inboundQueueFromMhs.close();
-
+    private void assertMessagesAreInTransferCompleteQueue(int numberOfMessagesToBeProcessed, List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
         var timeout = now().plusMinutes(25);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
             for (SqsMessage nextMessage : transferCompleteQueue.getNextMessages(timeout)) {
@@ -106,6 +93,31 @@ public class RepoInPerformanceTest {
         }
 
         assertTrue(messagesToBeProcessed.isEmpty());
+    }
+
+    private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
+        var inboundQueueFromMhs = new SimpleAmqpQueue(config);
+        messagesToBeProcessed.forEach(message -> {
+            var conversationId = message.getMessage().conversationId();
+            var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(conversationId);
+            inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
+        });
+        inboundQueueFromMhs.close();
+    }
+
+    private List<RepoInPerfMessageWrapper> setupMessagesToBeProcessed(int numberOfMessagesToBeProcessed) {
+        var messagesToBeProcessed = new ArrayList<RepoInPerfMessageWrapper>();
+
+        for (int i = 0; i < numberOfMessagesToBeProcessed ; i++) {
+            var message = new RepoIncomingMessageBuilder()
+                    .withNhsNumber(TestData.generateRandomNhsNumber())
+                    .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
+                    .build();
+            messagesToBeProcessed.add(new RepoInPerfMessageWrapper(message));
+        }
+
+        messagesToBeProcessed.forEach(message -> repoIncomingQueue.send(message.getMessage()));
+        return messagesToBeProcessed;
     }
 
     private int getNumberOfMessagesToBeProcessed() {
