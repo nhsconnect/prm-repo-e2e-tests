@@ -65,24 +65,25 @@ public class RepoInPerformanceTest {
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
         var numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
-        var messagesToBeProcessed = new ArrayList<RepoIncomingMessage>();
+        var messagesToBeProcessed = new ArrayList<RepoInPerfMessageWrapper>();
 
         for (int i = 0; i < numberOfMessagesToBeProcessed ; i++) {
             var message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
                     .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
                     .build();
-            messagesToBeProcessed.add(message);
+            messagesToBeProcessed.add(new RepoInPerfMessageWrapper(message));
         }
 
-        messagesToBeProcessed.forEach(message -> repoIncomingQueue.send(message));
+        messagesToBeProcessed.forEach(message -> repoIncomingQueue.send(message.getMessage()));
 
         System.out.println("DB setup completed. About to send messages to mq...");
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
         messagesToBeProcessed.forEach(message -> {
-            var conversationId = message.conversationId();
+            var conversationId = message.getMessage().conversationId();
             var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(conversationId);
+
             inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
         });
         inboundQueueFromMhs.close();
@@ -92,7 +93,8 @@ public class RepoInPerformanceTest {
             for (SqsMessage nextMessage : transferCompleteQueue.getNextMessages(timeout)) {
                 var conversationId = nextMessage.attributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
-                    if (message.conversationId().equals(conversationId)) {
+                    if (message.getMessage().conversationId().equals(conversationId)) {
+                        message.finish(nextMessage.queuedAt());
                         System.out.println("Found in transfer complete queue message with conversationId " + conversationId);
                         return true;
                     }
