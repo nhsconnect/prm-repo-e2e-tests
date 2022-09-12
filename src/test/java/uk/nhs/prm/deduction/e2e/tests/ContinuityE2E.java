@@ -22,6 +22,7 @@ import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.reregistration.ReRegistrationMessageObservabilityQueue;
 import uk.nhs.prm.deduction.e2e.reregistration.active_suspensions_db.ActiveSuspensionsDbClient;
+import uk.nhs.prm.deduction.e2e.reregistration.models.ActiveSuspensionsMessage;
 import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.deduction.e2e.suspensions.*;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
@@ -236,8 +237,8 @@ public class ContinuityE2E {
         var nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
         var reregistrationTime = now();
-
         storeEhrInRepositoryFor(patientNhsNumber);
+        activeSuspensionsDB.save(new ActiveSuspensionsMessage(patientNhsNumber,generateRandomOdsCode(), now()));
 
         var reRegistration = createNemsEventFromTemplate(
                 "change-of-gp-re-registration.xml", patientNhsNumber, nemsMessageId, reregistrationTime);
