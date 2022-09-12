@@ -82,7 +82,11 @@ public class RepoInPerformanceTest {
                 messagesToBeProcessed.removeIf(message -> {
                     if (message.getMessage().conversationId().equals(conversationId)) {
                         message.finish(nextMessage.queuedAt());
-                        System.out.println("Found in transfer complete queue message with conversationId " + conversationId);
+                        System.out.println("Found in transfer complete queue message with conversationId "
+                                + conversationId
+                                + " which took "
+                                + message.getProcessingTimeInSeconds()
+                                + " seconds to be processed");
                         return true;
                     }
                     return false;
@@ -100,6 +104,7 @@ public class RepoInPerformanceTest {
         messagesToBeProcessed.forEach(message -> {
             var conversationId = message.getMessage().conversationId();
             var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(conversationId);
+            message.start();
             inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
         });
         inboundQueueFromMhs.close();
