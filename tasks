@@ -273,6 +273,7 @@ case "${command}" in
 
       # make sure all are in state completed at start of run
 
+      # NB there is a Cancel stage API which would be better if can be used on self than this red fail
       fail_if_stage_running pds-adaptor deploy.dev
       fail_if_stage_running nems-event-processor deploy.dev
 
@@ -299,6 +300,15 @@ case "${command}" in
       dojo -c Dojofile-infra "./tasks _check_gocd_job"
       ;;
   _trigger_gocd_job)
+      # NB there is a https://api.gocd.org/21.3.0/#comment-on-pipeline-instance API which maybe could add
+      # some tracking info to this trigger, although it looks like comment is across whole pipeline run
+      # and not stage specific meaning it could be a bit verbose / inappropriate to add comments for all triggers
+
+      # was also thinking: one drawback to not having the e2e test process in the pipeline is we don't get to see the
+      # red build within the pipeline - however we could have a job inline in the microservice pipeline that waits for
+      # the automatically-triggered e2e tests job to complete and then continues (or fails or cancels) based
+
+
       echo automatic material dependency locator for pds-adaptor material is $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR
       trigger_stage_run $(echo $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR | sed 's/deploy.dev\/.*/prepare.test/')
       echo automatic material dependency locator for nems-event-processor material is $GO_DEPENDENCY_LOCATOR_NEMS_EVENT_PROCESSOR
