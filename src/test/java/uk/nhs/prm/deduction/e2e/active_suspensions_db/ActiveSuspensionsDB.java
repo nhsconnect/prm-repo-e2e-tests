@@ -1,5 +1,7 @@
 package uk.nhs.prm.deduction.e2e.active_suspensions_db;
 
+import uk.nhs.prm.deduction.e2e.reregistration.active_suspensions_db.ActiveSuspensionsDbClient;
+
 public class ActiveSuspensionsDB {
     ActiveSuspensionsDbClient activeSuspensionsDbClient;
 

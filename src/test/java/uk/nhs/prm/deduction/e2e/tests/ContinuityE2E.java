@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.active_suspensions_db.ActiveSuspensionsDB;
-import uk.nhs.prm.deduction.e2e.active_suspensions_db.ActiveSuspensionsDbClient;
 import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.models.*;
@@ -22,6 +21,7 @@ import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.reregistration.ReRegistrationMessageObservabilityQueue;
+import uk.nhs.prm.deduction.e2e.reregistration.active_suspensions_db.ActiveSuspensionsDbClient;
 import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.deduction.e2e.suspensions.*;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
@@ -232,8 +232,6 @@ public class ContinuityE2E {
 
     @Test
     @Order(7)
-    @Disabled("Disabling as WIP for PRMT-2765")
-    @DisabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "Toggled off reregistrations in dev to allow EHR out testing")
     public void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
         var nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
@@ -250,6 +248,7 @@ public class ContinuityE2E {
                 "\"newlyRegisteredOdsCode\":\"B86056\"," +
                 "\"nemsMessageId\":\"" + nemsMessageId + "\"," +
                 "\"lastUpdated\":\"" + reregistrationTime + "\"}";
+
 
 
         await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> { // check it's a 404?
@@ -276,6 +275,7 @@ public class ContinuityE2E {
 
         assertTrue(activeSuspensionsDB.nhsNumberExists(suspendedPatientNhsNumber));
     }
+
 
     private static String now() {
         return ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
