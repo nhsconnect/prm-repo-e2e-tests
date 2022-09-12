@@ -282,7 +282,7 @@ public class RepositoryE2ETests {
 
     private void setManagingOrganisationToRepo(String nhsNumber) {
         var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
-        assertThat(pdsResponse.getIsSuspended()).isTrue();
+        assertThat(pdsResponse.getIsSuspended()).as("%s should be suspended so that MOF is respected", nhsNumber).isTrue();
         var repoOdsCode = Gp2GpSystem.repoInEnv(config).odsCode();
         if (!repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorClient.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.getRecordETag());
