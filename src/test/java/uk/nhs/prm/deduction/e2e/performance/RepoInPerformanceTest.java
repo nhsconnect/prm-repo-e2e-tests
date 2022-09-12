@@ -14,6 +14,7 @@ import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.deduction.e2e.performance.reporting.RepoInPerformanceChartGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
@@ -23,7 +24,9 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getenv;
@@ -75,6 +78,7 @@ public class RepoInPerformanceTest {
     }
 
     private void assertMessagesAreInTransferCompleteQueue(int numberOfMessagesToBeProcessed, List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
+        var messagesProcessed = new ArrayList<RepoInPerfMessageWrapper>();
         var timeout = now().plusMinutes(25);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
             for (SqsMessage nextMessage : transferCompleteQueue.getNextMessages(timeout)) {
@@ -87,6 +91,7 @@ public class RepoInPerformanceTest {
                                 + " which took "
                                 + message.getProcessingTimeInSeconds()
                                 + " seconds to be processed");
+                        messagesProcessed.add(message);
                         return true;
                     }
                     return false;
@@ -95,6 +100,11 @@ public class RepoInPerformanceTest {
                 System.out.println("Processed " + numberOfMessagesProcessed + " messages out of " + numberOfMessagesToBeProcessed);
             }
         }
+
+        RepoInPerformanceChartGenerator.generateThroughputPlot(
+                messagesProcessed.stream()
+                        .sorted(Comparator.comparing(RepoInPerfMessageWrapper::getFinishedAt))
+                        .collect(Collectors.toList()));
 
         assertTrue(messagesToBeProcessed.isEmpty());
     }
