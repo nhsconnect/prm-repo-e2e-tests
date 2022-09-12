@@ -17,6 +17,7 @@ common:
                     source: build/reports/tests/
               tabs:
                 TestReport: test/index.html
+                Throughput: build/reports/performance/repo-in-throughput.png
               resources:
                 - docker
               tasks:
