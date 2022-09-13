@@ -78,8 +78,13 @@ public class RepoInPerformanceTest {
     }
 
     private void assertMessagesAreInTransferCompleteQueue(int numberOfMessagesToBeProcessed, List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
+        var messagesReadFromQueueEveryMinute = 100;
+        var additionalMinutesBuffer = 5;
+        var timeoutInMinutes = Math.round(numberOfMessagesToBeProcessed / messagesReadFromQueueEveryMinute) + additionalMinutesBuffer;
+        System.out.println("Polling messages from transfer complete queue, timeout for this operation set to " + timeoutInMinutes + " minutes.");
+
         var messagesProcessed = new ArrayList<RepoInPerfMessageWrapper>();
-        var timeout = now().plusMinutes(25);
+        var timeout = now().plusMinutes(timeoutInMinutes);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
             for (SqsMessage nextMessage : transferCompleteQueue.getNextMessages(timeout)) {
                 var conversationId = nextMessage.attributes().get("conversationId").stringValue();
