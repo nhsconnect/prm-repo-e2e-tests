@@ -26,6 +26,7 @@ import uk.nhs.prm.deduction.e2e.utility.Resources;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
@@ -117,12 +118,22 @@ public class RepoInPerformanceTest {
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
         var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
+        AtomicReference<Integer> counter = new AtomicReference<>(0);
         messagesToBeProcessed.forEach(message -> {
+            counter.updateAndGet(v -> v + 1);
             var conversationId = message.getMessage().conversationId();
             var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
             message.start();
+
+            System.out.println("Item number " + counter.get() + " - About to send conv id " + conversationId);
             inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         });
+        System.out.println("All messages sent, about to close mhs producer...");
         inboundQueueFromMhs.close();
     }
 
