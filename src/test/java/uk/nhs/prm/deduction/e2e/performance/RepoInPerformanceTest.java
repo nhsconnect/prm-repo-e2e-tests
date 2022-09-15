@@ -116,9 +116,10 @@ public class RepoInPerformanceTest {
 
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
+        var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
         messagesToBeProcessed.forEach(message -> {
             var conversationId = message.getMessage().conversationId();
-            var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(conversationId);
+            var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
             message.start();
             inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
         });
@@ -145,9 +146,8 @@ public class RepoInPerformanceTest {
         return result == null ? 500 : parseInt(result);
     }
 
-    private String getSmallMessageWithUniqueConversationIdAndMessageId(String conversationId) {
+    private String getSmallMessageWithUniqueConversationIdAndMessageId(String message, String conversationId) {
         var messageId = randomUUID().toString();
-        var message = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
         message = message.replaceAll("__CONVERSATION_ID__", conversationId);
         message = message.replaceAll("__MESSAGE_ID__", messageId);
         return message;
