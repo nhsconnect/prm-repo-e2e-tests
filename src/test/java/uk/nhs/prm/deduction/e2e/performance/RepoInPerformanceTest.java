@@ -147,7 +147,7 @@ public class RepoInPerformanceTest {
 
     private String getSmallMessageWithUniqueConversationIdAndMessageId(String conversationId) {
         var messageId = randomUUID().toString();
-        var message = Resources.readTestResourceFileFromEhrDirectory("small-ehr");
+        var message = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
         message = message.replaceAll("__CONVERSATION_ID__", conversationId);
         message = message.replaceAll("__MESSAGE_ID__", messageId);
         return message;
