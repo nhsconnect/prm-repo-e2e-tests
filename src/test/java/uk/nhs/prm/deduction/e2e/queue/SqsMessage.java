@@ -76,4 +76,8 @@ public class SqsMessage {
             throw new RuntimeException("message was not json");
         }
     }
+
+    public Message getMessage() {
+        return message;
+    }
 }

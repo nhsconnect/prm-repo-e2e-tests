@@ -67,7 +67,7 @@ public class AutoRefreshingRoleAssumingSqsClient implements TestSqsClient {
     }
 
     @Override
-    public void deleteAllMessageFrom(String queueUrl) {
-        client.deleteAllMessageFrom(queueUrl);
+    public void deleteAllMessagesFrom(String queueUrl) {
+        client.deleteAllMessagesFrom(queueUrl);
     }
 }

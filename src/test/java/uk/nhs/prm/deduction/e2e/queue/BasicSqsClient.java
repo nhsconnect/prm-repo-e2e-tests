@@ -61,7 +61,7 @@ public class BasicSqsClient implements TestSqsClient {
     }
 
     @Override
-    public void deleteAllMessageFrom(String queueUrl) {
+    public void deleteAllMessagesFrom(String queueUrl) {
         sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(queueUrl).build());
     }
     public void postAMessage(String queueUrl, String message) {
