@@ -42,7 +42,7 @@ pipelines:
   repo_in_perf_evening:
     <<: *pipeline-template
     timer:
-      spec: "0 30 15 * * ?"
+      spec: "0 50 15 * * ?"
         only_on_changes: no
     environment_variables:
       NHS_ENVIRONMENT: perf
