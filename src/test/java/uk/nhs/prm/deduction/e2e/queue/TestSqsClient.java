@@ -1,8 +1,6 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 import java.util.List;
 
