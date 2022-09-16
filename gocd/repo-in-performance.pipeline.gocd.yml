@@ -17,6 +17,8 @@ common:
               artifacts:
                 - build:
                     source: build/reports/tests/
+                - build:
+                    source: build/reports/performance/
               tabs:
                 TestReport: test/index.html
                 Throughput: build/reports/performance/repo-in-throughput.png
