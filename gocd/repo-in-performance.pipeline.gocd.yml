@@ -9,8 +9,8 @@ common:
         type: configrepo
     stages:
       - performance:
-          approval:
-            type: manual
+          #approval:
+           # type: manual
           clean_workspace: true
           jobs:
             performance_test:
