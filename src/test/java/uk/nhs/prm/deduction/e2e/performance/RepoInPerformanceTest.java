@@ -19,6 +19,7 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
+import uk.nhs.prm.deduction.e2e.timing.Sleeper;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
@@ -41,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         TransferTrackerDbClient.class,
         RepoInPerformanceTest.class,
         RepoIncomingQueue.class,
+        Sleeper.class,
         SqsQueue.class,
         TestConfiguration.class,
         TrackerDb.class,
@@ -51,6 +53,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RepoInPerformanceTest {
     @Autowired
     RepoIncomingQueue repoIncomingQueue;
+
+    @Autowired
+    Sleeper sleeper;
+
 
     @Autowired
     TestConfiguration config;
@@ -117,29 +123,25 @@ public class RepoInPerformanceTest {
     }
 
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
+        var intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
             var inboundQueueFromMhs = new SimpleAmqpQueue(config);
             var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
-            AtomicReference<Integer> counter = new AtomicReference<>(0);
+            var counter = new AtomicReference<>(0);
             messagesToBeProcessed.forEach(message -> {
                 counter.updateAndGet(v -> v + 1);
                 var conversationId = message.getMessage().conversationId();
                 var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
                 message.start();
 
-                System.out.println("Item number " + counter.get() + " - About to send conv id " + conversationId);
+                System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-                // TODO: use sleeper class
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                sleeper.sleep(intervalBetweenMessagesSentToMq);
             });
             System.out.println("All messages sent, about to close mhs producer...");
             inboundQueueFromMhs.close();
         } catch (OutOfMemoryError outOfMemoryError) {
-            System.out.println("Whoops, out of memory again!");
+            System.out.println("Whoops, mq client went out of memory again!");
             System.exit(1);
         }
     }
@@ -162,6 +164,11 @@ public class RepoInPerformanceTest {
     private int getNumberOfMessagesToBeProcessed() {
         var result = getenv("NUMBER_OF_MESSAGES_TO_BE_PROCESSED");
         return result == null ? 500 : parseInt(result);
+    }
+
+    private int getIntervalBetweenMessagesSentToMq() {
+        var result = getenv("INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ");
+        return result == null ? 100 : parseInt(result);
     }
 
     private String getSmallMessageWithUniqueConversationIdAndMessageId(String message, String conversationId) {
