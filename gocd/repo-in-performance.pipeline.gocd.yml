@@ -37,7 +37,7 @@ pipelines:
     environment_variables:
       NHS_ENVIRONMENT: perf
       NUMBER_OF_MESSAGES_TO_BE_PROCESSED: 2000
-      INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ: 100
+      INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ: 400
 
   repo_in_perf_evening:
     <<: *pipeline-template
@@ -46,5 +46,5 @@ pipelines:
         only_on_changes: no
     environment_variables:
       NHS_ENVIRONMENT: perf
-      NUMBER_OF_MESSAGES_TO_BE_PROCESSED: 100
-      INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ: 300
+      NUMBER_OF_MESSAGES_TO_BE_PROCESSED: 5000
+      INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ: 400
