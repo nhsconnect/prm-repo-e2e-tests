@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.sqs.model.Message;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import java.util.List;
 
@@ -21,8 +22,12 @@ public class SqsQueue {
         return sqsClient.readThroughMessages(queueUri, visibilityTimeout);
     }
 
-    public void deleteAllMessage(String queueUri) {
-        sqsClient.deleteAllMessageFrom(queueUri);
+    public void deleteMessage(String queueUrl, Message message) {
+        sqsClient.deleteMessageFrom(queueUrl, message);
+    }
+
+    public void deleteAllMessages(String queueUri) {
+        sqsClient.deleteAllMessagesFrom(queueUri);
     }
 
     public void postAMessage(String queueUrl, String message){

@@ -43,7 +43,7 @@ public class NemsEventMessageQueue {
     }
 
     public void deleteAllMessages() {
-        sqsQueue.deleteAllMessage(queueUri);
+        sqsQueue.deleteAllMessages(queueUri);
     }
 
     public void log(String messageBody) {

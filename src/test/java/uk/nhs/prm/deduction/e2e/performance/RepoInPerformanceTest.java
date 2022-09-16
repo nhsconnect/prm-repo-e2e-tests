@@ -93,12 +93,12 @@ public class RepoInPerformanceTest {
         var messagesProcessed = new ArrayList<RepoInPerfMessageWrapper>();
         var timeout = now().plusMinutes(timeoutInMinutes);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
-            for (SqsMessage nextMessage : transferCompleteQueue.getNextMessages(timeout)) {
-                var conversationId = nextMessage.attributes().get("conversationId").stringValue();
+            for (SqsMessage sqsMessage : transferCompleteQueue.getNextMessages(timeout)) {
+                var conversationId = sqsMessage.attributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
                     if (message.getMessage().conversationId().equals(conversationId)) {
-                        message.finish(nextMessage.queuedAt());
-                        // TODO: acknowledge message and remove it from queue here
+                        message.finish(sqsMessage.queuedAt());
+                        transferCompleteQueue.deleteMessage(sqsMessage);
                         System.out.println("Found in transfer complete queue message with conversationId "
                                 + conversationId
                                 + " which took "

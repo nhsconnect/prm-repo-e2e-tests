@@ -27,11 +27,14 @@ public class QueueMessageHelper {
     public void deleteAllMessages() {
         log(String.format("Trying to delete all the messages on : %s", this.queueUri));
         try {
-            sqsQueue.deleteAllMessage(queueUri);
-        }catch (Exception e){
+            sqsQueue.deleteAllMessages(queueUri);
+        } catch (Exception e){
             log.warn("Error encountered while deleting the messages on the queue : " + queueUri, e);
         }
+    }
 
+    public void deleteMessage(SqsMessage sqsMessage) {
+        sqsQueue.deleteMessage(queueUri, sqsMessage.getMessage());
     }
 
     public void log(String messageBody) {
