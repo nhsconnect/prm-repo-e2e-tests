@@ -57,7 +57,7 @@ public class SimpleAmqpQueue {
         try {
             connection.connect();
             var session = connection.createSession(100, 100);
-            return session.createProducer("inbound", QoS.AT_MOST_ONCE);
+            return session.createProducer("inbound", QoS.AT_LEAST_ONCE);
         }
         catch (IOException | AMQPException | AuthenticationException | UnsupportedProtocolVersionException e) {
             System.out.println(e.getMessage());
