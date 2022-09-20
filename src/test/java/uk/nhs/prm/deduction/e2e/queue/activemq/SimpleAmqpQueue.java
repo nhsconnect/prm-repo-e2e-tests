@@ -15,11 +15,16 @@ import java.util.HashMap;
 
 public class SimpleAmqpQueue {
     private final TestConfiguration config;
-    private final Producer producer;
+    private final String mqUser;
+    private final String mqPassword;
+
+//    private final Producer producer;
 
     public SimpleAmqpQueue(TestConfiguration config) {
         this.config = config;
-        this.producer = createProducer();
+        this.mqUser = config.getMqUserName();
+        this.mqPassword = config.getMqPassword();
+//        this.producer = createProducer();
     }
 
     public void sendMessage(String messageBody, String correlationId) {
@@ -32,26 +37,29 @@ public class SimpleAmqpQueue {
             msg.setApplicationProperties(properties);
             msg.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
 
+            var producer = createProducer();
             producer.send(msg);
+            producer.close();
+
         }
         catch (AMQPException | IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void close() {
-        try {
-            producer.close();
-        }
-        catch (AMQPException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    public void close() {
+//        try {
+//            producer.close();
+//        }
+//        catch (AMQPException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     private Producer createProducer() {
         var activeMqHostname = config.getAmqpEndpoint1();
         var ctx = new AMQPContext(AMQPContext.CLIENT);
-        var connection = new Connection(ctx, activeMqHostname, 5671, config.getMqUserName(), config.getMqPassword());
+        var connection = new Connection(ctx, activeMqHostname, 5671, mqUser, mqPassword);
         connection.setSocketFactory(new JSSESocketFactory());
 
         try {
