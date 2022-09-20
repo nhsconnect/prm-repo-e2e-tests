@@ -138,8 +138,9 @@ public class RepoInPerformanceTest {
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
                 sleeper.sleep(intervalBetweenMessagesSentToMq);
             });
-            System.out.println("All messages sent, about to close mhs producer...");
-            inboundQueueFromMhs.close();
+            System.out.println("All messages sent");
+//            System.out.println("All messages sent, about to close mhs producer...");
+//            inboundQueueFromMhs.close();
         } catch (OutOfMemoryError outOfMemoryError) {
             System.out.println("Whoops, mq client went out of memory again!");
             System.exit(1);
