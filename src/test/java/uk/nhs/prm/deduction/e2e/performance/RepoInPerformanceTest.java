@@ -75,9 +75,8 @@ public class RepoInPerformanceTest {
 
     @BeforeAll
     void init() {
-        transferCompleteQueue.deleteAllMessages();
         transferCompleteQueue = new TransferCompleteQueue(new SqsQueue(appropriateAuthenticationSqsClient()), config);
-
+        transferCompleteQueue.deleteAllMessages();
     }
 
     @Test
