@@ -18,13 +18,13 @@ public class SimpleAmqpQueue {
     private final String mqUser;
     private final String mqPassword;
 
-//    private final Producer producer;
+    private final Producer producer;
 
     public SimpleAmqpQueue(TestConfiguration config) {
         this.config = config;
         this.mqUser = config.getMqUserName();
         this.mqPassword = config.getMqPassword();
-//        this.producer = createProducer();
+        this.producer = createProducer();
     }
 
     public void sendMessage(String messageBody, String correlationId) {
@@ -37,24 +37,21 @@ public class SimpleAmqpQueue {
             msg.setApplicationProperties(properties);
             msg.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
 
-            var producer = createProducer();
             producer.send(msg);
-            producer.close();
-
         }
         catch (AMQPException | IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-//    public void close() {
-//        try {
-//            producer.close();
-//        }
-//        catch (AMQPException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    public void close() {
+        try {
+            producer.close();
+        }
+        catch (AMQPException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private Producer createProducer() {
         var activeMqHostname = config.getAmqpEndpoint1();
@@ -65,7 +62,7 @@ public class SimpleAmqpQueue {
         try {
             connection.connect();
             var session = connection.createSession(100, 100);
-            return session.createProducer("inbound", QoS.AT_LEAST_ONCE);
+            return session.createProducer("inbound", QoS.AT_MOST_ONCE);
         }
         catch (IOException | AMQPException | AuthenticationException | UnsupportedProtocolVersionException e) {
             System.out.println(e.getMessage());

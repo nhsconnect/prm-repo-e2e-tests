@@ -6,6 +6,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.TestData;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
@@ -19,6 +20,7 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
+import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.timing.Sleeper;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getenv;
+import static java.lang.System.out;
 import static java.time.LocalDateTime.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -67,9 +70,14 @@ public class RepoInPerformanceTest {
     @Autowired
     TransferCompleteQueue transferCompleteQueue;
 
+    @Autowired
+    ApplicationContext context;
+
     @BeforeAll
     void init() {
         transferCompleteQueue.deleteAllMessages();
+        transferCompleteQueue = new TransferCompleteQueue(new SqsQueue(appropriateAuthenticationSqsClient()), config);
+
     }
 
     @Test
@@ -138,9 +146,8 @@ public class RepoInPerformanceTest {
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
                 sleeper.sleep(intervalBetweenMessagesSentToMq);
             });
-            System.out.println("All messages sent");
-//            System.out.println("All messages sent, about to close mhs producer...");
-//            inboundQueueFromMhs.close();
+            System.out.println("All messages sent, about to close mhs producer...");
+            inboundQueueFromMhs.close();
         } catch (OutOfMemoryError outOfMemoryError) {
             System.out.println("Whoops, mq client went out of memory again!");
             System.exit(1);
@@ -177,5 +184,17 @@ public class RepoInPerformanceTest {
         message = message.replaceAll("__CONVERSATION_ID__", conversationId);
         message = message.replaceAll("__MESSAGE_ID__", messageId);
         return message;
+    }
+
+    private AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient() {
+        if (config.performanceTestTimeout() > TestConfiguration.SECONDS_IN_AN_HOUR * 0.9) {
+            var authStrategyWarning = "Performance test timeout is approaching an hour, getting where this will not work if " +
+                    "using temporary credentials (such as obtained by user using MFA) if it exceeds the expiration time. " +
+                    "Longer runs will need to be done in pipeline where refresh can be made from the AWS instance's " +
+                    "metadata credentials lookup.";
+            System.err.println(authStrategyWarning);
+        }
+        out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
+        return context.getBean(AutoRefreshingRoleAssumingSqsClient.class);
     }
 }
