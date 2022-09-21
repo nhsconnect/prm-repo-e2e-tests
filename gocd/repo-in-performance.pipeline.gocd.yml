@@ -30,14 +30,6 @@ common:
                       - ./tasks test_repo_in_performance
 
 pipelines:
-  repo_in_perf:
-    <<: *pipeline-template
-    approval:
-      type: manual
-    environment_variables:
-      NHS_ENVIRONMENT: perf
-      NUMBER_OF_MESSAGES_TO_BE_PROCESSED: 2000
-      INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ: 325
   repo_in_perf_evening:
     <<: *pipeline-template
     timer:
