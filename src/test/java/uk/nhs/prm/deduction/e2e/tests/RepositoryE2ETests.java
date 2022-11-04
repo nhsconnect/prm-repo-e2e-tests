@@ -61,7 +61,6 @@ public class RepositoryE2ETests {
 
     @Autowired
     RepoIncomingQueue repoIncomingQueue;
-
     @Autowired
     TrackerDb trackerDb;
     @Autowired
@@ -95,20 +94,6 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldTestThatMessagesAreReadCorrectlyFromRepoIncomingQueueAndAnEhrRequestIsMadeAndTheDbIsUpdatedWithExpectedStatus() {
-        var triggerMessage = new RepoIncomingMessageBuilder()
-                .withPatient(Patient.WITH_NO_9693795989_WHATEVER_THAT_MEANS)
-                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationGp(Gp2GpSystem.repoInEnv(config))
-                .build();
-
-        repoIncomingQueue.send(triggerMessage);
-
-        assertTrue(trackerDb.conversationIdExists(triggerMessage.conversationId()));
-        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_REQUEST_SENT"));
-    }
-
-    @Test
     @Disabled("disabled this and other EMIS tests since all EMIS transfers failing due to spine errors, asking EMIS for further info")
     void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus_DevAndTest() {
         var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(config);
@@ -124,7 +109,8 @@ public class RepositoryE2ETests {
         repoIncomingQueue.send(triggerMessage);
         assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
-//        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString())); TODO change dev patient to dev synthetic patient - what's this Jack?
+//        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString()));
+//        TODO change dev patient to dev synthetic patient - what's this Jack?
     }
 
     @ParameterizedTest
