@@ -251,6 +251,9 @@ public class TestConfiguration {
     public String smallEhrQueueUri() {
         return getQueueUri("ehr-transfer-service-small-ehr-observability");
     }
+    public String ehrInUnhandledQueueUri() {
+        return getQueueUri("ehr-transfer-service-unhandled-observability");
+    }
 
     public String negativeAcknowledgementQueueUri() {
         return getQueueUri("ehr-transfer-service-negative-acknowledgments-observability");
