@@ -22,6 +22,7 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSq
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
+import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
@@ -53,7 +54,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         EhrCompleteQueue.class,
         TransferCompleteQueue.class,
         NegativeAcknowledgementQueue.class,
-        EndOfTransferMofUpdatedMessageQueue.class
+        EndOfTransferMofUpdatedMessageQueue.class,
+        EhrInUnhandledQueue.class
 })
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -76,6 +78,8 @@ public class RepositoryE2ETests {
     @Autowired
     TransferCompleteQueue transferCompleteQueue;
     @Autowired
+    EhrInUnhandledQueue ehrInUnhandledQueue;
+    @Autowired
     NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
     @Autowired
     TestConfiguration config;
@@ -89,8 +93,22 @@ public class RepositoryE2ETests {
         attachmentQueue.deleteAllMessages();
         parsingDLQ.deleteAllMessages();
         transferCompleteQueue.deleteAllMessages();
+        ehrInUnhandledQueue.deleteAllMessages();
         negativeAcknowledgementObservabilityQueue.deleteAllMessages();
         pdsAdaptorClient = new PdsAdaptorClient("e2e-test", config.getPdsAdaptorE2ETestApiKey(), config.getPdsAdaptorUrl());
+    }
+
+    // The following test should eventually test that we can send a small EHR - until we have an EHR in repo/test patient ready to send,
+    // we are temporarily doing a smaller test to cover from amqp -> ehr out queue
+    @Test
+    void shouldIdentifyEhrRequestAsEhrOutMessage() {
+        var ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05");
+        var inboundQueueFromMhs = new SimpleAmqpQueue(config);
+
+        String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
+        inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
+
+        assertThat(ehrInUnhandledQueue.getMessageContaining(ehrRequest)).isNotNull();
     }
 
     @Test
