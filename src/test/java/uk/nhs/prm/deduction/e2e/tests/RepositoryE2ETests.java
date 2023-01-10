@@ -113,7 +113,6 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    @Disabled("disabled this and other EMIS tests since all EMIS transfers failing due to spine errors, asking EMIS for further info")
     void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus_DevAndTest() {
         var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(config);
 
@@ -128,8 +127,6 @@ public class RepositoryE2ETests {
         repoIncomingQueue.send(triggerMessage);
         assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
-//        assertThat(endOfTransferMofUpdatedQueue.getMessageContaining(triggerMessage.getNemsMessageIdAsString()));
-//        TODO change dev patient to dev synthetic patient - what's this Jack?
     }
 
     @ParameterizedTest
@@ -154,7 +151,9 @@ public class RepositoryE2ETests {
 
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
 
-        // assert in ehr-repo? need to check all messages complete?
+        // option: assert in ehr-repo - check all messages complete - evaluate need based on:
+        //  - ehr out round trip testing
+        //  - implementation of PRMT-2972
     }
 
     private static Stream<Arguments> largeEhrScenarios() {
@@ -166,14 +165,18 @@ public class RepositoryE2ETests {
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
 
-                // 5mins + variation -> let's run these overnight
-                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
-                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT)
+                // 5mins+ variation -> removed from regression as intermittently takes 2+ hours
+                // to complete which, whiile successful, is not sufficiently timely for on-commit regression
+                //
+                // 2023-01-10 - re-enabled temporarily for generation of test evidence
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT)
 
                 // 20mins+ -> let's run this overnight
                 // Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
 
-                // could not move it to TPP - Large Message general failure
+                // could not move it EMIS to TPP - Large Message general failure
+                // need to establish current TPP limits that are applying in this case
                 // Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SUPER_LARGE)
         );
     }
