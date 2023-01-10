@@ -101,6 +101,7 @@ public class RepositoryE2ETests {
     // The following test should eventually test that we can send a small EHR - until we have an EHR in repo/test patient ready to send,
     // we are temporarily doing a smaller test to cover from amqp -> ehr out queue
     @Test
+    @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev" )
     void shouldIdentifyEhrRequestAsEhrOutMessage() {
         var ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05");
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
