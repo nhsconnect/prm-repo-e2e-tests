@@ -172,7 +172,7 @@ public class RepositoryE2ETests {
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT)
 
-                // 20mins+ -> let's run this overnight
+                // 20mins+, filling FSS disks causing outages -> to be run ad hoc as needed
                 // Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
 
                 // could not move it EMIS to TPP - Large Message general failure
