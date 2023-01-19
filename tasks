@@ -179,6 +179,11 @@ case "${command}" in
       assume_environment_role $NHS_ENVIRONMENT
       dojo "./tasks _test_repo_e2e"
       ;;
+  test_repo_e2e_shell)
+      check_env
+      assume_environment_role $NHS_ENVIRONMENT
+      dojo
+      ;;
   _livetest_inject)
       gradle test --tests InjectChangeOfGPMessageTest
       ;;
