@@ -66,6 +66,7 @@ public class EhrRepoClient {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("conversationId", "bob");
         return headers;
     }
 }
