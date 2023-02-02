@@ -130,9 +130,9 @@ public class RepositoryE2ETests {
     }
 
     @ParameterizedTest
-    @MethodSource("largeEhrScenarios")
+    @MethodSource("largeEhrScenariosRunningOnCommit")
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "We have only one set of variants for large ehr")
-    void shouldTransferAllSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
+    void shouldTransferRepresentativeSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhr.patient())
                 .withEhrSourceGp(sourceSystem)
@@ -156,24 +156,50 @@ public class RepositoryE2ETests {
         //  - implementation of PRMT-2972
     }
 
-    private static Stream<Arguments> largeEhrScenarios() {
+    private static Stream<Arguments> largeEhrScenariosRunningOnCommit() {
         return Stream.of(
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
-                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS)
+        );
+    }
 
+    @ParameterizedTest
+    @MethodSource("largeEhrScenariosToBeRunAsRequired")
+    @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "We have only one set of variants for large ehr")
+    @EnabledIfEnvironmentVariable(named = "RUN_ALL_VARIANTS", matches = "true", disabledReason = "Too slow / problematic for on-commit run")
+    void shouldTransferRemainingSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
+        var triggerMessage = new RepoIncomingMessageBuilder()
+                .withPatient(largeEhr.patient())
+                .withEhrSourceGp(sourceSystem)
+                .withEhrDestinationAsRepo(config)
+                .build();
+
+        setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
+
+        repoIncomingQueue.send(triggerMessage);
+
+        assertThat(transferCompleteQueue.getMessageContainingAttribute(
+                "conversationId",
+                triggerMessage.conversationId(),
+                largeEhr.timeoutMinutes(),
+                TimeUnit.MINUTES));
+
+        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+    }
+
+    private static Stream<Arguments> largeEhrScenariosToBeRunAsRequired() {
+        return Stream.of(
                 // 5mins+ variation -> removed from regression as intermittently takes 2+ hours
                 // to complete which, whiile successful, is not sufficiently timely for on-commit regression
-                //
-                // 2023-01-10 - re-enabled temporarily for generation of test evidence
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
-                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT)
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
 
                 // 20mins+, filling FSS disks causing outages -> to be run ad hoc as needed
-                // Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
+                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
 
                 // could not move it EMIS to TPP - Large Message general failure
                 // need to establish current TPP limits that are applying in this case
