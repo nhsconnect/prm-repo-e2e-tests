@@ -20,7 +20,7 @@ import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         RepositoryE2ETests.class,
         RepoIncomingQueue.class,
         TestConfiguration.class,
-        SqsQueue.class, BasicSqsClient.class,
+        ThinlyWrappedSqsClient.class, BasicSqsClient.class,
         AssumeRoleCredentialsProviderFactory.class,
         AutoRefreshingRoleAssumingSqsClient.class,
         Resources.class,

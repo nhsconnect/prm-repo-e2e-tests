@@ -6,11 +6,11 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSq
 import java.util.List;
 
 @Component
-public class SqsQueue {
+public class ThinlyWrappedSqsClient {
 
     private AutoRefreshingRoleAssumingSqsClient sqsClient;
 
-    public SqsQueue(AutoRefreshingRoleAssumingSqsClient sqsClient) {
+    public ThinlyWrappedSqsClient(AutoRefreshingRoleAssumingSqsClient sqsClient) {
         this.sqsClient = sqsClient;
     }
 
@@ -30,7 +30,7 @@ public class SqsQueue {
         sqsClient.deleteAllMessagesFrom(queueUri);
     }
 
-    public void postAMessage(String queueUrl, String message){
-        sqsClient.postAMessage(queueUrl, message);
+    public void postAMessage(String queueUrl, String message, String attributeKey, String attributeValue) {
+        sqsClient.postAMessage(queueUrl, message, attributeKey, attributeValue);
     }
 }

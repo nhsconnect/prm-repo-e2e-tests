@@ -10,7 +10,7 @@ import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageObservabilityQueue;
 
 import static java.time.ZoneOffset.ofHours;
@@ -39,7 +39,7 @@ public class InjectChangeOfGPMessageTest {
     @BeforeEach
     public void setUp() {
         var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
-        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new SqsQueue(sqsClient), new TestConfiguration());
+        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new ThinlyWrappedSqsClient(sqsClient), new TestConfiguration());
     }
 
 

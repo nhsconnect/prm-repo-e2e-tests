@@ -9,14 +9,13 @@ import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.services.gp2gp_messenger.Gp2GpMessengerClient;
 import uk.nhs.prm.deduction.e2e.suspensions.SuspensionMessageRealQueue;
 
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters.fetchTestParameter;
 import static uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters.outputTestParameter;
 
 
@@ -31,7 +30,7 @@ public class ChangeOfGPMessageReceivedTest {
     @BeforeEach
     public void setUp() {
         var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
-        suspensionMessageRealQueue = new SuspensionMessageRealQueue(new SqsQueue(sqsClient), config);
+        suspensionMessageRealQueue = new SuspensionMessageRealQueue(new ThinlyWrappedSqsClient(sqsClient), config);
         gp2GpMessengerClient = new Gp2GpMessengerClient(config.getGp2GpMessengerApiKey(), config.getGp2GpMessengerUrl());
     }
 

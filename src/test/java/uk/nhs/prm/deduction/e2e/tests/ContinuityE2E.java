@@ -18,7 +18,7 @@ import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.reregistration.ReRegistrationMessageObservabilityQueue;
 import uk.nhs.prm.deduction.e2e.reregistration.active_suspensions_db.ActiveSuspensionsDbClient;
@@ -44,7 +44,7 @@ import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventF
         ContinuityE2E.class,
         RepoIncomingObservabilityQueue.class,
         MeshMailbox.class,
-        SqsQueue.class,
+        ThinlyWrappedSqsClient.class,
         TestConfiguration.class,
         MeshForwarderQueue.class,
         NemsEventProcessorUnhandledQueue.class,

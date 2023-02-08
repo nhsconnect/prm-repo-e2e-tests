@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,9 +65,24 @@ public class BasicSqsClient implements TestSqsClient {
     public void deleteAllMessagesFrom(String queueUrl) {
         sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(queueUrl).build());
     }
+
     public void postAMessage(String queueUrl, String message) {
         sqsClient.sendMessage(SendMessageRequest.builder().queueUrl(queueUrl).messageBody(message).build());
     }
+
+    public void postAMessage(String queueUrl, String message, String attributeKey, String attributeValue) {
+        var attributes = new HashMap<String, MessageAttributeValue>();
+        attributes.put(attributeKey, getMessageAttributeValue(attributeValue));
+
+        var messageRequest = SendMessageRequest.builder()
+                .queueUrl(queueUrl)
+                .messageBody(message)
+                .messageAttributes(attributes)
+                .build();
+
+        sqsClient.sendMessage(messageRequest);
+    }
+
     private ReceiveMessageResponse receiveMessages(ReceiveMessageRequest receiveMessageRequest) {
         try {
             return sqsClient.receiveMessage(receiveMessageRequest);
@@ -74,5 +90,12 @@ public class BasicSqsClient implements TestSqsClient {
         catch (Exception e) {
             throw new RuntimeException("Failure receiving messages from: " + receiveMessageRequest.queueUrl(), e);
         }
+    }
+
+    private MessageAttributeValue getMessageAttributeValue(String attributeValue) {
+        return MessageAttributeValue.builder()
+                .dataType("String")
+                .stringValue(attributeValue)
+                .build();
     }
 }
