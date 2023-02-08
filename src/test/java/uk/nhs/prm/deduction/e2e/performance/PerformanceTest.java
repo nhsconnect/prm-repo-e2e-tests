@@ -17,7 +17,7 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSq
 import uk.nhs.prm.deduction.e2e.performance.load.*;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
@@ -38,7 +38,7 @@ import static uk.nhs.prm.deduction.e2e.performance.reporting.PerformanceChartGen
 @SpringBootTest(classes = {
         PerformanceTest.class,
         MeshMailbox.class,
-        SqsQueue.class,
+        ThinlyWrappedSqsClient.class,
         TestConfiguration.class,
         QueueHelper.class,
         MofUpdatedMessageQueue.class,
@@ -67,7 +67,7 @@ public class PerformanceTest {
 
     @BeforeEach
     public void setUp() {
-        mofUpdatedMessageQueue = new MofUpdatedMessageQueue(new SqsQueue(appropriateAuthenticationSqsClient()), config);
+        mofUpdatedMessageQueue = new MofUpdatedMessageQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient()), config);
     }
 
     @Disabled("only used for perf test development not wanted on actual runs")

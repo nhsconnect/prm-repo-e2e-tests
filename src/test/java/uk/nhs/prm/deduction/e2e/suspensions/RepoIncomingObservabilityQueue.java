@@ -5,17 +5,13 @@ import org.springframework.stereotype.Component;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessage;
 import uk.nhs.prm.deduction.e2e.queue.QueueMessageHelper;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 
 @Component
 public class RepoIncomingObservabilityQueue extends QueueMessageHelper {
 
     @Autowired
-    public RepoIncomingObservabilityQueue(SqsQueue sqsQueue, TestConfiguration configuration) {
-        super(sqsQueue, configuration.repoIncomingObservabilityQueueUri());
-    }
-
-    public void send(RepoIncomingMessage message) {
-        super.postAMessage(message.toJsonString());
+    public RepoIncomingObservabilityQueue(ThinlyWrappedSqsClient thinlyWrappedSqsClient, TestConfiguration configuration) {
+        super(thinlyWrappedSqsClient, configuration.repoIncomingObservabilityQueueUri());
     }
 }

@@ -2,7 +2,7 @@ package uk.nhs.prm.deduction.e2e.nems;
 
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -13,11 +13,11 @@ import static org.hamcrest.Matchers.equalTo;
 @Component
 public class NemsEventMessageQueue {
 
-    private final SqsQueue sqsQueue;
+    private final ThinlyWrappedSqsClient thinlyWrappedSqsClient;
     private final String queueUri;
 
-    public NemsEventMessageQueue(SqsQueue sqsQueue, String queueUri) {
-        this.sqsQueue = sqsQueue;
+    public NemsEventMessageQueue(ThinlyWrappedSqsClient thinlyWrappedSqsClient, String queueUri) {
+        this.thinlyWrappedSqsClient = thinlyWrappedSqsClient;
         this.queueUri = queueUri;
     }
 
@@ -29,7 +29,7 @@ public class NemsEventMessageQueue {
     }
 
     private boolean messageIsOnQueue(String messageBodyToCheck) {
-        List<SqsMessage> allMessages = sqsQueue.readMessagesFrom(this.queueUri);
+        List<SqsMessage> allMessages = thinlyWrappedSqsClient.readMessagesFrom(this.queueUri);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
                 if (message.contains(messageBodyToCheck)) {
@@ -43,7 +43,7 @@ public class NemsEventMessageQueue {
     }
 
     public void deleteAllMessages() {
-        sqsQueue.deleteAllMessages(queueUri);
+        thinlyWrappedSqsClient.deleteAllMessages(queueUri);
     }
 
     public void log(String messageBody) {

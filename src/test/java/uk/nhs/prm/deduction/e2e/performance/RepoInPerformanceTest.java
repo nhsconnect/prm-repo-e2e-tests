@@ -17,10 +17,9 @@ import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProvide
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.performance.reporting.RepoInPerformanceChartGenerator;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
-import uk.nhs.prm.deduction.e2e.queue.SqsQueue;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
-import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.timing.Sleeper;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
@@ -46,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         RepoInPerformanceTest.class,
         RepoIncomingQueue.class,
         Sleeper.class,
-        SqsQueue.class,
+        ThinlyWrappedSqsClient.class,
         TestConfiguration.class,
         TrackerDb.class,
         TransferCompleteQueue.class,
@@ -75,7 +74,7 @@ public class RepoInPerformanceTest {
 
     @BeforeAll
     void init() {
-        transferCompleteQueue = new TransferCompleteQueue(new SqsQueue(appropriateAuthenticationSqsClient()), config);
+        transferCompleteQueue = new TransferCompleteQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient()), config);
         transferCompleteQueue.deleteAllMessages();
     }
 

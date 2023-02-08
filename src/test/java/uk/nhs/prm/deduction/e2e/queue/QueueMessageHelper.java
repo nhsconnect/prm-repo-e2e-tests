@@ -16,25 +16,25 @@ import static org.hamcrest.Matchers.notNullValue;
 
 @Slf4j
 public class QueueMessageHelper {
-    protected final SqsQueue sqsQueue;
+    protected final ThinlyWrappedSqsClient thinlyWrappedSqsClient;
     protected final String queueUri;
 
-    public QueueMessageHelper(SqsQueue sqsQueue, String queueUri) {
-        this.sqsQueue = sqsQueue;
+    public QueueMessageHelper(ThinlyWrappedSqsClient thinlyWrappedSqsClient, String queueUri) {
+        this.thinlyWrappedSqsClient = thinlyWrappedSqsClient;
         this.queueUri = queueUri;
     }
 
     public void deleteAllMessages() {
         log(String.format("Trying to delete all the messages on : %s", this.queueUri));
         try {
-            sqsQueue.deleteAllMessages(queueUri);
+            thinlyWrappedSqsClient.deleteAllMessages(queueUri);
         } catch (Exception e){
             log.warn("Error encountered while deleting the messages on the queue : " + queueUri, e);
         }
     }
 
     public void deleteMessage(SqsMessage sqsMessage) {
-        sqsQueue.deleteMessage(queueUri, sqsMessage.getMessage());
+        thinlyWrappedSqsClient.deleteMessage(queueUri, sqsMessage.getMessage());
     }
 
     public void log(String messageBody) {
@@ -82,12 +82,12 @@ public class QueueMessageHelper {
                 .until(() -> findMessagesOnQueue((int) timeoutSeconds), notNullValue());
     }
     private List<SqsMessage> findMessagesOnQueue(int visibilityTimeout) {
-        List<SqsMessage> messages = sqsQueue.readThroughMessages(this.queueUri, visibilityTimeout);
+        List<SqsMessage> messages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, visibilityTimeout);
         return messages.isEmpty() ? null : messages;
     }
 
     private SqsMessage findMessageContaining(String substring) {
-        var allMessages = sqsQueue.readThroughMessages(this.queueUri, 180);
+        var allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
         for (var message : allMessages) {
             System.out.println("just finding message, checking conversationId: " + substring);
             if (message.contains(substring)) {
@@ -98,7 +98,7 @@ public class QueueMessageHelper {
     }
 
     public SqsMessage findMessageWithAttribute(String attribute, String expectedValue) {
-        var allMessages = sqsQueue.readThroughMessages(this.queueUri, 180);
+        var allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
         for (var message : allMessages) {
             System.out.println("just finding message, checking attribute : " + attribute + " expected value is : " + expectedValue);
             if (message.attributes().get(attribute).stringValue().equals(expectedValue)) {
@@ -117,7 +117,7 @@ public class QueueMessageHelper {
     }
 
     private SqsMessage findMessageContainingWitHigherVisibilityTimeOut(String substring) {
-        var allMessages = sqsQueue.readThroughMessages(this.queueUri, 600);
+        var allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 600);
         for (var message : allMessages) {
             System.out.println("just finding message, checking conversationId: " + substring);
             if (message.contains(substring)) {
@@ -129,7 +129,7 @@ public class QueueMessageHelper {
 
 
     private boolean hasResolutionMessageNow(ResolutionMessage messageToCheck) throws JSONException {
-        List<SqsMessage> allMessages = sqsQueue.readMessagesFrom(this.queueUri);
+        List<SqsMessage> allMessages = thinlyWrappedSqsClient.readMessagesFrom(this.queueUri);
         for (var message : allMessages) {
             ResolutionMessage resolutionMessage = QueueHelper.getNonSensitiveDataMessage(message);
             if (QueueHelper.checkIfMessageIsExpectedMessage(resolutionMessage, messageToCheck)) {
@@ -139,7 +139,7 @@ public class QueueMessageHelper {
         return false;
     }
 
-    protected void postAMessage(String message) {
-        sqsQueue.postAMessage(queueUri,message);
+    protected void postAMessageWithAttribute(String message, String attributeKey, String attributeValue) {
+        thinlyWrappedSqsClient.postAMessage(queueUri,message, attributeKey, attributeValue);
     }
 }
