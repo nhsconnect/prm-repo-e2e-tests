@@ -55,7 +55,7 @@ public class ValidateEhrTransferToRepoUsingMofTest {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withNhsNumber(testPatientNhsNumber)
                 .withEhrSourceGpOdsCode(testPatientPreviousGp)
-                .withEhrDestinationAsRepo(config)
+                .withEhrDestination(config.getRepoOdsCode())
                 .build();
 
         repoIncomingQueue.send(triggerMessage);

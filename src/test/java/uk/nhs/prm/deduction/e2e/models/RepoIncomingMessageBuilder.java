@@ -53,6 +53,12 @@ public class RepoIncomingMessageBuilder {
         return this;
     }
 
+    public RepoIncomingMessageBuilder withEhrDestination(String ehrDestination) {
+        destinationGp = ehrDestination;
+        return this;
+    }
+
+
     public RepoIncomingMessageBuilder withEhrDestinationAsRepo(TestConfiguration config) {
         return withEhrDestinationGp(Gp2GpSystem.repoInEnv(config));
     }
