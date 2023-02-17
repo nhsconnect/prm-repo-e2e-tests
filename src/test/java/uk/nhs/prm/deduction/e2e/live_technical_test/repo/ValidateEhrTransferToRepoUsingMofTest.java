@@ -3,12 +3,17 @@ package uk.nhs.prm.deduction.e2e.live_technical_test.repo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.deduction.e2e.live_technical_test.helpers.TestPatientValidator;
+import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
+import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.deduction.e2e.services.gp2gp_messenger.Gp2GpMessengerClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters.fetchTestParameter;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -27,7 +33,10 @@ public class ValidateEhrTransferToRepoUsingMofTest {
     private Gp2GpMessengerClient gp2GpMessengerClient;
     private EhrRepoClient ehrRepoClient;
     private TestPatientValidator patientValidator = new TestPatientValidator();
-
+    @Autowired
+    TrackerDb trackerDb;
+    @Autowired
+    private RepoIncomingQueue repoIncomingQueue;
     @BeforeEach
     void setUp() {
         pdsAdaptorClient = new PdsAdaptorClient(PDS_ADAPTOR_TEST_USERNAME, config.getPdsAdaptorLiveTestApiKey(), config.getPdsAdaptorUrl());
@@ -43,15 +52,19 @@ public class ValidateEhrTransferToRepoUsingMofTest {
         assertThat(isSafeListedOrSynthetic(testPatientNhsNumber)).isTrue();
         updateMofToRepoOdsCode(testPatientNhsNumber);
 
-        var conversationId = UUID.randomUUID().toString();
-        System.out.println("Generated conversation id " + conversationId);
+        var triggerMessage = new RepoIncomingMessageBuilder()
+                .withNhsNumber(testPatientNhsNumber)
+                .withEhrSourceGpOdsCode(testPatientPreviousGp)
+                .withEhrDestinationAsRepo(config)
+                .build();
 
-        isHealthRecordRequestSuccessful(testPatientNhsNumber, testPatientPreviousGp, conversationId);
+        repoIncomingQueue.send(triggerMessage);
 
         System.out.println("Checking ehr repo for 60s till health record is stored is successfully");
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS)
-                .until(() -> ehrRepoClient.isPatientHealthRecordStatusComplete(testPatientNhsNumber, conversationId),
+                .until(() -> ehrRepoClient.isPatientHealthRecordStatusComplete(testPatientNhsNumber, triggerMessage.conversationId()),
                         equalTo(true));
+        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
 
     }
 

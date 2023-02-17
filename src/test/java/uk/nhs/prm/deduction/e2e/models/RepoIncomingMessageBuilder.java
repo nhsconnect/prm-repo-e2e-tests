@@ -44,7 +44,10 @@ public class RepoIncomingMessageBuilder {
         sourceGp = ehrSource.odsCode();
         return this;
     }
-
+    public RepoIncomingMessageBuilder withEhrSourceGpOdsCode(String ehrSource) {
+        sourceGp = ehrSource;
+        return this;
+    }
     public RepoIncomingMessageBuilder withEhrDestinationGp(Gp2GpSystem ehrDestination) {
         destinationGp = ehrDestination.odsCode();
         return this;
