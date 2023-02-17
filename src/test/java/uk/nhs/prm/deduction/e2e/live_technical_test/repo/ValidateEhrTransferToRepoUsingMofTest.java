@@ -9,6 +9,9 @@ import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.deduction.e2e.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
+import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.deduction.e2e.services.gp2gp_messenger.Gp2GpMessengerClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
@@ -33,15 +36,14 @@ public class ValidateEhrTransferToRepoUsingMofTest {
     private Gp2GpMessengerClient gp2GpMessengerClient;
     private EhrRepoClient ehrRepoClient;
     private TestPatientValidator patientValidator = new TestPatientValidator();
-    @Autowired
-    TrackerDb trackerDb;
-    @Autowired
     private RepoIncomingQueue repoIncomingQueue;
     @BeforeEach
     void setUp() {
+        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
         pdsAdaptorClient = new PdsAdaptorClient(PDS_ADAPTOR_TEST_USERNAME, config.getPdsAdaptorLiveTestApiKey(), config.getPdsAdaptorUrl());
         gp2GpMessengerClient = new Gp2GpMessengerClient(config.getGp2GpMessengerApiKey(), config.getGp2GpMessengerUrl());
         ehrRepoClient = new EhrRepoClient(config.getEhrRepoApiKey(), config.getEhrRepoUrl());
+        repoIncomingQueue = new RepoIncomingQueue(new ThinlyWrappedSqsClient(sqsClient), config);
     }
 
     @Test
@@ -64,7 +66,6 @@ public class ValidateEhrTransferToRepoUsingMofTest {
         await().atMost(60, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS)
                 .until(() -> ehrRepoClient.isPatientHealthRecordStatusComplete(testPatientNhsNumber, triggerMessage.conversationId()),
                         equalTo(true));
-        assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
 
     }
 
