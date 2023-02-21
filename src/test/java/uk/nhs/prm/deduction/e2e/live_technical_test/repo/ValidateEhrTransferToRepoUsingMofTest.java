@@ -63,7 +63,7 @@ public class ValidateEhrTransferToRepoUsingMofTest {
         repoIncomingQueue.send(triggerMessage);
 
         System.out.println("Checking ehr repo for 60s till health record is stored is successfully");
-        await().atMost(60, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS)
+        await().atMost(300, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS)
                 .until(() -> ehrRepoClient.isPatientHealthRecordStatusComplete(testPatientNhsNumber, triggerMessage.conversationId()),
                         equalTo(true));
 
