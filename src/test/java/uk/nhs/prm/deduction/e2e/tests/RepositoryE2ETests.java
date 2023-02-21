@@ -112,9 +112,8 @@ public class RepositoryE2ETests {
         assertThat(ehrInUnhandledQueue.getMessageContaining(ehrRequest)).isNotNull();
     }
 
-    @Disabled("EMIS in PTL int having issues")
     @Test
-    void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
+    void shouldTestTheE2EJourneyForALargeEhrReceivingAllTheFragmentsAndUpdatingTheDBWithHealthRecordStatus_DevAndTest() {
         var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(config);
 
         setManagingOrganisationToRepo(largeEhrAtEmisWithRepoMof.nhsNumber());
@@ -131,7 +130,7 @@ public class RepositoryE2ETests {
     }
 
     @ParameterizedTest
-    @MethodSource("largeEhrScenariosRunningOnCommit_ButNotEmisWhichIsCurrentlyHavingIssues")
+    @MethodSource("largeEhrScenariosRunningOnCommit")
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "We have only one set of variants for large ehr")
     void shouldTransferRepresentativeSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
         var triggerMessage = new RepoIncomingMessageBuilder()
@@ -155,11 +154,6 @@ public class RepositoryE2ETests {
         // option: assert in ehr-repo - check all messages complete - evaluate need based on:
         //  - ehr out round trip testing
         //  - implementation of PRMT-2972
-    }
-
-    private static Stream<Arguments> largeEhrScenariosRunningOnCommit_ButNotEmisWhichIsCurrentlyHavingIssues() {
-        return largeEhrScenariosRunningOnCommit().filter(args ->
-                args.get()[0] != Gp2GpSystem.EMIS_PTL_INT);
     }
 
     private static Stream<Arguments> largeEhrScenariosRunningOnCommit() {
