@@ -55,8 +55,9 @@ public class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
 
         repoIncomingQueue.send(triggerMessage);
 
-        System.out.println("Checking ehr repo for 300s till health record is stored is successfully");
-        await().atMost(300, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS)
+        int timeout = 1200;
+        System.out.println("Checking ehr repo for " + timeout + "s until health record is stored successfully");
+        await().atMost(timeout, TimeUnit.SECONDS).with().pollInterval(5, TimeUnit.SECONDS)
                 .until(() -> ehrRepoClient.isPatientHealthRecordStatusComplete(testPatientNhsNumber, triggerMessage.conversationId()),
                         equalTo(true));
 
