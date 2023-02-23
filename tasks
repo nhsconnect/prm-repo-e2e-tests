@@ -208,13 +208,21 @@ case "${command}" in
       assume_environment_role $NHS_ENVIRONMENT
       dojo "./tasks _livetest_day2_test"
       ;;
-  _livetest_repo_test)
-      gradle test --tests ValidateEhrTransferToRepoUsingMofTest
+  _live_synthetic_check_suspended)
+      gradle test --tests ValidateSyntheticPatientIsSuspendedTest
       ;;
-  livetest_repo_test)
+  live_synthetic_check_suspended)
       check_env
       assume_environment_role $NHS_ENVIRONMENT
-      dojo "./tasks _livetest_repo_test"
+      dojo "./tasks _live_synthetic_check_suspended"
+      ;;
+  _live_synthetic_transfer_in_ehr)
+      gradle test --tests ValidateSyntheticEhrTransferInToRepoUsingMofTest
+      ;;
+  live_synthetic_transfer_in_ehr)
+      check_env
+      assume_environment_role $NHS_ENVIRONMENT
+      dojo "./tasks _live_synthetic_transfer_in_ehr"
       ;;
   _test_perf_unit)
       gradle test --tests *.performance.*.*Test

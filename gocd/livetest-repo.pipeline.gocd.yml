@@ -42,3 +42,44 @@ pipelines:
       LIVE_TECHNICAL_TEST_PREVIOUS_GP:
     stages:
       - *common_stages
+  live-repo-ehr-in-synthetic-test.prod:
+    group: system-tests
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    environment_variables:
+      NHS_ENVIRONMENT: prod
+      LIVE_TECHNICAL_TEST_NHS_NUMBER:
+      LIVE_TECHNICAL_TEST_PREVIOUS_GP:
+    stages:
+      - check_suspended:
+          clean_workspace: true
+          approval:
+            type: manual
+          artifacts:
+            - build:
+                source: build/reports/tests/
+          tabs:
+            TestReport: test/index.html
+          tasks:
+            - exec:
+                command: /bin/bash
+                arguments:
+                  - -c
+                  - ./tasks live_synthetic_check_suspended
+      - transfer_in_ehr:
+          clean_workspace: true
+          approval:
+            type: manual
+          artifacts:
+            - build:
+                source: build/reports/tests/
+          tabs:
+            TestReport: test/index.html
+          tasks:
+            - exec:
+                command: /bin/bash
+                arguments:
+                  - -c
+                  - ./tasks live_synthetic_transfer_in_ehr
