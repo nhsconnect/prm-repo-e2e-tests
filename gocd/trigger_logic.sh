@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo Loading gocd explicit trigger checks and actions
+echo Loading gocd explicit trigger logic - checks and actions
 
 function get_latest_stage_run_status() {
   get_stage_run_history $1 $2 | jq .stages[0]

@@ -1,5 +1,20 @@
 format_version: 4
 pipelines:
+  test-gocd-triggers:
+    group: linear-spike
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    stages:
+      - test-trigger-logic:
+          clean_workspace: true
+          tasks:
+            - exec:
+                command: /bin/bash
+                arguments:
+                  - -c
+                  - ./tasks test_gocd_trigger_logic
   e2e-tests.dev:
     group: linear-spike
     label_template: '${COUNT}-${git[:8]}'
