@@ -60,11 +60,16 @@ pipelines:
                 command: /bin/bash
                 arguments:
                   - -c
-                  - ./tasks check_gocd_job
+                  - ./tasks check_env_deployed_before
             - exec:
                 command: sleep
                 arguments:
                   - 30
+            - exec:
+                command: /bin/bash
+                arguments:
+                  - -c
+                  - ./tasks check_env_still_deployed_after
             - exec:
                 command: /bin/bash
                 arguments:

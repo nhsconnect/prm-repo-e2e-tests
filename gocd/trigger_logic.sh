@@ -44,6 +44,8 @@ function stage_status_manifest_filename() {
   echo $pipeline-$stage-status.$context.json
 }
 
+microservices='pds-adaptor nems-event-processor'
+
 function check_environment_is_deployed() {
   local environment_id=${ENVIRONMENT_ID:='ENVIRONMENT_ID is not set'} # yeah using ENVIRONMENT_ID because NHS_ENVIRONMENT is daft
 
@@ -54,7 +56,6 @@ function check_environment_is_deployed() {
   # or assigned but is not building yet, it needn't invalidate run, but hardly seems worth it
 
   # NB there is a Cancel stage API which would be better if can be used on self than this red fail
-  local microservices='pds-adaptor nems-event-processor'
   local stage_name=deploy.$environment_id
 
   for microservice in $microservices
@@ -68,9 +69,13 @@ function check_environment_is_deployed() {
   done
 
   echo No deployments running into $environment_id. Allowing tests to run.
+}
+
+function check_environment_is_still_deployed_after() {
+  local environment_id=${ENVIRONMENT_ID:='ENVIRONMENT_ID is not set'} # yeah using ENVIRONMENT_ID because NHS_ENVIRONMENT is daft
+  local stage_name=deploy.$environment_id
 
   echo Saving stage status manifests after tests
-
   for microservice in $microservices
   do
     echo Capturing current deploy status of $microservice into $environment_id
@@ -80,15 +85,18 @@ function check_environment_is_deployed() {
   done
 
   echo Comparing before and after statuses to ensure no deployment into $environment_id overlapped with tests
+  local status_change
+  local has_status_changed
   for microservice in $microservices
   do
     local before_status_filename=$(stage_status_manifest_filename before $microservice $stage_name)
     local after_status_filename=$(stage_status_manifest_filename after $microservice $stage_name)
-    local status_change=$(diff $before_status_filename $after_status_filename)
-    local has_status_changed=$?
+
+    status_change=$(diff $before_status_filename $after_status_filename)
+    has_status_changed=$?
 
     if [ $has_status_changed -ne 0 ]; then
-      echo "Failing tests pending re-run as $microservice deployment occurred into $environment_id, status change: $status_change"
+      echo "Exiting pending re-run of tests as $microservice deployment occurred into $environment_id, status change: $status_change"
       exit 121
     fi
   done
