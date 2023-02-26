@@ -9,3 +9,4 @@ utils/**/aws-helpers
 samples/
 docs/perf-reports
 .DS_Store
+gocd_trigger.log
