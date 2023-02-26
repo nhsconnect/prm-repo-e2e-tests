@@ -63,4 +63,33 @@ if [ $fn_result -ne 0 ]; then
 fi
 echo passed
 
+echo fail_if_stage_running should return normally if stage is not running but failed which could occur \
+     if manually triggered to force re-test but of course tests would not be triggered automatically in this case
+
+get_stage_run_history_stub_response='{
+                                       "stages": [
+                                         {
+                                           "counter": "1",
+                                           "result": "Failed",
+                                           "pipeline_counter": 52,
+                                           "jobs": []
+                                         },
+                                         {
+                                           "counter": "1",
+                                           "result": "Passed",
+                                           "pipeline_counter": 51,
+                                           "jobs": []
+                                         }
+                                       ]
+                                     }'
+
+fn_output=$(fail_if_stage_running some_pipeline some_stage)
+fn_result=$?
+
+if [ $fn_result -ne 0 ]; then
+  echo 'should not have failed, but failed with' $fn_result
+  exit $fn_result
+fi
+echo passed
+
 
