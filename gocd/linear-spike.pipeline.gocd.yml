@@ -27,6 +27,7 @@ pipelines:
 #        pipeline: re-registration-service
 #        stage: deploy.dev
     environment_variables:
+      ENVIRONMENT_ID: dev
       NHS_ENVIRONMENT: dev
       UPDATE_MOF_TO_REPO: true
     stages:
