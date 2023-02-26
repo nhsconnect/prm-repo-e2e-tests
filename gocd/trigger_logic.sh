@@ -3,7 +3,12 @@
 echo Loading gocd explicit trigger logic - checks and actions
 
 function get_latest_stage_run_status() {
-  get_stage_run_history $1 $2 | jq .stages[0]
+  local pipeline_name=$1
+  local stage_name=$2
+
+  [[ $GOCD_TRIGGER_LOG == DEBUG ]] && { date >> gocd_trigger.log; echo get_latest_stage_run_status >> gocd_trigger.log; echo pipeline_name $pipeline_name stage_name $stage_name >> gocd_trigger.log; }
+
+  get_stage_run_history $pipeline_name $stage_name | jq .stages[0]
 }
 
 function extract_stage_status_result() {
@@ -14,21 +19,29 @@ function extract_stage_status_result() {
 }
 
 function fail_if_stage_running() {
-  local pipeline_name=$1
-  local stage_name=$2
-
-  [[ $GOCD_TRIGGER_LOG == DEBUG ]] && { date >> gocd_trigger.log; echo fail_if_stage_running >> gocd_trigger.log; echo pipeline_name $pipeline_name stage_name $stage_name >> gocd_trigger.log; }
-
-  local stage_status=$(get_latest_stage_run_status $pipeline_name $stage_name)
+  local stage_status=$1
 
   [[ $GOCD_TRIGGER_LOG == DEBUG ]] && { date >> gocd_trigger.log; echo fail_if_stage_running >> gocd_trigger.log; echo stage_status "$stage_status" >> gocd_trigger.log; }
 
   local stage_result=$(extract_stage_status_result "$stage_status")
 
   if [[ "$stage_result" == "Unknown" ]]; then
-    echo "Failing e2e tests fast as $pipeline_name is currently running $stage_name"
+    echo "Failing fast as stages is currently running according to $stage_status"
     exit 37
   fi
+}
+
+function stage_status_manifest_filename() {
+  local context=$1
+  local pipeline=$2
+  local stage=$3
+
+  if [ "$context" != 'before' ] && [ "$context" != 'after' ]; then
+    echo "Unknown context: $context"
+    exit 77
+  fi
+
+  echo $pipeline-$stage-status.$context.json
 }
 
 function check_environment_is_deployed() {
@@ -37,39 +50,56 @@ function check_environment_is_deployed() {
   # simplified pipelines next steps:
 
   # note:
-  # create versions manifest - then can just check is identical at end of tests?
-  # ... well not quite if you want to optimise - as e.g. if one gets scheduled or assigned
-  # but is not building yet, it needn't invalidate run, but for simplicity:
-
-  # todo 0: switch from looking for job status 'Completed', to stage result !'Unknown' which ensures
-  #         that waits for stage if has multiple parallel jobs
-
-  # make sure all are in state completed at start of run
-  # todo 1: split fail_if_stage_running to capture of stage status and separate fail \
-  #         which means stage status can be used afterwards for comparison
+  # just comparing stage status manifests may not be sufficient if you want to optimise - as e.g. if one gets scheduled
+  # or assigned but is not building yet, it needn't invalidate run, but hardly seems worth it
 
   # NB there is a Cancel stage API which would be better if can be used on self than this red fail
-  fail_if_stage_running pds-adaptor deploy.$environment_id
-  fail_if_stage_running nems-event-processor deploy.$environment_id
+  local microservices='pds-adaptor nems-event-processor'
+  local stage_name=deploy.$environment_id
+
+  for microservice in $microservices
+  do
+    echo Checking that $microservice is not deploying into $environment_id
+    local stage_status=$(get_latest_stage_run_status $microservice $stage_name)
+    fail_if_stage_running "$stage_status"
+
+    echo Saving stage status manifest before tests
+    echo "$stage_status" > $(stage_status_manifest_filename before $microservice $stage_name)
+  done
 
   echo No deployments running into $environment_id. Allowing tests to run.
 
-  # make sure all are in state completed at end of run, including which pipeline stage and job run number
-  # todo 2: capture input stage statuses again and compare vs previous, fail if different
+  echo Saving stage status manifests after tests
 
-  # if start and end manifests not identical, fail build due to potential changes while tests running (tests
-  # should then automatically re-run when in-flight or completed change triggers this test job again)
+  for microservice in $microservices
+  do
+    echo Capturing current deploy status of $microservice into $environment_id
+    local stage_name=deploy.$environment_id
+    local stage_status=$(get_latest_stage_run_status $microservice $stage_name)
+    echo "$stage_status" > $(stage_status_manifest_filename after $microservice $stage_name)
+  done
+
+  echo Comparing before and after statuses to ensure no deployment into $environment_id overlapped with tests
+  for microservice in $microservices
+  do
+    local before_status_filename=$(stage_status_manifest_filename before $microservice $stage_name)
+    local after_status_filename=$(stage_status_manifest_filename after $microservice $stage_name)
+    local status_change=$(diff $before_status_filename $after_status_filename)
+    local has_status_changed=$?
+
+    if [ $has_status_changed -ne 0 ]; then
+      echo "Failing tests pending re-run as $microservice deployment occurred into $environment_id, status change: $status_change"
+      exit 121
+    fi
+  done
 
   # next is to find latest previous passing run of this e2e tests job
 
-  # then next is to compare this manifests versions to previous passing manifest, and trigger next stages in those
+  # then next is to compare this manifests versions to *previous passing manifest*, and trigger next stages in those
   # pipelines that have different version IDs... or maybe actually safer to check latest completed next stage on
   # each microservice pipeline and trigger next stage if doesn't match? probably the prior - stick to e2e tests
   # triggering with reference to itself and previous runs - if other failures or re-runs occur that is a case for
   # manual repair
-
-  # think about / try inline e2e-tests in microservices pipelines? probs need to check only one e2e tests running at
-  # a time as well as no other deploys going on
 
   # todo 99: allow force of e2e tests run skipping pre-requisite checks e.g. if FORCE_TEST_RUN=true
 }
