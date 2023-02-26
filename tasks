@@ -104,6 +104,7 @@ function set_required_role_arn_from_assumed_role() {
   export REQUIRED_ROLE_ARN=$(dojo -c Dojofile-infra "aws sts get-caller-identity | jq -r .Arn")
 }
 
+source gocd/gocd_api_client.sh
 source gocd/explicit_triggers.sh
 
 ###########
