@@ -48,6 +48,13 @@ pipelines:
     stages:
       - test:
           clean_workspace: true
+          artifacts:
+            - build:
+                source: '*-status.before.json'
+                destination: before-manifests
+            - build:
+                source: '*-status.after.json'
+                destination: after-manifests
           tasks:
             - exec:
                 command: /bin/bash
