@@ -92,9 +92,11 @@ function check_environment_is_still_deployed_after() {
     local before_status_filename=$(stage_status_manifest_filename before $microservice $stage_name)
     local after_status_filename=$(stage_status_manifest_filename after $microservice $stage_name)
 
+    echo Checking $microservice has not been deployed during tests
     status_change=$(diff $before_status_filename $after_status_filename)
     has_status_changed=$?
 
+    echo has_status_changed "$has_status_changed"
     if [ $has_status_changed -ne 0 ]; then
       echo "Exiting pending re-run of tests as $microservice deployment occurred into $environment_id, status change: $status_change"
       exit 121
