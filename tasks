@@ -233,12 +233,19 @@ case "${command}" in
       export TARGET_MESSAGE_ID=be6f8d45-913a-4c67-89f3-10d131fc332c
       gradle ehrTool
       ;;
-  _check_gocd_job)
+  _check_env_deployed_before)
       check_environment_id
       check_environment_is_deployed
       ;;
-  check_gocd_job)
-      dojo -c Dojofile-infra "./tasks _check_gocd_job"
+  check_env_deployed_before)
+      dojo -c Dojofile-infra "./tasks _check_env_deployed_before"
+      ;;
+  _check_env_still_deployed_after)
+      check_environment_id
+      check_environment_is_still_deployed_after
+      ;;
+  check_env_still_deployed_after)
+      dojo -c Dojofile-infra "./tasks _check_env_still_deployed_after"
       ;;
   _trigger_gocd_job)
       check_environment_id
