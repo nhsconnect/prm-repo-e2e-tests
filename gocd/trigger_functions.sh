@@ -65,13 +65,15 @@ microservices='pds-adaptor nems-event-processor'
 function check_environment_is_deployed() {
   local environment_id=${ENVIRONMENT_ID:='ENVIRONMENT_ID is not set'} # yeah using ENVIRONMENT_ID because NHS_ENVIRONMENT is daft
 
-  # simplified pipelines next steps:
+  if [ "$FORCE_TEST_RUN" == 'true' ]; then
+    echo Skipping pre-test deployment status checks as FORCE_TEST_RUN is $FORCE_TEST_RUN
+    exit 0
+  fi
 
   # note:
   # just comparing stage status manifests may not be sufficient if you want to optimise - as e.g. if one gets scheduled
   # or assigned but is not building yet, it needn't invalidate run, but hardly seems worth it
 
-  # NB there is a Cancel stage API which would be better if can be used on self than this red fail
   local stage_name=deploy.$environment_id
 
   local is_stage_running
@@ -87,6 +89,7 @@ function check_environment_is_deployed() {
     if [ $is_stage_running -ne 0 ]; then
       echo Caught that stage is still running - attempting to cancel THIS stage run
       cancel_stage_run $GO_PIPELINE_NAME/$GO_PIPELINE_COUNTER/$GO_STAGE_NAME/$GO_STAGE_COUNTER
+      exit 99
     fi
 
     echo Saving stage status manifest before tests
@@ -99,6 +102,11 @@ function check_environment_is_deployed() {
 function check_environment_is_still_deployed_after() {
   local environment_id=${ENVIRONMENT_ID:='ENVIRONMENT_ID is not set'} # yeah using ENVIRONMENT_ID because NHS_ENVIRONMENT is daft
   local stage_name=deploy.$environment_id
+
+  if [ "$FORCE_TEST_RUN" == 'true' ]; then
+    echo Skipping post-test deployment status checks as FORCE_TEST_RUN is $FORCE_TEST_RUN
+    exit 0
+  fi
 
   echo Saving stage status manifests after tests
   for microservice in $microservices
@@ -124,18 +132,21 @@ function check_environment_is_still_deployed_after() {
     set -e
 
     if [ $has_status_changed -ne 0 ]; then
-      echo "Exiting pending re-run of tests as $microservice deployment occurred into $environment_id during tests, status change: $status_change"
+      echo "Cancelling tests pending re-run as $microservice deployment occurred into $environment_id during tests, status change: $status_change"
+      cancel_stage_run $GO_PIPELINE_NAME/$GO_PIPELINE_COUNTER/$GO_STAGE_NAME/$GO_STAGE_COUNTER
       exit 121
     fi
   done
-
-  # todo 99: allow force of e2e tests run skipping pre-requisite checks e.g. if FORCE_TEST_RUN=true
 }
 
 function trigger_downstream_stages() {
   local environment_id=${ENVIRONMENT_ID:='ENVIRONMENT_ID is not set'} # yeah using ENVIRONMENT_ID because NHS_ENVIRONMENT is daft
-
   local stage_name=deploy.$environment_id
+
+  if [ "$FORCE_TEST_RUN" == 'true' ]; then
+    echo Skipping triggering of downstream next stages as FORCE_TEST_RUN is $FORCE_TEST_RUN so status logic skipped
+    exit 0
+  fi
 
   for microservice in $microservices
   do
@@ -158,7 +169,10 @@ function trigger_downstream_stages() {
     fi
 
   done
+
   # NB there is a https://api.gocd.org/21.3.0/#comment-on-pipeline-instance API which maybe could add
   # some tracking info to this trigger, although it looks like comment is across whole pipeline run
   # and not stage specific meaning it could be a bit verbose / inappropriate to add comments for all triggers
+
+  # also AFAICT the comment is easy to overlook and does not stand out at all
 }
