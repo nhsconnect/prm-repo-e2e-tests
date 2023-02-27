@@ -74,11 +74,20 @@ function check_environment_is_deployed() {
   # NB there is a Cancel stage API which would be better if can be used on self than this red fail
   local stage_name=deploy.$environment_id
 
+  local is_stage_running
   for microservice in $microservices
   do
     echo Checking that $microservice is not deploying into $environment_id
     local stage_status=$(get_latest_stage_run_status $microservice $stage_name)
-    fail_if_stage_running "$stage_status"
+
+    set +e
+    (fail_if_stage_running "$stage_status")
+    is_stage_running=$?
+    set -e
+    if [ $is_stage_running -ne 0 ]; then
+      echo Caught that stage is still running - attempting to cancel THIS stage run
+      cancel_stage_run $GO_PIPELINE_NAME/$GO_PIPELINE_COUNTER/$GO_STAGE_NAME/$GO_STAGE_COUNTER
+    fi
 
     echo Saving stage status manifest before tests
     echo "$stage_status" > $(stage_status_manifest_filename before $microservice $stage_name)

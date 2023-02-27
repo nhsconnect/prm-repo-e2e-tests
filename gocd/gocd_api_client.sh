@@ -42,7 +42,7 @@ function get_pipeline_config() {
 }
 
 function trigger_stage_run() {
-  local stage_spec=$1
+  local stage_spec=$1 # :pipeline_name/:pipeline_counter/:stage_name
 
   echo triggering $stage_spec
 
@@ -52,6 +52,21 @@ function trigger_stage_run() {
     $GOCD_API_CURL_OPTIONS \
     -H "Authorization: bearer $GOCD_API_TOKEN" \
     -H 'Accept: application/vnd.go.cd.v2+json' \
+    -H 'X-GoCD-Confirm: true' \
+    -X POST
+}
+
+function cancel_stage_run() {
+  local stage_instance_spec=$1 # :pipeline_name/:pipeline_counter/:stage_name/:stage_counter
+
+  echo Cancelling $stage_instance_spec
+
+  init_gocd_api_access
+
+  curl --fail "https://$GOCD_HOST/go/api/stages/$stage_instance_spec/cancel" \
+    $GOCD_API_CURL_OPTIONS \
+    -H "Authorization: bearer $GOCD_API_TOKEN" \
+    -H 'Accept: application/vnd.go.cd.v3+json' \
     -H 'X-GoCD-Confirm: true' \
     -X POST
 }
