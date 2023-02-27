@@ -33,7 +33,7 @@ function fail_if_stage_running() {
   local stage_result=$(extract_stage_status_result "$stage_status")
 
   if [[ "$stage_result" == "Unknown" ]]; then
-    echo "Failing fast as stages is currently running according to $stage_status"
+    echo "Failing fast as stage is currently running according to $stage_status"
     exit 37
   fi
 }
