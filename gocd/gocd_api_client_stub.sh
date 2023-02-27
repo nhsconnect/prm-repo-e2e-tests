@@ -9,3 +9,7 @@ function get_stage_run_history() {
 function trigger_stage_run() {
   echo $trigger_stage_run_stub_response
 }
+
+function get_pipeline_config() {
+  echo $get_pipeline_config_stub_response
+}
