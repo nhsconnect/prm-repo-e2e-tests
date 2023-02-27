@@ -105,7 +105,7 @@ function set_required_role_arn_from_assumed_role() {
 }
 
 source gocd/gocd_api_client.sh
-source gocd/trigger_logic.sh
+source gocd/trigger_functions.sh
 
 ###########
 ## TASKS ##
@@ -254,8 +254,8 @@ case "${command}" in
   trigger_gocd_job)
       dojo -c Dojofile-infra "./tasks _trigger_gocd_job"
       ;;
-  test_gocd_trigger_logic)
-      dojo -c Dojofile-infra './gocd/test_trigger_logic.sh'
+  test_gocd_trigger_functions)
+      dojo -c Dojofile-infra './gocd/test_trigger_functions.sh'
       ;;
   *)
       echo "Invalid command: '${command}'"

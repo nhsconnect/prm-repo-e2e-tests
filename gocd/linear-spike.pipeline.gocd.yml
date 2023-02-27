@@ -14,7 +14,7 @@ pipelines:
                 command: /bin/bash
                 arguments:
                   - -c
-                  - ./tasks test_gocd_trigger_logic
+                  - ./tasks test_gocd_trigger_functions
   e2e-tests.dev:
     group: linear-spike
     label_template: '${COUNT}-${git[:8]}'

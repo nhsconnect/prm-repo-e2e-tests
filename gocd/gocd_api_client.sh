@@ -26,8 +26,23 @@ function get_stage_run_history() {
   echo "$stage_history"
 }
 
+function get_pipeline_config() {
+  local pipeline_name=$1
+
+  init_gocd_api_access
+
+  local pipeline_config=$(curl --silent --fail "https://$GOCD_HOST/go/api/admin/pipelines/$pipeline_name" \
+    $GOCD_API_CURL_OPTIONS \
+    -H "Authorization: bearer $GOCD_API_TOKEN" \
+    -H 'Accept: application/vnd.go.cd.v11+json')
+
+  [[ $GOCD_TRIGGER_LOG == DEBUG ]] && { date >> gocd_trigger.log; echo get_pipeline_config $pipeline_name >> gocd_trigger.log >> gocd_trigger.log; echo "$pipeline_config" >> gocd_trigger.log; }
+
+  echo "$pipeline_config"
+}
+
 function trigger_stage_run() {
-  local stage_spec=$1$stage_status
+  local stage_spec=$1
 
   echo triggering $stage_spec
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo Loading gocd explicit trigger logic - checks and actions
+echo Loading gocd explicit trigger logic and functions - checks and actions
 
 function get_latest_stage_run_status() {
   local pipeline_name=$1
@@ -16,6 +16,13 @@ function extract_stage_status_result() {
 
   [[ $GOCD_TRIGGER_LOG == DEBUG ]] && { date >> gocd_trigger.log; echo extract_stage_status_result stage_status >> gocd_trigger.log; echo "$stage_status" >> gocd_trigger.log; }
   echo $stage_status | jq -r .result
+}
+
+function extract_pipeline_counter() {
+  local stage_status=$1
+
+  [[ $GOCD_TRIGGER_LOG == DEBUG ]] && { date >> gocd_trigger.log; echo extract_stage_status_result stage_status >> gocd_trigger.log; echo "$stage_status" >> gocd_trigger.log; }
+  echo $stage_status | jq -r .pipeline_counter
 }
 
 function fail_if_stage_running() {
@@ -42,6 +49,15 @@ function stage_status_manifest_filename() {
   fi
 
   echo $pipeline-$stage-status.$context.json
+}
+
+function get_next_stage_name() {
+  local pipeline_name=$1
+  local stage_name=$2
+
+  [[ $GOCD_TRIGGER_LOG == DEBUG ]] && { date >> gocd_trigger.log; echo get_latest_stage_run_status >> gocd_trigger.log; echo pipeline_name $pipeline_name stage_name $stage_name >> gocd_trigger.log; }
+
+  get_pipeline_config $pipeline_name | jq -r .stages[].name | grep -A1 $stage_name | grep -v $stage_name
 }
 
 microservices='pds-adaptor nems-event-processor'
@@ -104,31 +120,36 @@ function check_environment_is_still_deployed_after() {
     fi
   done
 
-  # next is to find latest previous passing run of this e2e tests job
-
-  # then next is to compare this manifests versions to *previous passing manifest*, and trigger next stages in those
-  # pipelines that have different version IDs... or maybe actually safer to check latest completed next stage on
-  # each microservice pipeline and trigger next stage if doesn't match? probably the prior - stick to e2e tests
-  # triggering with reference to itself and previous runs - if other failures or re-runs occur that is a case for
-  # manual repair
-
   # todo 99: allow force of e2e tests run skipping pre-requisite checks e.g. if FORCE_TEST_RUN=true
 }
 
 function trigger_downstream_stages() {
   local environment_id=${ENVIRONMENT_ID:='ENVIRONMENT_ID is not set'} # yeah using ENVIRONMENT_ID because NHS_ENVIRONMENT is daft
 
+  local stage_name=deploy.$environment_id
+
+  for microservice in $microservices
+  do
+    echo Getting latest run counter of next stage after $microservice $stage_name
+    local after_status_filename=$(stage_status_manifest_filename after $microservice $stage_name)
+    local deploy_stage_status=$(cat $after_status_filename)
+
+    local next_stage_name=$(get_next_stage_name $microservice $stage_name)
+    local latest_next_stage_status=$(get_latest_stage_run_status $microservice $next_stage_name)
+
+    local deploy_stage_pipeline_counter=$(extract_pipeline_counter "$deploy_stage_status")
+    local latest_next_stage_pipeline_counter=$(extract_pipeline_counter "$latest_next_stage_status")
+
+    # trigger if pipeline counter does not match that from manifest
+    if [ "$deploy_stage_pipeline_counter" != "$latest_next_stage_pipeline_counter" ]; then
+      echo Next stage counter does not match - triggering
+      trigger_stage_run $microservice/$deploy_stage_pipeline_counter/$next_stage_name
+    else
+      echo Next stage of $microservice already at $deploy_stage_pipeline_counter - doing nothing NB if this is pipeline rerun will require manual rerun
+    fi
+
+  done
   # NB there is a https://api.gocd.org/21.3.0/#comment-on-pipeline-instance API which maybe could add
   # some tracking info to this trigger, although it looks like comment is across whole pipeline run
   # and not stage specific meaning it could be a bit verbose / inappropriate to add comments for all triggers
-
-  # was also thinking: one drawback to not having the e2e test process in the pipeline is we don't get to see the
-  # red build within the pipeline - however we could have a job inline in the microservice pipeline that waits for
-  # the automatically-triggered e2e tests job to complete and then continues (or fails or cancels) based
-
-
-  echo automatic material dependency locator for pds-adaptor material is $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR
-  trigger_stage_run $(echo $GO_DEPENDENCY_LOCATOR_PDS_ADAPTOR | sed 's/deploy.dev\/.*/prepare.test/')
-  echo automatic material dependency locator for nems-event-processor material is $GO_DEPENDENCY_LOCATOR_NEMS_EVENT_PROCESSOR
-  trigger_stage_run $(echo $GO_DEPENDENCY_LOCATOR_NEMS_EVENT_PROCESSOR | sed 's/deploy.dev\/.*/prepare.test/')
 }
