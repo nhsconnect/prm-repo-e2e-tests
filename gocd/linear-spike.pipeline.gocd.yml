@@ -80,8 +80,11 @@ pipelines:
       re-registration-service:
         pipeline: re-registration-service
         stage: deploy.dev
+      infra:
+        pipeline: prm-deductions-infra
+        stage: deploy_dev
     environment_variables:
-      MICROSERVICES: mesh-forwarder nems-event-processor pds-adaptor suspension-service re-registration-service
+      TRIGGERED_PIPELINES: mesh-forwarder nems-event-processor pds-adaptor suspension-service re-registration-service
       ENVIRONMENT_ID: dev
       NHS_ENVIRONMENT: dev
       UPDATE_MOF_TO_REPO: true
@@ -114,8 +117,11 @@ pipelines:
       re-registration-service:
         pipeline: re-registration-service
         stage: deploy.test
+      infra:
+        pipeline: prm-deductions-infra
+        stage: deploy_test
     environment_variables:
-      MICROSERVICES: mesh-forwarder nems-event-processor pds-adaptor suspension-service re-registration-service
+      TRIGGERED_PIPELINES: mesh-forwarder nems-event-processor pds-adaptor suspension-service re-registration-service
       ENVIRONMENT_ID: test
       NHS_ENVIRONMENT: test
       UPDATE_MOF_TO_REPO: false
