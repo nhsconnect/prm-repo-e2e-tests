@@ -132,7 +132,3 @@ pipelines:
       FORCE_TEST_RUN: false
     stages:
       - test: *test
-linear-tests:
-  pipeline:
-    gocd:
-      yml:
