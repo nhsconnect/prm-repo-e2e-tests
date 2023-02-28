@@ -40,11 +40,15 @@ common:
 
 pipelines:
   test-gocd-triggers:
-    group: linear-spike
+    group: shared-components
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
         type: configrepo
+        includes:
+          - gocd/*.sh
+          - tasks
+          - gocd/linear-tests.pipeline.gocd.yml
     stages:
       - test-trigger-logic:
           clean_workspace: true
@@ -128,3 +132,7 @@ pipelines:
       FORCE_TEST_RUN: false
     stages:
       - test: *test
+linear-tests:
+  pipeline:
+    gocd:
+      yml:
