@@ -55,7 +55,7 @@ pipelines:
                   - -c
                   - ./tasks test_gocd_trigger_functions
   continuity-service-e2e-tests.dev:
-    group: linear-spike
+    group: continuity-service
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
@@ -92,7 +92,7 @@ pipelines:
     stages:
       - test: *test
   continuity-service-e2e-tests.test:
-    group: linear-spike
+    group: continuity-service
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
