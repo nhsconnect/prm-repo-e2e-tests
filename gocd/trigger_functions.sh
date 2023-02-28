@@ -75,10 +75,10 @@ function check_environment_is_deployed() {
   local stage_name=deploy.$environment_id
 
   local is_stage_running
-  for microservice in $MICROSERVICES
+  for triggered_pipeline in $TRIGGERED_PIPELINES
   do
-    echo Checking that $microservice is not deploying into $environment_id
-    local stage_status=$(get_latest_stage_run_status $microservice $stage_name)
+    echo Checking that $triggered_pipeline is not deploying into $environment_id
+    local stage_status=$(get_latest_stage_run_status $triggered_pipeline $stage_name)
 
     set +e
     (fail_if_stage_running "$stage_status")
@@ -91,7 +91,7 @@ function check_environment_is_deployed() {
     fi
 
     echo Saving stage status manifest before tests
-    echo "$stage_status" > $(stage_status_manifest_filename before $microservice $stage_name)
+    echo "$stage_status" > $(stage_status_manifest_filename before $triggered_pipeline $stage_name)
   done
 
   echo No deployments running into $environment_id. Allowing tests to run.
@@ -107,30 +107,30 @@ function check_environment_is_still_deployed_after() {
   fi
 
   echo Saving stage status manifests after tests
-  for microservice in $MICROSERVICES
+  for triggered_pipeline in $TRIGGERED_PIPELINES
   do
-    echo Capturing current deploy status of $microservice into $environment_id
+    echo Capturing current deploy status of $triggered_pipeline into $environment_id
     local stage_name=deploy.$environment_id
-    local stage_status=$(get_latest_stage_run_status $microservice $stage_name)
-    echo "$stage_status" > $(stage_status_manifest_filename after $microservice $stage_name)
+    local stage_status=$(get_latest_stage_run_status $triggered_pipeline $stage_name)
+    echo "$stage_status" > $(stage_status_manifest_filename after $triggered_pipeline $stage_name)
   done
 
   echo Comparing before and after statuses to ensure no deployment into $environment_id overlapped with tests
   local status_change
   local has_status_changed
-  for microservice in $MICROSERVICES
+  for triggered_pipeline in $TRIGGERED_PIPELINES
   do
-    local before_status_filename=$(stage_status_manifest_filename before $microservice $stage_name)
-    local after_status_filename=$(stage_status_manifest_filename after $microservice $stage_name)
+    local before_status_filename=$(stage_status_manifest_filename before $triggered_pipeline $stage_name)
+    local after_status_filename=$(stage_status_manifest_filename after $triggered_pipeline $stage_name)
 
-    echo Checking $microservice has not been deployed during tests
+    echo Checking $triggered_pipeline has not been deployed during tests
     set +e
     status_change=$(diff $before_status_filename $after_status_filename)
     has_status_changed=$?
     set -e
 
     if [ $has_status_changed -ne 0 ]; then
-      echo "Cancelling tests pending re-run as $microservice deployment occurred into $environment_id during tests, status change: $status_change"
+      echo "Cancelling tests pending re-run as $triggered_pipeline deployment occurred into $environment_id during tests, status change: $status_change"
       cancel_stage_run $GO_PIPELINE_NAME/$GO_PIPELINE_COUNTER/$GO_STAGE_NAME/$GO_STAGE_COUNTER
       exit 121
     fi
@@ -146,14 +146,14 @@ function trigger_downstream_stages() {
     exit 0
   fi
 
-  for microservice in $MICROSERVICES
+  for triggered_pipeline in $TRIGGERED_PIPELINES
   do
-    echo Getting latest run counter of next stage after $microservice $stage_name
-    local after_status_filename=$(stage_status_manifest_filename after $microservice $stage_name)
+    echo Getting latest run counter of next stage after $triggered_pipeline $stage_name
+    local after_status_filename=$(stage_status_manifest_filename after $triggered_pipeline $stage_name)
     local deploy_stage_status=$(cat $after_status_filename)
 
-    local next_stage_name=$(get_next_stage_name $microservice $stage_name)
-    local latest_next_stage_status=$(get_latest_stage_run_status $microservice $next_stage_name)
+    local next_stage_name=$(get_next_stage_name $triggered_pipeline $stage_name)
+    local latest_next_stage_status=$(get_latest_stage_run_status $triggered_pipeline $next_stage_name)
 
     local deploy_stage_pipeline_counter=$(extract_pipeline_counter "$deploy_stage_status")
     local latest_next_stage_pipeline_counter=$(extract_pipeline_counter "$latest_next_stage_status")
@@ -161,9 +161,9 @@ function trigger_downstream_stages() {
     # trigger if pipeline counter does not match that from manifest
     if [ "$deploy_stage_pipeline_counter" != "$latest_next_stage_pipeline_counter" ]; then
       echo Next stage counter does not match - triggering
-      trigger_stage_run $microservice/$deploy_stage_pipeline_counter/$next_stage_name
+      trigger_stage_run $triggered_pipeline/$deploy_stage_pipeline_counter/$next_stage_name
     else
-      echo Next stage of $microservice already at $deploy_stage_pipeline_counter - doing nothing NB if this is pipeline rerun will require manual rerun
+      echo Next stage of $triggered_pipeline already at $deploy_stage_pipeline_counter - doing nothing NB if this is pipeline rerun will require manual rerun
     fi
 
   done
