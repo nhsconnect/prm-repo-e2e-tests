@@ -86,7 +86,7 @@ pipelines:
       UPDATE_MOF_TO_REPO: true
       FORCE_TEST_RUN: false
     stages:
-      test: *test
+      - test: *test
   continuity-service-e2e-tests.test:
     group: linear-spike
     label_template: '${COUNT}-${git[:8]}'
@@ -119,4 +119,4 @@ pipelines:
       UPDATE_MOF_TO_REPO: false
       FORCE_TEST_RUN: false
     stages:
-      test: *test
+      - test: *test
