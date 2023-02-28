@@ -60,8 +60,6 @@ function get_next_stage_name() {
   get_pipeline_config $pipeline_name | jq -r .stages[].name | grep -A1 $stage_name | grep -v $stage_name
 }
 
-microservices='pds-adaptor nems-event-processor'
-
 function check_environment_is_deployed() {
   local environment_id=${ENVIRONMENT_ID:='ENVIRONMENT_ID is not set'} # yeah using ENVIRONMENT_ID because NHS_ENVIRONMENT is daft
 
@@ -77,7 +75,7 @@ function check_environment_is_deployed() {
   local stage_name=deploy.$environment_id
 
   local is_stage_running
-  for microservice in $microservices
+  for microservice in $MICROSERVICES
   do
     echo Checking that $microservice is not deploying into $environment_id
     local stage_status=$(get_latest_stage_run_status $microservice $stage_name)
@@ -109,7 +107,7 @@ function check_environment_is_still_deployed_after() {
   fi
 
   echo Saving stage status manifests after tests
-  for microservice in $microservices
+  for microservice in $MICROSERVICES
   do
     echo Capturing current deploy status of $microservice into $environment_id
     local stage_name=deploy.$environment_id
@@ -120,7 +118,7 @@ function check_environment_is_still_deployed_after() {
   echo Comparing before and after statuses to ensure no deployment into $environment_id overlapped with tests
   local status_change
   local has_status_changed
-  for microservice in $microservices
+  for microservice in $MICROSERVICES
   do
     local before_status_filename=$(stage_status_manifest_filename before $microservice $stage_name)
     local after_status_filename=$(stage_status_manifest_filename after $microservice $stage_name)
@@ -148,7 +146,7 @@ function trigger_downstream_stages() {
     exit 0
   fi
 
-  for microservice in $microservices
+  for microservice in $MICROSERVICES
   do
     echo Getting latest run counter of next stage after $microservice $stage_name
     local after_status_filename=$(stage_status_manifest_filename after $microservice $stage_name)
