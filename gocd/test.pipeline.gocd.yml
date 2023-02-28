@@ -26,12 +26,6 @@ pipelines:
       suspension-service:
         pipeline: suspension-service.dev
         stage: deploy
-      ehr-transfer-service:
-        pipeline: ehr-transfer-service.dev
-        stage: deploy
-      prm-deductions-gp2gp-messenger:
-        pipeline: prm-deductions-gp2gp-messenger.dev
-        stage: deploy
       re-registration-service:
         pipeline: re-registration-service.dev
         stage: deploy
@@ -83,12 +77,6 @@ pipelines:
       suspension-service:
         pipeline: suspension-service.test
         stage: deploy
-      ehr-transfer-service:
-        pipeline: ehr-transfer-service.test
-        stage: deploy
-      prm-deductions-gp2gp-messenger:
-        pipeline: prm-deductions-gp2gp-messenger.test
-        stage: deploy
       re-registration-service:
         pipeline: re-registration-service.test
         stage: deploy
@@ -128,20 +116,20 @@ pipelines:
           - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
           - src/test/java/uk/nhs/prm/deduction/e2e/live_technical_test/**/*
           - gocd/performance.pipeline.gocd.yml
-      pds-adaptor:
-        pipeline: prm-deductions-pds-adaptor.dev
+      ehr-transfer-service:
+        pipeline: ehr-transfer-service.dev
         stage: deploy
-      nems-event-processor:
-        pipeline: prm-deductions-nems-event-processor.dev
-        stage: deploy
-      mesh-forwarder:
-        pipeline: prm-deductions-mesh-forwarder.dev
-        stage: deploy
-      suspension-service:
-        pipeline: suspension-service.dev
+      prm-deductions-gp2gp-messenger:
+        pipeline: prm-deductions-gp2gp-messenger.dev
         stage: deploy
       ehr-repository:
         pipeline: prm-deductions-ehr-repository.dev
+        stage: deploy
+      end-of-transfer-service:
+        pipeline: ehr-transfer-service.dev
+        stage: deploy
+      ehr-out-service:
+        pipeline: ehr-out-service.dev
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: dev
@@ -179,20 +167,20 @@ pipelines:
           - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
           - src/test/java/uk/nhs/prm/deduction/e2e/live_technical_test/**/*
           - gocd/performance.pipeline.gocd.yml
-      pds-adaptor:
-        pipeline: prm-deductions-pds-adaptor.test
+      ehr-transfer-service:
+        pipeline: ehr-transfer-service.test
         stage: deploy
-      nems-event-processor:
-        pipeline: prm-deductions-nems-event-processor.test
-        stage: deploy
-      mesh-forwarder:
-        pipeline: prm-deductions-mesh-forwarder.test
-        stage: deploy
-      suspension-service:
-        pipeline: suspension-service.test
+      prm-deductions-gp2gp-messenger:
+        pipeline: prm-deductions-gp2gp-messenger.test
         stage: deploy
       ehr-repository:
         pipeline: prm-deductions-ehr-repository.test
+        stage: deploy
+      end-of-transfer-service:
+        pipeline: ehr-transfer-service.test
+        stage: deploy
+      ehr-out-service:
+        pipeline: ehr-out-service.test
         stage: deploy
     environment_variables:
       NHS_ENVIRONMENT: test
