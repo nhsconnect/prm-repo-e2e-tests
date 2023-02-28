@@ -1,0 +1,104 @@
+format_version: 4
+pipelines:
+  continuity-e2e-tests.dev:
+    group: repo-history
+    label_template: '${git[:8]}'
+    timer:
+      spec: "0 0 9,13,17,21 * * ?"
+      only_on_changes: no
+    materials:
+      git:
+        type: configrepo
+        ignore:
+          - docs/**/*.*
+          - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
+          - src/test/java/uk/nhs/prm/deduction/e2e/live_technical_test/**/*
+          - gocd/performance.pipeline.gocd.yml
+      pds-adaptor:
+        pipeline: prm-deductions-pds-adaptor.dev
+        stage: deploy
+      nems-event-processor:
+        pipeline: prm-deductions-nems-event-processor.dev
+        stage: deploy
+      mesh-forwarder:
+        pipeline: prm-deductions-mesh-forwarder.dev
+        stage: deploy
+      suspension-service:
+        pipeline: suspension-service.dev
+        stage: deploy
+      re-registration-service:
+        pipeline: re-registration-service.dev
+        stage: deploy
+    environment_variables:
+      NHS_ENVIRONMENT: dev
+      UPDATE_MOF_TO_REPO: true
+    stages:
+      - test:
+          clean_workspace: true
+          jobs:
+            test_e2e:
+              timeout: 15
+              resources:
+                - docker
+              artifacts:
+                - build:
+                    source: build/reports/tests/
+              tabs:
+                TestReport: test/index.html
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_continuity_e2e
+  continuity-e2e-tests.test:
+    group: repo-history
+    label_template: '${git[:8]}'
+    timer:
+      spec: "0 0 9,13,17,21 * * ?"
+      only_on_changes: no
+    materials:
+      git:
+        type: configrepo
+        ignore:
+          - docs/**/*.*
+          - src/test/java/uk/nhs/prm/deduction/e2e/performance/**/*
+          - src/test/java/uk/nhs/prm/deduction/e2e/live_technical_test/**/*
+          - gocd/performance.pipeline.gocd.yml
+      pds-adaptor:
+        pipeline: prm-deductions-pds-adaptor.test
+        stage: deploy
+      nems-event-processor:
+        pipeline: prm-deductions-nems-event-processor.test
+        stage: deploy
+      mesh-forwarder:
+        pipeline: prm-deductions-mesh-forwarder.test
+        stage: deploy
+      suspension-service:
+        pipeline: suspension-service.test
+        stage: deploy
+      re-registration-service:
+        pipeline: re-registration-service.test
+        stage: deploy
+    environment_variables:
+      NHS_ENVIRONMENT: test
+      UPDATE_MOF_TO_REPO: false
+    stages:
+      - test:
+          clean_workspace: true
+          jobs:
+            test_e2e:
+              timeout: 15
+              resources:
+                - docker
+              artifacts:
+                - build:
+                    source: build/reports/tests/
+              tabs:
+                TestReport: test/index.html
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_continuity_e2e
