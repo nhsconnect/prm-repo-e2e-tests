@@ -112,7 +112,6 @@ public class RepositoryE2ETests {
         assertThat(ehrInUnhandledQueue.getMessageContaining(ehrRequest)).isNotNull();
     }
 
-    @Disabled("EMIS in PTL int having issues")
     @Test
     void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
         var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(config);
