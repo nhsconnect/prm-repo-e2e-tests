@@ -1,5 +1,7 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -15,6 +17,7 @@ import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
+import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessage;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
@@ -61,6 +64,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepositoryE2ETests {
 
+    // TODO PRMT-3252: REMOVE ONCE DONE IMPLEMENTING PRMT-3252 - FOR DEBUG USE ONLY.
+    private static final Logger debugLogger = LogManager.getLogger(RepositoryE2ETests.class);
+
     @Autowired
     RepoIncomingQueue repoIncomingQueue;
     @Autowired
@@ -101,7 +107,7 @@ public class RepositoryE2ETests {
     // The following test should eventually test that we can send a small EHR - until we have an EHR in repo/test patient ready to send,
     // we are temporarily doing a smaller test to cover from amqp -> ehr out queue
     @Test
-    @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev" )
+    @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev")
     void shouldIdentifyEhrRequestAsEhrOutMessage() {
         var ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05");
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
@@ -110,6 +116,26 @@ public class RepositoryE2ETests {
         inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
 
         assertThat(ehrInUnhandledQueue.getMessageContaining(ehrRequest)).isNotNull();
+    }
+
+    @Test
+    void shouldVerifyThatALargeEhrXMLIsUnchanged() {
+        // Given
+        Patient patient = Patient.largeEhrAtEmisWithRepoMof(config);
+        setManagingOrganisationToRepo(patient.nhsNumber());
+        RepoIncomingMessage message = new RepoIncomingMessageBuilder()
+                .withPatient(patient)
+                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
+                .withEhrDestinationAsRepo(config) // This is going INTO the repo!
+                .build();
+
+        // When
+        repoIncomingQueue.send(message);
+
+        // Then
+        debugLogger.info("Message from Repo Incoming Queue: {}", repoIncomingQueue.getMessageContaining(message.conversationId()));
+        debugLogger.info("Message from EHR Complete Queue: {}", ehrCompleteQueue.getMessageContaining(message.conversationId()));
+        debugLogger.info(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
     @Test
@@ -125,7 +151,7 @@ public class RepositoryE2ETests {
                 .build();
 
         repoIncomingQueue.send(triggerMessage);
-        assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId()));
+        assertThat(ehrCompleteQueue.getMessageContaining(triggerMessage.conversationId())).isNotNull();
         assertTrue(trackerDb.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
