@@ -33,6 +33,7 @@ import uk.nhs.prm.deduction.e2e.utility.Resources;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -51,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         TrackerDb.class,
         SmallEhrQueue.class,
         LargeEhrQueue.class,
+        Gp2gpMessengerQueue.class,
         AttachmentQueue.class,
         EhrParsingDLQ.class,
         TransferTrackerDbClient.class,
@@ -88,6 +90,8 @@ public class RepositoryE2ETests {
     @Autowired
     NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
     @Autowired
+    Gp2gpMessengerQueue gp2gpMessengerQueue;
+    @Autowired
     TestConfiguration config;
 
     PdsAdaptorClient pdsAdaptorClient;
@@ -119,24 +123,51 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldVerifyThatALargeEhrXMLIsUnchanged() {
+    void shouldVerifyThatASmallEhrXMLIsUnchanged() {
         // Given
-        Patient patient = Patient.largeEhrAtEmisWithRepoMof(config);
-        setManagingOrganisationToRepo(patient.nhsNumber());
-        RepoIncomingMessage message = new RepoIncomingMessageBuilder()
-                .withPatient(patient)
-                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationAsRepo(config) // This is going INTO the repo!
-                .build();
+        String conversationId = UUID.randomUUID().toString();
+        var inboundQueueFromMhs = new SimpleAmqpQueue(config);
+
+        String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-copy")
+                .replaceAll("__CONVERSATION_ID__", conversationId)
+                .replaceAll("__MESSAGE_ID__", UUID.randomUUID().toString());
+
+        String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
+                .replaceAll("9692842304", "9727018440")
+                .replaceAll("A91720", "M85019")
+                .replaceAll("200000000631", "200000000149");
+
+//        Patient patient = Patient.largeEhrAtEmisWithRepoMof(config); //TODO: Not large ehr. Needs replacing
+//        setManagingOrganisationToRepo(patient.nhsNumber());
+//        RepoIncomingMessage message = new RepoIncomingMessageBuilder()
+//                .withPatient(patient)
+//                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
+//                .withEhrDestinationAsRepo(config) // This is going INTO the repo!
+//                .build();
 
         // When
-        repoIncomingQueue.send(message);
+        // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
+        // Put the patient to inboundQueueFromMhs as an UK05 message
+//        inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
+//        debugLogger.info("conversationIdExists: {}",trackerDb.conversationIdExists(conversationId));
+//        var status = trackerDb.waitForStatusMatching(conversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
+
+        // Put a EHR request to inboundQueueFromMhs
+        inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
 
         // Then
-        debugLogger.info("Message from Repo Incoming Queue: {}", repoIncomingQueue.getMessageContaining(message.conversationId()));
-        debugLogger.info("Message from EHR Complete Queue: {}", ehrCompleteQueue.getMessageContaining(message.conversationId()));
-        debugLogger.info(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+//        assertThat(gp2gpMessengerQueue.getMessageContaining("17a757f2-f4d2-444e-a246-9cb77bef7f22")).isNotNull();
+        // assert gp2gpMessenger queue got a message of UK06
+        assertThat(gp2gpMessengerQueue.getMessageContaining("RCMR_IN030000UK06")).isNotNull();
+
+        // assert the patient record is matching
+//
+//        debugLogger.info("Message from Repo Incoming Queue: {}", repoIncomingQueue.getMessageContaining(message.conversationId()));
+//        debugLogger.info("Message from EHR Complete Queue: {}", ehrCompleteQueue.getMessageContaining(message.conversationId()));
+//        debugLogger.info(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
+
+    // TODO: PRMT-3252 Create test: shouldVerifyThatALargeEhrXMLIsUnchanged()
 
     @Test
     void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
