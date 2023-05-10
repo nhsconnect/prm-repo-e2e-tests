@@ -2,6 +2,8 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -13,16 +15,22 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Node;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.diff.*;
+import org.xmlunit.matchers.CompareMatcher;
+import org.xmlunit.util.Predicate;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
-import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessage;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
+import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
@@ -30,9 +38,11 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
+import java.lang.reflect.Array;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -40,6 +50,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.util.AssertionErrors.assertFalse;
 
 @SpringBootTest(classes = {
         RepositoryE2ETests.class,
@@ -125,46 +136,116 @@ public class RepositoryE2ETests {
     @Test
     void shouldVerifyThatASmallEhrXMLIsUnchanged() {
         // Given
-        String conversationId = UUID.randomUUID().toString();
+        String inboundConversationId = "1632CD65-FD8F-4914-B62A-9763B50FC04A".toLowerCase(); // UUID.randomUUID().toString();
+        String outboundConversationId = UUID.randomUUID().toString();
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
-        String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-copy")
-                .replaceAll("__CONVERSATION_ID__", conversationId)
-                .replaceAll("__MESSAGE_ID__", UUID.randomUUID().toString());
+        String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-copy");
 
         String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
                 .replaceAll("9692842304", "9727018440")
                 .replaceAll("A91720", "M85019")
-                .replaceAll("200000000631", "200000000149");
-
-//        Patient patient = Patient.largeEhrAtEmisWithRepoMof(config); //TODO: Not large ehr. Needs replacing
-//        setManagingOrganisationToRepo(patient.nhsNumber());
-//        RepoIncomingMessage message = new RepoIncomingMessageBuilder()
-//                .withPatient(patient)
-//                .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-//                .withEhrDestinationAsRepo(config) // This is going INTO the repo!
-//                .build();
+                .replaceAll("200000000631", "200000000149")
+                .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
 
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
         // Put the patient to inboundQueueFromMhs as an UK05 message
-//        inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-//        debugLogger.info("conversationIdExists: {}",trackerDb.conversationIdExists(conversationId));
-//        var status = trackerDb.waitForStatusMatching(conversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
+
+        inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
+        debugLogger.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
+//        var status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
+//        debugLogger.info("tracker db status: {}", status);
 
         // Put a EHR request to inboundQueueFromMhs
-        inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
+        inboundQueueFromMhs.sendMessage(ehrRequest, outboundConversationId);
 
         // Then
-//        assertThat(gp2gpMessengerQueue.getMessageContaining("17a757f2-f4d2-444e-a246-9cb77bef7f22")).isNotNull();
         // assert gp2gpMessenger queue got a message of UK06
-        assertThat(gp2gpMessengerQueue.getMessageContaining("RCMR_IN030000UK06")).isNotNull();
+        SqsMessage gp2gpMessage = gp2gpMessengerQueue.getMessageContaining(outboundConversationId);
 
-        // assert the patient record is matching
-//
-//        debugLogger.info("Message from Repo Incoming Queue: {}", repoIncomingQueue.getMessageContaining(message.conversationId()));
-//        debugLogger.info("Message from EHR Complete Queue: {}", ehrCompleteQueue.getMessageContaining(message.conversationId()));
-//        debugLogger.info(trackerDb.statusForConversationIdIs(message.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+        assertThat(gp2gpMessage).isNotNull();
+        assertThat(gp2gpMessage.contains("RCMR_IN030000UK06")).isTrue();
+
+        try {
+            String gp2gpMessengerPayload = getPayload(gp2gpMessage.body());
+            String smallEhrPayload = getPayload(smallEhr);
+
+            debugLogger.info("Payload from gp2gpMessenger: {}", gp2gpMessengerPayload);
+            debugLogger.info("Payload from smallEhr: {}", smallEhrPayload);
+            Diff myDiff = DiffBuilder.compare(gp2gpMessengerPayload).withTest(smallEhrPayload)
+                    .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
+                    .checkForSimilar().build();
+            debugLogger.info("diff: {}", myDiff.fullDescription());
+
+        } catch (JSONException e) {
+            debugLogger.error(e);
+        }
+
+        debugLogger.info("Message from gp2gpMessenger: {}", gp2gpMessage.body());
+//        assertThat(gp2gpMessengerPayload, CompareMatcher.isSimilarTo(smallEhrPayload));
+    }
+
+    public class IgnoreAttributeDifferenceEvaluator implements DifferenceEvaluator {
+        private String attributeName;
+        public IgnoreAttributeDifferenceEvaluator(String attributeName) {
+            this.attributeName = attributeName;
+        }
+
+        @Override
+        public ComparisonResult evaluate(Comparison comparison, ComparisonResult outcome) {
+            if (outcome == ComparisonResult.EQUAL)
+                return outcome;
+            final Node controlNode = comparison.getControlDetails().getTarget();
+            if (controlNode instanceof Attr) {
+                Attr attr = (Attr) controlNode;
+                if (attr.getName().equals(attributeName)) {
+                    return ComparisonResult.SIMILAR;
+                }
+            }
+            return outcome;
+        }
+    }
+
+    private boolean excludeComparisons(Node node) {
+        // if the node is ODS code, ignore comparison by returning false
+        List<String> excludeList = List.of(
+                "1.2.826.0.1285.0.1.10", // ODS code
+                "1.2.826.0.1285.0.2.0.107"); // ASID code
+        // TODO: messageId ^^
+
+        if (node.hasAttributes() && node.getAttributes().getNamedItem("root") != null) {
+            String rootId = node.getAttributes().getNamedItem("root").getNodeValue();
+            if (node.getNodeName().equals("id") && excludeList.contains(rootId)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Test
+    public void given2XMLsWithDifferences_whenTestsSimilarWithDifferenceEvaluator_thenCorrect() {
+//        final String control = "<agentOrganizationSDS classCode=\"ORG\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.1.10\" extension=\"B85002\"/></agentOrganizationSDS>";
+//        final String test =    "<agentOrganizationSDS classCode=\"ORG\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.1.10\" extension=\"M85019\"/></agentOrganizationSDS>";
+        final String control = "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000001613\"/></device>";
+        final String test =    "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000000149\"/></device>";
+
+        Diff myDiff = DiffBuilder.compare(control).withTest(test)
+                .withNodeFilter(node -> excludeComparisons(node))
+//                .withDifferenceEvaluator(new IgnoreAttributeDifferenceEvaluator("extension"))
+                .checkForSimilar().build();
+
+        assertFalse(myDiff.toString(), myDiff.hasDifferences());
+    }
+
+    private static String getPayload(String gp2gpMessageBody) throws JSONException {
+        JSONObject jsonObject = new JSONObject(gp2gpMessageBody);
+        if (jsonObject.has("payload") ) {
+            return jsonObject.getString("payload");
+        } else {
+            return jsonObject.getJSONObject("request").getJSONObject("body").getString("payload");
+        }
     }
 
     // TODO: PRMT-3252 Create test: shouldVerifyThatALargeEhrXMLIsUnchanged()
@@ -362,6 +443,7 @@ public class RepositoryE2ETests {
 
         assertThat(negativeAcknowledgementObservabilityQueue.getMessageContaining(triggerMessage.conversationId()));
         assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId()));
+
 
         var status = trackerDb.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
