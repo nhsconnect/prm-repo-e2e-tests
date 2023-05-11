@@ -275,7 +275,41 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldVerifyThatALargeEhrXMLIsUnchanged() {
+        String inboundConversationId = UUID.randomUUID().toString();
+        String largeEhrCoreMessageId = UUID.randomUUID().toString();
+        String outboundConversationId = UUID.randomUUID().toString();
+        String nhsNumberForTestPatient = "9727018157";
+        String sourceGpForTestPatient = "N82668";
+        String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
+        var inboundQueueFromMhs = new SimpleAmqpQueue(config);
+
+        String largeEhrCore = Resources.readTestResourceFileFromEhrDirectory("large-ehr-core")
+                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
+                .replaceAll("B8DC074D-C039-4FD2-8BBB-D4BFBBBF9AFA", largeEhrCoreMessageId);
+
+        String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
+                .replaceAll("9692842304", nhsNumberForTestPatient)
+                .replaceAll("A91720", sourceGpForTestPatient)
+                .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
+
+
+        trackerDb.save(new TransferTrackerDbMessage(
+                inboundConversationId,
+                largeEhrCoreMessageId,
+                randomNemsMessageId(),
+                nhsNumberForTestPatient,
+                sourceGpForTestPatient,
+                "ACTION:EHR_REQUEST_SENT",
+                timeNow,
+                timeNow,
+                timeNow
+        ));
+
+        inboundQueueFromMhs.sendMessage(largeEhrCore, inboundConversationId);
+        LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
+        var status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT");
+        LOGGER.info("tracker db status: {}", status);
     }
 
     @Test
