@@ -15,7 +15,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.w3c.dom.Attr;
 import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
@@ -51,7 +50,8 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
-import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
+import static uk.nhs.prm.deduction.e2e.utility.TestUtils.isValidUUID;
 
 @SpringBootTest(classes = {
         RepositoryE2ETests.class,
@@ -77,34 +77,50 @@ import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepositoryE2ETests {
+    private static final Logger LOGGER = LogManager.getLogger(RepositoryE2ETests.class);
 
-    // TODO PRMT-3252: REMOVE ONCE DONE IMPLEMENTING PRMT-3252 - FOR DEBUG USE ONLY.
-    private static final Logger debugLogger = LogManager.getLogger(RepositoryE2ETests.class);
+    private final RepoIncomingQueue repoIncomingQueue;
+    private final TrackerDb trackerDb;
+    private final SmallEhrQueue smallEhrQueue;
+    private final LargeEhrQueue largeEhrQueue;
+    private final AttachmentQueue attachmentQueue;
+    private final EhrParsingDLQ parsingDLQ;
+    private final EhrCompleteQueue ehrCompleteQueue;
+    private final TransferCompleteQueue transferCompleteQueue;
+    private final EhrInUnhandledQueue ehrInUnhandledQueue;
+    private final NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
+    private final Gp2gpMessengerQueue gp2gpMessengerQueue;
+    private final TestConfiguration config;
 
     @Autowired
-    RepoIncomingQueue repoIncomingQueue;
-    @Autowired
-    TrackerDb trackerDb;
-    @Autowired
-    SmallEhrQueue smallEhrQueue;
-    @Autowired
-    LargeEhrQueue largeEhrQueue;
-    @Autowired
-    AttachmentQueue attachmentQueue;
-    @Autowired
-    EhrParsingDLQ parsingDLQ;
-    @Autowired
-    EhrCompleteQueue ehrCompleteQueue;
-    @Autowired
-    TransferCompleteQueue transferCompleteQueue;
-    @Autowired
-    EhrInUnhandledQueue ehrInUnhandledQueue;
-    @Autowired
-    NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
-    @Autowired
-    Gp2gpMessengerQueue gp2gpMessengerQueue;
-    @Autowired
-    TestConfiguration config;
+    public RepositoryE2ETests(
+            RepoIncomingQueue repoIncomingQueue,
+            TrackerDb trackerDb,
+            SmallEhrQueue smallEhrQueue,
+            LargeEhrQueue largeEhrQueue,
+            AttachmentQueue attachmentQueue,
+            EhrParsingDLQ parsingDLQ,
+            EhrCompleteQueue ehrCompleteQueue,
+            TransferCompleteQueue transferCompleteQueue,
+            EhrInUnhandledQueue ehrInUnhandledQueue,
+            NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue,
+            Gp2gpMessengerQueue gp2gpMessengerQueue,
+            TestConfiguration config
+
+    ) {
+        this.repoIncomingQueue = repoIncomingQueue;
+        this.trackerDb = trackerDb;
+        this.smallEhrQueue = smallEhrQueue;
+        this.largeEhrQueue = largeEhrQueue;
+        this.attachmentQueue = attachmentQueue;
+        this.parsingDLQ = parsingDLQ;
+        this.ehrCompleteQueue = ehrCompleteQueue;
+        this.transferCompleteQueue = transferCompleteQueue;
+        this.ehrInUnhandledQueue = ehrInUnhandledQueue;
+        this.negativeAcknowledgementObservabilityQueue = negativeAcknowledgementObservabilityQueue;
+        this.gp2gpMessengerQueue = gp2gpMessengerQueue;
+        this.config = config;
+    }
 
     PdsAdaptorClient pdsAdaptorClient;
 
@@ -135,7 +151,7 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldVerifyThatASmallEhrXMLIsUnchanged() throws InterruptedException {
+    void shouldVerifyThatASmallEhrXMLIsUnchanged() {
         // Given
         String inboundConversationId = UUID.randomUUID().toString();
         String smallEhrMessageId = UUID.randomUUID().toString();
@@ -146,7 +162,6 @@ public class RepositoryE2ETests {
 
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
-//        String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-with-linebreaks");
         String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-without-linebreaks")
                 .replaceAll("1632CD65-FD8F-4914-B62A-9763B50FC04A", inboundConversationId.toUpperCase())
                 .replaceAll("0206C270-E9A0-11ED-808B-AC162D1F16F0", smallEhrMessageId);
@@ -174,9 +189,9 @@ public class RepositoryE2ETests {
         ));
 
         inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
-        debugLogger.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
+        LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
         var status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
-        debugLogger.info("tracker db status: {}", status);
+        LOGGER.info("tracker db status: {}", status);
 
         // Put a EHR request to inboundQueueFromMhs
         inboundQueueFromMhs.sendMessage(ehrRequest, outboundConversationId);
@@ -192,11 +207,11 @@ public class RepositoryE2ETests {
             String gp2gpMessengerPayload = getPayload(gp2gpMessage.body());
             String smallEhrPayload = getPayload(smallEhr);
 
-            debugLogger.info("Payload from gp2gpMessenger: {}", gp2gpMessengerPayload);
-            debugLogger.info("Payload from smallEhr: {}", smallEhrPayload);
+            LOGGER.info("Payload from gp2gpMessenger: {}", gp2gpMessengerPayload);
+            LOGGER.info("Payload from smallEhr: {}", smallEhrPayload);
             Diff myDiff = DiffBuilder.compare(gp2gpMessengerPayload).withTest(smallEhrPayload)
                     .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
-                    .withNodeFilter(node -> excludeComparisons(node))
+                    .withNodeFilter(this::excludeComparisons)
                     .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
                             DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
                     .checkForSimilar().build();
@@ -204,38 +219,26 @@ public class RepositoryE2ETests {
             assertFalse(myDiff.toString(), myDiff.hasDifferences());
 
         } catch (JSONException e) {
-            debugLogger.error(e);
+            LOGGER.error(e);
             throw new Error(e);
         }
     }
 
-    private boolean isValidUuid(String rootId) {
-        try {
-            UUID validUuid = UUID.fromString(rootId);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
     private boolean excludeComparisons(Node node) {
-        // if the node is ODS code, ignore comparison by returning false
         List<String> excludeList = List.of(
                 "1.2.826.0.1285.0.1.10", // ODS code
-                "1.2.826.0.1285.0.2.0.107"); // ASID code
+                "1.2.826.0.1285.0.2.0.107" // ASID code
+        );
 
         if (node.hasAttributes() && node.getAttributes().getNamedItem("root") != null) {
             String idRootValue = node.getAttributes().getNamedItem("root").getNodeValue();
             // return false to skip comparison in case when id root value itself is a message id
-            if (isValidUuid(idRootValue)) {
+            if (isValidUUID(idRootValue)) {
                 return false;
             }
             // return false to skip comparison when the type of compared value is in the excludedList
-            if (node.getNodeName().equals("id") && excludeList.contains(idRootValue)) {
-                return false;
-            }
+            return !(node.getNodeName().equals("id") && excludeList.contains(idRootValue));
         }
-
         return true;
     }
 
@@ -253,7 +256,7 @@ public class RepositoryE2ETests {
 
 
         Diff myDiff = DiffBuilder.compare(control).withTest(test)
-                .withNodeFilter(node -> excludeComparisons(node))
+                .withNodeFilter(this::excludeComparisons)
                 .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
                         DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
                 .checkForSimilar().build();
@@ -270,7 +273,10 @@ public class RepositoryE2ETests {
         }
     }
 
-    // TODO: PRMT-3252 Create test: shouldVerifyThatALargeEhrXMLIsUnchanged()
+    @Test
+    void shouldVerifyThatALargeEhrXMLIsUnchanged() {
+
+    }
 
     @Test
     void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
@@ -425,7 +431,7 @@ public class RepositoryE2ETests {
             long timeElapsed = Duration.between(timeLastRequestSent, finishedAt).toSeconds();
             System.out.println("Total time taken for: " + conversationId + " in seconds was no more than : " + timeElapsed);
 
-            assertTrue(trackerDb.statusForConversationIdIs(conversationId.toString(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+            assertTrue(trackerDb.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
         }
     }
 
