@@ -47,4 +47,9 @@ public class TrackerDb {
                 .pollInterval(2, TimeUnit.SECONDS)
                 .until(() -> transferTrackerDbClient.queryDbWithConversationId(conversationId).item().get("state").s(), containsString(partialStatus));
     }
+
+    public void save(TransferTrackerDbMessage message)
+    {
+        transferTrackerDbClient.save(message);
+    }
 }

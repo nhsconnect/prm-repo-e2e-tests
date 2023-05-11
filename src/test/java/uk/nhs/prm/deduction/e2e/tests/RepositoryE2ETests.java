@@ -19,8 +19,6 @@ import org.w3c.dom.Attr;
 import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
-import org.xmlunit.matchers.CompareMatcher;
-import org.xmlunit.util.Predicate;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
@@ -36,11 +34,13 @@ import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNot
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbMessage;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
-import java.lang.reflect.Array;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +51,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
 
 @SpringBootTest(classes = {
         RepositoryE2ETests.class,
@@ -134,17 +135,25 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldVerifyThatASmallEhrXMLIsUnchanged() {
+    void shouldVerifyThatASmallEhrXMLIsUnchanged() throws InterruptedException {
         // Given
-        String inboundConversationId = "1632CD65-FD8F-4914-B62A-9763B50FC04A".toLowerCase(); // UUID.randomUUID().toString();
+        String inboundConversationId = UUID.randomUUID().toString();
+        String smallEhrMessageId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
+        String nhsNumberForTestPatient = "9727018440";
+        String sourceGpForTestPatient = "M85019";
+        String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
-        String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-copy");
+//        String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-with-linebreaks");
+        String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-without-linebreaks")
+                .replaceAll("1632CD65-FD8F-4914-B62A-9763B50FC04A", inboundConversationId.toUpperCase())
+                .replaceAll("0206C270-E9A0-11ED-808B-AC162D1F16F0", smallEhrMessageId);
 
         String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
-                .replaceAll("9692842304", "9727018440")
-                .replaceAll("A91720", "M85019")
+                .replaceAll("9692842304", nhsNumberForTestPatient)
+                .replaceAll("A91720", sourceGpForTestPatient)
                 .replaceAll("200000000631", "200000000149")
                 .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
 
@@ -152,10 +161,22 @@ public class RepositoryE2ETests {
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
         // Put the patient to inboundQueueFromMhs as an UK05 message
 
+        trackerDb.save(new TransferTrackerDbMessage(
+                inboundConversationId,
+                "",
+                randomNemsMessageId(),
+                nhsNumberForTestPatient,
+                sourceGpForTestPatient,
+                "ACTION:EHR_REQUEST_SENT",
+                timeNow,
+                timeNow,
+                timeNow
+        ));
+
         inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
         debugLogger.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
-//        var status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
-//        debugLogger.info("tracker db status: {}", status);
+        var status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
+        debugLogger.info("tracker db status: {}", status);
 
         // Put a EHR request to inboundQueueFromMhs
         inboundQueueFromMhs.sendMessage(ehrRequest, outboundConversationId);
@@ -175,35 +196,25 @@ public class RepositoryE2ETests {
             debugLogger.info("Payload from smallEhr: {}", smallEhrPayload);
             Diff myDiff = DiffBuilder.compare(gp2gpMessengerPayload).withTest(smallEhrPayload)
                     .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
+                    .withNodeFilter(node -> excludeComparisons(node))
+                    .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
+                            DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
                     .checkForSimilar().build();
-            debugLogger.info("diff: {}", myDiff.fullDescription());
+
+            assertFalse(myDiff.toString(), myDiff.hasDifferences());
 
         } catch (JSONException e) {
             debugLogger.error(e);
+            throw new Error(e);
         }
-
-        debugLogger.info("Message from gp2gpMessenger: {}", gp2gpMessage.body());
-//        assertThat(gp2gpMessengerPayload, CompareMatcher.isSimilarTo(smallEhrPayload));
     }
 
-    public class IgnoreAttributeDifferenceEvaluator implements DifferenceEvaluator {
-        private String attributeName;
-        public IgnoreAttributeDifferenceEvaluator(String attributeName) {
-            this.attributeName = attributeName;
-        }
-
-        @Override
-        public ComparisonResult evaluate(Comparison comparison, ComparisonResult outcome) {
-            if (outcome == ComparisonResult.EQUAL)
-                return outcome;
-            final Node controlNode = comparison.getControlDetails().getTarget();
-            if (controlNode instanceof Attr) {
-                Attr attr = (Attr) controlNode;
-                if (attr.getName().equals(attributeName)) {
-                    return ComparisonResult.SIMILAR;
-                }
-            }
-            return outcome;
+    private boolean isValidUuid(String rootId) {
+        try {
+            UUID validUuid = UUID.fromString(rootId);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 
@@ -212,11 +223,15 @@ public class RepositoryE2ETests {
         List<String> excludeList = List.of(
                 "1.2.826.0.1285.0.1.10", // ODS code
                 "1.2.826.0.1285.0.2.0.107"); // ASID code
-        // TODO: messageId ^^
 
         if (node.hasAttributes() && node.getAttributes().getNamedItem("root") != null) {
-            String rootId = node.getAttributes().getNamedItem("root").getNodeValue();
-            if (node.getNodeName().equals("id") && excludeList.contains(rootId)) {
+            String idRootValue = node.getAttributes().getNamedItem("root").getNodeValue();
+            // return false to skip comparison in case when id root value itself is a message id
+            if (isValidUuid(idRootValue)) {
+                return false;
+            }
+            // return false to skip comparison when the type of compared value is in the excludedList
+            if (node.getNodeName().equals("id") && excludeList.contains(idRootValue)) {
                 return false;
             }
         }
@@ -226,14 +241,21 @@ public class RepositoryE2ETests {
 
     @Test
     public void given2XMLsWithDifferences_whenTestsSimilarWithDifferenceEvaluator_thenCorrect() {
+        // helper test case for building the `excludeComparisons` function
 //        final String control = "<agentOrganizationSDS classCode=\"ORG\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.1.10\" extension=\"B85002\"/></agentOrganizationSDS>";
 //        final String test =    "<agentOrganizationSDS classCode=\"ORG\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.1.10\" extension=\"M85019\"/></agentOrganizationSDS>";
-        final String control = "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000001613\"/></device>";
-        final String test =    "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000000149\"/></device>";
+//        final String control = "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000001613\"/></device>";
+//        final String test =    "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000000149\"/></device>";
+//        final String control = "<id root=\"DF91D420-DDC7-11ED-808B-AC162D1F16F0\"/>";
+//        final String test    = "<id root=\"DFBA6AC0-DDC7-11ED-808B-AC162D1F16F0\"/>";
+        final String control = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?><RCMR_IN030000UK06 xmlns=\"urn:hl7-org:v3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:hl7-org:v3 ..\\Schemas\\RCMR_IN030000UK06.xsd\"></RCMR_IN030000UK06>";
+        final String test    = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><RCMR_IN030000UK06 xmlns=\"urn:hl7-org:v3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:hl7-org:v3 ..\\Schemas\\RCMR_IN030000UK06.xsd\"></RCMR_IN030000UK06>";
+
 
         Diff myDiff = DiffBuilder.compare(control).withTest(test)
                 .withNodeFilter(node -> excludeComparisons(node))
-//                .withDifferenceEvaluator(new IgnoreAttributeDifferenceEvaluator("extension"))
+                .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
+                        DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
                 .checkForSimilar().build();
 
         assertFalse(myDiff.toString(), myDiff.hasDifferences());
