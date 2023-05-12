@@ -275,23 +275,42 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldVerifyThatALargeEhrXMLIsUnchanged() {
+        // given
         String inboundConversationId = UUID.randomUUID().toString();
         String largeEhrCoreMessageId = UUID.randomUUID().toString();
+        String fragment1MessageId = UUID.randomUUID().toString();
+        String fragment2MessageId = UUID.randomUUID().toString();
+
         String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumberForTestPatient = "9727018157";
-        String sourceGpForTestPatient = "N82668";
+        String previousGpForTestPatient = "N82668";
+        String newGpForTestPatient = "M85019";
         String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
         var inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
         String largeEhrCore = Resources.readTestResourceFileFromEhrDirectory("large-ehr-core")
                 .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
-                .replaceAll("B8DC074D-C039-4FD2-8BBB-D4BFBBBF9AFA", largeEhrCoreMessageId);
+                .replaceAll("B8DC074D-C039-4FD2-8BBB-D4BFBBBF9AFA", largeEhrCoreMessageId)
+                .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId);
+
+        String largeEhrFragment1 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-1")
+                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
+                .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId)
+                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId);
+
+        String largeEhrFragment2 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-2")
+                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
+                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId);
 
         String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
                 .replaceAll("9692842304", nhsNumberForTestPatient)
-                .replaceAll("A91720", sourceGpForTestPatient)
+                .replaceAll("A91720", newGpForTestPatient)
                 .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
+
+        String continueRequest = Resources.readTestResourceFile("COPC_IN000001UK01")
+                .replaceAll("A91720", newGpForTestPatient)
+                .replaceAll("a86e85ef-7ba9-46dd-ab48-da804c8bede6", outboundConversationId);
 
 
         trackerDb.save(new TransferTrackerDbMessage(
@@ -299,17 +318,65 @@ public class RepositoryE2ETests {
                 largeEhrCoreMessageId,
                 randomNemsMessageId(),
                 nhsNumberForTestPatient,
-                sourceGpForTestPatient,
+                previousGpForTestPatient,
                 "ACTION:EHR_REQUEST_SENT",
                 timeNow,
                 timeNow,
                 timeNow
         ));
 
+        // when
         inboundQueueFromMhs.sendMessage(largeEhrCore, inboundConversationId);
         LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
         var status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT");
         LOGGER.info("tracker db status: {}", status);
+
+        LOGGER.info("fragment 1 message id: {}", fragment1MessageId);
+        LOGGER.info("fragment 2 message id: {}", fragment2MessageId);
+
+        inboundQueueFromMhs.sendMessage(largeEhrFragment1, inboundConversationId);
+        inboundQueueFromMhs.sendMessage(largeEhrFragment2, inboundConversationId);
+
+        status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
+        LOGGER.info("tracker db status: {}", status);
+
+        // Put a EHR request to inboundQueueFromMhs
+        inboundQueueFromMhs.sendMessage(ehrRequest, outboundConversationId);
+
+        // Then
+        // assert gp2gpMessenger queue got a message of UK06
+        SqsMessage gp2gpMessageUK06 = gp2gpMessengerQueue.getMessageContaining(outboundConversationId);
+
+        assertThat(gp2gpMessageUK06).isNotNull();
+        assertThat(gp2gpMessageUK06.contains("RCMR_IN030000UK06")).isTrue();
+
+        try {
+            String gp2gpMessengerPayload = getPayload(gp2gpMessageUK06.body());
+            String largeEhrCorePayload = getPayload(largeEhrCore);
+
+            LOGGER.info("Payload from gp2gpMessenger: {}", gp2gpMessengerPayload);
+            LOGGER.info("Payload from largeEhrCore: {}", largeEhrCorePayload);
+            Diff myDiff = DiffBuilder.compare(gp2gpMessengerPayload).withTest(largeEhrCorePayload)
+                    .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
+                    .withNodeFilter(this::excludeComparisons)
+                    .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
+                            DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
+                    .checkForSimilar().build();
+
+            assertFalse(myDiff.toString(), myDiff.hasDifferences());
+
+        } catch (JSONException e) {
+            LOGGER.error(e);
+            throw new Error(e);
+        }
+
+        inboundQueueFromMhs.sendMessage(continueRequest, outboundConversationId);
+
+        // assert gp2gpMessenger queue got COPC ehr fragment
+        SqsMessage gp2gpMessageCOPC = gp2gpMessengerQueue.getMessageContaining("COPC_IN000001UK01");
+
+        assertThat(gp2gpMessageCOPC).isNotNull();
+        assertThat(gp2gpMessageCOPC.contains(outboundConversationId)).isTrue();
     }
 
     @Test
