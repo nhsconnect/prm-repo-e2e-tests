@@ -271,6 +271,8 @@ public class TestConfiguration {
         return getQueueUri("ehr-transfer-service-large-ehr-observability");
     }
 
+    public String gp2gpMessengerQueueUri() { return getQueueUri("hl7-message-sent-observability"); }
+
     public String getMqUserName() {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-username", getEnvironmentName()));
     }
