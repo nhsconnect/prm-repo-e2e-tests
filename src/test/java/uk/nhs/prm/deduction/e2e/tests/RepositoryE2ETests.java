@@ -3,7 +3,6 @@ package uk.nhs.prm.deduction.e2e.tests;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
@@ -35,13 +33,13 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbMessage;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
+import uk.nhs.prm.deduction.e2e.utility.TestUtils;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -51,7 +49,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
-import static uk.nhs.prm.deduction.e2e.utility.TestUtils.isValidUUID;
+import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
 
 @SpringBootTest(classes = {
         RepositoryE2ETests.class,
@@ -158,23 +156,18 @@ public class RepositoryE2ETests {
         String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumberForTestPatient = "9727018440";
         String sourceGpForTestPatient = "M85019";
+        String asidCodeForTestPatient = "200000000149";
         String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
-        var inboundQueueFromMhs = new SimpleAmqpQueue(config);
+        SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
-        String smallEhr = Resources.readTestResourceFileFromEhrDirectory("small-ehr-without-linebreaks")
-                .replaceAll("1632CD65-FD8F-4914-B62A-9763B50FC04A", inboundConversationId.toUpperCase())
-                .replaceAll("0206C270-E9A0-11ED-808B-AC162D1F16F0", smallEhrMessageId);
+        String smallEhr = getSmallEhrWithoutLinebreaks(inboundConversationId.toUpperCase(), smallEhrMessageId);
 
-        String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
-                .replaceAll("9692842304", nhsNumberForTestPatient)
-                .replaceAll("A91720", sourceGpForTestPatient)
-                .replaceAll("200000000631", "200000000149")
-                .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
+        String ehrRequest = getEhrRequest(nhsNumberForTestPatient, sourceGpForTestPatient, asidCodeForTestPatient, outboundConversationId);
 
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
-        // Put the patient to inboundQueueFromMhs as an UK05 message
+        // Put the patient into inboundQueueFromMhs as a UK05 message
 
         trackerDb.save(new TransferTrackerDbMessage(
                 inboundConversationId,
@@ -190,7 +183,7 @@ public class RepositoryE2ETests {
 
         inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
         LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
-        var status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
+        String status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
         LOGGER.info("tracker db status: {}", status);
 
         // Put a EHR request to inboundQueueFromMhs
@@ -211,35 +204,17 @@ public class RepositoryE2ETests {
             LOGGER.info("Payload from smallEhr: {}", smallEhrPayload);
             Diff myDiff = DiffBuilder.compare(gp2gpMessengerPayload).withTest(smallEhrPayload)
                     .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
-                    .withNodeFilter(this::excludeComparisons)
+                    .withNodeFilter(TestUtils::excludeComparisons)
                     .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
                             DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
                     .checkForSimilar().build();
 
             assertFalse(myDiff.toString(), myDiff.hasDifferences());
 
-        } catch (JSONException e) {
-            LOGGER.error(e);
-            throw new Error(e);
+        } catch (JSONException exception) {
+            LOGGER.error(exception);
+            throw new Error(exception);
         }
-    }
-
-    private boolean excludeComparisons(Node node) {
-        List<String> excludeList = List.of(
-                "1.2.826.0.1285.0.1.10", // ODS code
-                "1.2.826.0.1285.0.2.0.107" // ASID code
-        );
-
-        if (node.hasAttributes() && node.getAttributes().getNamedItem("root") != null) {
-            String idRootValue = node.getAttributes().getNamedItem("root").getNodeValue();
-            // return false to skip comparison in case when id root value itself is a message id
-            if (isValidUUID(idRootValue)) {
-                return false;
-            }
-            // return false to skip comparison when the type of compared value is in the excludedList
-            return !(node.getNodeName().equals("id") && excludeList.contains(idRootValue));
-        }
-        return true;
     }
 
     @Test
@@ -256,21 +231,12 @@ public class RepositoryE2ETests {
 
 
         Diff myDiff = DiffBuilder.compare(control).withTest(test)
-                .withNodeFilter(this::excludeComparisons)
+                .withNodeFilter(TestUtils::excludeComparisons)
                 .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
                         DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
                 .checkForSimilar().build();
 
         assertFalse(myDiff.toString(), myDiff.hasDifferences());
-    }
-
-    private static String getPayload(String gp2gpMessageBody) throws JSONException {
-        JSONObject jsonObject = new JSONObject(gp2gpMessageBody);
-        if (jsonObject.has("payload") ) {
-            return jsonObject.getString("payload");
-        } else {
-            return jsonObject.getJSONObject("request").getJSONObject("body").getString("payload");
-        }
     }
 
     @Test
