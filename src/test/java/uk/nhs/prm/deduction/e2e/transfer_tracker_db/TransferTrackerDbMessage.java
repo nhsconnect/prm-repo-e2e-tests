@@ -23,15 +23,15 @@ public class TransferTrackerDbMessage {
     private String createdAt;
     private String lastUpdatedAt;
 
-    public TransferTrackerDbMessage(@JsonProperty("conversationId") String conversationId,
-                                    @JsonProperty("largeEhrCoreMessageId") String largeEhrCoreMessageId,
-                                    @JsonProperty("nemsMessageId") String nemsMessageId,
-                                    @JsonProperty("nhsNumber") String nhsNumber,
-                                    @JsonProperty("sourceGp") String sourceGp,
-                                    @JsonProperty("state") String state,
-                                    @JsonProperty("nemsEventLastUpdated") String nemsEventLastUpdated,
-                                    @JsonProperty("createdAt") String createdAt,
-                                    @JsonProperty("lastUpdatedAt") String lastUpdatedAt){
+    public TransferTrackerDbMessage(String conversationId,
+                                    String largeEhrCoreMessageId,
+                                    String nemsMessageId,
+                                    String nhsNumber,
+                                    String sourceGp,
+                                    String state,
+                                    String nemsEventLastUpdated,
+                                    String createdAt,
+                                    String lastUpdatedAt){
         this.conversationId = conversationId;
         this.largeEhrCoreMessageId = largeEhrCoreMessageId;
         this.nemsMessageId = nemsMessageId;

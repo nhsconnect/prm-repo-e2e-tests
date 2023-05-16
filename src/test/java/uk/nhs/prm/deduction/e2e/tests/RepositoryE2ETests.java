@@ -241,7 +241,6 @@ public class RepositoryE2ETests {
 
     @Test
     void shouldVerifyThatALargeEhrXMLIsUnchanged() {
-
     }
 
     @Test
