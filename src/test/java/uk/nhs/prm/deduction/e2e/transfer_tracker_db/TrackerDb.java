@@ -48,8 +48,7 @@ public class TrackerDb {
                 .until(() -> transferTrackerDbClient.queryDbWithConversationId(conversationId).item().get("state").s(), containsString(partialStatus));
     }
 
-    public void save(TransferTrackerDbMessage message)
-    {
+    public void save(TransferTrackerDbMessage message) {
         transferTrackerDbClient.save(message);
     }
 }
