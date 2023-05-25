@@ -131,6 +131,7 @@ public class RepositoryE2ETests {
         transferCompleteQueue.deleteAllMessages();
         ehrInUnhandledQueue.deleteAllMessages();
         negativeAcknowledgementObservabilityQueue.deleteAllMessages();
+        gp2gpMessengerQueue.deleteAllMessages();
         pdsAdaptorClient = new PdsAdaptorClient("e2e-test", config.getPdsAdaptorE2ETestApiKey(), config.getPdsAdaptorUrl());
     }
 
@@ -244,8 +245,8 @@ public class RepositoryE2ETests {
         // given
         String inboundConversationId = UUID.randomUUID().toString();
         String largeEhrCoreMessageId = UUID.randomUUID().toString();
-        String fragment1MessageId = UUID.randomUUID().toString();
-        String fragment2MessageId = UUID.randomUUID().toString();
+        String fragment1MessageId = UUID.randomUUID().toString().toUpperCase();
+        String fragment2MessageId = UUID.randomUUID().toString().toUpperCase();
 
         String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumberForTestPatient = "9727018157";
@@ -263,11 +264,15 @@ public class RepositoryE2ETests {
         String largeEhrFragment1 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-1")
                 .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
                 .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId)
-                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId);
+                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId)
+                .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
+                .replaceAll("<From>N82668</From>", "<From>B85002</From>");
 
         String largeEhrFragment2 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-2")
                 .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
-                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId);
+                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId)
+                .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
+                .replaceAll("<From>N82668</From>", "<From>B85002</From>");
 
         String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
                 .replaceAll("9692842304", nhsNumberForTestPatient)
@@ -275,8 +280,7 @@ public class RepositoryE2ETests {
                 .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
 
         String continueRequest = Resources.readTestResourceFile("COPC_IN000001UK01")
-                .replaceAll("A91720", newGpForTestPatient)
-                .replaceAll("a86e85ef-7ba9-46dd-ab48-da804c8bede6", outboundConversationId);
+                .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", outboundConversationId);
 
 
         trackerDb.save(new TransferTrackerDbMessage(
@@ -324,7 +328,7 @@ public class RepositoryE2ETests {
             LOGGER.info("Payload from largeEhrCore: {}", largeEhrCorePayload);
             Diff myDiff = DiffBuilder.compare(gp2gpMessengerPayload).withTest(largeEhrCorePayload)
                     .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
-                    .withNodeFilter(this::excludeComparisons)
+                    .withNodeFilter(TestUtils::excludeComparisons)
                     .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
                             DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
                     .checkForSimilar().build();
@@ -338,11 +342,46 @@ public class RepositoryE2ETests {
 
         inboundQueueFromMhs.sendMessage(continueRequest, outboundConversationId);
 
-        // assert gp2gpMessenger queue got COPC ehr fragment
-//        SqsMessage gp2gpMessageCOPC = gp2gpMessengerQueue.getMessageContaining("COPC_IN000001UK01");
+//         assert gp2gpMessenger queue got COPC ehr fragment
+        SqsMessage gp2gpMessageCOPC = gp2gpMessengerQueue.getMessageContaining("COPC_IN000001UK01");
 //
-//        assertThat(gp2gpMessageCOPC).isNotNull();
-//        assertThat(gp2gpMessageCOPC.contains(outboundConversationId)).isTrue();
+        assertThat(gp2gpMessageCOPC).isNotNull();
+        LOGGER.info("COPC from observability queue: {}", gp2gpMessageCOPC.body());
+        assertThat(gp2gpMessageCOPC.contains(outboundConversationId)).isTrue();
+
+        try {
+            String gp2gpFragmentPayload = getPayload(gp2gpMessageCOPC.body());
+            String largeEhrFragment1Payload = getPayload(largeEhrFragment1);
+            String largeEhrFragment2Payload = getPayload(largeEhrFragment2);
+
+            LOGGER.info("Payload of fragment from gp2gpMessenger: {}", gp2gpFragmentPayload);
+            LOGGER.info("Payload of fragment 1: {}", largeEhrFragment1Payload);
+            LOGGER.info("Payload of fragment 2: {}", largeEhrFragment2Payload);
+
+            Diff myDiff = DiffBuilder.compare(gp2gpFragmentPayload).withTest(largeEhrFragment1Payload)
+                    .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
+                    .withNodeFilter(TestUtils::excludeComparisons)
+                    .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
+                            DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
+                    .checkForSimilar().build();
+            Diff myDiff2 = DiffBuilder.compare(gp2gpFragmentPayload).withTest(largeEhrFragment2Payload)
+                    .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
+                    .withNodeFilter(TestUtils::excludeComparisons)
+                    .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
+                            DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
+                    .checkForSimilar().build();
+
+            LOGGER.info("Difference between fragment 1 and outbound fragment: {}", myDiff.fullDescription());
+            LOGGER.info("Difference between fragment 2 and outbound fragment: {}", myDiff2.fullDescription());
+
+            // assert that the outbound fragment we got match one of the 2 fragments
+            assertFalse("Assert one of the fragment match the outbound fragment, but both didnt match", myDiff.hasDifferences() && myDiff2.hasDifferences());
+
+
+        } catch (JSONException e) {
+            LOGGER.error(e);
+            throw new Error(e);
+        }
     }
 
     @Test
