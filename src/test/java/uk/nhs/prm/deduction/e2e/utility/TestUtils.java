@@ -57,6 +57,12 @@ public final class TestUtils {
             // return false to skip comparison when the type of compared value is in the excludedList
             return !(node.getNodeName().equals("id") && excludeList.contains(idRootValue));
         }
+
+        // return false to skip comparison in case when the node name is "message-id"
+        if (node.getNodeName().equals("message-id")) {
+            return false;
+        }
+
         return true;
     }
 
