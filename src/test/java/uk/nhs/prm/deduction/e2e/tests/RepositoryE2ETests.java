@@ -227,8 +227,10 @@ public class RepositoryE2ETests {
 //        final String test =    "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000000149\"/></device>";
 //        final String control = "<id root=\"DF91D420-DDC7-11ED-808B-AC162D1F16F0\"/>";
 //        final String test    = "<id root=\"DFBA6AC0-DDC7-11ED-808B-AC162D1F16F0\"/>";
-        final String control = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?><RCMR_IN030000UK06 xmlns=\"urn:hl7-org:v3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:hl7-org:v3 ..\\Schemas\\RCMR_IN030000UK06.xsd\"></RCMR_IN030000UK06>";
-        final String test    = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><RCMR_IN030000UK06 xmlns=\"urn:hl7-org:v3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:hl7-org:v3 ..\\Schemas\\RCMR_IN030000UK06.xsd\"></RCMR_IN030000UK06>";
+//        final String control = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?><RCMR_IN030000UK06 xmlns=\"urn:hl7-org:v3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:hl7-org:v3 ..\\Schemas\\RCMR_IN030000UK06.xsd\"></RCMR_IN030000UK06>";
+//        final String test    = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><RCMR_IN030000UK06 xmlns=\"urn:hl7-org:v3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:hl7-org:v3 ..\\Schemas\\RCMR_IN030000UK06.xsd\"></RCMR_IN030000UK06>";
+        final String control = "<message-id>B0D8DE4B-49C1-4A73-AFC9-B6BE868B9656</message-id>";
+        final String test    = "<message-id>87DD478E-2006-42C1-B157-C2EB0423461B</message-id>";
 
 
         Diff myDiff = DiffBuilder.compare(control).withTest(test)
