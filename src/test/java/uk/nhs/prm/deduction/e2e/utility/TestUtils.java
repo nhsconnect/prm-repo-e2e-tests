@@ -5,9 +5,18 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.diff.*;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbMessage;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
+
+import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
 
 public final class TestUtils {
     private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
@@ -66,6 +75,22 @@ public final class TestUtils {
         return true;
     }
 
+    public static void addRecordToTrackerDb(TrackerDb trackerDb, String inboundConversationId, String largeEhrCoreMessageId, String nhsNumberForTestPatient, String previousGpForTestPatient, String state) {
+        String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+
+        trackerDb.save(new TransferTrackerDbMessage(
+                inboundConversationId,
+                largeEhrCoreMessageId,
+                randomNemsMessageId(),
+                nhsNumberForTestPatient,
+                previousGpForTestPatient,
+                state,
+                timeNow,
+                timeNow,
+                timeNow
+        ));
+    }
+
     public static String getPayload(String gp2gpMessageBody) throws JSONException {
         JSONObject jsonObject = new JSONObject(gp2gpMessageBody);
         if (jsonObject.has("payload") ) {
@@ -75,4 +100,65 @@ public final class TestUtils {
         }
     }
 
+    public static Optional<String> getPayloadOptional(String gp2gpMessageBody) {
+        try {
+            String payload = getPayload(gp2gpMessageBody);
+            return Optional.of(payload);
+        } catch (Exception exception) {
+            return Optional.empty();
+        }
+    }
+
+    public static Diff comparePayloads(String message1, String message2) {
+        return DiffBuilder.compare(message1).withTest(message2)
+                .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
+                .withNodeFilter(TestUtils::excludeComparisons)
+                .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
+                        DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
+                .checkForSimilar().build();
+    }
+
+    public static LargeEhrTestFiles prepareTestFilesForLargeEhr(
+            String inboundConversationId,
+            String outboundConversationId,
+            String largeEhrCoreMessageId,
+            String fragment1MessageId,
+            String fragment2MessageId,
+            String newGpForTestPatient,
+            String nhsNumberForTestPatient) {
+
+        inboundConversationId = inboundConversationId.toUpperCase();
+        outboundConversationId = outboundConversationId.toUpperCase();
+        largeEhrCoreMessageId = largeEhrCoreMessageId.toUpperCase();
+        fragment1MessageId = fragment1MessageId.toUpperCase();
+        fragment2MessageId = fragment2MessageId.toUpperCase();
+
+        String largeEhrCore = Resources.readTestResourceFileFromEhrDirectory("large-ehr-core")
+                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId)
+                .replaceAll("B8DC074D-C039-4FD2-8BBB-D4BFBBBF9AFA", largeEhrCoreMessageId)
+                .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId);
+
+        String largeEhrFragment1 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-1")
+                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId)
+                .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId)
+                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId)
+                .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
+                .replaceAll("<From>N82668</From>", "<From>B85002</From>");
+
+        String largeEhrFragment2 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-2")
+                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
+                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId)
+                .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
+                .replaceAll("<From>N82668</From>", "<From>B85002</From>");
+
+        String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
+                .replaceAll("9692842304", nhsNumberForTestPatient)
+                .replaceAll("A91720", newGpForTestPatient)
+                .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
+
+        String continueRequest = Resources.readTestResourceFile("COPC_IN000001UK01")
+                .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", outboundConversationId);
+
+        return new LargeEhrTestFiles(largeEhrCore, largeEhrFragment1, largeEhrFragment2, ehrRequest, continueRequest);
+    }
 }

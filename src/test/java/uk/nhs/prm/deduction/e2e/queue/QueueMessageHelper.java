@@ -1,18 +1,21 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hamcrest.Matchers;
+import org.hamcrest.collection.IsCollectionWithSize;
 import org.json.JSONException;
 import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.Matchers.*;
 
 @Slf4j
 public class QueueMessageHelper {
@@ -49,6 +52,27 @@ public class QueueMessageHelper {
                 .until(() -> findMessageContaining(substring), notNullValue());
         log(String.format("Found message on : %s", this.queueUri));
         return found;
+    }
+
+    public ArrayList<SqsMessage> getAllMessageContaining(String substring) {
+        log(String.format("Checking if message is present on : %s", this.queueUri));
+        ArrayList<SqsMessage> allMessages = new ArrayList<>();
+        await().atMost(120, TimeUnit.SECONDS)
+                .with()
+                .pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+                    SqsMessage found = findMessageContaining(substring);
+                    if (found != null) {
+                        allMessages.add(found);
+                    }
+                    assertTrue(allMessages.size() >= 2);
+                });
+
+//        ArrayList<SqsMessage> found = await().atMost(120, TimeUnit.SECONDS)
+//                .with()
+//                .pollInterval(100, TimeUnit.MILLISECONDS)
+//                .until(() -> findAllMessagesContaining(substring), is(IsCollectionWithSize.hasSize(2)));
+        log(String.format("Found message on : %s", this.queueUri));
+        return allMessages;
     }
 
     public SqsMessage getMessageContainingAttribute(String attribute, String expectedValue) {
@@ -95,6 +119,18 @@ public class QueueMessageHelper {
             }
         }
         return null;
+    }
+
+    private ArrayList<SqsMessage> findAllMessagesContaining(String substring) {
+        var allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
+        ArrayList<SqsMessage> messages = new ArrayList<>();
+        for (var message : allMessages) {
+            System.out.println("just finding message, checking conversationId: " + substring);
+            if (message.contains(substring)) {
+                messages.add(message);
+            }
+        }
+        return messages;
     }
 
     public SqsMessage findMessageWithAttribute(String attribute, String expectedValue) {
