@@ -32,6 +32,7 @@ import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbMessage;
+import uk.nhs.prm.deduction.e2e.utility.LargeEhrTestFiles;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 import uk.nhs.prm.deduction.e2e.utility.TestUtils;
 
@@ -40,6 +41,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -47,6 +49,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
 import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
@@ -156,33 +159,21 @@ public class RepositoryE2ETests {
         String smallEhrMessageId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumberForTestPatient = "9727018440";
-        String sourceGpForTestPatient = "M85019";
+        String previousGpForTestPatient = "M85019";
         String asidCodeForTestPatient = "200000000149";
-        String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
         SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
         String smallEhr = getSmallEhrWithoutLinebreaks(inboundConversationId.toUpperCase(), smallEhrMessageId);
-
-        String ehrRequest = getEhrRequest(nhsNumberForTestPatient, sourceGpForTestPatient, asidCodeForTestPatient, outboundConversationId);
+        String ehrRequest = getEhrRequest(nhsNumberForTestPatient, previousGpForTestPatient, asidCodeForTestPatient, outboundConversationId);
 
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
         // Put the patient into inboundQueueFromMhs as a UK05 message
 
-        trackerDb.save(new TransferTrackerDbMessage(
-                inboundConversationId,
-                "",
-                randomNemsMessageId(),
-                nhsNumberForTestPatient,
-                sourceGpForTestPatient,
-                "ACTION:EHR_REQUEST_SENT",
-                timeNow,
-                timeNow,
-                timeNow
-        ));
-
+        addRecordToTrackerDb(trackerDb, inboundConversationId, "", nhsNumberForTestPatient, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
         inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
+
         LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
         String status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
         LOGGER.info("tracker db status: {}", status);
@@ -197,47 +188,12 @@ public class RepositoryE2ETests {
         assertThat(gp2gpMessage).isNotNull();
         assertThat(gp2gpMessage.contains("RCMR_IN030000UK06")).isTrue();
 
-        try {
-            String gp2gpMessengerPayload = getPayload(gp2gpMessage.body());
-            String smallEhrPayload = getPayload(smallEhr);
+        String gp2gpMessengerPayload = getPayloadOptional(gp2gpMessage.body()).orElseThrow();
+        String smallEhrPayload = getPayloadOptional(smallEhr).orElseThrow();
+        LOGGER.info("Payload from gp2gpMessenger: {}", gp2gpMessengerPayload);
+        LOGGER.info("Payload from smallEhr: {}", smallEhrPayload);
 
-            LOGGER.info("Payload from gp2gpMessenger: {}", gp2gpMessengerPayload);
-            LOGGER.info("Payload from smallEhr: {}", smallEhrPayload);
-            Diff myDiff = DiffBuilder.compare(gp2gpMessengerPayload).withTest(smallEhrPayload)
-                    .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
-                    .withNodeFilter(TestUtils::excludeComparisons)
-                    .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
-                            DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
-                    .checkForSimilar().build();
-
-            assertFalse(myDiff.toString(), myDiff.hasDifferences());
-
-        } catch (JSONException exception) {
-            LOGGER.error(exception);
-            throw new Error(exception);
-        }
-    }
-
-    @Test
-    public void given2XMLsWithDifferences_whenTestsSimilarWithDifferenceEvaluator_thenCorrect() {
-        // helper test case for building the `excludeComparisons` function
-//        final String control = "<agentOrganizationSDS classCode=\"ORG\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.1.10\" extension=\"B85002\"/></agentOrganizationSDS>";
-//        final String test =    "<agentOrganizationSDS classCode=\"ORG\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.1.10\" extension=\"M85019\"/></agentOrganizationSDS>";
-//        final String control = "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000001613\"/></device>";
-//        final String test =    "<device classCode=\"DEV\" determinerCode=\"INSTANCE\"><id root=\"1.2.826.0.1285.0.2.0.107\" extension=\"200000000149\"/></device>";
-//        final String control = "<id root=\"DF91D420-DDC7-11ED-808B-AC162D1F16F0\"/>";
-//        final String test    = "<id root=\"DFBA6AC0-DDC7-11ED-808B-AC162D1F16F0\"/>";
-//        final String control = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?><RCMR_IN030000UK06 xmlns=\"urn:hl7-org:v3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:hl7-org:v3 ..\\Schemas\\RCMR_IN030000UK06.xsd\"></RCMR_IN030000UK06>";
-//        final String test    = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><RCMR_IN030000UK06 xmlns=\"urn:hl7-org:v3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:hl7-org:v3 ..\\Schemas\\RCMR_IN030000UK06.xsd\"></RCMR_IN030000UK06>";
-        final String control = "<message-id>B0D8DE4B-49C1-4A73-AFC9-B6BE868B9656</message-id>";
-        final String test    = "<message-id>87DD478E-2006-42C1-B157-C2EB0423461B</message-id>";
-
-
-        Diff myDiff = DiffBuilder.compare(control).withTest(test)
-                .withNodeFilter(TestUtils::excludeComparisons)
-                .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
-                        DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
-                .checkForSimilar().build();
+        Diff myDiff = TestUtils.comparePayloads(gp2gpMessengerPayload, smallEhrPayload);
 
         assertFalse(myDiff.toString(), myDiff.hasDifferences());
     }
@@ -246,61 +202,39 @@ public class RepositoryE2ETests {
     void shouldVerifyThatALargeEhrXMLIsUnchanged() {
         // given
         String inboundConversationId = UUID.randomUUID().toString();
-        String largeEhrCoreMessageId = UUID.randomUUID().toString();
-        String fragment1MessageId = UUID.randomUUID().toString().toUpperCase();
-        String fragment2MessageId = UUID.randomUUID().toString().toUpperCase();
-
         String outboundConversationId = UUID.randomUUID().toString();
+        String largeEhrCoreMessageId = UUID.randomUUID().toString();
+        String fragment1MessageId = UUID.randomUUID().toString();
+        String fragment2MessageId = UUID.randomUUID().toString();
+
         String nhsNumberForTestPatient = "9727018157";
         String previousGpForTestPatient = "N82668";
         String newGpForTestPatient = "M85019";
-        String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
-        var inboundQueueFromMhs = new SimpleAmqpQueue(config);
+        SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(config);
 
-        String largeEhrCore = Resources.readTestResourceFileFromEhrDirectory("large-ehr-core")
-                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
-                .replaceAll("B8DC074D-C039-4FD2-8BBB-D4BFBBBF9AFA", largeEhrCoreMessageId)
-                .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId);
-
-        String largeEhrFragment1 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-1")
-                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
-                .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId)
-                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId)
-                .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
-                .replaceAll("<From>N82668</From>", "<From>B85002</From>");
-
-        String largeEhrFragment2 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-2")
-                .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
-                .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId)
-                .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
-                .replaceAll("<From>N82668</From>", "<From>B85002</From>");
-
-        String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
-                .replaceAll("9692842304", nhsNumberForTestPatient)
-                .replaceAll("A91720", newGpForTestPatient)
-                .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
-
-        String continueRequest = Resources.readTestResourceFile("COPC_IN000001UK01")
-                .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", outboundConversationId);
-
-
-        trackerDb.save(new TransferTrackerDbMessage(
+        LargeEhrTestFiles largeEhrTestFiles = TestUtils.prepareTestFilesForLargeEhr(
                 inboundConversationId,
+                outboundConversationId,
                 largeEhrCoreMessageId,
-                randomNemsMessageId(),
-                nhsNumberForTestPatient,
-                previousGpForTestPatient,
-                "ACTION:EHR_REQUEST_SENT",
-                timeNow,
-                timeNow,
-                timeNow
-        ));
+                fragment1MessageId,
+                fragment2MessageId,
+                newGpForTestPatient,
+                nhsNumberForTestPatient
+        );
+
+        String largeEhrCore = largeEhrTestFiles.largeEhrCore;
+        String largeEhrFragment1 = largeEhrTestFiles.largeEhrFragment1;
+        String largeEhrFragment2 = largeEhrTestFiles.largeEhrFragment2;
+        String ehrRequest = largeEhrTestFiles.ehrRequest;
+        String continueRequest = largeEhrTestFiles.continueRequest;
+
+        addRecordToTrackerDb(trackerDb, inboundConversationId, largeEhrCoreMessageId, nhsNumberForTestPatient, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
 
         // when
         inboundQueueFromMhs.sendMessage(largeEhrCore, inboundConversationId);
         LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
-        var status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT");
+        String status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT");
         LOGGER.info("tracker db status: {}", status);
 
         LOGGER.info("fragment 1 message id: {}", fragment1MessageId);
@@ -322,68 +256,35 @@ public class RepositoryE2ETests {
         assertThat(gp2gpMessageUK06).isNotNull();
         assertThat(gp2gpMessageUK06.contains("RCMR_IN030000UK06")).isTrue();
 
-        try {
-            String gp2gpMessengerPayload = getPayload(gp2gpMessageUK06.body());
-            String largeEhrCorePayload = getPayload(largeEhrCore);
+        String gp2gpMessengerEhrCorePayload = getPayloadOptional(gp2gpMessageUK06.body()).orElseThrow();
+        String largeEhrCorePayload = getPayloadOptional(largeEhrCore).orElseThrow();
 
-            LOGGER.info("Payload from gp2gpMessenger: {}", gp2gpMessengerPayload);
-            LOGGER.info("Payload from largeEhrCore: {}", largeEhrCorePayload);
-            Diff myDiff = DiffBuilder.compare(gp2gpMessengerPayload).withTest(largeEhrCorePayload)
-                    .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
-                    .withNodeFilter(TestUtils::excludeComparisons)
-                    .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
-                            DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
-                    .checkForSimilar().build();
+        Diff compareEhrCores = TestUtils.comparePayloads(gp2gpMessengerEhrCorePayload, largeEhrCorePayload);
+        boolean ehrCoreIsIdentical = !compareEhrCores.hasDifferences();
+        assertTrue(ehrCoreIsIdentical);
 
-            assertFalse(myDiff.toString(), myDiff.hasDifferences());
-
-        } catch (JSONException e) {
-            LOGGER.error(e);
-            throw new Error(e);
-        }
-
+        // Put a continue request to inboundQueueFromMhs
         inboundQueueFromMhs.sendMessage(continueRequest, outboundConversationId);
 
-//         assert gp2gpMessenger queue got COPC ehr fragment
-        SqsMessage gp2gpMessageCOPC = gp2gpMessengerQueue.getMessageContaining("COPC_IN000001UK01");
-//
-        assertThat(gp2gpMessageCOPC).isNotNull();
-        LOGGER.info("COPC from observability queue: {}", gp2gpMessageCOPC.body());
-        assertThat(gp2gpMessageCOPC.contains(outboundConversationId)).isTrue();
+        // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
+        ArrayList<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("COPC_IN000001UK01");
+        assertThat(allFragments.size()).isGreaterThanOrEqualTo(2);
 
-        try {
-            String gp2gpFragmentPayload = getPayload(gp2gpMessageCOPC.body());
-            String largeEhrFragment1Payload = getPayload(largeEhrFragment1);
-            String largeEhrFragment2Payload = getPayload(largeEhrFragment2);
+        String largeEhrFragment1Payload = getPayloadOptional(largeEhrFragment1).orElseThrow();
+        String largeEhrFragment2Payload = getPayloadOptional(largeEhrFragment2).orElseThrow();
 
-            LOGGER.info("Payload of fragment from gp2gpMessenger: {}", gp2gpFragmentPayload);
-            LOGGER.info("Payload of fragment 1: {}", largeEhrFragment1Payload);
-            LOGGER.info("Payload of fragment 2: {}", largeEhrFragment2Payload);
+        allFragments.forEach(fragment -> {
+            assertThat(fragment.contains(outboundConversationId)).isTrue();
 
-            Diff myDiff = DiffBuilder.compare(gp2gpFragmentPayload).withTest(largeEhrFragment1Payload)
-                    .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
-                    .withNodeFilter(TestUtils::excludeComparisons)
-                    .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
-                            DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
-                    .checkForSimilar().build();
-            Diff myDiff2 = DiffBuilder.compare(gp2gpFragmentPayload).withTest(largeEhrFragment2Payload)
-                    .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
-                    .withNodeFilter(TestUtils::excludeComparisons)
-                    .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
-                            DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
-                    .checkForSimilar().build();
+            String fragmentPayload = getPayloadOptional(fragment.body()).orElseThrow();
+            Diff compareWithFragment1 = TestUtils.comparePayloads(fragmentPayload, largeEhrFragment1Payload);
+            Diff compareWithFragment2 = TestUtils.comparePayloads(fragmentPayload, largeEhrFragment2Payload);
 
-            LOGGER.info("Difference between fragment 1 and outbound fragment: {}", myDiff.fullDescription());
-            LOGGER.info("Difference between fragment 2 and outbound fragment: {}", myDiff2.fullDescription());
+            boolean identicalWithFragment1 = !compareWithFragment1.hasDifferences();
+            boolean identicalWithFragment2 = !compareWithFragment2.hasDifferences();
 
-            // assert that the outbound fragment we got match one of the 2 fragments
-            assertFalse("Assert one of the fragment match the outbound fragment, but both didnt match", myDiff.hasDifferences() && myDiff2.hasDifferences());
-
-
-        } catch (JSONException e) {
-            LOGGER.error(e);
-            throw new Error(e);
-        }
+            assertTrue(identicalWithFragment1 || identicalWithFragment2);
+        });
     }
 
     @Test
