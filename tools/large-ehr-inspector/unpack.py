@@ -37,15 +37,15 @@ def inspect_ebxml(ebxml):
   print_xpath('ebxml', root, ".//{*}Reference")
 
 
-def inspect_attachments(id, attachments):
-  print('message attachments', len(attachments))
-  for attachment in attachments:
-    print('attachment keys', attachment.keys())
-    print('attachment content_id', attachment['content_id'])
-    print('attachment content_type', attachment['content_type'])
-    print('attachment is base 64?', attachment['is_base64'])
-    print('attachment payload length', len(attachment['payload']))
-    write_to_file(id + '/' + attachment['content_id'].replace('/', '-'), attachment['payload'])
+def inspect_fragments(id, fragments):
+  print('message fragments', len(fragments))
+  for fragment in fragments:
+    print('fragment keys', fragment.keys())
+    print('fragment content_id', fragment['content_id'])
+    print('fragment content_type', fragment['content_type'])
+    print('fragment is base 64?', fragment['is_base64'])
+    print('fragment payload length', len(fragment['payload']))
+    write_to_file(id + '/' + fragment['content_id'].replace('/', '-'), fragment['payload'])
 
 
 os.chdir('samples/')
@@ -61,7 +61,7 @@ for filename in mhs_json_filenames:
   print('processing message id', id)
 
   inspect_ebxml(data['ebXML'])
-  inspect_attachments(id, data['attachments'])
+  inspect_fragments(id, data['attachments'])
 
   write_to_file(id + '/ebxml.xml', pretty_xml(data['ebXML']))
   write_to_file(id + '/payload.xml', pretty_xml(data['payload']))

@@ -44,9 +44,9 @@ public class EhrRepoClient {
         var conversationId = UUID.randomUUID();
         var messageId = UUID.randomUUID();
         var messageType = "ehrExtract";
-        var attachmentMessageIds = Collections.EMPTY_LIST;
+        var fragmentMessageIds = Collections.EMPTY_LIST;
 
-        var jsonPayloadString = new Gson().toJson(new StoreMessageRequestBody(messageId, conversationId, nhsNumber, messageType, attachmentMessageIds));
+        var jsonPayloadString = new Gson().toJson(new StoreMessageRequestBody(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds));
 
          restTemplate.exchange(new URL(rootUrl + "messages").toURI(), HttpMethod.POST,
                  new HttpEntity<>(jsonPayloadString, createHeaders(apiKey)), String.class);

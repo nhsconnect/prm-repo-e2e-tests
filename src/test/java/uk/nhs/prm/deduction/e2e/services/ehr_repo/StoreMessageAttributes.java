@@ -8,12 +8,12 @@ public class StoreMessageAttributes {
     public UUID conversationId;
     public String messageType;
     public String nhsNumber;
-    public List<UUID> attachmentMessageIds;
+    public List<UUID> fragmentMessageIds;
 
-    public StoreMessageAttributes(UUID conversationId, String nhsNumber, String messageType, List<UUID> attachmentMessageIds) {
+    public StoreMessageAttributes(UUID conversationId, String nhsNumber, String messageType, List<UUID> fragmentMessageIds) {
         this.conversationId = conversationId;
         this.messageType = messageType;
         this.nhsNumber = nhsNumber;
-        this.attachmentMessageIds = attachmentMessageIds;
+        this.fragmentMessageIds = fragmentMessageIds;
     }
 }
