@@ -8,7 +8,7 @@ public class StoreMessageRequestBody {
 
     public StoreMessageData data;
 
-    public StoreMessageRequestBody(UUID messageId, UUID conversationId, String nhsNumber, String messageType, List<UUID> attachmentMessageIds) {
-        this.data = new StoreMessageData(messageId, conversationId, nhsNumber, messageType, attachmentMessageIds);
+    public StoreMessageRequestBody(UUID messageId, UUID conversationId, String nhsNumber, String messageType, List<UUID> fragmentMessageIds) {
+        this.data = new StoreMessageData(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds);
     }
 }
