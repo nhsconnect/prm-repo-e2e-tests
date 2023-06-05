@@ -281,7 +281,7 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-password", getEnvironmentName()));
     }
 
-    public String attachmentQueueUri() {
+    public String fragmentQueueUri() {
         return getQueueUri("ehr-transfer-service-large-message-fragments-observability");
     }
 

@@ -11,6 +11,6 @@ public class LargeEhrFragmentsQueue extends QueueMessageHelper {
 
     @Autowired
     public LargeEhrFragmentsQueue(ThinlyWrappedSqsClient thinlyWrappedSqsClient, TestConfiguration configuration) {
-        super(thinlyWrappedSqsClient, configuration.attachmentQueueUri());
+        super(thinlyWrappedSqsClient, configuration.fragmentQueueUri());
     }
 }

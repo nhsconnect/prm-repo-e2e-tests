@@ -59,7 +59,7 @@ import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
         SmallEhrQueue.class,
         LargeEhrQueue.class,
         Gp2gpMessengerQueue.class,
-        AttachmentQueue.class,
+        FragmentQueue.class,
         EhrParsingDLQ.class,
         TransferTrackerDbClient.class,
         EhrCompleteQueue.class,
@@ -77,7 +77,7 @@ public class RepositoryE2ETests {
     private final TrackerDb trackerDb;
     private final SmallEhrQueue smallEhrQueue;
     private final LargeEhrQueue largeEhrQueue;
-    private final AttachmentQueue attachmentQueue;
+    private final FragmentQueue fragmentQueue;
     private final EhrParsingDLQ parsingDLQ;
     private final EhrCompleteQueue ehrCompleteQueue;
     private final TransferCompleteQueue transferCompleteQueue;
@@ -92,7 +92,7 @@ public class RepositoryE2ETests {
             TrackerDb trackerDb,
             SmallEhrQueue smallEhrQueue,
             LargeEhrQueue largeEhrQueue,
-            AttachmentQueue attachmentQueue,
+            FragmentQueue fragmentQueue,
             EhrParsingDLQ parsingDLQ,
             EhrCompleteQueue ehrCompleteQueue,
             TransferCompleteQueue transferCompleteQueue,
@@ -106,7 +106,7 @@ public class RepositoryE2ETests {
         this.trackerDb = trackerDb;
         this.smallEhrQueue = smallEhrQueue;
         this.largeEhrQueue = largeEhrQueue;
-        this.attachmentQueue = attachmentQueue;
+        this.fragmentQueue = fragmentQueue;
         this.parsingDLQ = parsingDLQ;
         this.ehrCompleteQueue = ehrCompleteQueue;
         this.transferCompleteQueue = transferCompleteQueue;
@@ -122,7 +122,7 @@ public class RepositoryE2ETests {
     void init() {
         smallEhrQueue.deleteAllMessages();
         largeEhrQueue.deleteAllMessages();
-        attachmentQueue.deleteAllMessages();
+        fragmentQueue.deleteAllMessages();
         parsingDLQ.deleteAllMessages();
         transferCompleteQueue.deleteAllMessages();
         ehrInUnhandledQueue.deleteAllMessages();
@@ -331,12 +331,12 @@ public class RepositoryE2ETests {
 
     private static Stream<Arguments> largeEhrScenariosRunningOnCommit() {
         return Stream.of(
-                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
-                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SINGLE_LARGE_FRAGMENT),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SINGLE_LARGE_FRAGMENT),
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
-                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
-                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS)
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_FRAGMENTS),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_FRAGMENTS)
         );
     }
 
@@ -368,8 +368,8 @@ public class RepositoryE2ETests {
         return Stream.of(
                 // 5mins+ variation -> removed from regression as intermittently takes 2+ hours
                 // to complete which, whiile successful, is not sufficiently timely for on-commit regression
-                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
-                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_FRAGMENT_COUNT),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_FRAGMENT_COUNT),
 
                 // 20mins+, filling FSS disks causing outages -> to be run ad hoc as needed
                  Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
@@ -439,16 +439,16 @@ public class RepositoryE2ETests {
 
     private static Stream<Arguments> loadTestScenarios() {
         return Stream.of(
-                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
-                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SINGLE_LARGE_ATTACHMENT),
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SINGLE_LARGE_FRAGMENT),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.SINGLE_LARGE_FRAGMENT),
                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.LARGE_MEDICAL_HISTORY),
-                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS),
-                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_ATTACHMENTS)
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_FRAGMENTS),
+                Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.MULTIPLE_LARGE_FRAGMENTS)
 //
 //                // 5mins + variation -> let's run these overnight
-//                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
-//                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_ATTACHMENT_COUNT),
+//                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.HIGH_FRAGMENT_COUNT),
+//                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_FRAGMENT_COUNT),
 //
 //                // 20mins+ -> let's run this overnight
 //                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
