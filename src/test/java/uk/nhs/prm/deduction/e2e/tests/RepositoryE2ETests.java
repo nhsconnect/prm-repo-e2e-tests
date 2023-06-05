@@ -2,7 +2,6 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -14,7 +13,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
@@ -31,17 +29,14 @@ import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNot
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
-import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbMessage;
 import uk.nhs.prm.deduction.e2e.utility.LargeEhrTestFiles;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 import uk.nhs.prm.deduction.e2e.utility.TestUtils;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -49,9 +44,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
-import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
 import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
 
 @SpringBootTest(classes = {
@@ -193,7 +186,7 @@ public class RepositoryE2ETests {
         LOGGER.info("Payload from gp2gpMessenger: {}", gp2gpMessengerPayload);
         LOGGER.info("Payload from smallEhr: {}", smallEhrPayload);
 
-        Diff myDiff = TestUtils.comparePayloads(gp2gpMessengerPayload, smallEhrPayload);
+        Diff myDiff = comparePayloads(gp2gpMessengerPayload, smallEhrPayload);
 
         assertFalse(myDiff.toString(), myDiff.hasDifferences());
     }
@@ -259,7 +252,7 @@ public class RepositoryE2ETests {
         String gp2gpMessengerEhrCorePayload = getPayloadOptional(gp2gpMessageUK06.body()).orElseThrow();
         String largeEhrCorePayload = getPayloadOptional(largeEhrCore).orElseThrow();
 
-        Diff compareEhrCores = TestUtils.comparePayloads(gp2gpMessengerEhrCorePayload, largeEhrCorePayload);
+        Diff compareEhrCores = comparePayloads(gp2gpMessengerEhrCorePayload, largeEhrCorePayload);
         boolean ehrCoreIsIdentical = !compareEhrCores.hasDifferences();
         assertTrue(ehrCoreIsIdentical);
 
@@ -267,7 +260,7 @@ public class RepositoryE2ETests {
         inboundQueueFromMhs.sendMessage(continueRequest, outboundConversationId);
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        ArrayList<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("COPC_IN000001UK01");
+        List<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("COPC_IN000001UK01");
         assertThat(allFragments.size()).isGreaterThanOrEqualTo(2);
 
         String largeEhrFragment1Payload = getPayloadOptional(largeEhrFragment1).orElseThrow();
@@ -277,8 +270,8 @@ public class RepositoryE2ETests {
             assertThat(fragment.contains(outboundConversationId)).isTrue();
 
             String fragmentPayload = getPayloadOptional(fragment.body()).orElseThrow();
-            Diff compareWithFragment1 = TestUtils.comparePayloads(fragmentPayload, largeEhrFragment1Payload);
-            Diff compareWithFragment2 = TestUtils.comparePayloads(fragmentPayload, largeEhrFragment2Payload);
+            Diff compareWithFragment1 = comparePayloads(fragmentPayload, largeEhrFragment1Payload);
+            Diff compareWithFragment2 = comparePayloads(fragmentPayload, largeEhrFragment2Payload);
 
             boolean identicalWithFragment1 = !compareWithFragment1.hasDifferences();
             boolean identicalWithFragment2 = !compareWithFragment2.hasDifferences();

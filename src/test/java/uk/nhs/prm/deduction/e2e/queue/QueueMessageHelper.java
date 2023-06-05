@@ -1,8 +1,6 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import lombok.extern.slf4j.Slf4j;
-import org.hamcrest.Matchers;
-import org.hamcrest.collection.IsCollectionWithSize;
 import org.json.JSONException;
 import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
@@ -54,9 +52,9 @@ public class QueueMessageHelper {
         return found;
     }
 
-    public ArrayList<SqsMessage> getAllMessageContaining(String substring) {
+    public List<SqsMessage> getAllMessageContaining(String substring) {
         log(String.format("Checking if message is present on : %s", this.queueUri));
-        ArrayList<SqsMessage> allMessages = new ArrayList<>();
+        List<SqsMessage> allMessages = new ArrayList<>();
         await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
@@ -67,10 +65,6 @@ public class QueueMessageHelper {
                     assertTrue(allMessages.size() >= 2);
                 });
 
-//        ArrayList<SqsMessage> found = await().atMost(120, TimeUnit.SECONDS)
-//                .with()
-//                .pollInterval(100, TimeUnit.MILLISECONDS)
-//                .until(() -> findAllMessagesContaining(substring), is(IsCollectionWithSize.hasSize(2)));
         log(String.format("Found message on : %s", this.queueUri));
         return allMessages;
     }
@@ -99,21 +93,22 @@ public class QueueMessageHelper {
     public List<SqsMessage> getNextMessages(LocalDateTime timeoutAt) {
         log(String.format("Checking for messages on : %s", this.queueUri));
         int pollInterval = 5;
-        var timeoutSeconds = Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval + 1);
+        long timeoutSeconds = Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval + 1);
         return await().atMost(timeoutSeconds, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(pollInterval, TimeUnit.SECONDS)
                 .until(() -> findMessagesOnQueue((int) timeoutSeconds), notNullValue());
     }
+
     private List<SqsMessage> findMessagesOnQueue(int visibilityTimeout) {
         List<SqsMessage> messages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, visibilityTimeout);
         return messages.isEmpty() ? null : messages;
     }
 
     private SqsMessage findMessageContaining(String substring) {
-        var allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
-        for (var message : allMessages) {
-            System.out.println("just finding message, checking conversationId: " + substring);
+        List<SqsMessage>  allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
+        for (SqsMessage message : allMessages) {
+            log(String.format("just finding message, checking conversationId: %s", this.queueUri));
             if (message.contains(substring)) {
                 return message;
             }
@@ -121,21 +116,9 @@ public class QueueMessageHelper {
         return null;
     }
 
-    private ArrayList<SqsMessage> findAllMessagesContaining(String substring) {
-        var allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
-        ArrayList<SqsMessage> messages = new ArrayList<>();
-        for (var message : allMessages) {
-            System.out.println("just finding message, checking conversationId: " + substring);
-            if (message.contains(substring)) {
-                messages.add(message);
-            }
-        }
-        return messages;
-    }
-
     public SqsMessage findMessageWithAttribute(String attribute, String expectedValue) {
-        var allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
-        for (var message : allMessages) {
+        List<SqsMessage> allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
+        for (SqsMessage message : allMessages) {
             System.out.println("just finding message, checking attribute : " + attribute + " expected value is : " + expectedValue);
             if (message.attributes().get(attribute).stringValue().equals(expectedValue)) {
                 return message;
@@ -153,8 +136,8 @@ public class QueueMessageHelper {
     }
 
     private SqsMessage findMessageContainingWitHigherVisibilityTimeOut(String substring) {
-        var allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 600);
-        for (var message : allMessages) {
+        List<SqsMessage> allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 600);
+        for (SqsMessage message : allMessages) {
             System.out.println("just finding message, checking conversationId: " + substring);
             if (message.contains(substring)) {
                 return message;
@@ -163,10 +146,9 @@ public class QueueMessageHelper {
         return null;
     }
 
-
     private boolean hasResolutionMessageNow(ResolutionMessage messageToCheck) throws JSONException {
         List<SqsMessage> allMessages = thinlyWrappedSqsClient.readMessagesFrom(this.queueUri);
-        for (var message : allMessages) {
+        for (SqsMessage message : allMessages) {
             ResolutionMessage resolutionMessage = QueueHelper.getNonSensitiveDataMessage(message);
             if (QueueHelper.checkIfMessageIsExpectedMessage(resolutionMessage, messageToCheck)) {
                 return true;
