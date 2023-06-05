@@ -7,10 +7,10 @@ import uk.nhs.prm.deduction.e2e.queue.QueueMessageHelper;
 import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 
 @Component
-public class AttachmentQueue extends QueueMessageHelper {
+public class FragmentQueue extends QueueMessageHelper {
 
     @Autowired
-    public AttachmentQueue(ThinlyWrappedSqsClient thinlyWrappedSqsClient, TestConfiguration configuration) {
-        super(thinlyWrappedSqsClient, configuration.attachmentQueueUri());
+    public FragmentQueue(ThinlyWrappedSqsClient thinlyWrappedSqsClient, TestConfiguration configuration) {
+        super(thinlyWrappedSqsClient, configuration.fragmentQueueUri());
     }
 }
