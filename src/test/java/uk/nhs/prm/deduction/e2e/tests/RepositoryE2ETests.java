@@ -287,7 +287,7 @@ public class RepositoryE2ETests {
     @Test
     void shouldNotBeAffectedByMessageWithUnrecognisedInteractionID() {
         // given
-        String invalidInteractionId = "RCMR_IN010000GB99";
+        String invalidInteractionId = "TEST_XX123456XX01";
         EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder().build();
         String invalidInboundMessage  = ehrRequestMessage.toJsonString()
                 .replaceAll("RCMR_IN010000UK05", invalidInteractionId);
