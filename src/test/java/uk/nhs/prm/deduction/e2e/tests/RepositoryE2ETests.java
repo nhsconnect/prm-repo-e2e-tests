@@ -288,21 +288,21 @@ public class RepositoryE2ETests {
     void shouldNotBeAffectedByMessageWithUnrecognisedInteractionID() {
         // given
         String invalidInteractionId = "RCMR_IN010000GB99";
-        String conversationId = UUID.randomUUID().toString();
-        String invalidInboundMessage  = Resources.readTestResourceFile("RCMR_IN010000UK05")
-                .replaceAll("RCMR_IN010000UK05", invalidInteractionId)
-                .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", conversationId);
+        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder().build();
+        String invalidInboundMessage  = ehrRequestMessage.toJsonString()
+                .replaceAll("RCMR_IN010000UK05", invalidInteractionId);
 
         // when
-        inboundQueueFromMhs.sendMessage(invalidInboundMessage, conversationId);
+        inboundQueueFromMhs.sendMessage(invalidInboundMessage, ehrRequestMessage.conversationId());
 
         // then
+        // verify that the message is placed in unhandled queue
         SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(invalidInteractionId);
         assertThat(unhandledMessage.body()).isEqualTo(invalidInboundMessage);
 
         // verify that no response message with given conversation id is on the gp2gp observability queue
         // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
-        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(conversationId)).isTrue();
+        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(ehrRequestMessage.conversationId())).isTrue();
 
         checkThatAllServicesHealthCheckPassing();
     }
@@ -319,6 +319,7 @@ public class RepositoryE2ETests {
         inboundQueueFromMhs.sendMessage(ehrRequestMessage.toJsonString(), ehrRequestMessage.conversationId());
 
         // then
+        // verify that the message is placed in unhandled queue
         SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(ehrRequestMessage.conversationId());
         assertThat(unhandledMessage.body()).isEqualTo(ehrRequestMessage.toJsonString());
 
