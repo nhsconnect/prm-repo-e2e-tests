@@ -3,6 +3,7 @@ package uk.nhs.prm.deduction.e2e.models;
 import org.junit.jupiter.params.provider.Arguments;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 
+import java.util.Map;
 import java.util.stream.Stream;
 
 public enum Gp2GpSystem {
@@ -19,6 +20,17 @@ public enum Gp2GpSystem {
 
     public String odsCode() {
         return odsCode;
+    }
+
+    public String asidCode() {
+        Map<String, String> knownAsidCodes = Map.of(
+                "M85019", "200000000149", // TPP_PTL_INT
+                "N82668", "200000000631", // EMIS_PTL_INT
+                "B85002", "200000001613", // REPO dev
+                "B86041", "200000001694" // REPO test
+        );
+
+        return knownAsidCodes.get(this.odsCode);
     }
 
     public static Gp2GpSystem repoInEnv(TestConfiguration config) {
