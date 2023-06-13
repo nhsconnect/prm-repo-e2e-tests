@@ -17,10 +17,7 @@ import org.xmlunit.diff.*;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
-import uk.nhs.prm.deduction.e2e.models.EhrRequestMessage;
-import uk.nhs.prm.deduction.e2e.models.EhrRequestMessageBuilder;
-import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
-import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
+import uk.nhs.prm.deduction.e2e.models.*;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
@@ -308,7 +305,7 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void shouldNotBeAffectedByMessageWithUnrecognisedNhsNumber() {
+    void shouldNotBeAffectedByEhrRequestWithUnrecognisedNhsNumber() {
         // given
         String nonExistentNhsNumber = "9729999999";
         EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder()
@@ -326,6 +323,27 @@ public class RepositoryE2ETests {
         // verify that no response message with given conversation id is on the gp2gp observability queue
         // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
         assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(ehrRequestMessage.conversationId())).isTrue();
+
+        checkThatAllServicesHealthCheckPassing();
+    }
+
+    @Test
+    void shouldNotBeAffectedByContinueRequestWithUnrecognisedConversationId() {
+        // given
+        // a COPC continue request with a randomly generated conversation ID
+        ContinueRequestMessage continueRequestMessage = new ContinueRequestMessageBuilder().build();
+
+        // when
+        inboundQueueFromMhs.sendMessage(continueRequestMessage.toJsonString(), continueRequestMessage.conversationId());
+
+        // then
+        // verify that the message is placed in unhandled queue
+        SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(continueRequestMessage.conversationId());
+        assertThat(unhandledMessage.body()).isEqualTo(continueRequestMessage.toJsonString());
+
+        // verify that no response message with given conversation id is on the gp2gp observability queue
+        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
+        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(continueRequestMessage.conversationId())).isTrue();
 
         checkThatAllServicesHealthCheckPassing();
     }
