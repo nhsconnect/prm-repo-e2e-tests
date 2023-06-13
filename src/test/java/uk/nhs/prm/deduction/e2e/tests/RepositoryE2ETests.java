@@ -17,6 +17,8 @@ import org.xmlunit.diff.*;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
+import uk.nhs.prm.deduction.e2e.models.EhrRequestMessage;
+import uk.nhs.prm.deduction.e2e.models.EhrRequestMessageBuilder;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
@@ -29,6 +31,7 @@ import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNot
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.deduction.e2e.utility.HealthCheck;
 import uk.nhs.prm.deduction.e2e.utility.LargeEhrTestFiles;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 import uk.nhs.prm.deduction.e2e.utility.TestUtils;
@@ -72,7 +75,6 @@ import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepositoryE2ETests {
     private static final Logger LOGGER = LogManager.getLogger(RepositoryE2ETests.class);
-
     private final RepoIncomingQueue repoIncomingQueue;
     private final TrackerDb trackerDb;
     private final SmallEhrQueue smallEhrQueue;
@@ -117,6 +119,7 @@ public class RepositoryE2ETests {
     }
 
     PdsAdaptorClient pdsAdaptorClient;
+    SimpleAmqpQueue inboundQueueFromMhs;
 
     @BeforeAll
     void init() {
@@ -129,6 +132,7 @@ public class RepositoryE2ETests {
         negativeAcknowledgementObservabilityQueue.deleteAllMessages();
         gp2gpMessengerQueue.deleteAllMessages();
         pdsAdaptorClient = new PdsAdaptorClient("e2e-test", config.getPdsAdaptorE2ETestApiKey(), config.getPdsAdaptorUrl());
+        inboundQueueFromMhs = new SimpleAmqpQueue(config);
     }
 
     // The following test should eventually test that we can send a small EHR - until we have an EHR in repo/test patient ready to send,
@@ -278,6 +282,61 @@ public class RepositoryE2ETests {
 
             assertTrue(identicalWithFragment1 || identicalWithFragment2);
         });
+    }
+
+    @Test
+    void shouldNotBeAffectedByMessageWithUnrecognisedInteractionID() {
+        // given
+        String invalidInteractionId = "RCMR_IN010000GB99";
+        String conversationId = UUID.randomUUID().toString();
+        String invalidInboundMessage  = Resources.readTestResourceFile("RCMR_IN010000UK05")
+                .replaceAll("RCMR_IN010000UK05", invalidInteractionId)
+                .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", conversationId);
+
+        // when
+        inboundQueueFromMhs.sendMessage(invalidInboundMessage, conversationId);
+
+        // then
+        SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(invalidInteractionId);
+        assertThat(unhandledMessage.body()).isEqualTo(invalidInboundMessage);
+
+        // verify that no response message with given conversation id is on the gp2gp observability queue
+        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
+        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(conversationId)).isTrue();
+
+        checkThatAllServicesHealthCheckPassing();
+    }
+
+    @Test
+    void shouldNotBeAffectedByMessageWithUnrecognisedNhsNumber() {
+        // given
+        String nonExistentNhsNumber = "9729999999";
+        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder()
+                .withNhsNumber(nonExistentNhsNumber)
+                .build();
+
+        // when
+        inboundQueueFromMhs.sendMessage(ehrRequestMessage.toJsonString(), ehrRequestMessage.conversationId());
+
+        // then
+        SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(ehrRequestMessage.conversationId());
+        assertThat(unhandledMessage.body()).isEqualTo(ehrRequestMessage.toJsonString());
+
+        // verify that no response message with given conversation id is on the gp2gp observability queue
+        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
+        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(ehrRequestMessage.conversationId())).isTrue();
+
+        checkThatAllServicesHealthCheckPassing();
+    }
+
+    private void checkThatAllServicesHealthCheckPassing() {
+        List<String> servicesToCheck = List.of(
+                config.getEhrRepoUrl(),
+                config.getEhrOutUrl(),
+                config.getGp2GpMessengerUrl()
+        );
+        boolean allHealthChecksPassing = servicesToCheck.stream().allMatch(HealthCheck::isHealthCheckPassing);
+        assertThat(allHealthChecksPassing).isTrue();
     }
 
     @Test
