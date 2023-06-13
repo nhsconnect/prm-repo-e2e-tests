@@ -34,19 +34,11 @@ public class EhrRequestMessage {
                 .replaceAll("200000000631", destinationGpAsid);
     }
 
-    private String getConversationIdAsString() {
-        return conversationId.toString();
-    }
-
-    private String getMessageIdAsString() {
-        return messageId.toString();
-    }
-
     public String conversationId() {
-        return getConversationIdAsString().toUpperCase();
+        return conversationId.toString().toUpperCase();
     }
 
     public String messageId() {
-        return getMessageIdAsString().toUpperCase();
+        return messageId.toString().toUpperCase();
     }
 }
