@@ -181,6 +181,10 @@ public class TestConfiguration {
         return String.format("https://ehr-repo.%s.patient-deductions.nhs.uk/", getEnvSuffix());
     }
 
+    public String getEhrOutUrl() {
+        return String.format("https://ehr-out-service.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+    }
+
     private String getAwsAccountNo() {
         if (cachedAwsAccountNo == null) {
             cachedAwsAccountNo = fetchAwsAccountNo();
