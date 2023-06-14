@@ -123,7 +123,7 @@ public class QueueMessageHelper {
     private SqsMessage findMessageContaining(String substring) {
         List<SqsMessage>  allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
         for (SqsMessage message : allMessages) {
-            log(String.format("just finding message, checking conversationId: %s", this.queueUri));
+            log(String.format("Finding message with substring %s on queue: %s", substring, this.queueUri));
             if (message.contains(substring)) {
                 return message;
             }
