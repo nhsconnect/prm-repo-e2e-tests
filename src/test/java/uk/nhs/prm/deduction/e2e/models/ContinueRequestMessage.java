@@ -12,14 +12,6 @@ public final class ContinueRequestMessage {
     private String sourceGpAsid;
     private String destinationGpAsid;
 
-    public UUID getConversationId() {
-        return conversationId;
-    }
-
-    public UUID getMessageId() {
-        return messageId;
-    }
-
     public ContinueRequestMessage(UUID conversationId, UUID messageId, String sourceGpOds, String destinationGpOds, String sourceGpAsid, String destinationGpAsid) {
         this.conversationId = conversationId;
         this.messageId = messageId;

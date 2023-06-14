@@ -13,7 +13,7 @@ import static org.hamcrest.Matchers.is;
 
 public class HealthCheck {
     private static final RestTemplate restTemplate = new RestTemplate();
-    private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
+    private static final Logger LOGGER = LogManager.getLogger(HealthCheck.class);
 
     public static boolean isHealthCheckPassing(String rootUrl) {
         String healthCheckUrl = rootUrl + "health";
