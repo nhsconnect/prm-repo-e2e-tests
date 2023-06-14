@@ -1,7 +1,10 @@
 package uk.nhs.prm.deduction.e2e.models;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.tests.Patient;
+import uk.nhs.prm.deduction.e2e.utility.TestUtils;
 
 import java.util.UUID;
 
@@ -13,6 +16,8 @@ public final class EhrRequestMessageBuilder {
     private String destinationGpAsid;
     private UUID conversationId;
     private UUID messageId;
+
+    private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
 
     public EhrRequestMessageBuilder() {
         withRandomlyGeneratedConversationId();
@@ -57,8 +62,7 @@ public final class EhrRequestMessageBuilder {
 
     public EhrRequestMessageBuilder withRandomlyGeneratedConversationId() {
         conversationId = UUID.randomUUID();
-        System.out.println("generated conversation id " + conversationId);
-        System.out.flush();
+        LOGGER.info("generated conversation id {}", conversationId);
         return this;
     }
 
@@ -69,8 +73,7 @@ public final class EhrRequestMessageBuilder {
 
     public EhrRequestMessageBuilder withRandomlyGeneratedMessageId() {
         messageId = UUID.randomUUID();
-        System.out.println("generated message id " + messageId);
-        System.out.flush();
+        LOGGER.info("generated message id {}", messageId);
         return this;
     }
 
