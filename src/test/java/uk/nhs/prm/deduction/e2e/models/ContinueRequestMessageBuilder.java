@@ -15,7 +15,7 @@ public final class ContinueRequestMessageBuilder {
     private String sourceGpAsid;
     private String destinationGpAsid;
 
-    private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
+    private static final Logger LOGGER = LogManager.getLogger(ContinueRequestMessageBuilder.class);
 
 
     public ContinueRequestMessageBuilder() {

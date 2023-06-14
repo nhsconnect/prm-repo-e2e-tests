@@ -17,7 +17,7 @@ public final class EhrRequestMessageBuilder {
     private UUID conversationId;
     private UUID messageId;
 
-    private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
+    private static final Logger LOGGER = LogManager.getLogger(EhrRequestMessageBuilder.class);
 
     public EhrRequestMessageBuilder() {
         withRandomlyGeneratedConversationId();
