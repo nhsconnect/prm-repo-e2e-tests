@@ -2,10 +2,7 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -168,7 +165,7 @@ public class RepositoryE2ETests {
         addRecordToTrackerDb(trackerDb, inboundConversationId, "", nhsNumberForTestPatient, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
         inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
 
-        LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
+        LOGGER.info("conversationIdExists: {}", trackerDb.conversationIdExists(inboundConversationId));
         String status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
         LOGGER.info("tracker db status: {}", status);
 
@@ -227,7 +224,7 @@ public class RepositoryE2ETests {
 
         // when
         inboundQueueFromMhs.sendMessage(largeEhrCore, inboundConversationId);
-        LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
+        LOGGER.info("conversationIdExists: {}", trackerDb.conversationIdExists(inboundConversationId));
         String status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT");
         LOGGER.info("tracker db status: {}", status);
 
@@ -286,7 +283,7 @@ public class RepositoryE2ETests {
         // given
         String invalidInteractionId = "TEST_XX123456XX01";
         EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder().build();
-        String invalidInboundMessage  = ehrRequestMessage.toJsonString()
+        String invalidInboundMessage = ehrRequestMessage.toJsonString()
                 .replaceAll("RCMR_IN010000UK05", invalidInteractionId);
 
         // when
@@ -344,6 +341,65 @@ public class RepositoryE2ETests {
         // verify that no response message with given conversation id is on the gp2gp observability queue
         // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
         assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(continueRequestMessage.conversationId())).isTrue();
+
+        checkThatAllServicesHealthCheckPassing();
+    }
+
+    private Arguments erroneousInboundMessage_UnrecognisedInteractionID() {
+        String invalidInteractionId = "RCMR_IN010000GB99";
+        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder().build();
+        String invalidInboundMessage = ehrRequestMessage.toJsonString()
+                .replaceAll("RCMR_IN010000UK05", invalidInteractionId);
+
+        return Arguments.of(
+                Named.of("Message with unrecognised Interaction ID", invalidInboundMessage),
+                ehrRequestMessage.conversationId()
+        );
+    }
+
+    private Arguments erroneousInboundMessage_EhrRequestWithUnrecognisedNhsNumber() {
+        String nonExistentNhsNumber = "9729999999";
+        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder()
+                .withNhsNumber(nonExistentNhsNumber)
+                .build();
+
+        return Arguments.of(
+                Named.of("Ehr Request with unrecognised NHS Number", ehrRequestMessage.toJsonString()),
+                ehrRequestMessage.conversationId()
+        );
+    }
+
+    private Arguments erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId() {
+        ContinueRequestMessage continueRequestMessage = new ContinueRequestMessageBuilder().build();
+
+        return Arguments.of(
+                Named.of("Continue Request with unrecognised conversation id", continueRequestMessage.toJsonString()),
+                continueRequestMessage.conversationId()
+        );
+    }
+
+    private Stream<Arguments> erroneousInboundMessages() {
+        return Stream.of(
+                erroneousInboundMessage_UnrecognisedInteractionID(),
+                erroneousInboundMessage_EhrRequestWithUnrecognisedNhsNumber(),
+                erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId()
+        );
+    }
+
+    @ParameterizedTest(name = "[{index}] Case of {0}")
+    @MethodSource("erroneousInboundMessages")
+    void testWithErroneousInboundMessages(String inboundMessage, String conversationId) {
+        // when
+        inboundQueueFromMhs.sendMessage(inboundMessage, conversationId);
+
+        // then
+        // verify that the message is placed in unhandled queue
+        SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(conversationId);
+        assertThat(unhandledMessage.body()).isEqualTo(inboundMessage);
+
+        // verify that no response message with given conversation id is on the gp2gp observability queue
+        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
+        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(conversationId)).isTrue();
 
         checkThatAllServicesHealthCheckPassing();
     }
@@ -450,7 +506,7 @@ public class RepositoryE2ETests {
                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_FRAGMENT_COUNT),
 
                 // 20mins+, filling FSS disks causing outages -> to be run ad hoc as needed
-                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
 
                 // could not move it EMIS to TPP - Large Message general failure
                 // need to establish current TPP limits that are applying in this case
