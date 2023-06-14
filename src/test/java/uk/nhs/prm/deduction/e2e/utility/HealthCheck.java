@@ -1,5 +1,7 @@
 package uk.nhs.prm.deduction.e2e.utility;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -11,9 +13,11 @@ import static org.hamcrest.Matchers.is;
 
 public class HealthCheck {
     private static final RestTemplate restTemplate = new RestTemplate();
+    private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
+
     public static boolean isHealthCheckPassing(String rootUrl) {
         String healthCheckUrl = rootUrl + "health";
-        System.out.printf("checking service health status of rootUrl: %s" , rootUrl);
+        LOGGER.info("checking service health status of rootUrl: {}" , rootUrl);
 
         try {
             return await().atMost(5, TimeUnit.SECONDS)
@@ -21,7 +25,7 @@ public class HealthCheck {
                     .pollInterval(200, TimeUnit.MILLISECONDS)
                     .until(() -> getRequest(healthCheckUrl).getStatusCode().is2xxSuccessful(), is(true));
         } catch (Exception e) {
-            System.out.printf("Error retrieving health check status from %s. Error: %s%n", rootUrl, e.getMessage());
+            LOGGER.info("Error retrieving health check status from {}. Error: {}", rootUrl, e.getMessage());
             return false;
         }
     }
