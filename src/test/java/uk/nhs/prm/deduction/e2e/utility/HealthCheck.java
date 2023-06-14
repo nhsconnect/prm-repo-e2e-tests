@@ -17,7 +17,7 @@ public class HealthCheck {
 
     public static boolean isHealthCheckPassing(String rootUrl) {
         String healthCheckUrl = rootUrl + "health";
-        LOGGER.info("checking service health status of rootUrl: {}" , rootUrl);
+        LOGGER.info("Checking health status of service: {}" , rootUrl);
 
         try {
             return await().atMost(5, TimeUnit.SECONDS)

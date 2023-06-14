@@ -278,75 +278,8 @@ public class RepositoryE2ETests {
         });
     }
 
-    @Test
-    void shouldNotBeAffectedByMessageWithUnrecognisedInteractionID() {
-        // given
-        String invalidInteractionId = "TEST_XX123456XX01";
-        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder().build();
-        String invalidInboundMessage = ehrRequestMessage.toJsonString()
-                .replaceAll("RCMR_IN010000UK05", invalidInteractionId);
-
-        // when
-        inboundQueueFromMhs.sendMessage(invalidInboundMessage, ehrRequestMessage.conversationId());
-
-        // then
-        // verify that the message is placed in unhandled queue
-        SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(invalidInteractionId);
-        assertThat(unhandledMessage.body()).isEqualTo(invalidInboundMessage);
-
-        // verify that no response message with given conversation id is on the gp2gp observability queue
-        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
-        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(ehrRequestMessage.conversationId())).isTrue();
-
-        checkThatAllServicesHealthCheckPassing();
-    }
-
-    @Test
-    void shouldNotBeAffectedByEhrRequestWithUnrecognisedNhsNumber() {
-        // given
-        String nonExistentNhsNumber = "9729999999";
-        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder()
-                .withNhsNumber(nonExistentNhsNumber)
-                .build();
-
-        // when
-        inboundQueueFromMhs.sendMessage(ehrRequestMessage.toJsonString(), ehrRequestMessage.conversationId());
-
-        // then
-        // verify that the message is placed in unhandled queue
-        SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(ehrRequestMessage.conversationId());
-        assertThat(unhandledMessage.body()).isEqualTo(ehrRequestMessage.toJsonString());
-
-        // verify that no response message with given conversation id is on the gp2gp observability queue
-        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
-        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(ehrRequestMessage.conversationId())).isTrue();
-
-        checkThatAllServicesHealthCheckPassing();
-    }
-
-    @Test
-    void shouldNotBeAffectedByContinueRequestWithUnrecognisedConversationId() {
-        // given
-        // a COPC continue request with a randomly generated conversation ID
-        ContinueRequestMessage continueRequestMessage = new ContinueRequestMessageBuilder().build();
-
-        // when
-        inboundQueueFromMhs.sendMessage(continueRequestMessage.toJsonString(), continueRequestMessage.conversationId());
-
-        // then
-        // verify that the message is placed in unhandled queue
-        SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(continueRequestMessage.conversationId());
-        assertThat(unhandledMessage.body()).isEqualTo(continueRequestMessage.toJsonString());
-
-        // verify that no response message with given conversation id is on the gp2gp observability queue
-        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
-        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(continueRequestMessage.conversationId())).isTrue();
-
-        checkThatAllServicesHealthCheckPassing();
-    }
-
     private Arguments erroneousInboundMessage_UnrecognisedInteractionID() {
-        String invalidInteractionId = "RCMR_IN010000GB99";
+        String invalidInteractionId = "TEST_XX123456XX01";
         EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder().build();
         String invalidInboundMessage = ehrRequestMessage.toJsonString()
                 .replaceAll("RCMR_IN010000UK05", invalidInteractionId);
@@ -370,10 +303,11 @@ public class RepositoryE2ETests {
     }
 
     private Arguments erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId() {
+        // a COPC continue request with a randomly generated conversation ID
         ContinueRequestMessage continueRequestMessage = new ContinueRequestMessageBuilder().build();
 
         return Arguments.of(
-                Named.of("Continue Request with unrecognised conversation id", continueRequestMessage.toJsonString()),
+                Named.of("Continue Request with unrecognised Conversation ID", continueRequestMessage.toJsonString()),
                 continueRequestMessage.conversationId()
         );
     }
@@ -388,7 +322,8 @@ public class RepositoryE2ETests {
 
     @ParameterizedTest(name = "[{index}] Case of {0}")
     @MethodSource("erroneousInboundMessages")
-    void testWithErroneousInboundMessages(String inboundMessage, String conversationId) {
+    @DisplayName("Test how EHR Out handles Erroneous inbound messages")
+    void testsWithErroneousInboundMessages(String inboundMessage, String conversationId) {
         // when
         inboundQueueFromMhs.sendMessage(inboundMessage, conversationId);
 
