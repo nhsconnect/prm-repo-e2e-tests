@@ -14,6 +14,13 @@ public enum Gp2GpSystem {
 
     private String odsCode;
 
+    private static final Map<String, String> KNOWN_ASID_CODES = Map.of(
+            "M85019", "200000000149", // TPP_PTL_INT
+            "N82668", "200000000631", // EMIS_PTL_INT
+            "B85002", "200000001613", // REPO dev
+            "B86041", "200000001694" // REPO test
+    );
+
     Gp2GpSystem(String odsCode) {
         this.odsCode = odsCode;
     }
@@ -23,14 +30,7 @@ public enum Gp2GpSystem {
     }
 
     public String asidCode() {
-        Map<String, String> knownAsidCodes = Map.of(
-                "M85019", "200000000149", // TPP_PTL_INT
-                "N82668", "200000000631", // EMIS_PTL_INT
-                "B85002", "200000001613", // REPO dev
-                "B86041", "200000001694" // REPO test
-        );
-
-        return knownAsidCodes.get(this.odsCode);
+        return KNOWN_ASID_CODES.get(this.odsCode);
     }
 
     public static Gp2GpSystem repoInEnv(TestConfiguration config) {
