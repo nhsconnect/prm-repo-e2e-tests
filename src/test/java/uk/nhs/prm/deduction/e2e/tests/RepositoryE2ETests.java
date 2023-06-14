@@ -322,13 +322,13 @@ public class RepositoryE2ETests {
 
     @ParameterizedTest(name = "[{index}] Case of {0}")
     @MethodSource("erroneousInboundMessages")
-    @DisplayName("Test how EHR Out handles Erroneous inbound messages")
+    @DisplayName("Test how ORC handles Erroneous inbound messages")
     void testsWithErroneousInboundMessages(String inboundMessage, String conversationId) {
         // when
         inboundQueueFromMhs.sendMessage(inboundMessage, conversationId);
 
         // then
-        // verify that the message is placed in unhandled queue
+        // verify that EHR-IN put the message to unhandled queue
         SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(conversationId);
         assertThat(unhandledMessage.body()).isEqualTo(inboundMessage);
 
