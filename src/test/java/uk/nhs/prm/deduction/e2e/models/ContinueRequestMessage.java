@@ -4,7 +4,7 @@ import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import java.util.UUID;
 
-public final class ContinueRequestMessage {
+public class ContinueRequestMessage {
     private UUID conversationId;
     private UUID messageId;
     private String sourceGpOds;

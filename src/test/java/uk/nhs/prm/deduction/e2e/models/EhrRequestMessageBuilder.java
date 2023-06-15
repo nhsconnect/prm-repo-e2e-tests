@@ -8,7 +8,7 @@ import uk.nhs.prm.deduction.e2e.utility.TestUtils;
 
 import java.util.UUID;
 
-public final class EhrRequestMessageBuilder {
+public class EhrRequestMessageBuilder {
     private String nhsNumber;
     private String sourceGpOds;
     private String destinationGpOds;
