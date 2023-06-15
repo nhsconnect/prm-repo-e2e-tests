@@ -30,7 +30,7 @@ public class QueueMessageHelper {
         log(String.format("Trying to delete all the messages on : %s", this.queueUri));
         try {
             thinlyWrappedSqsClient.deleteAllMessages(queueUri);
-        } catch (Exception e){
+        } catch (Exception e) {
             log.warn("Error encountered while deleting the messages on the queue : " + queueUri, e);
         }
     }
@@ -84,6 +84,29 @@ public class QueueMessageHelper {
         return allMessages;
     }
 
+    public List<SqsMessage> getAllMessageContaining(String substring, int expectedNumberOfMessages, long secondsToPoll) {
+        // Because of the invisibility property of sqs, it is difficult to get all existing messages in one go.
+        // This method attempts to poll the queue repeatedly for x seconds, until we got n messages.
+        // If we couldn't get all n messages, will just return with what we already got.
+        log(String.format("Try to get at least %d messages with substring %s on queue", expectedNumberOfMessages, substring));
+        List<SqsMessage> allMessages = new ArrayList<>();
+
+        try {
+            await().atMost(secondsToPoll, TimeUnit.SECONDS)
+                    .with()
+                    .pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+                        SqsMessage found = findMessageContaining(substring);
+                        if (found != null) {
+                            allMessages.add(found);
+                        }
+                        assertTrue(allMessages.size() >= expectedNumberOfMessages);
+                    });
+        } catch (ConditionTimeoutException error) {
+            log(String.format("Could not get %d messages from the queue matching the substring %s. Just return what we got", expectedNumberOfMessages, substring));
+        }
+        return allMessages;
+    }
+
     public SqsMessage getMessageContainingAttribute(String attribute, String expectedValue) {
         return getMessageContainingAttribute(attribute, expectedValue, 120, TimeUnit.SECONDS);
     }
@@ -121,7 +144,7 @@ public class QueueMessageHelper {
     }
 
     private SqsMessage findMessageContaining(String substring) {
-        List<SqsMessage>  allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
+        List<SqsMessage> allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
         for (SqsMessage message : allMessages) {
             log(String.format("Finding message with substring %s on queue: %s", substring, this.queueUri));
             if (message.contains(substring)) {
@@ -173,6 +196,6 @@ public class QueueMessageHelper {
     }
 
     protected void postAMessageWithAttribute(String message, String attributeKey, String attributeValue) {
-        thinlyWrappedSqsClient.postAMessage(queueUri,message, attributeKey, attributeValue);
+        thinlyWrappedSqsClient.postAMessage(queueUri, message, attributeKey, attributeValue);
     }
 }
