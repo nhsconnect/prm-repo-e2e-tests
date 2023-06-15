@@ -349,6 +349,39 @@ public class RepositoryE2ETests {
         assertThat(allHealthChecksPassing).isTrue();
     }
 
+
+    @Test
+    void shouldRejectDuplicatedEhrRequestMessagesFromTheSameGP() {
+        // given
+        String nhsNumberForTest = Patient.PATIENT_WITH_SMALL_EHR_RECORD_IN_REPO_AND_ODS_SET_TO_TPP.nhsNumber();
+        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder()
+                .withNhsNumber(nhsNumberForTest)
+                .withEhrSourceAsRepo(config)
+                .withEhrDestinationGp(Gp2GpSystem.TPP_PTL_INT)
+                .build();
+        int numberOfDuplicatedMessage = 3;
+        String interactionIdOfEhrCore = "RCMR_IN030000UK06";
+
+        // when
+        for (int i = 0; i < numberOfDuplicatedMessage; i++) {
+            inboundQueueFromMhs.sendMessage(ehrRequestMessage.toJsonString(), ehrRequestMessage.conversationId());
+        }
+
+        // then
+        // Verify that we send back one (and only one) EHR Core as response
+        List<SqsMessage> messages =  gp2gpMessengerQueue.getAllMessageContaining(
+                ehrRequestMessage.conversationId(),
+                3,
+                120
+        );
+        assertThat(messages.size()).isEqualTo(1);
+
+        String messageBody = messages.get(0).body();
+        assertThat(messageBody).contains(nhsNumberForTest);
+        assertThat(messageBody).contains(interactionIdOfEhrCore);
+    }
+
+
     @Test
     void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
         var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(config);
