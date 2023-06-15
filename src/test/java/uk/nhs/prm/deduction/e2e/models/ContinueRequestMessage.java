@@ -4,6 +4,8 @@ import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import java.util.UUID;
 
+import static uk.nhs.prm.deduction.e2e.utility.TestUtils.getUuidAsUpperCaseString;
+
 public class ContinueRequestMessage {
     private UUID conversationId;
     private UUID messageId;
@@ -32,10 +34,10 @@ public class ContinueRequestMessage {
     }
 
     public String conversationId() {
-        return conversationId.toString().toUpperCase();
+        return getUuidAsUpperCaseString(conversationId);
     }
 
     public String messageId() {
-        return messageId.toString().toUpperCase();
+        return getUuidAsUpperCaseString(messageId);
     }
 }

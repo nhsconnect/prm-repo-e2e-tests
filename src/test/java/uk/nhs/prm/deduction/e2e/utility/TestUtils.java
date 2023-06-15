@@ -14,6 +14,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
@@ -160,5 +161,9 @@ public final class TestUtils {
                 .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", outboundConversationId);
 
         return new LargeEhrTestFiles(largeEhrCore, largeEhrFragment1, largeEhrFragment2, ehrRequest, continueRequest);
+    }
+
+    public static String getUuidAsUpperCaseString(UUID uuid) {
+        return uuid.toString().toUpperCase();
     }
 }

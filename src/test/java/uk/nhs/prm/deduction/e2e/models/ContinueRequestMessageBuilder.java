@@ -17,7 +17,6 @@ public class ContinueRequestMessageBuilder {
 
     private static final Logger LOGGER = LogManager.getLogger(ContinueRequestMessageBuilder.class);
 
-
     public ContinueRequestMessageBuilder() {
         withRandomlyGeneratedConversationId();
         withRandomlyGeneratedMessageId();
