@@ -36,7 +36,7 @@ public final class TestUtils {
     public static String getSmallEhrWithoutLinebreaks(String newConversationId, String newMessageId) {
         return Resources.readTestResourceFileFromEhrDirectory("small-ehr-without-linebreaks")
                 .replaceAll("1632CD65-FD8F-4914-B62A-9763B50FC04A", newConversationId.toUpperCase())
-                .replaceAll("0206C270-E9A0-11ED-808B-AC162D1F16F0", newMessageId);
+                .replaceAll("0206C270-E9A0-11ED-808B-AC162D1F16F0", newMessageId.toUpperCase());
     }
 
     public static String getEhrRequest(
@@ -161,6 +161,10 @@ public final class TestUtils {
                 .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", outboundConversationId);
 
         return new LargeEhrTestFiles(largeEhrCore, largeEhrFragment1, largeEhrFragment2, ehrRequest, continueRequest);
+    }
+
+    public static String createUuidAsString() {
+        return UUID.randomUUID().toString();
     }
 
     public static String getUuidAsUpperCaseString(UUID uuid) {
