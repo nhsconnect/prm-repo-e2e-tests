@@ -97,7 +97,10 @@ public class QueueMessageHelper {
                     .pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
                         SqsMessage found = findMessageContaining(substring);
                         if (found != null) {
-                            allMessages.add(found);
+                            boolean isNewMessage = allMessages.stream().noneMatch(sqsMessage -> sqsMessage.id().equals(found.id()));
+                            if (isNewMessage) {
+                                allMessages.add(found);
+                            }
                         }
                         assertTrue(allMessages.size() >= expectedNumberOfMessages);
                     });
