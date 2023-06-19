@@ -33,6 +33,10 @@ import uk.nhs.prm.deduction.e2e.utility.LargeEhrTestFiles;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 import uk.nhs.prm.deduction.e2e.utility.TestUtils;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -278,6 +282,22 @@ public class RepositoryE2ETests {
 
             assertTrue(identicalWithFragment1 || identicalWithFragment2);
         });
+    }
+
+    @Test
+    void tryConnectToPostgresDb() throws SQLException {
+        Connection conn = getRemoteConnection(config);
+        assert conn != null;
+        Statement statement = conn.createStatement();
+        String selectSql = "SELECT COUNT(*) FROM acknowledgements WHERE message_id = '7e6c9590-fa4b-11ed-808b-ac162d1f16f0';";
+        ResultSet resultSet = statement.executeQuery(selectSql);
+        LOGGER.info(" ========= HERE ===========");
+        assertTrue(resultSet.next());
+        LOGGER.info("got count: {}", resultSet.getInt("count"));
+
+        int numberOfMatchingRow = resultSet.getInt("count");
+
+        assertThat(numberOfMatchingRow).isEqualTo(1);
     }
 
     @Test
