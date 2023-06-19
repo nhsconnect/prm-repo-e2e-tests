@@ -3,6 +3,8 @@ package uk.nhs.prm.deduction.e2e.ehr_out_db;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Type;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -17,6 +19,7 @@ import java.util.UUID;
 @Table(name = "acknowledgements")
 public class Acknowledgement {
     @Id
+    @Type(type="pg-uuid")
     private UUID messageId;
     private String acknowledgementTypeCode;
     private String acknowledgementDetail;
