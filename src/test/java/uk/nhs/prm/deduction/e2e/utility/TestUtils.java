@@ -7,9 +7,13 @@ import org.json.JSONObject;
 import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
+import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbMessage;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -160,5 +164,18 @@ public final class TestUtils {
                 .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", outboundConversationId);
 
         return new LargeEhrTestFiles(largeEhrCore, largeEhrFragment1, largeEhrFragment2, ehrRequest, continueRequest);
+    }
+
+
+    public static Connection getRemoteConnection(TestConfiguration config) {
+        try {
+            String jdbcUrl = config.getEhrOutPostgresDbConnString();
+            LOGGER.trace("Getting remote connection with connection string from environment variables.");
+            Connection conn = DriverManager.getConnection(jdbcUrl);
+            LOGGER.info("Remote connection successful.");
+            return conn;
+        }
+        catch (SQLException e) { LOGGER.warn(e.toString());}
+        return null;
     }
 }
