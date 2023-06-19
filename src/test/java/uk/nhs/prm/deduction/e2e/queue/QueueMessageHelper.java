@@ -68,26 +68,15 @@ public class QueueMessageHelper {
     }
 
     public List<SqsMessage> getAllMessageContaining(String substring) {
-        log(String.format("Checking if message is present on : %s", this.queueUri));
-        List<SqsMessage> allMessages = new ArrayList<>();
-        await().atMost(120, TimeUnit.SECONDS)
-                .with()
-                .pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-                    SqsMessage found = findMessageContaining(substring);
-                    if (found != null) {
-                        allMessages.add(found);
-                    }
-                    assertTrue(allMessages.size() >= 2);
-                });
-
-        log(String.format("Found message on : %s", this.queueUri));
-        return allMessages;
+        // keep this method in order not to break the WIP work in another branch.
+        // delegate the actual work to the method `tryGetAllMessageContaining` below, which allows more parameters.
+        return tryGetAllMessageContaining(substring, 2, 120);
     }
 
-    public List<SqsMessage> getAllMessageContaining(String substring, int expectedNumberOfMessages, long secondsToPoll) {
+    public List<SqsMessage> tryGetAllMessageContaining(String substring, int expectedNumberOfMessages, long secondsToPoll) {
         // Because of the invisibility property of sqs, it is difficult to get all existing messages in one go.
         // This method attempts to poll the queue repeatedly for x seconds, until we got n messages.
-        // If we couldn't get all n messages, will just return with what we already got.
+        // If we couldn't get all n messages, it will just return with what we already got.
         log(String.format("Try to get at least %d messages with substring %s on queue", expectedNumberOfMessages, substring));
         List<SqsMessage> allMessages = new ArrayList<>();
 

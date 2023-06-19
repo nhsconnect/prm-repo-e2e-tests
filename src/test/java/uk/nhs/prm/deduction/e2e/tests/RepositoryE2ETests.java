@@ -351,20 +351,18 @@ public class RepositoryE2ETests {
 
 
 
-    private void setUpSmallEhrInEhrRepo() {
-        // Given
+    private void addSmallEhrToEhrRepo(String nhsNumber) {
+        // A utility function to add a small ehr of given patient into ehr REPO
+
         String inboundConversationId = createUuidAsString();
         String smallEhrMessageId = createUuidAsString();
-        String nhsNumberForTestPatient = "9727018440";
         String previousGpForTestPatient = "M85019";
 
-        String smallEhr = getSmallEhrWithoutLinebreaks(inboundConversationId, smallEhrMessageId);
+        // TODO: Consider to implement a better way of filling details into the EHR files
+        String smallEhr = getSmallEhrWithoutLinebreaks(inboundConversationId, smallEhrMessageId)
+                .replaceAll("9727018440", nhsNumber);
 
-        // When
-        // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
-        // Put the patient into inboundQueueFromMhs as a UK05 message
-
-        addRecordToTrackerDb(trackerDb, inboundConversationId, "", nhsNumberForTestPatient, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
+        addRecordToTrackerDb(trackerDb, inboundConversationId, "", nhsNumber, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
         inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
 
         trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
@@ -374,9 +372,10 @@ public class RepositoryE2ETests {
     void shouldRejectDuplicatedEhrRequestMessagesFromTheSameGP() {
         // given
         Patient testPatient = Patient.PATIENT_WITH_SMALL_EHR_RECORD_IN_REPO_AND_MOF_SET_TO_TPP;
-        setUpSmallEhrInEhrRepo();
-
         String nhsNumberForTest = testPatient.nhsNumber();
+
+        addSmallEhrToEhrRepo(nhsNumberForTest);
+
         EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder()
                 .withNhsNumber(nhsNumberForTest)
                 .withEhrSourceAsRepo(config)
@@ -391,10 +390,10 @@ public class RepositoryE2ETests {
 
         // then
         // Verify that EHR-OUT send back one (and only one) EHR Core as response
-        List<SqsMessage> outboundMessages = gp2gpMessengerQueue.getAllMessageContaining(
+        List<SqsMessage> outboundMessages = gp2gpMessengerQueue.tryGetAllMessageContaining(
                 ehrRequestMessage.conversationId(),
                 3,
-                120
+                30
         );
         assertThat(outboundMessages.size()).isEqualTo(1);
 
