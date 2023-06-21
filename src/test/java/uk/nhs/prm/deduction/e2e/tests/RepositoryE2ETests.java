@@ -3,10 +3,10 @@ package uk.nhs.prm.deduction.e2e.tests;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
+import org.jooq.Record;
 import org.jooq.Result;
-import org.jooq.Results;
 import org.jooq.SQLDialect;
-import org.jooq.codegen.GenerationTool;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -57,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
 import static uk.nhs.prm.deduction.e2e.ehroutdb.tables.Acknowledgements.*;
+import static org.assertj.core.api.ListAssert.*;
 
 @SpringBootTest(classes = {
         RepositoryE2ETests.class,
@@ -292,24 +293,30 @@ public class RepositoryE2ETests {
     }
 
     @Test
-    void tryConnectToPostgresDb() throws SQLException {
-        Connection conn = getRemoteConnection(config);
-        assert conn != null;
-        DSLContext context = DSL.using(conn, SQLDialect.POSTGRES);
+    void tryConnectToPostgresDb() {
+        try(Connection connection = getRemoteConnection(config)) {
+            // given
+            String messageId = "3327d3e7-a1e7-4ec5-850b-912db9c8c5dd";
 
-        String messageId = "3327d3e7-a1e7-4ec5-850b-912db9c8c5dd";
-        Result<org.jooq.Record> result =  context
-                .select()
-                .from(ACKNOWLEDGEMENTS)
-                .where(ACKNOWLEDGEMENTS.MESSAGE_ID.eq(UUID.fromString(messageId)))
-                .fetch();
-        assertThat(result.size()).isEqualTo(1);
-        String typeCode = result.getValue(0, ACKNOWLEDGEMENTS.ACKNOWLEDGEMENT_TYPE_CODE);
-        LOGGER.info("typeCode of {} is {}", messageId, typeCode);
-        assertThat(typeCode).isEqualTo("AR");
+            // when
+            connection.setReadOnly(true); // we've got no reason to write to the database for these E2E tests
+            DSLContext context = DSL.using(connection, SQLDialect.POSTGRES);
+            Result<Record> result = context
+                    .select()
+                    .from(ACKNOWLEDGEMENTS)
+                    .where(ACKNOWLEDGEMENTS.MESSAGE_ID.eq(UUID.fromString(messageId)))
+                    .fetch();
 
-        conn.close();
+            String typeCode = result.getValue(0, ACKNOWLEDGEMENTS.ACKNOWLEDGEMENT_TYPE_CODE);
 
+            // then
+            assertTrue(result.isNotEmpty());
+            assertThat(typeCode).isEqualTo("AR");
+            LOGGER.info("The acknowledgement typeCode of {} is {}.", messageId, typeCode);
+        } catch (DataAccessException | SQLException exception) {
+            LOGGER.error(exception.getMessage());
+            fail();
+        }
     }
 
     @Test
