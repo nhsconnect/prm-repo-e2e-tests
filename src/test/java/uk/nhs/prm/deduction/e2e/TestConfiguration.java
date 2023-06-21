@@ -93,7 +93,7 @@ public class TestConfiguration {
         return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/e2e-test", getEnvironmentName()));
     }
 
-    public String getEhrOutPostgresDbConnString() {
+    public String getEhrOutPostgresJdbcUrl() {
         String hostname = awsConfigurationClient.getParamValue(String.format("/repo/%s/output/prm-repo-ehr-out-service/db-host", getEnvironmentName()));
         String password = awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/ehr-out-service-db-password", getEnvironmentName()));
         String username = awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/ehr-out-service-db-username", getEnvironmentName()));

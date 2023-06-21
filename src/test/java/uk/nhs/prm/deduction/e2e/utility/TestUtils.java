@@ -166,16 +166,7 @@ public final class TestUtils {
         return new LargeEhrTestFiles(largeEhrCore, largeEhrFragment1, largeEhrFragment2, ehrRequest, continueRequest);
     }
 
-
-    public static Connection getRemoteConnection(TestConfiguration config) {
-        try {
-            String jdbcUrl = config.getEhrOutPostgresDbConnString();
-            LOGGER.trace("Getting remote connection with connection string from environment variables.");
-            Connection conn = DriverManager.getConnection(jdbcUrl);
-            LOGGER.info("Remote connection successful.");
-            return conn;
-        }
-        catch (SQLException e) { LOGGER.warn(e.toString());}
-        return null;
+    public static Connection getRemoteConnection(TestConfiguration config) throws SQLException {
+        return DriverManager.getConnection(config.getEhrOutPostgresJdbcUrl());
     }
 }
