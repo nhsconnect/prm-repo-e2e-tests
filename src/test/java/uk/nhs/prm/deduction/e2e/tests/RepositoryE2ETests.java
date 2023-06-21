@@ -2,6 +2,12 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.DSLContext;
+import org.jooq.Result;
+import org.jooq.Results;
+import org.jooq.SQLDialect;
+import org.jooq.codegen.GenerationTool;
+import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -13,9 +19,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.xmlunit.diff.*;
+import org.xmlunit.diff.Diff;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
+import uk.nhs.prm.deduction.e2e.ehroutdb.tables.Acknowledgements;
 import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
 import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
@@ -27,16 +34,14 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
-import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.utility.LargeEhrTestFiles;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 import uk.nhs.prm.deduction.e2e.utility.TestUtils;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,8 +53,10 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
+import static uk.nhs.prm.deduction.e2e.ehroutdb.tables.Acknowledgements.*;
 
 @SpringBootTest(classes = {
         RepositoryE2ETests.class,
@@ -288,16 +295,21 @@ public class RepositoryE2ETests {
     void tryConnectToPostgresDb() throws SQLException {
         Connection conn = getRemoteConnection(config);
         assert conn != null;
-        Statement statement = conn.createStatement();
-        String selectSql = "SELECT COUNT(*) FROM acknowledgements WHERE message_id = '7e6c9590-fa4b-11ed-808b-ac162d1f16f0';";
-        ResultSet resultSet = statement.executeQuery(selectSql);
-        LOGGER.info(" ========= HERE ===========");
-        assertTrue(resultSet.next());
-        LOGGER.info("got count: {}", resultSet.getInt("count"));
+        DSLContext context = DSL.using(conn, SQLDialect.POSTGRES);
 
-        int numberOfMatchingRow = resultSet.getInt("count");
+        String messageId = "3327d3e7-a1e7-4ec5-850b-912db9c8c5dd";
+        Result<org.jooq.Record> result =  context
+                .select()
+                .from(ACKNOWLEDGEMENTS)
+                .where(ACKNOWLEDGEMENTS.MESSAGE_ID.eq(UUID.fromString(messageId)))
+                .fetch();
+        assertThat(result.size()).isEqualTo(1);
+        String typeCode = result.getValue(0, ACKNOWLEDGEMENTS.ACKNOWLEDGEMENT_TYPE_CODE);
+        LOGGER.info("typeCode of {} is {}", messageId, typeCode);
+        assertThat(typeCode).isEqualTo("AR");
 
-        assertThat(numberOfMatchingRow).isEqualTo(1);
+        conn.close();
+
     }
 
     @Test
