@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -44,12 +45,16 @@ public class QueueMessageHelper {
 
     public SqsMessage getMessageContaining(String substring) {
         log(String.format("Checking if message is present on : %s", this.queueUri));
-        SqsMessage found = await().atMost(120, TimeUnit.SECONDS)
+        Optional<SqsMessage> found = await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS)
-                .until(() -> findMessageContaining(substring), notNullValue());
+                .until(() -> findMessageContaining(substring), Optional::isPresent);
         log(String.format("Found message on : %s", this.queueUri));
-        return found;
+        if (found.isPresent()) {
+            return found.get();
+        } else {
+            throw new RuntimeException();
+        }
     }
 
     public List<SqsMessage> getAllMessageContaining(String substring) {
@@ -58,10 +63,8 @@ public class QueueMessageHelper {
         await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-                    SqsMessage found = findMessageContaining(substring);
-                    if (found != null) {
-                        allMessages.add(found);
-                    }
+                    Optional<SqsMessage> found = findMessageContaining(substring);
+                    found.ifPresent(allMessages::add);
                     assertTrue(allMessages.size() >= 2);
                 });
 
@@ -105,15 +108,11 @@ public class QueueMessageHelper {
         return messages.isEmpty() ? null : messages;
     }
 
-    private SqsMessage findMessageContaining(String substring) {
-        List<SqsMessage>  allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
-        for (SqsMessage message : allMessages) {
-            log(String.format("Finding message with substring %s on queue: %s", substring, this.queueUri));
-            if (message.contains(substring)) {
-                return message;
-            }
-        }
-        return null;
+    private Optional<SqsMessage> findMessageContaining(String substring) {
+        return thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180)
+            .stream()
+            .filter(message -> message.contains(substring))
+            .findFirst();
     }
 
     public SqsMessage findMessageWithAttribute(String attribute, String expectedValue) {
