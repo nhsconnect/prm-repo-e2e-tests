@@ -1,5 +1,6 @@
 package uk.nhs.prm.deduction.e2e.tests;
 
+import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
@@ -57,22 +58,12 @@ import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
         RoleAssumingAwsConfigurationClient.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@AllArgsConstructor(onConstructor = @__(@Autowired))
 public class EhrOutE2ETests {
     private static final Logger LOGGER = LogManager.getLogger(EhrOutE2ETests.class);
     private final TrackerDb trackerDb;
     private final Gp2gpMessengerQueue gp2gpMessengerQueue;
     private final TestConfiguration config;
-
-    @Autowired
-    public EhrOutE2ETests(
-            TrackerDb trackerDb,
-            Gp2gpMessengerQueue gp2gpMessengerQueue,
-            TestConfiguration config
-    ) {
-        this.trackerDb = trackerDb;
-        this.gp2gpMessengerQueue = gp2gpMessengerQueue;
-        this.config = config;
-    }
 
     @BeforeAll
     void init() {
@@ -97,9 +88,8 @@ public class EhrOutE2ETests {
 
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
-        // Put the patient into inboundQueueFromMhs as a UK05 message
-
         addRecordToTrackerDb(trackerDb, inboundConversationId, "", nhsNumberForTestPatient, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
+        // Put the patient into inboundQueueFromMhs as a UK05 message
         inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
 
         LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
