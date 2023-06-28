@@ -167,7 +167,7 @@ public final class TestUtils {
         return UUID.randomUUID().toString();
     }
 
-    public static String getUuidAsUpperCaseString(UUID uuid) {
+    public static String getUUIDAsUpperCaseString(UUID uuid) {
         return uuid.toString().toUpperCase();
     }
 }
