@@ -163,7 +163,7 @@ public final class TestUtils {
         return new LargeEhrTestFiles(largeEhrCore, largeEhrFragment1, largeEhrFragment2, ehrRequest, continueRequest);
     }
 
-    public static String getUuidAsUpperCaseString(UUID uuid) {
+    public static String getUUIDAsUpperCaseString(UUID uuid) {
         return uuid.toString().toUpperCase();
     }
 }
