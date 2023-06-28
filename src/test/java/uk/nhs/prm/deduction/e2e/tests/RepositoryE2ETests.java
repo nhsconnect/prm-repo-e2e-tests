@@ -371,7 +371,7 @@ public class RepositoryE2ETests {
     @Test
     void shouldRejectDuplicatedEhrRequestMessagesFromTheSameGP() {
         // given
-        Patient testPatient = Patient.PATIENT_WITH_SMALL_EHR_RECORD_IN_REPO_AND_MOF_SET_TO_TPP;
+        Patient testPatient = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP;
         String nhsNumberForTest = testPatient.nhsNumber();
 
         addSmallEhrToEhrRepo(nhsNumberForTest);
@@ -381,10 +381,10 @@ public class RepositoryE2ETests {
                 .withEhrSourceAsRepo(config)
                 .withEhrDestinationGp(Gp2GpSystem.TPP_PTL_INT)
                 .build();
-        int numberOfDuplicatedMessage = 3;
+        int numberOfDuplicatedMessages = 3;
 
         // when
-        for (int i = 0; i < numberOfDuplicatedMessage; i++) {
+        for (int i = 0; i < numberOfDuplicatedMessages; i++) {
             inboundQueueFromMhs.sendMessage(ehrRequestMessage.toJsonString(), ehrRequestMessage.conversationId());
         }
 
@@ -398,7 +398,7 @@ public class RepositoryE2ETests {
         assertThat(outboundMessages.size()).isEqualTo(1);
 
         String outboundEhrCore = outboundMessages.get(0).body();
-        assertThat(outboundEhrCore).contains(testPatient.nhsNumber());
+        assertThat(outboundEhrCore).contains(nhsNumberForTest);
         assertThat(outboundEhrCore).contains("RCMR_IN030000UK06");
     }
 
