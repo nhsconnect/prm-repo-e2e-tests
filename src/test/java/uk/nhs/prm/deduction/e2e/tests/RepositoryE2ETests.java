@@ -2,10 +2,7 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,7 +10,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.xmlunit.diff.*;
+import org.xmlunit.diff.Diff;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
@@ -27,8 +24,8 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
-import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.utility.LargeEhrTestFiles;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 import uk.nhs.prm.deduction.e2e.utility.TestUtils;
@@ -189,6 +186,9 @@ public class RepositoryE2ETests {
         Diff myDiff = comparePayloads(gp2gpMessengerPayload, smallEhrPayload);
 
         assertFalse(myDiff.toString(), myDiff.hasDifferences());
+
+        // clear up the queue after test in order not to interfere with other tests
+        gp2gpMessengerQueue.deleteMessage(gp2gpMessage);
     }
 
     @Test
@@ -278,6 +278,10 @@ public class RepositoryE2ETests {
 
             assertTrue(identicalWithFragment1 || identicalWithFragment2);
         });
+
+        // clear up the queue after test in order not to interfere with other tests
+        gp2gpMessengerQueue.deleteMessage(gp2gpMessageUK06);
+        allFragments.forEach(gp2gpMessengerQueue::deleteMessage);
     }
 
     @Test
