@@ -2,7 +2,9 @@ package uk.nhs.prm.deduction.e2e.utility;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.core.ConditionTimeoutException;
 import org.springframework.http.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.concurrent.TimeUnit;
@@ -24,7 +26,7 @@ public class HealthCheck {
                     .with()
                     .pollInterval(200, TimeUnit.MILLISECONDS)
                     .until(() -> getRequest(healthCheckUrl).getStatusCode().is2xxSuccessful(), is(true));
-        } catch (Exception exception) {
+        } catch (HttpClientErrorException | ConditionTimeoutException exception) {
             LOGGER.info("Error retrieving health check status from {}. Error: {}", rootUrl, exception.getMessage());
             return false;
         }
