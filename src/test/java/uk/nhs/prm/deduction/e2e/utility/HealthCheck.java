@@ -24,8 +24,8 @@ public class HealthCheck {
                     .with()
                     .pollInterval(200, TimeUnit.MILLISECONDS)
                     .until(() -> getRequest(healthCheckUrl).getStatusCode().is2xxSuccessful(), is(true));
-        } catch (Exception e) {
-            LOGGER.info("Error retrieving health check status from {}. Error: {}", rootUrl, e.getMessage());
+        } catch (Exception exception) {
+            LOGGER.info("Error retrieving health check status from {}. Error: {}", rootUrl, exception.getMessage());
             return false;
         }
     }
