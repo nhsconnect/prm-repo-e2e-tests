@@ -2,10 +2,7 @@ package uk.nhs.prm.deduction.e2e.tests;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,8 +14,7 @@ import org.xmlunit.diff.*;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.*;
 import uk.nhs.prm.deduction.e2e.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
-import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
-import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
+import uk.nhs.prm.deduction.e2e.models.*;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
@@ -29,6 +25,7 @@ import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNot
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.deduction.e2e.utility.HealthCheck;
 import uk.nhs.prm.deduction.e2e.utility.LargeEhrTestFiles;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 import uk.nhs.prm.deduction.e2e.utility.TestUtils;
@@ -72,7 +69,6 @@ import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RepositoryE2ETests {
     private static final Logger LOGGER = LogManager.getLogger(RepositoryE2ETests.class);
-
     private final RepoIncomingQueue repoIncomingQueue;
     private final TrackerDb trackerDb;
     private final SmallEhrQueue smallEhrQueue;
@@ -117,6 +113,7 @@ public class RepositoryE2ETests {
     }
 
     PdsAdaptorClient pdsAdaptorClient;
+    SimpleAmqpQueue inboundQueueFromMhs;
 
     @BeforeAll
     void init() {
@@ -129,6 +126,7 @@ public class RepositoryE2ETests {
         negativeAcknowledgementObservabilityQueue.deleteAllMessages();
         gp2gpMessengerQueue.deleteAllMessages();
         pdsAdaptorClient = new PdsAdaptorClient("e2e-test", config.getPdsAdaptorE2ETestApiKey(), config.getPdsAdaptorUrl());
+        inboundQueueFromMhs = new SimpleAmqpQueue(config);
     }
 
     // The following test should eventually test that we can send a small EHR - until we have an EHR in repo/test patient ready to send,
@@ -167,7 +165,7 @@ public class RepositoryE2ETests {
         addRecordToTrackerDb(trackerDb, inboundConversationId, "", nhsNumberForTestPatient, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
         inboundQueueFromMhs.sendMessage(smallEhr, inboundConversationId);
 
-        LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
+        LOGGER.info("conversationIdExists: {}", trackerDb.conversationIdExists(inboundConversationId));
         String status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
         LOGGER.info("tracker db status: {}", status);
 
@@ -226,7 +224,7 @@ public class RepositoryE2ETests {
 
         // when
         inboundQueueFromMhs.sendMessage(largeEhrCore, inboundConversationId);
-        LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
+        LOGGER.info("conversationIdExists: {}", trackerDb.conversationIdExists(inboundConversationId));
         String status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT");
         LOGGER.info("tracker db status: {}", status);
 
@@ -278,6 +276,77 @@ public class RepositoryE2ETests {
 
             assertTrue(identicalWithFragment1 || identicalWithFragment2);
         });
+    }
+
+    private Arguments erroneousInboundMessage_UnrecognisedInteractionID() {
+        String invalidInteractionId = "TEST_XX123456XX01";
+        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder().build();
+        String invalidInboundMessage = ehrRequestMessage.toJsonString()
+                .replaceAll("RCMR_IN010000UK05", invalidInteractionId);
+
+        return Arguments.of(
+                Named.of("Message with unrecognised Interaction ID", invalidInboundMessage),
+                ehrRequestMessage.conversationId()
+        );
+    }
+
+    private Arguments erroneousInboundMessage_EhrRequestWithUnrecognisedNhsNumber() {
+        String nonExistentNhsNumber = "9729999999";
+        EhrRequestMessage ehrRequestMessage = new EhrRequestMessageBuilder()
+                .withNhsNumber(nonExistentNhsNumber)
+                .build();
+
+        return Arguments.of(
+                Named.of("Ehr Request with unrecognised NHS Number", ehrRequestMessage.toJsonString()),
+                ehrRequestMessage.conversationId()
+        );
+    }
+
+    private Arguments erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId() {
+        // a COPC continue request with a randomly generated conversation ID
+        ContinueRequestMessage continueRequestMessage = new ContinueRequestMessageBuilder().build();
+
+        return Arguments.of(
+                Named.of("Continue Request with unrecognised Conversation ID", continueRequestMessage.toJsonString()),
+                continueRequestMessage.conversationId()
+        );
+    }
+
+    private Stream<Arguments> erroneousInboundMessages() {
+        return Stream.of(
+                erroneousInboundMessage_UnrecognisedInteractionID(),
+                erroneousInboundMessage_EhrRequestWithUnrecognisedNhsNumber(),
+                erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId()
+        );
+    }
+
+    @ParameterizedTest(name = "[{index}] Case of {0}")
+    @MethodSource("erroneousInboundMessages")
+    @DisplayName("Test how ORC handles Erroneous inbound messages")
+    void testsWithErroneousInboundMessages(String inboundMessage, String conversationId) {
+        // when
+        inboundQueueFromMhs.sendMessage(inboundMessage, conversationId);
+
+        // then
+        // verify that EHR-IN put the message to unhandled queue
+        SqsMessage unhandledMessage = ehrInUnhandledQueue.getMessageContaining(conversationId);
+        assertThat(unhandledMessage.body()).isEqualTo(inboundMessage);
+
+        // verify that no response message with given conversation id is on the gp2gp observability queue
+        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
+        assertThat(gp2gpMessengerQueue.verifyNoMessageContaining(conversationId)).isTrue();
+
+        checkThatAllServicesHealthCheckPassing();
+    }
+
+    private void checkThatAllServicesHealthCheckPassing() {
+        List<String> servicesToCheck = List.of(
+                config.getEhrRepoUrl(),
+                config.getEhrOutUrl(),
+                config.getGp2GpMessengerUrl()
+        );
+        boolean allHealthChecksPassing = servicesToCheck.stream().allMatch(HealthCheck::isHealthCheckPassing);
+        assertThat(allHealthChecksPassing).isTrue();
     }
 
     @Test
@@ -372,7 +441,7 @@ public class RepositoryE2ETests {
                 Arguments.of(Gp2GpSystem.TPP_PTL_INT, LargeEhrVariant.HIGH_FRAGMENT_COUNT),
 
                 // 20mins+, filling FSS disks causing outages -> to be run ad hoc as needed
-                 Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
+                Arguments.of(Gp2GpSystem.EMIS_PTL_INT, LargeEhrVariant.SUPER_LARGE)
 
                 // could not move it EMIS to TPP - Large Message general failure
                 // need to establish current TPP limits that are applying in this case

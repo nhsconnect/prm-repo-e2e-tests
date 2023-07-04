@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e.queue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.core.ConditionTimeoutException;
 import org.json.JSONException;
 import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
 import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
@@ -50,6 +51,20 @@ public class QueueMessageHelper {
                 .until(() -> findMessageContaining(substring), notNullValue());
         log(String.format("Found message on : %s", this.queueUri));
         return found;
+    }
+
+    public boolean verifyNoMessageContaining(String substring) {
+        try {
+            await().atMost(60, TimeUnit.SECONDS)
+                    .with()
+                    .pollInterval(100, TimeUnit.MILLISECONDS)
+                    .until(() -> findMessageContaining(substring), notNullValue());
+            log(String.format("A message on %s match the given substring %s. Returning false", this.queueUri, substring));
+            return false;
+        } catch (ConditionTimeoutException error) {
+            log(String.format("Confirmed no message on %s match the given substring %s.", this.queueUri, substring));
+            return true;
+        }
     }
 
     public List<SqsMessage> getAllMessageContaining(String substring) {
@@ -108,7 +123,7 @@ public class QueueMessageHelper {
     private SqsMessage findMessageContaining(String substring) {
         List<SqsMessage>  allMessages = thinlyWrappedSqsClient.readThroughMessages(this.queueUri, 180);
         for (SqsMessage message : allMessages) {
-            log(String.format("just finding message, checking conversationId: %s", this.queueUri));
+            log(String.format("Finding message with substring %s on queue: %s", substring, this.queueUri));
             if (message.contains(substring)) {
                 return message;
             }
