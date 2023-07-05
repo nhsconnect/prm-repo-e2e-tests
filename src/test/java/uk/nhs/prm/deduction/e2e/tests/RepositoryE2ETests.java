@@ -42,6 +42,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
+import static uk.nhs.prm.deduction.e2e.TestConfiguration.*;
 import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
 
 @SpringBootTest(classes = {
@@ -341,9 +342,9 @@ public class RepositoryE2ETests {
 
     private void checkThatAllServicesHealthCheckPassing() {
         List<String> servicesToCheck = List.of(
-                config.getEhrRepoUrl(),
-                config.getEhrOutUrl(),
-                config.getGp2GpMessengerUrl()
+                EHR_REPO_URL,
+                EHR_OUT_URL,
+                GP2GP_MESSENGER_URL
         );
         boolean allHealthChecksPassing = servicesToCheck.stream().allMatch(HealthCheck::isHealthCheckPassing);
         assertThat(allHealthChecksPassing).isTrue();
