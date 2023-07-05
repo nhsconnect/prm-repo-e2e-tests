@@ -30,8 +30,8 @@ public class QueueMessageHelper {
         log(String.format("Trying to delete all the messages on : %s", this.queueUri));
         try {
             thinlyWrappedSqsClient.deleteAllMessages(queueUri);
-        } catch (Exception e) {
-            log.warn("Error encountered while deleting the messages on the queue : " + queueUri, e);
+        } catch (Exception exception) {
+            log.warn("Error encountered while deleting the messages on the queue : " + queueUri, exception);
         }
     }
 
