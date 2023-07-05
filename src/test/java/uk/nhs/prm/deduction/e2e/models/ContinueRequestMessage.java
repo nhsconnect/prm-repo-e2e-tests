@@ -7,12 +7,12 @@ import java.util.UUID;
 import static uk.nhs.prm.deduction.e2e.utility.TestUtils.getUUIDAsUpperCaseString;
 
 public class ContinueRequestMessage {
-    private UUID conversationId;
-    private UUID messageId;
-    private String sourceGpOds;
-    private String destinationGpOds;
-    private String sourceGpAsid;
-    private String destinationGpAsid;
+    private final UUID conversationId;
+    private final UUID messageId;
+    private final String sourceGpOds;
+    private final String destinationGpOds;
+    private final String sourceGpAsid;
+    private final String destinationGpAsid;
 
     public ContinueRequestMessage(UUID conversationId, UUID messageId, String sourceGpOds, String destinationGpOds, String sourceGpAsid, String destinationGpAsid) {
         this.conversationId = conversationId;
