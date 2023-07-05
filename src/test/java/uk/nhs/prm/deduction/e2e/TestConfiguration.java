@@ -19,6 +19,11 @@ public class TestConfiguration {
 
     public static final int SECONDS_IN_AN_HOUR = 3600;
 
+    public static String PDS_ADAPTOR_URL = String.format("https://pds-adaptor.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+    public static String GP2GP_MESSENGER_URL = String.format("https://gp2gp-messenger.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+    public static String EHR_REPO_URL = String.format("https://ehr-repo.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+    public static String EHR_OUT_URL = String.format("https://ehr-out-service.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+
     private final ImmutableMap<String, List<String>> suspendedNhsNumbersByEnv = ImmutableMap.of(
             "dev", TestData.dev(),
             "pre-prod", TestData.preProd(),
@@ -169,20 +174,18 @@ public class TestConfiguration {
         return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-%s", getAwsAccountNo(), getEnvironmentName(), name);
     }
 
+    // TODO: After we move packages to main,
+    //       change the reference for these url-returning methods to directly reference the constants.
     public String getPdsAdaptorUrl() {
-        return String.format("https://pds-adaptor.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+        return PDS_ADAPTOR_URL;
     }
 
     public String getGp2GpMessengerUrl() {
-        return String.format("https://gp2gp-messenger.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+        return GP2GP_MESSENGER_URL;
     }
 
     public String getEhrRepoUrl() {
-        return String.format("https://ehr-repo.%s.patient-deductions.nhs.uk/", getEnvSuffix());
-    }
-
-    public String getEhrOutUrl() {
-        return String.format("https://ehr-out-service.%s.patient-deductions.nhs.uk/", getEnvSuffix());
+        return EHR_REPO_URL;
     }
 
     private String getAwsAccountNo() {
@@ -228,7 +231,7 @@ public class TestConfiguration {
         return parseInt(timeout);
     }
 
-    public String getEnvironmentName() {
+    public static String getEnvironmentName() {
         return getRequiredEnvVar("NHS_ENVIRONMENT");
     }
 
@@ -244,7 +247,7 @@ public class TestConfiguration {
         return new RoleAssumingAwsConfigurationClient(new AssumeRoleCredentialsProviderFactory());
     }
 
-    private String getEnvSuffix() {
+    private static String getEnvSuffix() {
         return getEnvironmentName().equals("prod") ? "prod" : String.format("%s.non-prod", getEnvironmentName());
     }
 
