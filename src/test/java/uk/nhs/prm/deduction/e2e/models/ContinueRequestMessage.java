@@ -1,11 +1,13 @@
 package uk.nhs.prm.deduction.e2e.models;
 
+import lombok.AllArgsConstructor;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import java.util.UUID;
 
 import static uk.nhs.prm.deduction.e2e.utility.TestUtils.getUUIDAsUpperCaseString;
 
+@AllArgsConstructor
 public class ContinueRequestMessage {
     private final UUID conversationId;
     private final UUID messageId;
@@ -13,15 +15,6 @@ public class ContinueRequestMessage {
     private final String destinationGpOds;
     private final String sourceGpAsid;
     private final String destinationGpAsid;
-
-    public ContinueRequestMessage(UUID conversationId, UUID messageId, String sourceGpOds, String destinationGpOds, String sourceGpAsid, String destinationGpAsid) {
-        this.conversationId = conversationId;
-        this.messageId = messageId;
-        this.sourceGpOds = sourceGpOds;
-        this.destinationGpOds = destinationGpOds;
-        this.sourceGpAsid = sourceGpAsid;
-        this.destinationGpAsid = destinationGpAsid;
-    }
 
     public String toJsonString() {
         return Resources.readTestResourceFile("COPC_IN000001UK01")

@@ -1,11 +1,13 @@
 package uk.nhs.prm.deduction.e2e.models;
 
+import lombok.AllArgsConstructor;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
 import java.util.UUID;
 
 import static uk.nhs.prm.deduction.e2e.utility.TestUtils.getUUIDAsUpperCaseString;
 
+@AllArgsConstructor
 public class EhrRequestMessage {
     private final String nhsNumber;
     private final String sourceGpOds;
@@ -14,16 +16,6 @@ public class EhrRequestMessage {
     private final String destinationGpAsid;
     private final UUID conversationId;
     private final UUID messageId;
-
-    public EhrRequestMessage(String nhsNumber, String sourceGpOds, String destinationGpOds, String sourceGpAsid, String destinationGpAsid, UUID conversationId, UUID messageId) {
-        this.nhsNumber = nhsNumber;
-        this.sourceGpOds = sourceGpOds;
-        this.destinationGpOds = destinationGpOds;
-        this.sourceGpAsid = sourceGpAsid;
-        this.destinationGpAsid = destinationGpAsid;
-        this.conversationId = conversationId;
-        this.messageId = messageId;
-    }
 
     public String toJsonString() {
         return Resources.readTestResourceFile("RCMR_IN010000UK05")
