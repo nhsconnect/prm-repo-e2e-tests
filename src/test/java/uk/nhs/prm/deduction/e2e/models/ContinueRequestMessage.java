@@ -1,0 +1,36 @@
+package uk.nhs.prm.deduction.e2e.models;
+
+import lombok.AllArgsConstructor;
+import uk.nhs.prm.deduction.e2e.utility.Resources;
+
+import java.util.UUID;
+
+import static uk.nhs.prm.deduction.e2e.utility.TestUtils.getUUIDAsUpperCaseString;
+
+@AllArgsConstructor
+public class ContinueRequestMessage {
+    private final UUID conversationId;
+    private final UUID messageId;
+    private final String sourceGpOds;
+    private final String destinationGpOds;
+    private final String sourceGpAsid;
+    private final String destinationGpAsid;
+
+    public String toJsonString() {
+        return Resources.readTestResourceFile("COPC_IN000001UK01")
+                .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", conversationId())
+                .replaceAll("DE304CA0-F984-11ED-808B-AC162D1F16F0", messageId())
+                .replaceAll("B85002", sourceGpOds)
+                .replaceAll("200000001613", sourceGpAsid)
+                .replaceAll("M85019", destinationGpOds)
+                .replaceAll("200000000149", destinationGpAsid);
+    }
+
+    public String conversationId() {
+        return getUUIDAsUpperCaseString(conversationId);
+    }
+
+    public String messageId() {
+        return getUUIDAsUpperCaseString(messageId);
+    }
+}
