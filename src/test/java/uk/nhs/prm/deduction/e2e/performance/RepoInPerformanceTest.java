@@ -80,6 +80,7 @@ public class RepoInPerformanceTest {
 
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
+        System.out.println("BEGINNING PROBLEMATIC TEST");
         var numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
         var messagesToBeProcessed = setupMessagesToBeProcessed(numberOfMessagesToBeProcessed);
 

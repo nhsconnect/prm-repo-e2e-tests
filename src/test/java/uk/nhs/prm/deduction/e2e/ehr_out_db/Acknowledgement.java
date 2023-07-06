@@ -19,7 +19,6 @@ import java.util.UUID;
 @Table(name = "acknowledgements")
 public class Acknowledgement {
     @Id
-    @Type(type="pg-uuid")
     private UUID messageId;
     private String acknowledgementTypeCode;
     private String acknowledgementDetail;
