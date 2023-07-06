@@ -2,14 +2,14 @@ import org.w3c.dom.Attr
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 
-import javax.xml.namespace.NamespaceContext
-import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.transform.Transformer
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
-import javax.xml.xpath.XPathConstants
-import javax.xml.xpath.XPathFactory
+import jakarta.xml.namespace.NamespaceContext
+import jakarta.xml.parsers.DocumentBuilderFactory
+import jakarta.xml.transform.Transformer
+import jakarta.xml.transform.TransformerFactory
+import jakarta.xml.transform.dom.DOMSource
+import jakarta.xml.transform.stream.StreamResult
+import jakarta.xml.xpath.XPathConstants
+import jakarta.xml.xpath.XPathFactory
 import java.nio.file.Files
 import java.nio.file.Paths
 
