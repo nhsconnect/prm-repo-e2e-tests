@@ -25,9 +25,11 @@ import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.utility.Resources;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -134,23 +136,61 @@ public class RepoInPerformanceTest {
         try {
             var inboundQueueFromMhs = new SimpleAmqpQueue(config);
             var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
-            var counter = new AtomicReference<>(0);
-            messagesToBeProcessed.forEach(message -> {
+            var counter = new AtomicInteger(0);
+
+            messagesToBeProcessed.parallelStream().forEach(message -> {
                 counter.updateAndGet(v -> v + 1);
-                var conversationId = message.getMessage().conversationId();
-                var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
+                String conversationId = message.getMessage().conversationId();
+
+                String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
                 message.start();
 
                 System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
+
                 sleeper.sleep(intervalBetweenMessagesSentToMq);
             });
+//            for (RepoInPerfMessageWrapper message : messagesToBeProcessed) {
+//                counter.updateAndGet(v -> v + 1);
+//                String conversationId = message.getMessage().conversationId();
+//
+//                String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
+//                message.start();
+//
+//                System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
+//                inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
+//
+//                sleeper.sleep(intervalBetweenMessagesSentToMq);
+//            }
+
+//            messagesToBeProcessed.forEach(message -> processMessage(message, messageTemplate, counter, inboundQueueFromMhs));
+
             System.out.println("All messages sent, about to close mhs producer...");
             inboundQueueFromMhs.close();
         } catch (OutOfMemoryError outOfMemoryError) {
             System.out.println("Whoops, mq client went out of memory again!");
             System.exit(1);
         }
+    }
+
+    private synchronized void processMessage(
+            RepoInPerfMessageWrapper message,
+            String messageTemplate,
+            AtomicInteger counter,
+            SimpleAmqpQueue inboundQueueFromMhs
+    ) {
+        counter.incrementAndGet();
+        var conversationId = message.getMessage().conversationId();
+
+        var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
+        message.start();
+
+        System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
+        inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
+
+
+        sleeper.sleep(100);
+        message.finish(LocalDateTime.now());
     }
 
     private List<RepoInPerfMessageWrapper> setupMessagesToBeProcessed(int numberOfMessagesToBeProcessed) {
