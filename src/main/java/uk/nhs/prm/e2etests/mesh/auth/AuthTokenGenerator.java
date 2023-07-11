@@ -1,6 +1,6 @@
-package uk.nhs.prm.deduction.e2e.mesh.auth;
+package uk.nhs.prm.e2etests.mesh.auth;
 
-import uk.nhs.prm.deduction.e2e.mesh.MeshConfig;
+import uk.nhs.prm.e2etests.mesh.MeshConfig;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;

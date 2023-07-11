@@ -1,9 +1,7 @@
 package uk.nhs.prm.deduction.e2e.pdsadaptor;
 
 import org.springframework.http.*;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
 
 public class PdsAdaptorClient {
 

@@ -1,16 +1,29 @@
-package uk.nhs.prm.deduction.e2e.client;
+package uk.nhs.prm.e2etests.client;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import jakarta.xml.bind.DatatypeConverter;
+import org.springframework.stereotype.Component;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.security.*;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -19,13 +32,15 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
+@Component
 public class StackOverflowInsecureSSLContextLoader {
-
+    private static final Logger LOGGER = LogManager.getLogger(StackOverflowInsecureSSLContextLoader.class);
 
     public SSLContext getClientAuthSslContext(String clientCertInPemFormat, String clientKeyInPemFormat){
+        LOGGER.info("Attempting to initialise the SSL context so that we can make requests to the Mesh Mailbox.");
 
-       // log("** initialising SSL context to make request to Mesh Mailbox");
         SSLContext sslContext = null;
+
         try {
             sslContext = SSLContext.getInstance("TLS");
             byte[] certDerBytes = parseDERFromPEM(clientCertInPemFormat.getBytes(), "-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----");
@@ -58,18 +73,17 @@ public class StackOverflowInsecureSSLContextLoader {
 
             sslContext.init(km, new TrustManager[]{acceptAll}, null);
 
-         //   log("** SSL context initialised");
+            LOGGER.info("The SSL Context has successfully been initialised.");
 
-        }catch (Exception e){
-            log("** encountered exception %s",e.getMessage());
-            e.printStackTrace();
+        } catch (Exception exception){
+            LOGGER.error("The application encountered the following exception: {}", exception.getMessage());
         }
         return sslContext;
     }
 
     private RSAPrivateKey getRsaPrivateKey(String clientKeyInPemFormat) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         if (clientKeyInPemFormat.startsWith("-----BEGIN RSA PRIVATE KEY-----")) {
-            return getPrivateKeyForRsaKeyString(clientKeyInPemFormat);
+            return getPrivateKeyForRSAKeyString(clientKeyInPemFormat);
         } else {
             byte[] keyDerBytes = parseDERFromPEM(clientKeyInPemFormat.getBytes(), "-----BEGIN PRIVATE KEY-----", "-----END PRIVATE KEY-----");
             return generatePrivateKeyFromDER(keyDerBytes);
@@ -83,7 +97,7 @@ public class StackOverflowInsecureSSLContextLoader {
         return DatatypeConverter.parseBase64Binary(tokens[0]);
     }
 
-    private RSAPrivateKey getPrivateKeyForRsaKeyString(String privateKeyString) throws IOException {
+    private RSAPrivateKey getPrivateKeyForRSAKeyString(String privateKeyString) throws IOException {
         PEMParser pemParser = new PEMParser(new StringReader(privateKeyString));
         Security.addProvider(new BouncyCastleProvider());
         JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
@@ -92,26 +106,14 @@ public class StackOverflowInsecureSSLContextLoader {
         return (RSAPrivateKey) kp.getPrivate();
     }
 
-    private static RSAPrivateKey generatePrivateKeyFromDER(byte[] keyBytes) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    private RSAPrivateKey generatePrivateKeyFromDER(byte[] keyBytes) throws InvalidKeySpecException, NoSuchAlgorithmException {
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-
         KeyFactory factory = KeyFactory.getInstance("RSA");
-
         return (RSAPrivateKey) factory.generatePrivate(spec);
     }
 
-    private static X509Certificate generateCertificateFromDER(byte[] certBytes) throws CertificateException {
+    private X509Certificate generateCertificateFromDER(byte[] certificateBytes) throws CertificateException {
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
-
-        return (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(certBytes));
-    }
-
-
-    public void log(String message) {
-        System.out.println(message);
-    }
-
-    public void log(String messageBody, String messageValue) {
-        System.out.println(String.format(messageBody, messageValue));
+        return (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(certificateBytes));
     }
 }

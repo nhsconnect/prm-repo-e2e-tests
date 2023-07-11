@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import uk.nhs.prm.deduction.e2e.client.RoleAssumingAwsConfigurationClient;
+import uk.nhs.prm.e2etests.client.RoleAssumingAwsConfigurationClient;
 
 import javax.sql.DataSource;
 import java.util.Map;
@@ -44,7 +44,7 @@ public class EhrOutDbConfiguration {
 
     private String getAwsParameterStoreValue(String parameterName) {
         try {
-            return roleAssumingAwsConfigurationClient.getParamValue(String.format(parameterName, environment));
+            return roleAssumingAwsConfigurationClient.getSsmParameterValue(String.format(parameterName, environment));
         } catch (NullPointerException exception) {
             log.error(exception.getMessage());
             throw exception;

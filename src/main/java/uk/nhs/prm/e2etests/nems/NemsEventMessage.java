@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.nems;
+package uk.nhs.prm.e2etests.nems;
 
 
 public class NemsEventMessage {

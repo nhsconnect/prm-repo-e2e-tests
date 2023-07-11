@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
-import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.deduction.e2e.services.gp2gp_messenger.Gp2GpMessengerClient;
 
 import java.util.Arrays;
