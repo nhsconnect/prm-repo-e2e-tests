@@ -1,6 +1,6 @@
 package uk.nhs.prm.deduction.e2e.utility;
 
-import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.nems.NemsEventMessage;
 
 import java.io.IOException;
 import java.sql.Timestamp;

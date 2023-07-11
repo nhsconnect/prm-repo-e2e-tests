@@ -1,13 +1,11 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
-import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.nems.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.Phased;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

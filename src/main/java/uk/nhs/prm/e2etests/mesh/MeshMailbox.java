@@ -1,19 +1,23 @@
-package uk.nhs.prm.deduction.e2e.mesh;
+package uk.nhs.prm.e2etests.mesh;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.nems.NemsEventMessage;
 
 @Component
 public class MeshMailbox {
-
     private final MeshConfig meshConfig;
     private final MeshClient meshClient;
 
-    public MeshMailbox(@Autowired TestConfiguration testConfiguration) {
-        this.meshConfig = new MeshConfig(testConfiguration);
-        this.meshClient = new MeshClient(meshConfig);
+    @Autowired
+    public MeshMailbox(
+        MeshConfig meshConfig,
+        MeshClient meshClient
+    ) {
+        this.meshConfig = meshConfig;
+        this.meshClient = meshClient;
     }
 
     public void postMessage(NemsEventMessage message) {

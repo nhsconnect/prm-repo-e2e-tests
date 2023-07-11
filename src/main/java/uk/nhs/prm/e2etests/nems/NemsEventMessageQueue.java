@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.nems;
+package uk.nhs.prm.e2etests.nems;
 
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
