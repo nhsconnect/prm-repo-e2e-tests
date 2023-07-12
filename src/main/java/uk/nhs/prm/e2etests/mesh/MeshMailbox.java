@@ -1,41 +1,41 @@
 package uk.nhs.prm.e2etests.mesh;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
-import uk.nhs.prm.e2etests.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.configuration.MeshConfiguration;
+import uk.nhs.prm.e2etests.exception.MeshMailboxException;
+import uk.nhs.prm.e2etests.model.NemsEventMessage;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 @Component
 public class MeshMailbox {
-    private final MeshConfig meshConfig;
+    private final MeshConfiguration meshConfiguration;
     private final MeshClient meshClient;
+    private static final Logger LOGGER = LogManager.getLogger(MeshMailbox.class);
 
     @Autowired
     public MeshMailbox(
-        MeshConfig meshConfig,
+        MeshConfiguration meshConfiguration,
         MeshClient meshClient
     ) {
         this.meshConfig = meshConfig;
         this.meshClient = meshClient;
     }
 
-    public void postMessage(NemsEventMessage message) {
-        String messageId = postMessage(message, true);
-        if (messageId == null) {
-            throw new RuntimeException("Failed to send message to Mesh Mailbox");
-        }
-    }
+    public String postMessage(NemsEventMessage message) {
+        try {
+            LOGGER.info("Attempting to send NEMS message: {}", message.toString());
 
-    public String postMessage(NemsEventMessage message, boolean shouldLog) {
-        String messageId = meshClient.postMessage(getMailboxServiceOutboxUri(), message);
-        if (shouldLog) {
-            System.out.println("Posted messageId is " + messageId);
+            return meshClient.sendMessage(
+                this.meshConfiguration.getMailboxServiceOutboxUri(),
+                message
+            );
+        } catch (IOException | InterruptedException | URISyntaxException exception) {
+            throw new MeshMailboxException(exception.getMessage());
         }
-        return messageId;
-    }
-
-    private String getMailboxServiceOutboxUri() {
-        return String.format("https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox", meshConfig.getMailboxId());
     }
 }

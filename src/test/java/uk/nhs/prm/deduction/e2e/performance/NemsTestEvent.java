@@ -1,6 +1,6 @@
 package uk.nhs.prm.deduction.e2e.performance;
 
-import uk.nhs.prm.e2etests.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.Phased;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;

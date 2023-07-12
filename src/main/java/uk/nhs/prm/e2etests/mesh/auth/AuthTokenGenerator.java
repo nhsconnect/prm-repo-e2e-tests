@@ -11,15 +11,21 @@ import java.util.Calendar;
 import java.util.Formatter;
 import java.util.UUID;
 
+import static uk.nhs.prm.e2etests.configuration.MeshConfiguration.Type.MAILBOX_ID;
+import static uk.nhs.prm.e2etests.configuration.MeshConfiguration.Type.MAILBOX_PASSWORD;
+
+@Component
 public class AuthTokenGenerator {
     private static final String HMAC_SHA216 = "HmacSHA256";
     private static final String AUTHSCHEMANAME = "NHSMESH";
     private static final String env_shared = "BackBone";
+    private final String mailboxId;
+    private final String mailboxPassword;
 
-    private final MeshConfig meshConfig;
-
-    public AuthTokenGenerator(MeshConfig meshConfig) {
-        this.meshConfig = meshConfig;
+    @Autowired
+    public AuthTokenGenerator(MeshConfiguration meshConfiguration) {
+        this.mailboxId = meshConfiguration.getValue(MAILBOX_ID);
+        this.mailboxPassword = meshConfiguration.getValue(MAILBOX_PASSWORD);
     }
 
     private String toHexString(byte[] bytes) {
@@ -41,9 +47,9 @@ public class AuthTokenGenerator {
         final String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
         final String nonce = generateNonce();
         final String nonce_count = "0";
-        final String hmac_msg = meshConfig.getMailboxId() + ":" + nonce + ":" + nonce_count + ":" + meshConfig.getMailboxPassword() + ":" + timeStamp;
+        final String hmac_msg = this.mailboxId + ":" + nonce + ":" + nonce_count + ":" + this.mailboxPassword + ":" + timeStamp;
         final String hmac = calculateHMAC(hmac_msg, env_shared);
-        final String token = AUTHSCHEMANAME + " " + meshConfig.getMailboxId() + ":" + nonce + ":" + nonce_count + ":" + timeStamp + ":" + hmac;
+        final String token = AUTHSCHEMANAME + " " + this.mailboxId + ":" + nonce + ":" + nonce_count + ":" + timeStamp + ":" + hmac;
         return token;
     }
 

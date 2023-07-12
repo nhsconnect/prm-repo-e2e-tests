@@ -1,18 +1,23 @@
 package uk.nhs.prm.e2etests.mesh;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.Gson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deduction.e2e.mesh.auth.AuthTokenGenerator;
-import uk.nhs.prm.deduction.e2e.client.StackOverflowInsecureSSLContextLoader;
-import uk.nhs.prm.deduction.e2e.nems.NemsEventMessage;
 import uk.nhs.prm.e2etests.client.StackOverflowInsecureSSLContextLoader;
+import uk.nhs.prm.e2etests.configuration.MeshConfiguration;
+import uk.nhs.prm.e2etests.model.NemsEventMessage;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+
+import static uk.nhs.prm.e2etests.configuration.MeshConfiguration.Type.CLIENT_CERT;
+import static uk.nhs.prm.e2etests.configuration.MeshConfiguration.Type.CLIENT_KEY;
 
 /**
  * The MeshClient provides an API which allows developers to interact with
@@ -21,62 +26,52 @@ import java.net.http.HttpResponse;
  */
 @Component
 public class MeshClient {
+    private final Logger LOGGER = LogManager.getLogger(MeshClient.class);
     private final StackOverflowInsecureSSLContextLoader contextLoader;
-    private final MeshConfig meshConfig;
+    private final MeshConfiguration meshConfiguration;
+    private final Gson gson;
 
     @Autowired
     public MeshClient(
         StackOverflowInsecureSSLContextLoader contextLoader,
-        MeshConfig meshConfig
+        MeshConfiguration meshConfiguration,
+        Gson gson
     ) {
         this.contextLoader = contextLoader;
-        this.meshConfig = meshConfig;
+        this.meshConfiguration = meshConfiguration;
+        this.gson = gson;
     }
 
-    public String postMessage(String mailboxServiceUri, NemsEventMessage message) {
-        try {
-            HttpRequest.BodyPublisher messageBody = HttpRequest.BodyPublishers.ofString(message.body());
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URL(mailboxServiceUri).toURI())
-                    .method("POST", messageBody)
-                    .header("Authorization", authTokenGenerator.getAuthorizationToken())
-                    .header("Content-Type", "application/octet-stream")
-                    .header("Mex-LocalID", "Test")
-                    .header("Mex-To", meshConfig.getMailboxId())
-                    .header("Mex-From", meshConfig.getMailboxId())
-                    .header("Mex-WorkflowID", "API-DOCS-TEST")
-                    .build();
+    public String sendMessage(String mailboxServiceUri, NemsEventMessage message) throws IOException, InterruptedException, URISyntaxException {
+        final HttpRequest.BodyPublisher messageBody = HttpRequest
+                .BodyPublishers
+                .ofString(message.getMessage());
 
-            HttpResponse<String> response = HttpClient.newBuilder()
-                    .sslContext(contextLoader.getClientAuthSslContext(meshConfig.getClientCert(), meshConfig.getClientKey()))
-                    .build()
-                    .send(request, HttpResponse.BodyHandlers.ofString());
+        final HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URL(mailboxServiceUri).toURI())
+                .method("POST", messageBody)
+                .header("Authorization", authTokenGenerator.getAuthorizationToken())
+                .header("Content-Type", "application/octet-stream")
+                .header("Mex-LocalID", "Test")
+                .header("Mex-To", meshConfig.getMailboxId())
+                .header("Mex-From", meshConfig.getMailboxId())
+                .header("Mex-WorkflowID", "API-DOCS-TEST")
+                .build();
 
+        final HttpResponse<String> response = HttpClient.newBuilder()
+                .sslContext(contextLoader.getClientAuthSslContext(
+                        meshConfiguration.getValue(CLIENT_CERT),
+                        meshConfiguration.getValue(CLIENT_KEY))
+                )
+                .build()
+                .send(request, HttpResponse.BodyHandlers.ofString());
 
-            return getMessageIdFromMessage(response.body());
-        }
-        catch (Exception e) {
-            log("Exception posting message on mailbox %s", e.getMessage());
-            return null;
-        }
+        return getMessageIdFromMessage(response.body());
     }
 
-    private String getMessageIdFromMessage(String responseBody) {
-        String key = "messageID";
-        Object value = getJsonValue(responseBody, key);
-        return String.valueOf(value);
-    }
-
-    private Object getJsonValue(String json, String key) {
-        try {
-            return new JSONObject(json).get(key);
-        }
-        catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void log(String messageBody, String messageValue) {
-        System.out.println(String.format(messageBody, messageValue));
+    private String getMessageIdFromMessage(String response) {
+        return gson
+                .fromJson(response, NemsEventMessage.class)
+                .getMessage();
     }
 }

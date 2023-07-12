@@ -129,7 +129,7 @@ public class PerformanceTest {
 
         listener.onStartingTestItem(testEvent);
 
-        String meshMessageId = meshMailbox.postMessage(nemsSuspension, false);
+        String meshMessageId = meshMailbox.postMessage(nemsSuspension);
 
         testEvent.started(meshMessageId);
 
