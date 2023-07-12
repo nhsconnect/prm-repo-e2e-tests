@@ -12,7 +12,7 @@ import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.deduction.e2e.models.*;
 import uk.nhs.prm.e2etests.nems.MeshForwarderQueue;
-import uk.nhs.prm.e2etests.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import uk.nhs.prm.e2etests.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
