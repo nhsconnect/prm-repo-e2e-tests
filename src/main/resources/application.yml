@@ -14,3 +14,7 @@ aws:
 
 nhs:
   environment: ${NHS_ENVIRONMENT}
+
+spring:
+  main:
+    web-application-type: none
