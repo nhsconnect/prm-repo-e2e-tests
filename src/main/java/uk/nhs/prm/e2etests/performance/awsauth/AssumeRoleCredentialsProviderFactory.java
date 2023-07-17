@@ -1,17 +1,16 @@
-package uk.nhs.prm.deduction.e2e.performance.awsauth;
+package uk.nhs.prm.e2etests.performance.awsauth;
 
-import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.services.sts.StsClient;
-import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 import software.amazon.awssdk.services.sts.model.AssumeRoleResponse;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import uk.nhs.prm.e2etests.configuration.BootstrapConfiguration;
 import software.amazon.awssdk.services.sts.model.Credentials;
-import uk.nhs.prm.deduction.e2e.config.BootstrapConfiguration;
+import software.amazon.awssdk.services.sts.StsClient;
+import org.springframework.stereotype.Component;
 
 import static software.amazon.awssdk.regions.Region.EU_WEST_2;
-
 
 @Component
 public class AssumeRoleCredentialsProviderFactory {
@@ -37,5 +36,4 @@ public class AssumeRoleCredentialsProviderFactory {
 
         return StaticCredentialsProvider.create(AwsSessionCredentials.create(creds.accessKeyId(), creds.secretAccessKey(), creds.sessionToken()));
     }
-
 }

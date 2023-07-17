@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.tests;
+package uk.nhs.prm.e2etests.enumeration;
 
 public enum LargeEhrVariant {
     SINGLE_LARGE_FRAGMENT(Patient.WITH_SINGLE_FRAGMENT_LARGE_EHR, 2),

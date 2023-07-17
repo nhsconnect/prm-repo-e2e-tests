@@ -1,15 +1,15 @@
 package uk.nhs.prm.e2etests.mesh;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.configuration.MeshConfiguration;
 import uk.nhs.prm.e2etests.exception.MeshMailboxException;
 import uk.nhs.prm.e2etests.model.NemsEventMessage;
+import org.springframework.stereotype.Component;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
+import java.io.IOException;
 
 @Component
 public class MeshMailbox {

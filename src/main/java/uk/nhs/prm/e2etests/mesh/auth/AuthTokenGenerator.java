@@ -36,21 +36,24 @@ public class AuthTokenGenerator {
         return formatter.toString();
     }
 
-    private String calculateHMAC(String data, String key) throws NoSuchAlgorithmException, InvalidKeyException {
-       SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(), HMAC_SHA216);
+    private String calculateHMAC(String data) throws NoSuchAlgorithmException, InvalidKeyException {
+       SecretKeySpec secretKeySpec = new SecretKeySpec(AuthTokenGenerator.env_shared.getBytes(), HMAC_SHA216);
         Mac mac = Mac.getInstance(HMAC_SHA216);
         mac.init(secretKeySpec);
         return toHexString(mac.doFinal(data.getBytes()));
     }
 
-    public String getAuthorizationToken() throws Exception {
-        final String timeStamp = new SimpleDateFormat("YmdHMS").format(Calendar.getInstance().getTime());
-        final String nonce = generateNonce();
-        final String nonce_count = "0";
-        final String hmac_msg = this.mailboxId + ":" + nonce + ":" + nonce_count + ":" + this.mailboxPassword + ":" + timeStamp;
-        final String hmac = calculateHMAC(hmac_msg, env_shared);
-        final String token = AUTHSCHEMANAME + " " + this.mailboxId + ":" + nonce + ":" + nonce_count + ":" + timeStamp + ":" + hmac;
-        return token;
+    public String getAuthorizationToken() {
+        try {
+            final String timeStamp = new SimpleDateFormat("yMdHms").format(Calendar.getInstance().getTime());
+            final String nonce = generateNonce();
+            final String nonce_count = "0";
+            final String hmac_msg = this.mailboxId + ":" + nonce + ":" + nonce_count + ":" + this.mailboxPassword + ":" + timeStamp;
+            final String hmac = calculateHMAC(hmac_msg);
+            return AUTHSCHEMANAME + " " + this.mailboxId + ":" + nonce + ":" + nonce_count + ":" + timeStamp + ":" + hmac;
+        } catch (NoSuchAlgorithmException | InvalidKeyException exception) {
+            throw new AuthorizationTokenException(exception.getMessage());
+        }
     }
 
     private String generateNonce() {

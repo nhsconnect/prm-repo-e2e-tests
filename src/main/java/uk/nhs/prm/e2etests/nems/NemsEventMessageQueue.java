@@ -12,19 +12,20 @@ import static org.hamcrest.Matchers.equalTo;
 
 @Component
 public class NemsEventMessageQueue {
-
+    private final Logger LOGGER = LogManager.getLogger(NemsEventMessage.class);
     private final ThinlyWrappedSqsClient thinlyWrappedSqsClient;
     private final String queueUri;
 
+    @Autowired
     public NemsEventMessageQueue(ThinlyWrappedSqsClient thinlyWrappedSqsClient, String queueUri) {
         this.thinlyWrappedSqsClient = thinlyWrappedSqsClient;
         this.queueUri = queueUri;
     }
 
     public boolean hasMessage(String messageBodyToCheck) {
-        log(String.format("Checking if message is present on : %s",  this.queueUri));
+        LOGGER.info("Checking if message is present on: {}",  this.queueUri);
         await().atMost(120, TimeUnit.SECONDS).with().pollInterval(2, TimeUnit.SECONDS).until(() -> messageIsOnQueue(messageBodyToCheck), equalTo(true));
-        log("Message is present on queue");
+        LOGGER.info("The message is present on the queue.");
         return true;
     }
 
@@ -32,11 +33,7 @@ public class NemsEventMessageQueue {
         List<SqsMessage> allMessages = thinlyWrappedSqsClient.readMessagesFrom(this.queueUri);
         if (!allMessages.isEmpty()) {
             for (var message : allMessages) {
-                if (message.contains(messageBodyToCheck)) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return message.contains(messageBodyToCheck);
             }
         } 
         return false;
@@ -44,9 +41,5 @@ public class NemsEventMessageQueue {
 
     public void deleteAllMessages() {
         thinlyWrappedSqsClient.deleteAllMessages(queueUri);
-    }
-
-    public void log(String messageBody) {
-        System.out.println(messageBody);
     }
 }

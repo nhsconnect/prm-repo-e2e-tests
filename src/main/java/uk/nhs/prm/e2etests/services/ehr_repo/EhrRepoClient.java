@@ -17,7 +17,6 @@ import java.util.UUID;
 
 @Component
 public class EhrRepoClient {
-
     private final String apiKey;
     private final String rootUrl;
     private final RestTemplate restTemplate = new RestTemplate();

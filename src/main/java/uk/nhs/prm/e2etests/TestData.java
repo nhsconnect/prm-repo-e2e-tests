@@ -6,7 +6,6 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 public class TestData {
-
     public static List<String> dev() {
         return asList(
                 "9693797426",

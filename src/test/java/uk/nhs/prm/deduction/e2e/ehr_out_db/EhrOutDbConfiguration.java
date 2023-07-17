@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import uk.nhs.prm.e2etests.client.RoleAssumingAwsConfigurationClient;
+import uk.nhs.prm.e2etests.services.SsmService;
 
 import javax.sql.DataSource;
 import java.util.Map;
@@ -18,7 +18,7 @@ import java.util.Map;
 public class EhrOutDbConfiguration {
     @Value("${NHS_ENVIRONMENT}")
     private final String environment;
-    private final RoleAssumingAwsConfigurationClient roleAssumingAwsConfigurationClient;
+    private final SsmService ssmService;
     private final Map<String, String> parameters = Map.of(
         "DATABASE_HOST", getAwsParameterStoreValue("/repo/%s/output/prm-repo-ehr-out-service/db-host"),
         "DATABASE_NAME", getAwsParameterStoreValue("/repo/%s/output/prm-repo-ehr-out-service/db-name"),
@@ -44,7 +44,7 @@ public class EhrOutDbConfiguration {
 
     private String getAwsParameterStoreValue(String parameterName) {
         try {
-            return roleAssumingAwsConfigurationClient.getSsmParameterValue(String.format(parameterName, environment));
+            return ssmService.getSsmParameterValue(String.format(parameterName, environment));
         } catch (NullPointerException exception) {
             log.error(exception.getMessage());
             throw exception;

@@ -1,7 +1,7 @@
 package uk.nhs.prm.deduction.e2e.models;
 
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.tests.Patient;
+import uk.nhs.prm.e2etests.TestConfiguration;
+import uk.nhs.prm.e2etests.enumeration.Patient;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
