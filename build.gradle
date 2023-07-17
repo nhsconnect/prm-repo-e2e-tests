@@ -28,6 +28,7 @@ ext {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-integration'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -50,6 +51,8 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
+    implementation 'org.json:json:20230618'
+    implementation 'com.swiftmq:swiftmq-client:12.5.4'
 
     compileOnly 'org.projectlombok:lombok'
 
@@ -63,6 +66,7 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'org.springframework.integration:spring-integration-test'
     testImplementation 'org.xmlunit:xmlunit-core:2.9.1'
     testImplementation 'org.xmlunit:xmlunit-matchers:2.9.1'

@@ -1,8 +1,12 @@
 package uk.nhs.prm.e2etests.nems;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
-import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
+import uk.nhs.prm.e2etests.model.NemsEventMessage;
+import uk.nhs.prm.e2etests.queue.SqsMessage;
+import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

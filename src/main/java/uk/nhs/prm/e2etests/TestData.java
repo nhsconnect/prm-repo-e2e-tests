@@ -69,7 +69,7 @@ public class TestData {
     }
 
     public static String generateRandomNhsNumber() {
-        var randonSevenDigitNumber = (long) Math.floor(Math.random() * 9_000_000L) + 1_000_000L;
+        var randonSevenDigitNumber = (long) Math.floor(Math.random() * 9_000_000L) + 1_000_000L; // TODO PRMT-3488 RENAME THIS MISSPELLING
         return "969" + randonSevenDigitNumber;
     }
 }
