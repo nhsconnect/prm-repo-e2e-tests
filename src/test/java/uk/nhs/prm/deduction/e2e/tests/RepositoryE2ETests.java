@@ -29,9 +29,9 @@ import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNot
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
-import uk.nhs.prm.deduction.e2e.utility.LargeEhrTestFiles;
-import uk.nhs.prm.deduction.e2e.utility.Resources;
-import uk.nhs.prm.deduction.e2e.utility.TestUtils;
+import uk.nhs.prm.e2etests.utility.LargeEhrTestFiles;
+import uk.nhs.prm.e2etests.utility.Resources;
+import uk.nhs.prm.e2etests.utility.TestUtils;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -45,7 +45,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
-import static uk.nhs.prm.deduction.e2e.utility.TestUtils.*;
+import static uk.nhs.prm.e2etests.utility.TestUtils.*;
 
 @SpringBootTest(classes = {
         RepositoryE2ETests.class,

@@ -12,7 +12,7 @@ import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
-import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
+import uk.nhs.prm.e2etests.services.ehr_repo.EhrRepoClient;
 
 import java.util.concurrent.TimeUnit;
 

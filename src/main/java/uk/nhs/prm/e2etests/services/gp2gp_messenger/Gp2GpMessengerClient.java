@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.services.gp2gp_messenger;
+package uk.nhs.prm.e2etests.services.gp2gp_messenger;
 
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;

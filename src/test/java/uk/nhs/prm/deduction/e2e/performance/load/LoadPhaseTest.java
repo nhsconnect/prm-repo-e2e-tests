@@ -1,12 +1,11 @@
 package uk.nhs.prm.deduction.e2e.performance.load;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.prm.deduction.e2e.timing.Sleeper;
-import uk.nhs.prm.deduction.e2e.timing.Timer;
+import uk.nhs.prm.e2etests.timing.Sleeper;
+import uk.nhs.prm.e2etests.timing.Timer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyInt;
