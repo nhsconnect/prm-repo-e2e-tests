@@ -1,11 +1,11 @@
 package uk.nhs.prm.e2etests.client;
 
 import lombok.AllArgsConstructor;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.ssm.SsmClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 
