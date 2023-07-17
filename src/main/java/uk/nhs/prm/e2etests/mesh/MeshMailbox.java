@@ -22,7 +22,7 @@ public class MeshMailbox {
         MeshConfiguration meshConfiguration,
         MeshClient meshClient
     ) {
-        this.meshConfig = meshConfig;
+        this.meshConfiguration = meshConfiguration;
         this.meshClient = meshClient;
     }
 

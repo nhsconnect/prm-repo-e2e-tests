@@ -8,8 +8,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
-import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNhsNumber;
+import uk.nhs.prm.e2etests.nhs.NhsIdentityGenerator;
+
 
 public class NemsEventFactory {
 

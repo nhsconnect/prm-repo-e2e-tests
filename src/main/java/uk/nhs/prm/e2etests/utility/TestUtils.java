@@ -9,6 +9,7 @@ import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbMessage;
+import uk.nhs.prm.e2etests.nhs.NhsIdentityGenerator;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
 
 public final class TestUtils {
     private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);

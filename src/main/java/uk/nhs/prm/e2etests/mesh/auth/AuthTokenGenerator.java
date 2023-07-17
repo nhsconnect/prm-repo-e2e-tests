@@ -1,6 +1,9 @@
 package uk.nhs.prm.e2etests.mesh.auth;
 
-import uk.nhs.prm.e2etests.mesh.MeshConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import uk.nhs.prm.e2etests.configuration.MeshConfiguration;
+import uk.nhs.prm.e2etests.exception.AuthorizationTokenException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
