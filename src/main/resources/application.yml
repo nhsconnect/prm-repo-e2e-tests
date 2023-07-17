@@ -14,6 +14,12 @@ aws:
 
 nhs:
   environment: ${NHS_ENVIRONMENT}
+  gp2gp:
+    odsCodes:
+      tppPtlInt: M85019
+      emisPtlInt: N82668
+      repoDev: B85002
+      repoTest: B86041
 
 spring:
   main:
