@@ -11,6 +11,15 @@ aws:
           clientCert: /repo/${NHS_ENVIRONMENT}/user-input/external/mesh-mailbox-client-cert
           clientKey: /repo/${NHS_ENVIRONMENT}/user-input/external/mesh-mailbox-client-key
           mailboxPassword: /repo/${NHS_ENVIRONMENT}/user-input/external/mesh-mailbox-password
+        pdsAdaptor:
+          performanceApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/pds-adaptor/performance-test
+          liveTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/pds-adaptor/live-test
+          e2eTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/pds-adaptor/e2e-test
+        gp2gpMessenger:
+          liveTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/gp2gp-messenger/live-test
+        ehrRepository:
+          liveTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/ehr-repo/live-test
+          e2eTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/ehr-repo/e2e-test
 
 nhs:
   environment: ${NHS_ENVIRONMENT}

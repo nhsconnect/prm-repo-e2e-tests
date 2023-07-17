@@ -31,6 +31,7 @@ import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNot
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.e2etests.configuration.Gp2gpMessengerConfiguration;
 import uk.nhs.prm.e2etests.utility.LargeEhrTestFiles;
 import uk.nhs.prm.e2etests.utility.Resources;
 import uk.nhs.prm.e2etests.utility.TestUtils;
@@ -86,7 +87,8 @@ public class RepositoryE2ETests {
     private final EhrInUnhandledQueue ehrInUnhandledQueue;
     private final NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
     private final Gp2gpMessengerQueue gp2gpMessengerQueue;
-    private final TestConfiguration config;
+    private final TestConfiguration testConfiguration;
+    private final Gp2gpMessengerConfiguration gp2GpMessengerConfiguration;
 
     @Autowired
     public RepositoryE2ETests(
@@ -483,11 +485,8 @@ public class RepositoryE2ETests {
     }
 
     private static Stream<Arguments> foundationSupplierSystemsWithoutEmisWhichIsCurrentlyHavingIssues() {
-        return Stream.of(Arguments.of(Gp2GpSystem.TPP_PTL_INT));
-    }
+        return Stream.of(Arguments.of(gp2GpMessengerConfiguration.getTppPtlIntOdsCode()));
 
-    private static Stream<Arguments> foundationSupplierSystems() {
-        return Gp2GpSystem.foundationSupplierSystems();
     }
 
     private void setManagingOrganisationToRepo(String nhsNumber) {

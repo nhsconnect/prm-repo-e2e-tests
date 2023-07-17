@@ -6,9 +6,9 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
-import uk.nhs.prm.deduction.e2e.queue.BasicSqsClient;
-import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
-import uk.nhs.prm.deduction.e2e.queue.TestSqsClient;
+import uk.nhs.prm.e2etests.queue.BasicSqsClient;
+import uk.nhs.prm.e2etests.queue.SqsMessage;
+import uk.nhs.prm.e2etests.queue.TestSqsClient;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
