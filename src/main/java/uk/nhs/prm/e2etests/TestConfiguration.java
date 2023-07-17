@@ -1,10 +1,12 @@
 package uk.nhs.prm.e2etests;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.utils.ImmutableMap;
 import uk.nhs.prm.e2etests.configuration.BootstrapConfiguration;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadSpecParser;
+import uk.nhs.prm.e2etests.services.SsmService;
 
 import java.util.List;
 
@@ -42,60 +44,61 @@ public class TestConfiguration {
         return "9692295400";
     }
 
-    private final AwsConfigurationClient awsConfigurationClient;
+    private final SsmService ssmService;
 
     private volatile String cachedAwsAccountNo;
 
-    public TestConfiguration() {
-        this.awsConfigurationClient = createAwsConfigurationClient();
+    @Autowired
+    public TestConfiguration(SsmService ssmService) {
+        this.ssmService = ssmService;
     }
 
     public String getMeshMailBoxID() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-id", getEnvironmentName()));
+        return ssmService.getSsmParameterValue(String.format("/repo/%s/user-input/external/mesh-mailbox-id", getEnvironmentName()));
     }
 
     public String getMeshMailBoxClientCert() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-client-cert", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-client-cert", getEnvironmentName()));
     }
 
     public String getMeshMailBoxClientKey() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-client-key", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-client-key", getEnvironmentName()));
     }
 
     public String getMeshMailBoxPassword() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-password", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-password", getEnvironmentName()));
     }
 
     public String getPdsAdaptorPerformanceApiKey() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/performance-test", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/performance-test", getEnvironmentName()));
     }
 
     public String getPdsAdaptorLiveTestApiKey() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/live-test", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/live-test", getEnvironmentName()));
     }
 
     public String getPdsAdaptorE2ETestApiKey() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/e2e-test", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/e2e-test", getEnvironmentName()));
     }
 
     public String getGp2GpMessengerApiKey() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/gp2gp-messenger/live-test", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/gp2gp-messenger/live-test", getEnvironmentName()));
     }
 
     public String getEhrRepoApiKey() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/live-test", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/live-test", getEnvironmentName()));
     }
 
     public String getEhrRepoE2EApiKey() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/e2e-test", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/e2e-test", getEnvironmentName()));
     }
 
     public String getRepoOdsCode() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/repository-ods-code", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/repository-ods-code", getEnvironmentName()));
     }
 
     public String getRepoAsid() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/repository-asid", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/repository-asid", getEnvironmentName()));
     }
 
     public String meshForwarderObservabilityQueueUri() {
@@ -159,7 +162,7 @@ public class TestConfiguration {
     }
 
     public String getSafeListedPatientList() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/external/safe-listed-patients-nhs-numbers", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/safe-listed-patients-nhs-numbers", getEnvironmentName()));
     }
 
     private String getQueueUri(String name) {
@@ -233,10 +236,6 @@ public class TestConfiguration {
         return value;
     }
 
-    private AwsConfigurationClient createAwsConfigurationClient() {
-        return new RoleAssumingAwsConfigurationClient(new AssumeRoleCredentialsProviderFactory());
-    }
-
     private String getEnvSuffix() {
         return getEnvironmentName().equals("prod") ? "prod" : String.format("%s.non-prod", getEnvironmentName());
     }
@@ -271,11 +270,11 @@ public class TestConfiguration {
     public String gp2gpMessengerQueueUri() { return getQueueUri("hl7-message-sent-observability"); }
 
     public String getMqUserName() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-username", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/mq-app-username", getEnvironmentName()));
     }
 
     public String getMqPassword() {
-        return awsConfigurationClient.getParamValue(String.format("/repo/%s/user-input/mq-app-password", getEnvironmentName()));
+        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/mq-app-password", getEnvironmentName()));
     }
 
     public String fragmentQueueUri() {
