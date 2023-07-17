@@ -3,7 +3,7 @@ package uk.nhs.prm.deduction.e2e.live_technical_test.repo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 

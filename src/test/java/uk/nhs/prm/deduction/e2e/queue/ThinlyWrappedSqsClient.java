@@ -2,7 +2,7 @@ package uk.nhs.prm.deduction.e2e.queue;
 
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.model.Message;
-import uk.nhs.prm.deduction.e2e.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import java.util.List;
 
 @Component

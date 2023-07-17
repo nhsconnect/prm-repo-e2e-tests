@@ -8,7 +8,7 @@ import com.swiftmq.amqp.v100.messaging.AMQPMessage;
 import com.swiftmq.amqp.v100.types.AMQPString;
 import com.swiftmq.amqp.v100.types.AMQPType;
 import com.swiftmq.net.JSSESocketFactory;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.e2etests.TestConfiguration;
 
 import java.io.IOException;
 import java.util.HashMap;

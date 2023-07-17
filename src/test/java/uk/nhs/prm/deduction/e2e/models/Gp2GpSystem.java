@@ -1,7 +1,7 @@
 package uk.nhs.prm.deduction.e2e.models;
 
 import org.junit.jupiter.params.provider.Arguments;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.e2etests.TestConfiguration;
 
 import java.util.stream.Stream;
 

@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.performance.awsauth;
+package uk.nhs.prm.e2etests.performance.awsauth;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.Scheduled;

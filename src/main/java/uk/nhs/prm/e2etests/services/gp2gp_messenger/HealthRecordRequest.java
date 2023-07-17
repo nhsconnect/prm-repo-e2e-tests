@@ -12,5 +12,4 @@ public class HealthRecordRequest {
     String repositoryAsid;
     String practiceOdsCode;
     String conversationId;
-
 }

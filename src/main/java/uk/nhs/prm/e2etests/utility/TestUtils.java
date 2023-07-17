@@ -24,12 +24,7 @@ public final class TestUtils {
             Pattern.compile("^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$");
 
     public static boolean isValidUUID(String uuid) {
-        try {
-            return UUID_REGEX_PATTERN.matcher(uuid).matches();
-        } catch (IllegalArgumentException exception) {
-            LOGGER.error("Exception occurred while testing UUID validity: {}", exception.getMessage());
-            return false;
-        }
+        return UUID_REGEX_PATTERN.matcher(uuid).matches();
     }
 
     public static String getSmallEhrWithoutLinebreaks(String newConversationId, String newMessageId) {

@@ -1,11 +1,8 @@
-package uk.nhs.prm.deduction.e2e;
+package uk.nhs.prm.e2etests;
 
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.utils.ImmutableMap;
-import uk.nhs.prm.e2etests.TestData;
-import uk.nhs.prm.e2etests.client.RoleAssumingAwsConfigurationClient;
-import uk.nhs.prm.deduction.e2e.config.BootstrapConfiguration;
-import uk.nhs.prm.deduction.e2e.performance.awsauth.AssumeRoleCredentialsProviderFactory;
+import uk.nhs.prm.e2etests.configuration.BootstrapConfiguration;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadSpecParser;
 

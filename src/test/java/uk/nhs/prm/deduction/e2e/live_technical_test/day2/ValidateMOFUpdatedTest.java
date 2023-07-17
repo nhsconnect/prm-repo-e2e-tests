@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import uk.nhs.prm.deduction.e2e.TestConfiguration;
+import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.deduction.e2e.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.services.gp2gp_messenger.Gp2GpMessengerClient;
