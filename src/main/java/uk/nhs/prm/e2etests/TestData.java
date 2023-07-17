@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e;
+package uk.nhs.prm.e2etests;
 
 import java.util.ArrayList;
 import java.util.List;

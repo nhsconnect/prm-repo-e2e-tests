@@ -4,7 +4,7 @@ import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
 import uk.nhs.prm.deduction.e2e.performance.load.Phased;
 import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
-import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
+import uk.nhs.prm.e2etests.utility.NemsEventFactory;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

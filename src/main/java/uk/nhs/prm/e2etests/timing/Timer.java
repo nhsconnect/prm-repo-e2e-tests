@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.timing;
+package uk.nhs.prm.e2etests.timing;
 
 public class Timer {
     public long milliseconds() {

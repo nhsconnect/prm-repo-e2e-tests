@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.utility;
+package uk.nhs.prm.e2etests.utility;
 
 import org.json.JSONException;
 import org.json.JSONObject;

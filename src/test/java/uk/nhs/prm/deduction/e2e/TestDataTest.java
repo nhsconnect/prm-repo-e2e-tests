@@ -1,6 +1,7 @@
 package uk.nhs.prm.deduction.e2e;
 
 import org.junit.jupiter.api.Test;
+import uk.nhs.prm.e2etests.TestData;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

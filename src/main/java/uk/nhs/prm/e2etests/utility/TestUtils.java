@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.utility;
+package uk.nhs.prm.e2etests.utility;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,7 +81,7 @@ public final class TestUtils {
         trackerDb.save(new TransferTrackerDbMessage(
                 inboundConversationId,
                 largeEhrCoreMessageId,
-                randomNemsMessageId(),
+                NhsIdentityGenerator.randomNemsMessageId(),
                 nhsNumberForTestPatient,
                 previousGpForTestPatient,
                 state,

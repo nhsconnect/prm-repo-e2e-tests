@@ -20,7 +20,7 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.suspensions.MofUpdatedMessageQueue;
-import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
+import uk.nhs.prm.e2etests.utility.QueueHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -23,10 +23,10 @@ import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNot
 import uk.nhs.prm.deduction.e2e.reregistration.ReRegistrationMessageObservabilityQueue;
 import uk.nhs.prm.deduction.e2e.reregistration.active_suspensions_db.ActiveSuspensionsDbClient;
 import uk.nhs.prm.deduction.e2e.reregistration.models.ActiveSuspensionsMessage;
-import uk.nhs.prm.deduction.e2e.services.ehr_repo.EhrRepoClient;
+import uk.nhs.prm.e2etests.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.deduction.e2e.suspensions.*;
-import uk.nhs.prm.deduction.e2e.utility.NemsEventFactory;
-import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
+import uk.nhs.prm.e2etests.utility.NemsEventFactory;
+import uk.nhs.prm.e2etests.utility.QueueHelper;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -38,7 +38,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.*;
-import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventFromTemplate;
+import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
 
 @SpringBootTest(classes = {
         ContinuityE2E.class,

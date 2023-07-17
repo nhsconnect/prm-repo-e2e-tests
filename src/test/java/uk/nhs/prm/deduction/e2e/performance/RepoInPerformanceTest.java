@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import uk.nhs.prm.deduction.e2e.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.TestData;
+import uk.nhs.prm.e2etests.TestData;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.deduction.e2e.ehr_transfer.TransferCompleteQueue;
 import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
@@ -20,10 +20,10 @@ import uk.nhs.prm.deduction.e2e.queue.SqsMessage;
 import uk.nhs.prm.deduction.e2e.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.deduction.e2e.queue.activemq.SimpleAmqpQueue;
-import uk.nhs.prm.deduction.e2e.timing.Sleeper;
+import uk.nhs.prm.e2etests.timing.Sleeper;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.deduction.e2e.transfer_tracker_db.TransferTrackerDbClient;
-import uk.nhs.prm.deduction.e2e.utility.Resources;
+import uk.nhs.prm.e2etests.utility.Resources;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -136,19 +136,32 @@ public class RepoInPerformanceTest {
             var inboundQueueFromMhs = new SimpleAmqpQueue(config);
             var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
             var counter = new AtomicInteger(0);
+            String smallEhr;
 
-            messagesToBeProcessed.parallelStream().forEach(message -> {
+            for (int i = 0; i < messagesToBeProcessed.size(); i++) {
                 counter.updateAndGet(v -> v + 1);
-                String conversationId = message.getMessage().conversationId();
+                String conversationId = messagesToBeProcessed.get(i).getMessage().conversationId();
 
-                String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
-                message.start();
+                smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
+                messagesToBeProcessed.get(i).start();
 
                 System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
 
                 sleeper.sleep(intervalBetweenMessagesSentToMq);
-            });
+            }
+//            messagesToBeProcessed.forEach(message -> {
+//                counter.updateAndGet(v -> v + 1);
+//                String conversationId = message.getMessage().conversationId();
+//
+//                smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
+//                message.start();
+//
+//                System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
+//                inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
+//
+//                sleeper.sleep(intervalBetweenMessagesSentToMq);
+//            });
 //            for (RepoInPerfMessageWrapper message : messagesToBeProcessed) {
 //                counter.updateAndGet(v -> v + 1);
 //                String conversationId = message.getMessage().conversationId();

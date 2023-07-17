@@ -1,7 +1,7 @@
 package uk.nhs.prm.deduction.e2e.performance.load;
 
-import uk.nhs.prm.deduction.e2e.timing.Sleeper;
-import uk.nhs.prm.deduction.e2e.timing.Timer;
+import uk.nhs.prm.e2etests.timing.Sleeper;
+import uk.nhs.prm.e2etests.timing.Timer;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

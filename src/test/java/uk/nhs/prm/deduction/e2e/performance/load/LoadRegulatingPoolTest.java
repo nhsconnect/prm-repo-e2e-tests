@@ -6,8 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.prm.deduction.e2e.performance.RoundRobinPool;
-import uk.nhs.prm.deduction.e2e.timing.Sleeper;
-import uk.nhs.prm.deduction.e2e.timing.Timer;
+import uk.nhs.prm.e2etests.timing.Sleeper;
+import uk.nhs.prm.e2etests.timing.Timer;
 
 import java.util.List;
 

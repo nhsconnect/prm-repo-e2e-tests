@@ -3,7 +3,7 @@ package uk.nhs.prm.deduction.e2e.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import uk.nhs.prm.deduction.e2e.models.ResolutionMessage;
-import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
+import uk.nhs.prm.e2etests.utility.QueueHelper;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;

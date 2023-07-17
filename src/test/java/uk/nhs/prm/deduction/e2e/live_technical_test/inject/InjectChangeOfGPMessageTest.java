@@ -18,7 +18,7 @@ import static java.time.ZonedDateTime.now;
 import static uk.nhs.prm.deduction.e2e.live_technical_test.TestParameters.outputTestParameter;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.generateRandomOdsCode;
 import static uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator.randomNemsMessageId;
-import static uk.nhs.prm.deduction.e2e.utility.NemsEventFactory.createNemsEventFromTemplate;
+import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
 
 @SpringBootTest(classes = {
         MeshMailbox.class,

@@ -1,4 +1,4 @@
-package uk.nhs.prm.deduction.e2e.services.ehr_repo;
+package uk.nhs.prm.e2etests.services.ehr_repo;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

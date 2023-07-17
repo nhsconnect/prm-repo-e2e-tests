@@ -2,7 +2,7 @@ package uk.nhs.prm.deduction.e2e.performance.load;
 
 import uk.nhs.prm.deduction.e2e.nhs.NhsIdentityGenerator;
 import uk.nhs.prm.deduction.e2e.performance.NemsTestEvent;
-import uk.nhs.prm.deduction.e2e.utility.QueueHelper;
+import uk.nhs.prm.e2etests.utility.QueueHelper;
 
 public class SuspensionCreatorPool implements Pool<NemsTestEvent> {
     private final Pool<String> nhsNumberPool;
