@@ -1,6 +1,7 @@
 package uk.nhs.prm.e2etests.services.ehr_repo;
 
 import com.google.gson.Gson;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -8,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.e2etests.configuration.EhrRepositoryPropertySource;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -17,20 +19,23 @@ import java.util.UUID;
 
 @Component
 public class EhrRepoClient {
-    private final String apiKey;
-    private final String rootUrl;
+    private final String ehrRepositoryApiKey;
+    private final String ehrRepositoryUri;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public EhrRepoClient(String apiKey, String rootUrl) {
-        this.apiKey = apiKey;
-        this.rootUrl = rootUrl;
+    @Autowired
+    public EhrRepoClient(
+            EhrRepositoryPropertySource ehrRepositoryPropertySource
+    ) {
+        this.ehrRepositoryApiKey = ehrRepositoryPropertySource.getE2eTestApiKey();
+        this.ehrRepositoryUri = ehrRepositoryPropertySource.getEhrRepositoryUrl();
     }
 
     public boolean isPatientHealthRecordStatusComplete(String nhsNumber, String conversationId) {
-        var ehrHealthRecordUrl = buildUrl(rootUrl, nhsNumber, conversationId);
+        var ehrHealthRecordUrl = buildUrl(ehrRepositoryUri, nhsNumber, conversationId);
         try {
             System.out.printf("Sending ehr status request to ehr repor: %s%n", ehrHealthRecordUrl);
-            var exchange = restTemplate.exchange(ehrHealthRecordUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(apiKey)), String.class);
+            var exchange = restTemplate.exchange(ehrHealthRecordUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(ehrRepositoryApiKey)), String.class);
             System.out.println("Ehr request successfully stored in ehr repo");
             return exchange.getStatusCode().is2xxSuccessful();
         } catch (HttpStatusCodeException e) {
@@ -47,14 +52,14 @@ public class EhrRepoClient {
 
         var jsonPayloadString = new Gson().toJson(new StoreMessageRequestBody(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds));
 
-         restTemplate.exchange(new URL(rootUrl + "messages").toURI(), HttpMethod.POST,
-                 new HttpEntity<>(jsonPayloadString, createHeaders(apiKey)), String.class);
+         restTemplate.exchange(new URL(ehrRepositoryUri + "messages").toURI(), HttpMethod.POST,
+                 new HttpEntity<>(jsonPayloadString, createHeaders(ehrRepositoryApiKey)), String.class);
 
     }
 
     public String getEhrResponse(String nhsNumber) throws MalformedURLException, URISyntaxException {
-        return restTemplate.exchange(new URL(rootUrl + "patients/" + nhsNumber).toURI(), HttpMethod.GET,
-                new HttpEntity<>(createHeaders(apiKey)), String.class).getStatusCode().toString();
+        return restTemplate.exchange(new URL(ehrRepositoryUri + "patients/" + nhsNumber).toURI(), HttpMethod.GET,
+                new HttpEntity<>(createHeaders(ehrRepositoryApiKey)), String.class).getStatusCode().toString();
     }
 
     private String buildUrl(String baseUrl, String nhsNumber, String conversationId) {

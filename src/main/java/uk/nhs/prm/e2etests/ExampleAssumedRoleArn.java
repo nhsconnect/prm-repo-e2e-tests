@@ -1,23 +1,20 @@
 package uk.nhs.prm.e2etests;
 
+// TODO: PRMT-3488 Example? What does that mean!?
 public class ExampleAssumedRoleArn {
-    private String exampleArn;
+    private final String awsArn;
 
-    public static ExampleAssumedRoleArn parse(String exampleArn) {
-        return new ExampleAssumedRoleArn(exampleArn);
+    public ExampleAssumedRoleArn(String awsArn) {
+        this.awsArn = awsArn;
     }
 
-    public ExampleAssumedRoleArn(String exampleArn) {
-        this.exampleArn = exampleArn;
-    }
-
-    public String assumeRoleTargetArn() {
-        String role = exampleArn.replace("assumed-role", "role");
+    public String getTargetArn() {
+        String role = awsArn.replace("assumed-role", "role");
         return role.substring(0, role.lastIndexOf("/"));
     }
 
-    public String accountNo() {
-        String accountAndRoleId = exampleArn.replace("arn:aws:sts::", "");
+    public String getAccountNo() {
+        String accountAndRoleId = awsArn.replace("arn:aws:sts::", "");
         return accountAndRoleId.split(":")[0];
     }
 }

@@ -1,7 +1,7 @@
 package uk.nhs.prm.e2etests.mesh;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.nhs.prm.e2etests.configuration.MeshConfiguration;
+import uk.nhs.prm.e2etests.configuration.MeshPropertySource;
 import uk.nhs.prm.e2etests.exception.MeshMailboxException;
 import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import org.springframework.stereotype.Component;
@@ -13,16 +13,16 @@ import java.io.IOException;
 
 @Component
 public class MeshMailbox {
-    private final MeshConfiguration meshConfiguration;
+    private final MeshPropertySource meshPropertySource;
     private final MeshClient meshClient;
     private static final Logger LOGGER = LogManager.getLogger(MeshMailbox.class);
 
     @Autowired
     public MeshMailbox(
-        MeshConfiguration meshConfiguration,
+        MeshPropertySource meshPropertySource,
         MeshClient meshClient
     ) {
-        this.meshConfiguration = meshConfiguration;
+        this.meshPropertySource = meshPropertySource;
         this.meshClient = meshClient;
     }
 
@@ -31,7 +31,7 @@ public class MeshMailbox {
             LOGGER.info("Attempting to send NEMS message: {}", message.toString());
 
             return meshClient.sendMessage(
-                this.meshConfiguration.getMailboxServiceOutboxUri(),
+                this.meshPropertySource.getMailboxServiceOutboxUri(),
                 message
             );
         } catch (IOException | InterruptedException | URISyntaxException exception) {

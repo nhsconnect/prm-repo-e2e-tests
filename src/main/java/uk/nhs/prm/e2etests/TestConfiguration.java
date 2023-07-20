@@ -15,14 +15,16 @@ import static java.lang.System.getenv;
 
 @Component
 public class TestConfiguration {
-
+    // INSTANCE VARIABLES
     public static final int SECONDS_IN_AN_HOUR = 3600;
-
     private final ImmutableMap<String, List<String>> suspendedNhsNumbersByEnv = ImmutableMap.of(
             "dev", TestData.dev(),
             "pre-prod", TestData.preProd(),
             "perf", TestData.perf(numberOfPerfNhsNumbers())
     );
+
+    // BEANS
+    private final ExampleAssumedRoleArn exampleAssumedRoleArn;
 
     public String getNhsNumberForSyntheticPatientWithCurrentGp() {
         return getEnvironmentName().equals("dev") ? "9693796284" : "9694179254";
@@ -46,107 +48,13 @@ public class TestConfiguration {
 
     private final SsmService ssmService;
 
-    private volatile String cachedAwsAccountNo;
-
     @Autowired
-    public TestConfiguration(SsmService ssmService) {
+    public TestConfiguration(
+            ExampleAssumedRoleArn exampleAssumedRoleArn,
+            SsmService ssmService
+    ) {
         this.ssmService = ssmService;
-    }
-
-    public String getMeshMailBoxID() {
-        return ssmService.getSsmParameterValue(String.format("/repo/%s/user-input/external/mesh-mailbox-id", getEnvironmentName()));
-    }
-
-    public String getMeshMailBoxClientCert() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-client-cert", getEnvironmentName()));
-    }
-
-    public String getMeshMailBoxClientKey() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-client-key", getEnvironmentName()));
-    }
-
-    public String getMeshMailBoxPassword() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/mesh-mailbox-password", getEnvironmentName()));
-    }
-
-    public String getPdsAdaptorPerformanceApiKey() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/performance-test", getEnvironmentName()));
-    }
-
-    public String getPdsAdaptorLiveTestApiKey() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/live-test", getEnvironmentName()));
-    }
-
-    public String getPdsAdaptorE2ETestApiKey() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/pds-adaptor/e2e-test", getEnvironmentName()));
-    }
-
-    public String getGp2GpMessengerApiKey() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/gp2gp-messenger/live-test", getEnvironmentName()));
-    }
-
-    public String getEhrRepoApiKey() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/live-test", getEnvironmentName()));
-    }
-
-    public String getEhrRepoE2EApiKey() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/api-keys/ehr-repo/e2e-test", getEnvironmentName()));
-    }
-
-    public String getRepoOdsCode() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/repository-ods-code", getEnvironmentName()));
-    }
-
-    public String getRepoAsid() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/repository-asid", getEnvironmentName()));
-    }
-
-    public String meshForwarderObservabilityQueueUri() {
-        return getQueueUri("mesh-forwarder-nems-events-observability");
-    }
-
-    public String nemsEventProcesorUnhandledQueueUri() {
-        return getQueueUri("nems-event-processor-unhandled-events");
-    }
-
-    public String suspensionsObservabilityQueueUri() {
-        return getQueueUri("nems-event-processor-suspensions-observability");
-    }
-
-    public String reRegistrationObservabilityQueueUri() {
-        return getQueueUri("nems-event-processor-re-registration-observability");
-    }
-
-    public String suspensionsRealQueueUri() {
-        return getQueueUri("suspension-service-suspensions");
-    }
-
-    public String notReallySuspendedObservabilityQueueUri() {
-        return getQueueUri("suspension-service-not-suspended-observability");
-    }
-
-    public String nemsEventProcessorDeadLetterQueue() {
-        return getQueueUri("nems-event-processor-dlq");
-    }
-
-    public String mofUpdatedQueueUri() {
-        return getQueueUri("suspension-service-mof-updated");
-    }
-
-    public String mofNotUpdatedQueueUri() {
-        return getQueueUri("suspension-service-mof-not-updated");
-    }
-
-    public String deceasedQueueUri() {
-        return getQueueUri("suspension-service-deceased-patient");
-    }
-
-    public String repoIncomingQueueUri() {
-        return getQueueUri("ehr-transfer-service-repo-incoming");
-    }
-
-    public String repoIncomingObservabilityQueueUri() {
-        return getQueueUri("suspension-service-repo-incoming-observability");
+        this.exampleAssumedRoleArn = exampleAssumedRoleArn;
     }
 
     public String getTransferTrackerDb() {
@@ -159,37 +67,6 @@ public class TestConfiguration {
 
     public String getSyntheticPatientPrefix() {
         return getEnvironmentName().equals("prod") ? "999" : "969";
-    }
-
-    public String getSafeListedPatientList() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/external/safe-listed-patients-nhs-numbers", getEnvironmentName()));
-    }
-
-    private String getQueueUri(String name) {
-        return String.format("https://sqs.eu-west-2.amazonaws.com/%s/%s-%s", getAwsAccountNo(), getEnvironmentName(), name);
-    }
-
-    public String getPdsAdaptorUrl() {
-        return String.format("https://pds-adaptor.%s.patient-deductions.nhs.uk/", getEnvSuffix());
-    }
-
-    public String getGp2GpMessengerUrl() {
-        return String.format("https://gp2gp-messenger.%s.patient-deductions.nhs.uk/", getEnvSuffix());
-    }
-
-    public String getEhrRepoUrl() {
-        return String.format("https://ehr-repo.%s.patient-deductions.nhs.uk/", getEnvSuffix());
-    }
-
-    private String getAwsAccountNo() {
-        if (cachedAwsAccountNo == null) {
-            cachedAwsAccountNo = fetchAwsAccountNo();
-        }
-        return cachedAwsAccountNo;
-    }
-
-    private String fetchAwsAccountNo() {
-        return BootstrapConfiguration.exampleAssumeRoleArn().accountNo();
     }
 
     public List<String> suspendedNhsNumbers() {
