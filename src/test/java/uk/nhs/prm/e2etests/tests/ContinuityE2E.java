@@ -7,10 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.e2etests.TestConfiguration;
-import uk.nhs.prm.deduction.e2e.active_suspensions_db.ActiveSuspensionsDB;
-import uk.nhs.prm.deduction.e2e.deadletter.NemsEventProcessorDeadLetterQueue;
+import uk.nhs.prm.e2etests.active_suspensions_db.ActiveSuspensionsDB;
+import uk.nhs.prm.e2etests.configuration.EhrRepositoryPropertySource;
+import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
+import uk.nhs.prm.e2etests.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
-import uk.nhs.prm.deduction.e2e.models.*;
+import uk.nhs.prm.e2etests.model.*;
 import uk.nhs.prm.e2etests.nems.MeshForwarderQueue;
 import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import uk.nhs.prm.e2etests.nems.NemsEventProcessorUnhandledQueue;
@@ -24,7 +26,7 @@ import uk.nhs.prm.e2etests.reregistration.ReRegistrationMessageObservabilityQueu
 import uk.nhs.prm.e2etests.reregistration.active_suspensions_db.ActiveSuspensionsDbClient;
 import uk.nhs.prm.e2etests.reregistration.models.ActiveSuspensionsMessage;
 import uk.nhs.prm.e2etests.services.ehr_repo.EhrRepoClient;
-import uk.nhs.prm.deduction.e2e.suspensions.*;
+import uk.nhs.prm.e2etests.suspensions.*;
 import uk.nhs.prm.e2etests.utility.NemsEventFactory;
 import uk.nhs.prm.e2etests.utility.QueueHelper;
 
@@ -66,8 +68,7 @@ import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTe
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class ContinuityE2E {
-
+class ContinuityE2E {
     @Autowired
     private MeshForwarderQueue meshForwarderQueue;
     @Autowired
@@ -90,16 +91,22 @@ public class ContinuityE2E {
     private MeshMailbox meshMailbox;
     @Autowired
     private TestConfiguration config;
+    @Autowired
+    private RepoIncomingObservabilityQueue repoIncomingObservabilityQueue;
+    @Autowired
+    private ActiveSuspensionsDB activeSuspensionsDB;
+    @Autowired
     private EhrRepoClient ehrRepoClient;
-    @Autowired
-    RepoIncomingObservabilityQueue repoIncomingObservabilityQueue;
-    @Autowired
-    ActiveSuspensionsDB activeSuspensionsDB;
 
-    PdsAdaptorClient pdsAdaptorClient;
+    private PdsAdaptorClient pdsAdaptorClient;
+    private final PdsAdaptorPropertySource pdsAdaptorPropertySource;
 
     private final String EMIS_PTL_INT = "N82668";
     private final String SUSPENDED_PATIENT_NHS_NUMBER = "9693796047";
+
+    public ContinuityE2E(PdsAdaptorPropertySource pdsAdaptorPropertySource) {
+        this.pdsAdaptorPropertySource = pdsAdaptorPropertySource;
+    }
 
     @BeforeAll
     void init() {
@@ -110,7 +117,11 @@ public class ContinuityE2E {
         notReallySuspensionsMessageQueue.deleteAllMessages();
         reRegistrationMessageObservabilityQueue.deleteAllMessages();
         repoIncomingObservabilityQueue.deleteAllMessages();
-        pdsAdaptorClient = new PdsAdaptorClient("e2e-test", config.getPdsAdaptorE2ETestApiKey(), config.getPdsAdaptorUrl());
+        pdsAdaptorClient = new PdsAdaptorClient(
+                "e2e-test",
+                pdsAdaptorPropertySource.getE2eTestApiKey(),
+                pdsAdaptorPropertySource.getPdsAdaptorUrl()
+        );
     }
 
     @Test
@@ -125,7 +136,7 @@ public class ContinuityE2E {
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
         meshMailbox.postMessage(nemsSuspension);
-        MofUpdatedMessage expectedMessageOnQueue = new MofUpdatedMessage(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
+        MofUpdatedMessageNems expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
         assertThat(meshForwarderQueue.hasMessage(nemsSuspension.getMessage()));
         assertThat(mofUpdatedMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
@@ -147,7 +158,6 @@ public class ContinuityE2E {
 
     }
 
-
     @Test
     @Order(2)
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
@@ -158,7 +168,7 @@ public class ContinuityE2E {
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp, now);
 
-        NoLongerSuspendedMessage expectedMessageOnQueue = new NoLongerSuspendedMessage(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
+        NoLongerSuspendedMessageNems expectedMessageOnQueue = new NoLongerSuspendedMessageNems(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
         meshMailbox.postMessage(nemsSuspension);
         assertThat(notReallySuspensionsMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
@@ -177,7 +187,6 @@ public class ContinuityE2E {
 
         assertThat(nemsEventProcessorUnhandledQueue.hasMessage("{\"nemsMessageId\":\"" + nemsMessageId + "\",\"messageStatus\":\"NO_ACTION:NON_SUSPENSION\"}"));
     }
-
 
     @Test
     @Order(6)
@@ -206,7 +215,7 @@ public class ContinuityE2E {
 
         meshMailbox.postMessage(nemsSuspension);
 
-        ResolutionMessage expectedMessageOnQueue = new ResolutionMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC_OR_SAFE_LISTED");
+        NemsResolutionMessage expectedMessageOnQueue = new NemsResolutionMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC_OR_SAFE_LISTED");
 
         assertThat(mofNotUpdatedMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
@@ -226,7 +235,7 @@ public class ContinuityE2E {
 
         meshMailbox.postMessage(deceasedEvent);
 
-        var expectedMessageOnQueue = new DeceasedPatientMessage(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
+        var expectedMessageOnQueue = new DeceasedPatientMessageNems(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
 
         assertThat(deceasedPatientQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
@@ -283,7 +292,6 @@ public class ContinuityE2E {
     }
 
     private void storeEhrInRepositoryFor(String patientNhsNumber) throws Exception {
-        ehrRepoClient = new EhrRepoClient(config.getEhrRepoE2EApiKey(), config.getEhrRepoUrl());
         ehrRepoClient.createEhr(patientNhsNumber);
         assertThat(ehrRepoClient.getEhrResponse(patientNhsNumber)).isEqualTo("200 OK");
     }

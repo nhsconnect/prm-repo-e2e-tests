@@ -20,6 +20,7 @@ import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClie
 import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.services.ehr_repo.EhrRepoClient;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +39,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     private List<String> safeListedPatientList;
     private String syntheticPatientPrefix;
     private RepoIncomingQueue repoIncomingQueue;
+    private QueuePropertySource queuePropertySource;
 
     @Autowired
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
@@ -107,9 +109,5 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
         System.out.println("Confirming patient status is suspended");
         assertThat(pdsResponse.getIsSuspended()).isTrue();
         return pdsResponse;
-    }
-
-    private boolean isSafeListedOrSynthetic(String testPatientNhsNumber) {
-        return patientValidator.isIncludedInTheTest(testPatientNhsNumber, config.getSafeListedPatientList(), config.getSyntheticPatientPrefix());
     }
 }

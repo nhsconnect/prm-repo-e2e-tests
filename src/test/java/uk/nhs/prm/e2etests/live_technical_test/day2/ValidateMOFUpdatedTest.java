@@ -17,8 +17,7 @@ import java.util.List;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnableScheduling
-public class ValidateMOFUpdatedTest {
+class ValidateMOFUpdatedTest {
 
     private final String gp2GpMessengerApiKey;
     private final String gp2GpMessengerUrl;

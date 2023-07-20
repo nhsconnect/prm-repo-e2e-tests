@@ -3,9 +3,8 @@ package uk.nhs.prm.e2etests;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.utils.ImmutableMap;
-import uk.nhs.prm.e2etests.configuration.BootstrapConfiguration;
-import uk.nhs.prm.deduction.e2e.performance.load.LoadPhase;
-import uk.nhs.prm.deduction.e2e.performance.load.LoadSpecParser;
+import uk.nhs.prm.e2etests.performance.load.LoadPhase;
+import uk.nhs.prm.e2etests.performance.load.LoadSpecParser;
 import uk.nhs.prm.e2etests.services.SsmService;
 
 import java.util.List;

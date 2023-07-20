@@ -7,10 +7,14 @@ import java.util.UUID;
 
 @Getter
 @EqualsAndHashCode
-@AllArgsConstructor
 public class NemsEventMessage {
     private final UUID id;
     private final String message;
+
+    public NemsEventMessage(String id, String message) {
+        this.id = UUID.fromString(id);
+        this.message = message;
+    }
 
     @Override
     public String toString() {
