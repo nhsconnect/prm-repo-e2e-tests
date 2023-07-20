@@ -2,7 +2,7 @@ package uk.nhs.prm.e2etests.mesh;
 
 import uk.nhs.prm.e2etests.client.StackOverflowInsecureSSLContextLoader;
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.nhs.prm.e2etests.configuration.MeshConfiguration;
+import uk.nhs.prm.e2etests.configuration.MeshPropertySource;
 import uk.nhs.prm.e2etests.mesh.auth.AuthTokenGenerator;
 import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import org.springframework.stereotype.Component;
@@ -15,14 +15,10 @@ import java.net.http.HttpClient;
 import java.io.IOException;
 import java.net.URL;
 
-import static uk.nhs.prm.e2etests.configuration.MeshConfiguration.Type.CLIENT_CERT;
-import static uk.nhs.prm.e2etests.configuration.MeshConfiguration.Type.CLIENT_KEY;
-import static uk.nhs.prm.e2etests.configuration.MeshConfiguration.Type.MAILBOX_ID;
-
 @Component
 public class MeshClient {
     private final StackOverflowInsecureSSLContextLoader contextLoader;
-    private final MeshConfiguration meshConfiguration;
+    private final MeshPropertySource meshPropertySource;
     private final AuthTokenGenerator authTokenGenerator;
     private final Gson gson;
     private final String mailBoxId;
@@ -30,13 +26,13 @@ public class MeshClient {
     @Autowired
     public MeshClient(
         StackOverflowInsecureSSLContextLoader contextLoader,
-        MeshConfiguration meshConfiguration,
+        MeshPropertySource meshPropertySource,
         AuthTokenGenerator authTokenGenerator,
         Gson gson
     ) {
         this.contextLoader = contextLoader;
-        this.meshConfiguration = meshConfiguration;
-        this.mailBoxId = this.meshConfiguration.getValue(MAILBOX_ID);
+        this.meshPropertySource = meshPropertySource;
+        this.mailBoxId = this.meshPropertySource.getMailboxId();
         this.authTokenGenerator = authTokenGenerator;
         this.gson = gson;
     }
@@ -59,9 +55,9 @@ public class MeshClient {
 
         final HttpResponse<String> response = HttpClient.newBuilder()
                 .sslContext(contextLoader.getClientAuthSslContext(
-                        meshConfiguration.getValue(CLIENT_CERT),
-                        meshConfiguration.getValue(CLIENT_KEY))
-                )
+                        meshPropertySource.getClientCert(),
+                        meshPropertySource.getClientKey()
+                ))
                 .build()
                 .send(request, HttpResponse.BodyHandlers.ofString());
 

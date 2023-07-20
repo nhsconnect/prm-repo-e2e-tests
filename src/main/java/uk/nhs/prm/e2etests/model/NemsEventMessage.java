@@ -1,11 +1,11 @@
 package uk.nhs.prm.e2etests.model;
 
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 import java.util.UUID;
 
 @Getter
-@Builder
 @EqualsAndHashCode
 @AllArgsConstructor
 public class NemsEventMessage {
@@ -16,5 +16,4 @@ public class NemsEventMessage {
     public String toString() {
         return String.format("NemsEventMessage{id=%s, message='%s'}", id, message);
     }
-
 }
