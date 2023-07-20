@@ -5,7 +5,7 @@ import uk.nhs.prm.e2etests.services.SsmService;
 public abstract class AbstractSsmRetriever {
     private final SsmService ssmService;
 
-    public AbstractSsmRetriever(SsmService ssmService) {
+    protected AbstractSsmRetriever(SsmService ssmService) {
         this.ssmService = ssmService;
     }
 

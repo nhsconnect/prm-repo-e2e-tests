@@ -15,16 +15,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ValidateSyntheticPatientIsSuspendedTest {
+class ValidateSyntheticPatientIsSuspendedTest {
 
-    private final TestConfiguration config = new TestConfiguration();
+    private final TestPatientValidator patientValidator;
+    private final String pdsAdaptorApiKey;
+    private final String pdsAdaptorUrl;
     private static final String PDS_ADAPTOR_TEST_USERNAME = "live-test";
     private PdsAdaptorClient pdsAdaptorClient;
-    private TestPatientValidator patientValidator = new TestPatientValidator();
 
+    @Autowired
+    public ValidateSyntheticPatientIsSuspendedTest(
+            TestPatientValidator testPatientValidator,
+            PdsAdaptorPropertySource pdsAdaptorPropertySource
+    ) {
+        patientValidator = testPatientValidator;
+        pdsAdaptorApiKey = pdsAdaptorPropertySource.getLiveTestApiKey();
+        pdsAdaptorUrl = pdsAdaptorPropertySource.getPdsAdaptorUrl();
+    }
+
+    // TODO: PRMT-3523 @TestPropertySource(properties = {"PDS_ADAPTOR_TEST_USERNAME = live-test", apiKey = something}) could be useful.
     @BeforeEach
     void setUp() {
-        pdsAdaptorClient = new PdsAdaptorClient(PDS_ADAPTOR_TEST_USERNAME, config.getPdsAdaptorLiveTestApiKey(), config.getPdsAdaptorUrl());
+        pdsAdaptorClient = new PdsAdaptorClient(PDS_ADAPTOR_TEST_USERNAME, pdsAdaptorApiKey, pdsAdaptorUrl);
     }
 
     @Test
@@ -35,9 +47,4 @@ public class ValidateSyntheticPatientIsSuspendedTest {
         var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(testPatientNhsNumber);
         assertThat(pdsResponse.getIsSuspended()).as("patient status should be suspended").isTrue();
     }
-
-    private boolean isSafeListedOrSynthetic(String testPatientNhsNumber) {
-        return patientValidator.isIncludedInTheTest(testPatientNhsNumber, config.getSafeListedPatientList(), config.getSyntheticPatientPrefix());
-    }
-
 }

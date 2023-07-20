@@ -16,14 +16,12 @@ public class Gp2gpMessengerPropertySource extends AbstractSsmRetriever {
     @Value("${nhs.services.gp2gp.odsCodes.emisPtlInt}")
     private String emisPtlIntOdsCode;
 
-    @Value("${nhs.services.gp2gp.odsCodes.repoDev}")
-    private String repoDevOdsCode;
-
-    @Value("${nhs.services.gp2gp.odsCodes.repoTest}")
-    private String repoTestOdsCode;
-
+    @Getter(AccessLevel.NONE)
     @Value("${aws.configuration.ssm.parameters.gp2gpMessenger.liveTestApiKey}")
     private String liveTestApiKey;
+
+    @Value("${aws.configuration.serviceUrls.gp2GpMessenger}")
+    private String gp2gpMessengerUrl;
 
     @Autowired
     public Gp2gpMessengerPropertySource(SsmService ssmService) {

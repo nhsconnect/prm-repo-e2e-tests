@@ -28,21 +28,42 @@ import static org.hamcrest.Matchers.equalTo;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
+class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
 
-    private final TestConfiguration config = new TestConfiguration();
     private static final String PDS_ADAPTOR_TEST_USERNAME = "live-test";
+    private TestPatientValidator patientValidator;
     private PdsAdaptorClient pdsAdaptorClient;
     private EhrRepoClient ehrRepoClient;
-    private TestPatientValidator patientValidator = new TestPatientValidator();
+    private String repoOdsCode;
+    private List<String> safeListedPatientList;
+    private String syntheticPatientPrefix;
     private RepoIncomingQueue repoIncomingQueue;
+
+    @Autowired
+    public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
+            TestPatientValidator testPatientValidator,
+            PdsAdaptorPropertySource pdsAdaptorPropertySource,
+            EhrRepositoryPropertySource ehrRepositoryPropertySource,
+            NhsPropertySource nhsPropertySource,
+            QueuePropertySource queuePropertySource,
+            EhrRepoClient ehrRepoClient
+    ) {
+        patientValidator = testPatientValidator;
+
+        pdsAdaptorClient = new PdsAdaptorClient(
+                PDS_ADAPTOR_TEST_USERNAME,
+                pdsAdaptorPropertySource.getLiveTestApiKey(),
+                pdsAdaptorPropertySource.getPdsAdaptorUrl());
+        repoOdsCode = nhsPropertySource.getRepoOdsCode();
+        safeListedPatientList = nhsPropertySource.getSafeListedPatientList();
+        syntheticPatientPrefix = nhsPropertySource.getSyntheticPatientPrefix();
+        this.queuePropertySource = queuePropertySource;
+    }
 
     @BeforeEach
     void setUp() {
         var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
-        pdsAdaptorClient = new PdsAdaptorClient(PDS_ADAPTOR_TEST_USERNAME, config.getPdsAdaptorLiveTestApiKey(), config.getPdsAdaptorUrl());
-        ehrRepoClient = new EhrRepoClient(config.getEhrRepoApiKey(), config.getEhrRepoUrl());
-        repoIncomingQueue = new RepoIncomingQueue(new ThinlyWrappedSqsClient(sqsClient), config);
+        repoIncomingQueue = new RepoIncomingQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
     }
 
     @Test
@@ -50,13 +71,13 @@ public class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
         var testPatientNhsNumber = TestParameters.fetchTestParameter("LIVE_TECHNICAL_TEST_NHS_NUMBER");
         var testPatientPreviousGp = TestParameters.fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
 
-        assertThat(isSafeListedOrSynthetic(testPatientNhsNumber)).isTrue();
+        assertThat(patientValidator.isIncludedInTheTest(testPatientNhsNumber)).isTrue();
         updateMofToRepoOdsCode(testPatientNhsNumber);
 
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withNhsNumber(testPatientNhsNumber)
                 .withEhrSourceGpOdsCode(testPatientPreviousGp)
-                .withEhrDestination(config.getRepoOdsCode())
+                .withEhrDestination(repoOdsCode)
                 .build();
 
         repoIncomingQueue.send(triggerMessage);
@@ -71,7 +92,7 @@ public class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
 
     private void updateMofToRepoOdsCode(String testPatientNhsNumber) {
         PdsAdaptorResponse pdsResponse = getPdsAdaptorResponse(testPatientNhsNumber);
-        var repoOdsCode = config.getRepoOdsCode();
+
         if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             System.out.println("Not sending update request because managing organisation already set to repo ods code");
         } else {

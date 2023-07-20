@@ -15,20 +15,36 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 
-
+@SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableScheduling
 public class ValidateMOFUpdatedTest {
 
-    private TestConfiguration config = new TestConfiguration();
+    private final String gp2GpMessengerApiKey;
+    private final String gp2GpMessengerUrl;
+    private final List<String> safeListedPatientList;
+    private final String pdsAdaptorApiKey;
+    private final String pdsAdaptorUrl;
     private String pdsAdaptorUsername = "live-test";
     private Gp2GpMessengerClient gp2GpMessengerClient;
 
-    @BeforeEach
-    void setUp() {
-        gp2GpMessengerClient = new Gp2GpMessengerClient(config.getGp2GpMessengerApiKey(), config.getGp2GpMessengerUrl());
+    @Autowired
+    public ValidateMOFUpdatedTest(
+            Gp2gpMessengerPropertySource gp2gpMessengerPropertySource,
+            PdsAdaptorPropertySource pdsAdaptorPropertySource,
+            NhsPropertySource nhsPropertySource
+    ) {
+        gp2GpMessengerApiKey = gp2gpMessengerPropertySource.getLiveTestApiKey();
+        gp2GpMessengerUrl = gp2gpMessengerPropertySource.getGp2gpMessengerUrl();
+        safeListedPatientList = nhsPropertySource.getSafeListedPatientList();
+        pdsAdaptorApiKey = pdsAdaptorPropertySource.getLiveTestApiKey();
+        pdsAdaptorUrl = pdsAdaptorPropertySource.getPdsAdaptorUrl();
     }
 
+    @BeforeEach
+    void setUp() {
+        gp2GpMessengerClient = new Gp2GpMessengerClient(gp2GpMessengerApiKey, gp2GpMessengerUrl);
+    }
 
     @Test
     void shouldMoveSingleSuspensionMessageFromMeshMailBoxToNemsIncomingQueue() {
@@ -42,15 +58,12 @@ public class ValidateMOFUpdatedTest {
                 System.out.println("Checking patient status with hl7 pds request - see logs for more details");
                 gp2GpMessengerClient.getPdsRecordViaHlv7(nhsNumber);
             });
-
         }
-
     }
 
+    // TODO: PRMT-3523 @TestPropertySource(properties = {"PDS_ADAPTOR_TEST_USERNAME = live-test", apiKey = something}) could be useful.
     private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
-        var config = new TestConfiguration();
-        var pds = new PdsAdaptorClient(pdsAdaptorUsername, config.getPdsAdaptorLiveTestApiKey(), config.getPdsAdaptorUrl());
-
+        PdsAdaptorClient pds = new PdsAdaptorClient(pdsAdaptorUsername, pdsAdaptorApiKey, pdsAdaptorUrl);
         return pds.getSuspendedPatientStatus(testPatientNhsNumber);
     }
 }

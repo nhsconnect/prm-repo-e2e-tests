@@ -21,8 +21,12 @@ public class EhrRepositoryPropertySource extends AbstractSsmRetriever {
     @Value("${aws.configuration.ssm.parameters.ehrRepository.liveTestApiKey}")
     private String liveTestApiKey;
 
+    @Getter(AccessLevel.NONE)
     @Value("${aws.configuration.ssm.parameters.ehrRepository.e2eTestApiKey}")
     private String e2eTestApiKey;
+
+    @Value("${aws.configuration.serviceUrls.ehrRepository}")
+    private String ehrRepositoryUrl;
 
     @Autowired
     public EhrRepositoryPropertySource(SsmService ssmService) {
