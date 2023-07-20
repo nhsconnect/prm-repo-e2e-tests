@@ -117,51 +117,7 @@ public class TestConfiguration {
         return getEnvironmentName().equals("prod") ? "prod" : String.format("%s.non-prod", getEnvironmentName());
     }
 
-    public String endOfTransferMofUpdatedQueue() {
-        return getQueueUri("end-of-transfer-service-mof-updated");
-    }
-
-    public String smallEhrQueueUri() {
-        return getQueueUri("ehr-transfer-service-small-ehr-observability");
-    }
-    public String ehrInUnhandledQueueUri() {
-        return getQueueUri("ehr-transfer-service-unhandled-observability");
-    }
-
-    public String negativeAcknowledgementQueueUri() {
-        return getQueueUri("ehr-transfer-service-negative-acknowledgments-observability");
-    }
-
-    public String ehrCompleteQueueUri() {
-        return getQueueUri("ehr-transfer-service-ehr-complete-observability");
-    }
-
-    public String transferCompleteQueueUri() {
-        return getQueueUri("end-of-transfer-service-transfer-complete-observability");
-    }
-
-    public String largeEhrQueueUri() {
-        return getQueueUri("ehr-transfer-service-large-ehr-observability");
-    }
-
-    public String gp2gpMessengerQueueUri() { return getQueueUri("hl7-message-sent-observability"); }
-
-    public String getMqUserName() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/mq-app-username", getEnvironmentName()));
-    }
-
-    public String getMqPassword() {
-        return awsConfiguration.getParamValue(String.format("/repo/%s/user-input/mq-app-password", getEnvironmentName()));
-    }
-
-    public String fragmentQueueUri() {
-        return getQueueUri("ehr-transfer-service-large-message-fragments-observability");
-    }
-
-    public String parsingDLQ() {
-        return getQueueUri("ehr-transfer-service-parsing-dlq");
-    }
-
+    // TODO PRMT-3488 'AmqpEndpoint1' tells us nothing, rename
     public String getAmqpEndpoint1() {
         var devEndpoint = "b-09f25472-2c58-4386-ad2c-675ce15efbd6-1.mq.eu-west-2.amazonaws.com";
         var perfEndpoint = "b-b7552552-9d19-43a6-91a7-677285f32b04-1.mq.eu-west-2.amazonaws.com";

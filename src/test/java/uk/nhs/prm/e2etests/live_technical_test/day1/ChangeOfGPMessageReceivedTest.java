@@ -61,7 +61,7 @@ class ChangeOfGPMessageReceivedTest {
 
             safeListPatients.forEach(nhsNumber -> {
                 System.out.println("Checking if nhs number is synthetic");
-                assertThat(isSafeListedOrSynthetic(nhsNumber)).isTrue();
+                assertThat(patientValidator.isIncludedInTheTest(nhsNumber)).isTrue();
 
                 var pdsResponse = getPatientStatusOnPDSForSyntheticPatient(nhsNumber);
 
@@ -91,7 +91,7 @@ class ChangeOfGPMessageReceivedTest {
     }
 
     private PdsAdaptorResponse getPatientStatusOnPDSForSyntheticPatient(String testPatientNhsNumber) {
-        String pdsAdaptorUsernameXXX = "live-test";
+        String pdsAdaptorUsernameXXX = "live-test"; // TODO PRMT-3488 'XXX'? could do with a rename
         return fetchPdsPatientStatus(pdsAdaptorUsernameXXX, testPatientNhsNumber);
     }
 
