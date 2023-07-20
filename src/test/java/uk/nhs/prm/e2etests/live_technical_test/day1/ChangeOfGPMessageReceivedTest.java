@@ -28,6 +28,10 @@ class ChangeOfGPMessageReceivedTest {
     private SuspensionMessageRealQueue suspensionMessageRealQueue;
     private TestPatientValidator patientValidator;
     private Gp2GpMessengerClient gp2GpMessengerClient;
+    private Gp2gpMessengerPropertySource gp2gpMessengerPropertySource;
+    private QueuePropertySource queuePropertySource;
+    private NhsPropertySource nhsPropertySource;
+    private PdsAdaptorPropertySource pdsAdaptorPropertySource;
 
     @Autowired
     public ChangeOfGPMessageReceivedTest(
@@ -47,8 +51,8 @@ class ChangeOfGPMessageReceivedTest {
     @BeforeEach
     public void setUp() {
         var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
-        suspensionMessageRealQueue = new SuspensionMessageRealQueue(new ThinlyWrappedSqsClient(sqsClient), config);
-        gp2GpMessengerClient = new Gp2GpMessengerClient(config.getGp2GpMessengerApiKey(), config.getGp2GpMessengerUrl());
+        suspensionMessageRealQueue = new SuspensionMessageRealQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
+        gp2GpMessengerClient = new Gp2GpMessengerClient(gp2gpMessengerPropertySource.getLiveTestApiKey(), gp2gpMessengerPropertySource.getGp2gpMessengerUrl());
     }
 
     @Test
@@ -83,11 +87,6 @@ class ChangeOfGPMessageReceivedTest {
             System.out.println("No safe list patients for test");
         }
 
-
-    }
-
-    private boolean isSafeListedOrSynthetic(String testPatientNhsNumber) {
-        return patientValidator.isIncludedInTheTest(testPatientNhsNumber, config.getSafeListedPatientList(), config.getSyntheticPatientPrefix());
     }
 
     private PdsAdaptorResponse getPatientStatusOnPDSForSyntheticPatient(String testPatientNhsNumber) {
@@ -97,7 +96,11 @@ class ChangeOfGPMessageReceivedTest {
 
     private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
 
-        var pds = new PdsAdaptorClient(pdsAdaptorUsername, config.getPdsAdaptorLiveTestApiKey(), config.getPdsAdaptorUrl());
+        var pds = new PdsAdaptorClient(
+                pdsAdaptorUsername,
+                pdsAdaptorPropertySource.getLiveTestApiKey(),
+                pdsAdaptorPropertySource.getPdsAdaptorUrl()
+        );
 
         return pds.getSuspendedPatientStatus(testPatientNhsNumber);
     }

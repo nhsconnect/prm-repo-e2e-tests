@@ -9,10 +9,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.TestData;
-import uk.nhs.prm.deduction.e2e.ehr_transfer.RepoIncomingQueue;
-import uk.nhs.prm.deduction.e2e.ehr_transfer.TransferCompleteQueue;
-import uk.nhs.prm.deduction.e2e.models.Gp2GpSystem;
-import uk.nhs.prm.deduction.e2e.models.RepoIncomingMessageBuilder;
+import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.ehr_transfer.RepoIncomingQueue;
+import uk.nhs.prm.e2etests.ehr_transfer.TransferCompleteQueue;
+import uk.nhs.prm.e2etests.model.Gp2GpSystem;
+import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
@@ -53,13 +54,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 })
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class RepoInPerformanceTest {
+class RepoInPerformanceTest {
     @Autowired
     RepoIncomingQueue repoIncomingQueue;
 
     @Autowired
     Sleeper sleeper;
-
 
     @Autowired
     TestConfiguration config;
@@ -73,9 +73,12 @@ public class RepoInPerformanceTest {
     @Autowired
     ApplicationContext context;
 
+    @Autowired
+    QueuePropertySource queuePropertySource;
+
     @BeforeAll
     void init() {
-        transferCompleteQueue = new TransferCompleteQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient()), config);
+        transferCompleteQueue = new TransferCompleteQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient()), queuePropertySource);
         transferCompleteQueue.deleteAllMessages();
     }
 
@@ -133,7 +136,7 @@ public class RepoInPerformanceTest {
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
         var intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
-            var inboundQueueFromMhs = new SimpleAmqpQueue(config);
+            var inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, config);
             var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
             var counter = new AtomicInteger(0);
             String smallEhr;

@@ -53,7 +53,8 @@ import static uk.nhs.prm.e2etests.utility.TestUtils.*;
         RepositoryE2ETests.class,
         RepoIncomingQueue.class,
         TestConfiguration.class,
-        ThinlyWrappedSqsClient.class, BasicSqsClient.class,
+        ThinlyWrappedSqsClient.class,
+        BasicSqsClient.class,
         AssumeRoleCredentialsProviderFactory.class,
         AutoRefreshingRoleAssumingSqsClient.class,
         Resources.class,
@@ -72,7 +73,7 @@ import static uk.nhs.prm.e2etests.utility.TestUtils.*;
 })
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class RepositoryE2ETests {
+class RepositoryE2ETests {
     private static final Logger LOGGER = LogManager.getLogger(RepositoryE2ETests.class);
 
     private final RepoIncomingQueue repoIncomingQueue;
@@ -138,7 +139,11 @@ public class RepositoryE2ETests {
         ehrInUnhandledQueue.deleteAllMessages();
         negativeAcknowledgementObservabilityQueue.deleteAllMessages();
         gp2gpMessengerQueue.deleteAllMessages();
-        pdsAdaptorClient = new PdsAdaptorClient("e2e-test", testConfiguration.getPdsAdaptorE2ETestApiKey(), testConfiguration.getPdsAdaptorUrl());
+        pdsAdaptorClient = new PdsAdaptorClient(
+                "e2e-test",
+                pdsAdaptorPropertySource.getLiveTestApiKey(),
+                pdsAdaptorPropertySource.getPdsAdaptorUrl()
+        );
     }
 
     // The following test should eventually test that we can send a small EHR - until we have an EHR in repo/test patient ready to send,
@@ -147,7 +152,7 @@ public class RepositoryE2ETests {
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev")
     void shouldIdentifyEhrRequestAsEhrOutMessage() {
         var ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05");
-        var inboundQueueFromMhs = new SimpleAmqpQueue(testConfiguration);
+        var inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, testConfiguration);
 
         String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
         inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
@@ -165,7 +170,7 @@ public class RepositoryE2ETests {
         String previousGpForTestPatient = "M85019";
         String asidCodeForTestPatient = "200000000149";
 
-        SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(testConfiguration);
+        SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, testConfiguration);
 
         String smallEhr = getSmallEhrWithoutLinebreaks(inboundConversationId.toUpperCase(), smallEhrMessageId);
         String ehrRequest = getEhrRequest(nhsNumberForTestPatient, previousGpForTestPatient, asidCodeForTestPatient, outboundConversationId);
@@ -214,7 +219,7 @@ public class RepositoryE2ETests {
         String previousGpForTestPatient = "N82668";
         String newGpForTestPatient = "M85019";
 
-        SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(testConfiguration);
+        SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, testConfiguration);
 
         LargeEhrTestFiles largeEhrTestFiles = TestUtils.prepareTestFilesForLargeEhr(
                 inboundConversationId,

@@ -38,6 +38,9 @@ public class InjectChangeOfGPMessageTest {
     @Autowired
     private SuspensionMessageObservabilityQueue suspensionMessageObservabilityQueue;
 
+    @Autowired
+    QueuePropertySource queuePropertySource;
+
     @BeforeEach
     public void setUp() {
         var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
