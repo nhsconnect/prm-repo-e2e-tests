@@ -27,7 +27,7 @@ dependencies {
     testImplementation 'org.postgresql:postgresql'
     testImplementation 'org.apache.httpcomponents:httpclient:4.5.14'
     testImplementation 'org.apache.activemq:activemq-broker:5.16.4'
-    testImplementation 'org.apache.activemq:activemq-client:5.16.4'
+    testImplementation 'org.apache.activemq:activemq-client:5.18.2'
     testImplementation 'org.apache.activemq:activemq-pool:5.16.4'
     testImplementation 'org.awaitility:awaitility:4.2.0'
     testImplementation 'org.jfree:jfreechart:1.5.4'
