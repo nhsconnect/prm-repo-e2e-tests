@@ -69,10 +69,4 @@ public class MeshClient {
                 .fromJson(response, NemsEventMessage.class)
                 .getMessage();
     }
-
-//    private String getMessageIdFromMessage(String responseBody) {
-//        String key = "messageID";
-//        Object value = getJsonValue(responseBody, key);
-//        return String.valueOf(value);
-//    }
 }
