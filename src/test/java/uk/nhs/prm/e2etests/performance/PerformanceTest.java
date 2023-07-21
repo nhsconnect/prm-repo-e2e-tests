@@ -164,16 +164,4 @@ public class PerformanceTest {
     private boolean before(LocalDateTime timeout) {
         return now().isBefore(timeout);
     }
-
-//    private AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient() {
-//        if (config.performanceTestTimeout() > TestConfiguration.SECONDS_IN_AN_HOUR * 0.9) {
-//            var authStrategyWarning = "Performance test timeout is approaching an hour, getting where this will not work if " +
-//                    "using temporary credentials (such as obtained by user using MFA) if it exceeds the expiration time. " +
-//                    "Longer runs will need to be done in pipeline where refresh can be made from the AWS instance's " +
-//                    "metadata credentials lookup.";
-//            System.err.println(authStrategyWarning);
-//        }
-//        out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
-//        return context.getBean(AutoRefreshingRoleAssumingSqsClient.class);
-//    }
 }
