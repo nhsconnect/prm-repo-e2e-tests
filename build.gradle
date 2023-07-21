@@ -75,12 +75,6 @@ dependencies {
     testImplementation 'com.swiftmq:swiftmq-client:12.5.4'
 }
 
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-    }
-}
-
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
 }
