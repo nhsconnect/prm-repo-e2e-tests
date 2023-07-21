@@ -143,32 +143,6 @@ class RepoInPerformanceTest {
 
                 sleeper.sleep(intervalBetweenMessagesSentToMq);
             }
-//            messagesToBeProcessed.forEach(message -> {
-//                counter.updateAndGet(v -> v + 1);
-//                String conversationId = message.getMessage().conversationId();
-//
-//                smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
-//                message.start();
-//
-//                System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
-//                inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-//
-//                sleeper.sleep(intervalBetweenMessagesSentToMq);
-//            });
-//            for (RepoInPerfMessageWrapper message : messagesToBeProcessed) {
-//                counter.updateAndGet(v -> v + 1);
-//                String conversationId = message.getMessage().conversationId();
-//
-//                String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
-//                message.start();
-//
-//                System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
-//                inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-//
-//                sleeper.sleep(intervalBetweenMessagesSentToMq);
-//            }
-
-//            messagesToBeProcessed.forEach(message -> processMessage(message, messageTemplate, counter, inboundQueueFromMhs));
 
             System.out.println("All messages sent, about to close mhs producer...");
             inboundQueueFromMhs.close();
@@ -229,16 +203,4 @@ class RepoInPerformanceTest {
         message = message.replaceAll("__MESSAGE_ID__", messageId);
         return message;
     }
-
-//    private AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient() {
-//        if (config.performanceTestTimeout() > TestConfiguration.SECONDS_IN_AN_HOUR * 0.9) {
-//            var authStrategyWarning = "Performance test timeout is approaching an hour, getting where this will not work if " +
-//                    "using temporary credentials (such as obtained by user using MFA) if it exceeds the expiration time. " +
-//                    "Longer runs will need to be done in pipeline where refresh can be made from the AWS instance's " +
-//                    "metadata credentials lookup.";
-//            System.err.println(authStrategyWarning);
-//        }
-//        out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
-//        return context.getBean(AutoRefreshingRoleAssumingSqsClient.class);
-//    }
 }
