@@ -24,6 +24,7 @@ public class TestConfiguration {
 
     // BEANS
     private final ExampleAssumedRoleArn exampleAssumedRoleArn;
+    private final SsmService ssmService;
 
     public String getNhsNumberForSyntheticPatientWithCurrentGp() {
         return getEnvironmentName().equals("dev") ? "9693796284" : "9694179254";
@@ -44,8 +45,6 @@ public class TestConfiguration {
     public String getNhsNumberForNonSyntheticPatientWithoutGp() {
         return "9692295400";
     }
-
-    private final SsmService ssmService;
 
     @Autowired
     public TestConfiguration(

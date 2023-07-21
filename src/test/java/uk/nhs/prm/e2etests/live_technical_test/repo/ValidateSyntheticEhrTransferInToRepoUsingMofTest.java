@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
 import uk.nhs.prm.e2etests.configuration.EhrRepositoryPropertySource;
 import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
 import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
@@ -40,6 +41,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     private String syntheticPatientPrefix;
     private RepoIncomingQueue repoIncomingQueue;
     private QueuePropertySource queuePropertySource;
+    private ExampleAssumedRoleArn exampleAssumedRoleArn;
 
     @Autowired
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
@@ -48,7 +50,8 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
             EhrRepositoryPropertySource ehrRepositoryPropertySource,
             NhsPropertySource nhsPropertySource,
             QueuePropertySource queuePropertySource,
-            EhrRepoClient ehrRepoClient
+            EhrRepoClient ehrRepoClient,
+            ExampleAssumedRoleArn exampleAssumedRoleArn
     ) {
         patientValidator = testPatientValidator;
 
@@ -60,11 +63,13 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
         safeListedPatientList = nhsPropertySource.getSafeListedPatientList();
         syntheticPatientPrefix = nhsPropertySource.getSyntheticPatientPrefix();
         this.queuePropertySource = queuePropertySource;
+        this.exampleAssumedRoleArn = exampleAssumedRoleArn;
     }
 
     @BeforeEach
     void setUp() {
-        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
+        // TODO PRMT-3523 - Refactor this to use dependency injection
+        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory(exampleAssumedRoleArn));
         repoIncomingQueue = new RepoIncomingQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
     }
 

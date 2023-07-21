@@ -14,6 +14,6 @@ public class DeceasedPatientQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getSuspensionServiceDeceasedPatientQueueUri());
+              queuePropertySource.getSuspensionServiceDeceasedPatientQueueUrl());
     }
 }

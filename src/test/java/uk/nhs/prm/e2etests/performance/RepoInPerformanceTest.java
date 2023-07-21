@@ -6,7 +6,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
+import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
 import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.TestData;
 import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
@@ -14,7 +14,6 @@ import uk.nhs.prm.e2etests.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.e2etests.ehr_transfer.TransferCompleteQueue;
 import uk.nhs.prm.e2etests.model.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
-import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
 import uk.nhs.prm.e2etests.queue.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
@@ -23,7 +22,6 @@ import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.queue.SqsMessage;
 import uk.nhs.prm.e2etests.timing.Sleeper;
 import uk.nhs.prm.e2etests.transfer_tracker_db.TrackerDb;
-import uk.nhs.prm.e2etests.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.e2etests.utility.Resources;
 
 import java.time.LocalDateTime;
@@ -35,23 +33,11 @@ import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getenv;
-import static java.lang.System.out;
 import static java.time.LocalDateTime.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(classes = {
-        AutoRefreshingRoleAssumingSqsClient.class,
-        AssumeRoleCredentialsProviderFactory.class,
-        TransferTrackerDbClient.class,
-        RepoInPerformanceTest.class,
-        RepoIncomingQueue.class,
-        Sleeper.class,
-        ThinlyWrappedSqsClient.class,
-        TestConfiguration.class,
-        TrackerDb.class,
-        TransferCompleteQueue.class,
-})
+@SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RepoInPerformanceTest {
@@ -71,14 +57,17 @@ class RepoInPerformanceTest {
     TransferCompleteQueue transferCompleteQueue;
 
     @Autowired
-    ApplicationContext context;
+    ExampleAssumedRoleArn exampleAssumedRoleArn;
 
     @Autowired
     QueuePropertySource queuePropertySource;
 
+    @Autowired
+    AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient;
+
     @BeforeAll
     void init() {
-        transferCompleteQueue = new TransferCompleteQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient()), queuePropertySource);
+        transferCompleteQueue = new TransferCompleteQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient), queuePropertySource);
         transferCompleteQueue.deleteAllMessages();
     }
 
@@ -141,6 +130,7 @@ class RepoInPerformanceTest {
             var counter = new AtomicInteger(0);
             String smallEhr;
 
+            // TODO PRMT-3574 traditional for loop here that could be refactored
             for (int i = 0; i < messagesToBeProcessed.size(); i++) {
                 counter.updateAndGet(v -> v + 1);
                 String conversationId = messagesToBeProcessed.get(i).getMessage().conversationId();
@@ -240,15 +230,15 @@ class RepoInPerformanceTest {
         return message;
     }
 
-    private AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient() {
-        if (config.performanceTestTimeout() > TestConfiguration.SECONDS_IN_AN_HOUR * 0.9) {
-            var authStrategyWarning = "Performance test timeout is approaching an hour, getting where this will not work if " +
-                    "using temporary credentials (such as obtained by user using MFA) if it exceeds the expiration time. " +
-                    "Longer runs will need to be done in pipeline where refresh can be made from the AWS instance's " +
-                    "metadata credentials lookup.";
-            System.err.println(authStrategyWarning);
-        }
-        out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
-        return context.getBean(AutoRefreshingRoleAssumingSqsClient.class);
-    }
+//    private AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient() {
+//        if (config.performanceTestTimeout() > TestConfiguration.SECONDS_IN_AN_HOUR * 0.9) {
+//            var authStrategyWarning = "Performance test timeout is approaching an hour, getting where this will not work if " +
+//                    "using temporary credentials (such as obtained by user using MFA) if it exceeds the expiration time. " +
+//                    "Longer runs will need to be done in pipeline where refresh can be made from the AWS instance's " +
+//                    "metadata credentials lookup.";
+//            System.err.println(authStrategyWarning);
+//        }
+//        out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
+//        return context.getBean(AutoRefreshingRoleAssumingSqsClient.class);
+//    }
 }

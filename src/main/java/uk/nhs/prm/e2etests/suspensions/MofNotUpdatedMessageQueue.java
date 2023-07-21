@@ -14,6 +14,6 @@ public class MofNotUpdatedMessageQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
             ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getSuspensionsServiceMofNotUpdatedQueueUri());
+              queuePropertySource.getSuspensionsServiceMofNotUpdatedQueueUrl());
     }
 }

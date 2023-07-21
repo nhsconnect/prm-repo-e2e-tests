@@ -1,9 +1,9 @@
 package uk.nhs.prm.e2etests.exception;
 
-public class UnknownRegionException extends RuntimeException {
+public class UnknownAwsRegionException extends RuntimeException {
     private static final String MESSAGE = "The provided AWS Region was either unknown or invalid.";
 
-    public UnknownRegionException() {
+    public UnknownAwsRegionException() {
         super(MESSAGE);
     }
 }

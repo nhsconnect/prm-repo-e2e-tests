@@ -15,6 +15,6 @@ public class EhrParsingDLQ extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getEhrTransferServiceParsingDlqQueueUri());
+              queuePropertySource.getEhrTransferServiceParsingDlqQueueUrl());
     }
 }

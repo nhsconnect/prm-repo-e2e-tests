@@ -2,11 +2,15 @@ package uk.nhs.prm.e2etests.active_suspensions_db;
 
 import uk.nhs.prm.e2etests.reregistration.active_suspensions_db.ActiveSuspensionsDbClient;
 import uk.nhs.prm.e2etests.reregistration.models.ActiveSuspensionsMessage;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ActiveSuspensionsDB {
     ActiveSuspensionsDbClient activeSuspensionsDbClient;
 
-    public ActiveSuspensionsDB(ActiveSuspensionsDbClient activeSuspensionsDbClient) {
+    public ActiveSuspensionsDB(
+            ActiveSuspensionsDbClient activeSuspensionsDbClient
+    ) {
         this.activeSuspensionsDbClient = activeSuspensionsDbClient;
     }
 

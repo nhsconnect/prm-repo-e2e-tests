@@ -15,6 +15,6 @@ public class EhrInUnhandledQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getEhrTransferServiceUnhandledObservabilityQueueUri());
+              queuePropertySource.getEhrTransferServiceUnhandledObservabilityQueueUrl());
     }
 }

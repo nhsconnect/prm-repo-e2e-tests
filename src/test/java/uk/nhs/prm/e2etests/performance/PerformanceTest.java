@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.e2etests.TestConfiguration;
+import uk.nhs.prm.e2etests.configuration.MeshPropertySource;
 import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
 import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
@@ -37,37 +38,35 @@ import static uk.nhs.prm.e2etests.performance.load.LoadPhase.atFlatRate;
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateProcessingDurationScatterPlot;
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateThroughputPlot;
 
-@SpringBootTest(classes = {
-        PerformanceTest.class,
-        MeshMailbox.class,
-        ThinlyWrappedSqsClient.class,
-        TestConfiguration.class,
-        QueueHelper.class,
-        MofUpdatedMessageQueue.class,
-        AssumeRoleCredentialsProviderFactory.class,
-        BasicSqsClient.class,
-        AutoRefreshingRoleAssumingSqsClient.class
-})
+@SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableScheduling
 public class PerformanceTest {
-
+    // CONSTANTS
     public static final int TOTAL_MESSAGES_PER_DAY = 17000;
     public static final int SUSPENSION_MESSAGES_PER_DAY = 4600;
     public static final int NON_SUSPENSION_MESSAGES_PER_DAY = TOTAL_MESSAGES_PER_DAY - SUSPENSION_MESSAGES_PER_DAY;
     public static final int THROUGHPUT_BUCKET_SECONDS = 60;
 
-    @Autowired
+    // BEANS
     private MeshMailbox meshMailbox;
-    @Autowired
     private TestConfiguration config;
-    @Autowired
-    ApplicationContext context;
-    @Autowired
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
-    @Autowired
     PdsAdaptorPropertySource pdsAdaptorPropertySource;
+
+    @Autowired
+    public PerformanceTest(
+            MeshMailbox meshMailbox,
+            TestConfiguration config,
+            MofUpdatedMessageQueue mofUpdatedMessageQueue,
+            PdsAdaptorPropertySource pdsAdaptorPropertySource
+    ) {
+        this.meshMailbox = meshMailbox;
+        this.config = config;
+        this.mofUpdatedMessageQueue = mofUpdatedMessageQueue;
+        this.pdsAdaptorPropertySource = pdsAdaptorPropertySource;
+    }
 
     @Disabled("only used for perf test development not wanted on actual runs")
     @Test
@@ -166,15 +165,15 @@ public class PerformanceTest {
         return now().isBefore(timeout);
     }
 
-    private AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient() {
-        if (config.performanceTestTimeout() > TestConfiguration.SECONDS_IN_AN_HOUR * 0.9) {
-            var authStrategyWarning = "Performance test timeout is approaching an hour, getting where this will not work if " +
-                    "using temporary credentials (such as obtained by user using MFA) if it exceeds the expiration time. " +
-                    "Longer runs will need to be done in pipeline where refresh can be made from the AWS instance's " +
-                    "metadata credentials lookup.";
-            System.err.println(authStrategyWarning);
-        }
-        out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
-        return context.getBean(AutoRefreshingRoleAssumingSqsClient.class);
-    }
+//    private AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient() {
+//        if (config.performanceTestTimeout() > TestConfiguration.SECONDS_IN_AN_HOUR * 0.9) {
+//            var authStrategyWarning = "Performance test timeout is approaching an hour, getting where this will not work if " +
+//                    "using temporary credentials (such as obtained by user using MFA) if it exceeds the expiration time. " +
+//                    "Longer runs will need to be done in pipeline where refresh can be made from the AWS instance's " +
+//                    "metadata credentials lookup.";
+//            System.err.println(authStrategyWarning);
+//        }
+//        out.println("AUTH STRATEGY: using auto-refresh, role-assuming sqs client");
+//        return context.getBean(AutoRefreshingRoleAssumingSqsClient.class);
+//    }
 }

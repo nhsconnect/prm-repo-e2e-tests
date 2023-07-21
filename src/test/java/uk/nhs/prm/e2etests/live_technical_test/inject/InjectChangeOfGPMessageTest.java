@@ -6,6 +6,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
 import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.TestConfiguration;
@@ -41,9 +42,12 @@ public class InjectChangeOfGPMessageTest {
     @Autowired
     QueuePropertySource queuePropertySource;
 
+    @Autowired
+    ExampleAssumedRoleArn exampleAssumedRoleArn;
+
     @BeforeEach
     public void setUp() {
-        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
+        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory(exampleAssumedRoleArn));
         suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
     }
 

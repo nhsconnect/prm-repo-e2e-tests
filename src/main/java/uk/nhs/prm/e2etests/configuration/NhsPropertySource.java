@@ -10,7 +10,7 @@ import java.util.List;
 
 @Component
 public class NhsPropertySource extends AbstractSsmRetriever {
-    @Value("${nhs.environment:#{'dev'}")
+    @Value("${nhs.environment}")
     private String nhsEnvironment;
 
     @Value("${aws.configuration.ssm.parameters.ehrRepository.odsCode}")

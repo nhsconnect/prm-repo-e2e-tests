@@ -14,7 +14,7 @@ public class NemsEventProcessorUnhandledQueue extends NemsEventMessageQueue {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getNemsEventProcessorUnhandledEventsQueueUri());
+              queuePropertySource.getNemsEventProcessorUnhandledEventsQueueUrl());
     }
 
 }

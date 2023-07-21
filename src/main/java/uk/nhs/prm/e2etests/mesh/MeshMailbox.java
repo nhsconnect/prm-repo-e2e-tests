@@ -31,7 +31,7 @@ public class MeshMailbox {
             LOGGER.info("Attempting to send NEMS message: {}", message.toString());
 
             return meshClient.sendMessage(
-                this.meshPropertySource.getMailboxServiceOutboxUri(),
+                this.meshPropertySource.getMailboxServiceOutboxUrl(),
                 message
             );
         } catch (IOException | InterruptedException | URISyntaxException exception) {

@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.live_technical_test.day1;
 
+import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
 import uk.nhs.prm.e2etests.configuration.Gp2gpMessengerPropertySource;
 import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
 import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.extractProperty;
 
 
 @SpringBootTest
@@ -32,6 +34,7 @@ class ChangeOfGPMessageReceivedTest {
     private QueuePropertySource queuePropertySource;
     private NhsPropertySource nhsPropertySource;
     private PdsAdaptorPropertySource pdsAdaptorPropertySource;
+    private ExampleAssumedRoleArn exampleAssumedRoleArn;
 
     @Autowired
     public ChangeOfGPMessageReceivedTest(
@@ -39,18 +42,20 @@ class ChangeOfGPMessageReceivedTest {
             Gp2gpMessengerPropertySource gp2gpMessengerPropertySource,
             QueuePropertySource queuePropertySource,
             NhsPropertySource nhsPropertySource,
-            PdsAdaptorPropertySource pdsAdaptorPropertySource
+            PdsAdaptorPropertySource pdsAdaptorPropertySource,
+            ExampleAssumedRoleArn exampleAssumedRoleArn
     ) {
         patientValidator = testPatientValidator;
         this.gp2gpMessengerPropertySource = gp2gpMessengerPropertySource;
         this.queuePropertySource = queuePropertySource;
         this.nhsPropertySource = nhsPropertySource;
         this.pdsAdaptorPropertySource = pdsAdaptorPropertySource;
+        this.exampleAssumedRoleArn = exampleAssumedRoleArn;
     }
 
     @BeforeEach
     public void setUp() {
-        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory());
+        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory(exampleAssumedRoleArn));
         suspensionMessageRealQueue = new SuspensionMessageRealQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
         gp2GpMessengerClient = new Gp2GpMessengerClient(gp2gpMessengerPropertySource.getLiveTestApiKey(), gp2gpMessengerPropertySource.getGp2gpMessengerUrl());
     }

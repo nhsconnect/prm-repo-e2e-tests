@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.queue;
 
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import uk.nhs.prm.e2etests.model.NemsResolutionMessage;
@@ -23,6 +24,7 @@ public class QueueMessageHelper {
     public QueueMessageHelper(ThinlyWrappedSqsClient thinlyWrappedSqsClient, String queueUri) {
         this.thinlyWrappedSqsClient = thinlyWrappedSqsClient;
         this.queueUri = queueUri;
+        log.info("======================================== {} =====================================", queueUri);
     }
 
     public void deleteAllMessages() {

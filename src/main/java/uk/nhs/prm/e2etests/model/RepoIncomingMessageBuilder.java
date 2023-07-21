@@ -44,10 +44,12 @@ public class RepoIncomingMessageBuilder {
         sourceGp = ehrSource.odsCode();
         return this;
     }
+
     public RepoIncomingMessageBuilder withEhrSourceGpOdsCode(String ehrSource) {
         sourceGp = ehrSource;
         return this;
     }
+
     public RepoIncomingMessageBuilder withEhrDestinationGp(Gp2GpSystem ehrDestination) {
         destinationGp = ehrDestination.odsCode();
         return this;
@@ -59,8 +61,8 @@ public class RepoIncomingMessageBuilder {
     }
 
 
-    public RepoIncomingMessageBuilder withEhrDestinationAsRepo(TestConfiguration config) {
-        return withEhrDestinationGp(Gp2GpSystem.repoInEnv(config));
+    public RepoIncomingMessageBuilder withEhrDestinationAsRepo(String nhsEnvironment) {
+        return withEhrDestinationGp(Gp2GpSystem.repoInEnv(nhsEnvironment));
     }
 
     public RepoIncomingMessageBuilder withRandomlyGeneratedConversationId() {

@@ -1,5 +1,8 @@
 package uk.nhs.prm.e2etests.timing;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class Sleeper {
     public long sleep(int milliseconds) {
         try {
