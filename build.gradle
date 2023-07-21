@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'org.owasp.dependencycheck' version '7.4.4'
     id 'org.springframework.boot' version '2.7.11'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'io.spring.dependency-management' version '1.1.1'
 }
 
 group 'org.example'
@@ -13,11 +13,11 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'com.swiftmq:swiftmq-client:12.3.0'
+    testImplementation 'com.swiftmq:swiftmq-client:12.5.4'
     testImplementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    testImplementation platform('software.amazon.awssdk:bom:2.18.41')
+    testImplementation platform('software.amazon.awssdk:bom:2.20.103')
     testImplementation 'software.amazon.awssdk:ssm'
     testImplementation 'software.amazon.awssdk:sqs'
     testImplementation 'software.amazon.awssdk:sts'
@@ -25,10 +25,10 @@ dependencies {
     testImplementation 'software.amazon.awssdk:cloudwatchlogs'
     testImplementation 'software.amazon.awssdk:dynamodb'
     testImplementation 'org.postgresql:postgresql'
-    testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    testImplementation 'org.apache.httpcomponents:httpclient:4.5.14'
     testImplementation 'org.apache.activemq:activemq-broker:5.16.4'
-    testImplementation 'org.apache.activemq:activemq-client:5.16.4'
-    testImplementation 'org.apache.activemq:activemq-pool:5.16.4'
+    testImplementation 'org.apache.activemq:activemq-client:5.18.2'
+    testImplementation 'org.apache.activemq:activemq-pool:5.18.2'
     testImplementation 'org.awaitility:awaitility:4.2.0'
     testImplementation 'org.jfree:jfreechart:1.5.0'
     testImplementation 'org.bouncycastle:bcpkix-jdk15on:1.70'
@@ -36,7 +36,7 @@ dependencies {
     testImplementation 'org.xmlunit:xmlunit-core:2.9.1'
     testImplementation 'org.xmlunit:xmlunit-matchers:2.9.1'
 
-    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.28'
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
