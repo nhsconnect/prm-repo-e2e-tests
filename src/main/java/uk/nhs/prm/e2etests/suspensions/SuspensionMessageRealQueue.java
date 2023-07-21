@@ -15,7 +15,6 @@ public class SuspensionMessageRealQueue extends QueueMessageHelper {
             ThinlyWrappedSqsClient thinlyWrappedSqsClient,
             QueuePropertySource queuePropertySource
     ) {
-        // TODO: IS THIS THE CORRECT QUEUE URL
         super(thinlyWrappedSqsClient, queuePropertySource.getSuspensionsServiceSuspensionsQueueUrl());
     }
 }
