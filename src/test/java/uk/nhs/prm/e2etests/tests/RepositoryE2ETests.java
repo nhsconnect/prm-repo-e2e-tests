@@ -190,7 +190,7 @@ class RepositoryE2ETests {
         assertFalse(myDiff.toString(), myDiff.hasDifferences());
     }
 
-    // THIS TEST WAS FAILING BEFORE REFACTOR
+    // TODO: THIS TEST WAS FAILING BEFORE REFACTOR
     @Test
     void shouldVerifyThatALargeEhrXMLIsUnchanged() {
         // given
