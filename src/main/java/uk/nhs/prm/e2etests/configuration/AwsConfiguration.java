@@ -4,7 +4,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import org.springframework.context.annotation.Configuration;
-import uk.nhs.prm.e2etests.exception.UnknownRegionException;
+import uk.nhs.prm.e2etests.exception.UnknownAwsRegionException;
 import org.springframework.beans.factory.annotation.Value;
 import uk.nhs.prm.e2etests.exception.AssumedRoleException;
 import software.amazon.awssdk.services.sts.StsClient;
@@ -17,6 +17,8 @@ import java.util.regex.Pattern;
 
 @Configuration
 public class AwsConfiguration {
+    private static final String REQUIRED_ROLE_ARN_DEFAULT_VALUE = "none";
+
     @Value("${aws.configuration.requiredRoleArn}")
     private String requiredRoleArn;
 
@@ -49,7 +51,7 @@ public class AwsConfiguration {
                 .credentialsProvider(awsCredentialsProvider())
                 .build()) {
 
-            if(this.requiredRoleArn.isBlank()) return new ExampleAssumedRoleArn(stsClient.getCallerIdentity().arn());
+            if(this.requiredRoleArn.equalsIgnoreCase(REQUIRED_ROLE_ARN_DEFAULT_VALUE)) return new ExampleAssumedRoleArn(stsClient.getCallerIdentity().arn());
             else return new ExampleAssumedRoleArn(this.requiredRoleArn);
         } catch (Exception exception) {
             throw new AssumedRoleException(exception.getMessage());
@@ -59,6 +61,6 @@ public class AwsConfiguration {
     @PostConstruct
     private void validateAwsRegion() {
         final Pattern pattern = Pattern.compile("(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\\d");
-        if(!pattern.matcher(this.region).find()) throw new UnknownRegionException();
+        if(!pattern.matcher(this.region).find()) throw new UnknownAwsRegionException();
     }
 }

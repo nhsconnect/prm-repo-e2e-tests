@@ -17,6 +17,6 @@ public class SuspensionServiceNotReallySuspensionsMessageQueue extends QueueMess
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getSuspensionsServiceNotSuspendedObservabilityQueueUri());
+              queuePropertySource.getSuspensionsServiceNotSuspendedObservabilityQueueUrl());
     }
 }

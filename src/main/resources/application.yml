@@ -4,7 +4,7 @@ aws:
     secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
     sessionToken: ${AWS_SESSION_TOKEN}
     region: ${AWS_REGION}
-    requiredRoleArn: ${REQUIRED_ROLE_ARN}
+    requiredRoleArn: ${REQUIRED_ROLE_ARN:none}
 
     ssm:
       parameters:
@@ -28,12 +28,14 @@ aws:
           mqAppPassword: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-password
         safeListedPatients: /repo/${NHS_ENVIRONMENT}/user-input/external/safe-listed-patients-nhs-numbers
 
+    # TODO: PRMT-3468 - MAKE USE OF GETENVSUFFIX, NHS_ENV HAS ONLY PROD AND NON PROD
+    # TODO: PRMT-3468 - MAKE USE OF OUR AWS ENVIRONMENTS.
     serviceUrls:
-      pdsAdaptor: https://pds-adaptor.${NHS_ENVIRONMENT}.patient-deductions.nhs.uk/
-      gp2GpMessenger: https://gp2gp-messenger.${NHS_ENVIRONMENT}.patient-deductions.nhs.uk/
-      ehrRepository: https://ehr-repo.${NHS_ENVIRONMENT}.patient-deductions.nhs.uk/
+      pdsAdaptor: https://pds-adaptor.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
+      gp2GpMessenger: https://gp2gp-messenger.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
+      ehrRepository: https://ehr-repo.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
 
-    queueUri:
+    queueNames:
       meshForwarder:
         nemsEventsObservability: mesh-forwarder-nems-events-observability
       nemsEventProcessor:
@@ -64,7 +66,7 @@ aws:
         messageSentObservability: hl7-message-sent-observability
 
 nhs:
-  environment: ${NHS_ENVIRONMENT}
+  environment: ${NHS_ENVIRONMENT:dev}
   services:
     gp2gp:
       odsCodes:

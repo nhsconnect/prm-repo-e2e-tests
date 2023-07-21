@@ -16,6 +16,6 @@ public class NemsEventProcessorDeadLetterQueue extends NemsEventMessageQueue {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getNemsEventProcessorDlqQueueUri());
+              queuePropertySource.getNemsEventProcessorDlqQueueUrl());
     }
 }

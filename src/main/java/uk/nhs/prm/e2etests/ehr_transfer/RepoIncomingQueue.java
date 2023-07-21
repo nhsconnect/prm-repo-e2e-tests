@@ -16,7 +16,7 @@ public class RepoIncomingQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getEhrTransferServiceRepoIncomingQueueUri());
+              queuePropertySource.getEhrTransferServiceRepoIncomingQueueUrl());
     }
 
     public void send(RepoIncomingMessage message) {

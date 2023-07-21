@@ -15,6 +15,6 @@ public class NegativeAcknowledgementQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getEhrTransferServiceNegativeAcknowledgementObservabilityQueueUri());
+              queuePropertySource.getEhrTransferServiceNegativeAcknowledgementObservabilityQueueUrl());
     }
 }

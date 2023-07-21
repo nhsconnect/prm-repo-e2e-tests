@@ -11,6 +11,6 @@ public class EhrCompleteQueue extends QueueMessageHelper {
 
     @Autowired
     public EhrCompleteQueue(ThinlyWrappedSqsClient thinlyWrappedSqsClient, QueuePropertySource queuePropertySource) {
-        super(thinlyWrappedSqsClient, queuePropertySource.getEhrTransferServiceEhrCompleteObservabilityQueueUri());
+        super(thinlyWrappedSqsClient, queuePropertySource.getEhrTransferServiceEhrCompleteObservabilityQueueUrl());
     }
 }

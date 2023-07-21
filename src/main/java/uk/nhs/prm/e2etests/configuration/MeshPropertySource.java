@@ -19,7 +19,7 @@ public class MeshPropertySource extends AbstractSsmRetriever {
     @Value("${aws.configuration.ssm.parameters.mesh.mailboxPassword}")
     private String mailboxPassword;
 
-    private static final String MAILBOX_SERVICE_OUTBOX_URI = "https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox";
+    private static final String MAILBOX_SERVICE_OUTBOX_URL = "https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox";
 
     @Autowired
     public MeshPropertySource(SsmService ssmService) {
@@ -42,9 +42,7 @@ public class MeshPropertySource extends AbstractSsmRetriever {
         return super.getAwsSsmParameterValue(this.mailboxPassword);
     }
 
-    public String getMailboxServiceOutboxUri() {
-        return super.getAwsSsmParameterValue(
-            String.format(MAILBOX_SERVICE_OUTBOX_URI, this.getMailboxId())
-        );
+    public String getMailboxServiceOutboxUrl() {
+        return String.format(MAILBOX_SERVICE_OUTBOX_URL, this.getMailboxId());
     }
 }

@@ -14,6 +14,6 @@ public class SmallEhrQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getEhrTransferServiceSmallEhrObservabilityQueueUri());
+              queuePropertySource.getEhrTransferServiceSmallEhrObservabilityQueueUrl());
     }
 }

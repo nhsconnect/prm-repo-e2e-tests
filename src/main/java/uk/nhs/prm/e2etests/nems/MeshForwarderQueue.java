@@ -15,6 +15,6 @@ public class MeshForwarderQueue extends NemsEventMessageQueue {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getNemsEventsObservabilityQueueUri());
+              queuePropertySource.getNemsEventsObservabilityQueueUrl());
     }
 }

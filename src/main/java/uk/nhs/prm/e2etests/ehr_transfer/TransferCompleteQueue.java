@@ -19,6 +19,6 @@ public class TransferCompleteQueue extends QueueMessageHelper {
          to be the end of transfer service and didn't change directories.
          */
         super(thinlyWrappedSqsClient,
-                queuePropertySource.getEndOfTransferServiceTransferCompleteObservabilityQueueUri());
+                queuePropertySource.getEndOfTransferServiceTransferCompleteObservabilityQueueUrl());
     }
 }

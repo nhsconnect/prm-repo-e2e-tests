@@ -9,6 +9,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.active_suspensions_db.ActiveSuspensionsDB;
 import uk.nhs.prm.e2etests.configuration.EhrRepositoryPropertySource;
+import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
 import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
 import uk.nhs.prm.e2etests.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
@@ -42,29 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.nhs.NhsIdentityGenerator.*;
 import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
 
-@SpringBootTest(classes = {
-        ContinuityE2E.class,
-        RepoIncomingObservabilityQueue.class,
-        MeshMailbox.class,
-        ThinlyWrappedSqsClient.class,
-        TestConfiguration.class,
-        MeshForwarderQueue.class,
-        NemsEventProcessorUnhandledQueue.class,
-        SuspensionMessageObservabilityQueue.class,
-        SuspensionServiceNotReallySuspensionsMessageQueue.class,
-        NemsEventProcessorDeadLetterQueue.class,
-        MeshForwarderQueue.class,
-        QueueHelper.class,
-        MofUpdatedMessageQueue.class,
-        DeceasedPatientQueue.class,
-        ReRegistrationMessageObservabilityQueue.class,
-        MofNotUpdatedMessageQueue.class,
-        BasicSqsClient.class,
-        AssumeRoleCredentialsProviderFactory.class,
-        ActiveSuspensionsDB.class,
-        ActiveSuspensionsDbClient.class,
-        AutoRefreshingRoleAssumingSqsClient.class,
-})
+@SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -97,16 +76,15 @@ class ContinuityE2E {
     private ActiveSuspensionsDB activeSuspensionsDB;
     @Autowired
     private EhrRepoClient ehrRepoClient;
+    @Autowired
+    private PdsAdaptorPropertySource pdsAdaptorPropertySource;
+    @Autowired
+    private NhsPropertySource nhsPropertySource;
 
     private PdsAdaptorClient pdsAdaptorClient;
-    private final PdsAdaptorPropertySource pdsAdaptorPropertySource;
 
     private final String EMIS_PTL_INT = "N82668";
     private final String SUSPENDED_PATIENT_NHS_NUMBER = "9693796047";
-
-    public ContinuityE2E(PdsAdaptorPropertySource pdsAdaptorPropertySource) {
-        this.pdsAdaptorPropertySource = pdsAdaptorPropertySource;
-    }
 
     @BeforeAll
     void init() {
@@ -138,7 +116,7 @@ class ContinuityE2E {
         meshMailbox.postMessage(nemsSuspension);
         MofUpdatedMessageNems expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
-        assertThat(meshForwarderQueue.hasMessage(nemsSuspension.getMessage()));
+        assertThat(meshForwarderQueue.hasMessage(nemsSuspension.getMessage())); // TODO PRMT-3574 an 'assertThat' without a matching 'isTrue'? I think these instances need a change
         assertThat(mofUpdatedMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
@@ -261,11 +239,11 @@ class ContinuityE2E {
 
 
 
-        await().atMost(20, TimeUnit.SECONDS).untilAsserted(() -> { // check it's a 404?
-            assertThrows(HttpClientErrorException.class, () -> {
-                ehrRepoClient.getEhrResponse(patientNhsNumber);
-            });
+
+        assertThrows(HttpClientErrorException.class, () -> {
+            ehrRepoClient.getEhrResponse(patientNhsNumber);
         });
+
 
         assertThat(meshForwarderQueue.hasMessage(reRegistration.getMessage()));
         assertThat(reRegistrationMessageObservabilityQueue.hasMessage(expectedMessageOnQueue));
@@ -298,7 +276,7 @@ class ContinuityE2E {
 
     private void setManagingOrganisationToEMISOdsCode(String nhsNumber) {
         var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
-        var repoOdsCode = Gp2GpSystem.repoInEnv(config).odsCode();
+        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsPropertySource.getNhsEnvironment()).odsCode();
         if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorClient.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.getRecordETag());
         }

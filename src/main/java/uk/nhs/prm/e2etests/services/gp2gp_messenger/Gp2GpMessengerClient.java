@@ -1,11 +1,9 @@
 package uk.nhs.prm.e2etests.services.gp2gp_messenger;
 
 import org.springframework.http.*;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-@Component
 public class Gp2GpMessengerClient {
 
     private final String apiKey;

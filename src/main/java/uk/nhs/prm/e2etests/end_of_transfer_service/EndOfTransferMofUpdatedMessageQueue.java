@@ -13,6 +13,6 @@ public class EndOfTransferMofUpdatedMessageQueue extends QueueMessageHelper {
             ThinlyWrappedSqsClient thinlyWrappedSqsClient,
             QueuePropertySource queuePropertySource) {
         super(thinlyWrappedSqsClient,
-                queuePropertySource.getEndOfTransferServiceMofUpdatedQueueUri());
+                queuePropertySource.getEndOfTransferServiceMofUpdatedQueueUrl());
     }
 }

@@ -12,6 +12,6 @@ public class ReRegistrationMessageObservabilityQueue extends NemsEventMessageQue
     public ReRegistrationMessageObservabilityQueue(
             ThinlyWrappedSqsClient thinlyWrappedSqsClient,
             QueuePropertySource queuePropertySource) {
-        super(thinlyWrappedSqsClient, queuePropertySource.getNemsEventProcessorReregistrationObservabilityQueueUri());
+        super(thinlyWrappedSqsClient, queuePropertySource.getNemsEventProcessorReregistrationObservabilityQueueUrl());
     }
 }

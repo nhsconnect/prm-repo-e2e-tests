@@ -14,6 +14,6 @@ public class LargeEhrFragmentsQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getEhrTransferServiceLargeMessageFragmentsObservabilityQueueUri());
+              queuePropertySource.getEhrTransferServiceLargeMessageFragmentsObservabilityQueueUrl());
     }
 }

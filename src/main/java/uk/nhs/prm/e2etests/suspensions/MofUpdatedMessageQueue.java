@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
 import uk.nhs.prm.e2etests.queue.QueueMessageHelper;
 import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
-import uk.nhs.prm.e2etests.TestConfiguration;
 
 @Component
 public class MofUpdatedMessageQueue extends QueueMessageHelper {
@@ -15,6 +14,6 @@ public class MofUpdatedMessageQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getSuspensionsServiceMofUpdatedQueueUri());
+              queuePropertySource.getSuspensionsServiceMofUpdatedQueueUrl());
     }
 }

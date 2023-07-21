@@ -14,6 +14,6 @@ public class Gp2gpMessengerQueue extends QueueMessageHelper {
             QueuePropertySource queuePropertySource
     ) {
         super(thinlyWrappedSqsClient,
-              queuePropertySource.getGp2gpMessengerObservabilityQueueUri());
+              queuePropertySource.getGp2gpMessengerObservabilityQueueUrl());
     }
 }

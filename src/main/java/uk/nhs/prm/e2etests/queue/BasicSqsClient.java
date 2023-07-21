@@ -1,20 +1,22 @@
 package uk.nhs.prm.e2etests.queue;
 
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.*;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@Component
-@Lazy
 public class BasicSqsClient implements TestSqsClient {
     private static final int MAX_VISIBILITY_TIMEOUT = 43200;
 
-    private SqsClient sqsClient;
+    private final SqsClient sqsClient;
 
     public BasicSqsClient(SqsClient sqsClient) {
         this.sqsClient = sqsClient;
@@ -35,7 +37,7 @@ public class BasicSqsClient implements TestSqsClient {
                 .messages()
                 .stream()
                 .map(SqsMessage::new)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -53,7 +55,7 @@ public class BasicSqsClient implements TestSqsClient {
         return receiveMessages(receiveMessageRequest).messages()
                 .stream()
                 .map(SqsMessage::new)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
