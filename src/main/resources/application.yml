@@ -1,0 +1,83 @@
+aws:
+  configuration:
+    accessKey: ${AWS_ACCESS_KEY_ID}
+    secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
+    sessionToken: ${AWS_SESSION_TOKEN}
+    region: ${AWS_REGION}
+    requiredRoleArn: ${REQUIRED_ROLE_ARN:none}
+
+    ssm:
+      parameters:
+        mesh:
+          mailboxId: /repo/${NHS_ENVIRONMENT}/user-input/external/mesh-mailbox-id
+          clientCert: /repo/${NHS_ENVIRONMENT}/user-input/external/mesh-mailbox-client-cert
+          clientKey: /repo/${NHS_ENVIRONMENT}/user-input/external/mesh-mailbox-client-key
+          mailboxPassword: /repo/${NHS_ENVIRONMENT}/user-input/external/mesh-mailbox-password
+        pdsAdaptor:
+          performanceApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/pds-adaptor/performance-test
+          liveTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/pds-adaptor/live-test
+          e2eTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/pds-adaptor/e2e-test
+        gp2gpMessenger:
+          liveTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/gp2gp-messenger/live-test
+        ehrRepository:
+          odsCode: /repo/${NHS_ENVIRONMENT}/user-input/external/repository-ods-code
+          liveTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/ehr-repo/live-test
+          e2eTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/ehr-repo/e2e-test
+        queue:
+          mqAppUsername: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-username
+          mqAppPassword: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-password
+        safeListedPatients: /repo/${NHS_ENVIRONMENT}/user-input/external/safe-listed-patients-nhs-numbers
+
+    # TODO: PRMT-3468 - MAKE USE OF GETENVSUFFIX, NHS_ENV HAS ONLY PROD AND NON PROD
+    # TODO: PRMT-3468 - MAKE USE OF OUR AWS ENVIRONMENTS.
+    serviceUrls:
+      pdsAdaptor: https://pds-adaptor.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
+      gp2GpMessenger: https://gp2gp-messenger.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
+      ehrRepository: https://ehr-repo.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
+
+    queueNames:
+      meshForwarder:
+        nemsEventsObservability: mesh-forwarder-nems-events-observability
+      nemsEventProcessor:
+        unhandledEvents: nems-event-processor-unhandled-events
+        suspensionsObservability: nems-event-processor-suspensions-observability
+        reregistrationObservability: nems-event-processor-re-registration-observability
+        dlq: nems-event-processor-dlq
+      suspensionsService:
+        suspensions: suspension-service-suspensions
+        repoIncomingObservability: suspension-service-repo-incoming-observability
+        notSuspendedObservability: suspension-service-not-suspended-observability
+        mofUpdated: suspension-service-mof-updated
+        mofNotUpdated: suspension-service-mof-not-updated
+        deceasedPatient: suspension-service-deceased-patient
+      ehrTransferService:
+        repoIncoming: ehr-transfer-service-repo-incoming
+        smallEhrObservability: ehr-transfer-service-small-ehr-observability
+        largeEhrObservability: ehr-transfer-service-large-ehr-observability
+        largeMessageFragmentsObservability: ehr-transfer-service-large-message-fragments-observability
+        unhandledObservability: ehr-transfer-service-unhandled-observability
+        negativeAcknowledgementsObservability: ehr-transfer-service-negative-acknowledgments-observability
+        ehrCompleteObservability: ehr-transfer-service-ehr-complete-observability
+        parsingDlq: ehr-transfer-service-parsing-dlq
+      endOfTransferService:
+        mofUpdated: end-of-transfer-service-mof-updated
+        transferCompleteObservability: end-of-transfer-service-transfer-complete-observability
+      gp2gpMessenger:
+        messageSentObservability: hl7-message-sent-observability
+
+nhs:
+  environment: ${NHS_ENVIRONMENT:dev}
+  services:
+    gp2gp:
+      odsCodes:
+        tppPtlInt: M85019
+        emisPtlInt: N82668
+        repoDev: B85002
+        repoTest: B86041
+  syntheticPatientNhsNumberPrefix:
+    prod: 999
+    nonProd: 969
+
+spring:
+  main:
+    web-application-type: none
