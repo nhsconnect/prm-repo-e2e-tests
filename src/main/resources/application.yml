@@ -26,6 +26,7 @@ aws:
         queue:
           mqAppUsername: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-username
           mqAppPassword: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-password
+          amqpEndpoint: /repo/${NHS_ENVIRONMENT}/output/prm-deductions-infra/amqp-endpoint-0
         safeListedPatients: /repo/${NHS_ENVIRONMENT}/user-input/external/safe-listed-patients-nhs-numbers
 
     # TODO: PRMT-3468 - MAKE USE OF GETENVSUFFIX, NHS_ENV HAS ONLY PROD AND NON PROD

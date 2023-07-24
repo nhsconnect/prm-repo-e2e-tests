@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
 import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.TestData;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.e2etests.ehr_transfer.TransferCompleteQueue;
 import uk.nhs.prm.e2etests.model.Gp2GpSystem;
@@ -45,6 +45,9 @@ class RepoInPerformanceTest {
     RepoIncomingQueue repoIncomingQueue;
 
     @Autowired
+    SimpleAmqpQueue inboundQueueFromMhs;
+
+    @Autowired
     Sleeper sleeper;
 
     @Autowired
@@ -60,14 +63,14 @@ class RepoInPerformanceTest {
     ExampleAssumedRoleArn exampleAssumedRoleArn;
 
     @Autowired
-    QueuePropertySource queuePropertySource;
+    QueueProperties queueProperties;
 
     @Autowired
     AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient;
 
     @BeforeAll
     void init() {
-        transferCompleteQueue = new TransferCompleteQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient), queuePropertySource);
+        transferCompleteQueue = new TransferCompleteQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient), queueProperties);
         transferCompleteQueue.deleteAllMessages();
     }
 
@@ -125,7 +128,7 @@ class RepoInPerformanceTest {
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
         var intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
-            var inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, config);
+//            var inboundQueueFromMhs = new SimpleAmqpQueue(queueProperties, config);
             var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
             var counter = new AtomicInteger(0);
             String smallEhr;

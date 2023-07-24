@@ -11,28 +11,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.e2etests.TestConfiguration;
-import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
-import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.ehr_transfer.*;
-import uk.nhs.prm.e2etests.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
 import uk.nhs.prm.e2etests.model.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.e2etests.enumeration.LargeEhrVariant;
 import uk.nhs.prm.e2etests.enumeration.Patient;
-import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
-import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.queue.*;
-import uk.nhs.prm.e2etests.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.e2etests.transfer_tracker_db.TrackerDb;
-import uk.nhs.prm.e2etests.configuration.Gp2gpMessengerPropertySource;
+import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.utility.LargeEhrTestFiles;
 import uk.nhs.prm.e2etests.utility.Resources;
 import uk.nhs.prm.e2etests.utility.TestUtils;
@@ -58,6 +53,7 @@ class RepositoryE2ETests {
     private static final Logger LOGGER = LogManager.getLogger(RepositoryE2ETests.class);
 
     private final RepoIncomingQueue repoIncomingQueue;
+    private final SimpleAmqpQueue inboundQueueFromMhs;
     private final TrackerDb trackerDb;
     private final SmallEhrQueue smallEhrQueue;
     private final LargeEhrQueue largeEhrQueue;
@@ -69,14 +65,14 @@ class RepositoryE2ETests {
     private final NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue;
     private final Gp2gpMessengerQueue gp2gpMessengerQueue;
     private final TestConfiguration testConfiguration;
-    private final Gp2gpMessengerPropertySource gp2GpMessengerPropertySource;
-    private final QueuePropertySource queuePropertySource;
-    private final PdsAdaptorPropertySource pdsAdaptorPropertySource;
-    private final NhsPropertySource nhsPropertySource;
+    private final Gp2gpMessengerProperties gp2GpMessengerProperties;
+    private final PdsAdaptorProperties pdsAdaptorProperties;
+    private final NhsProperties nhsProperties;
 
     @Autowired
     public RepositoryE2ETests(
             RepoIncomingQueue repoIncomingQueue,
+            SimpleAmqpQueue inboundQueueFromMhs,
             TrackerDb trackerDb,
             SmallEhrQueue smallEhrQueue,
             LargeEhrQueue largeEhrQueue,
@@ -88,12 +84,12 @@ class RepositoryE2ETests {
             NegativeAcknowledgementQueue negativeAcknowledgementObservabilityQueue,
             Gp2gpMessengerQueue gp2gpMessengerQueue,
             TestConfiguration testConfiguration,
-            Gp2gpMessengerPropertySource gp2GpMessengerPropertySource,
-            QueuePropertySource queuePropertySource,
-            PdsAdaptorPropertySource pdsAdaptorPropertySource,
-            NhsPropertySource nhsPropertySource
+            Gp2gpMessengerProperties gp2GpMessengerProperties,
+            PdsAdaptorProperties pdsAdaptorProperties,
+            NhsProperties nhsProperties
     ) {
         this.repoIncomingQueue = repoIncomingQueue;
+        this.inboundQueueFromMhs = inboundQueueFromMhs;
         this.trackerDb = trackerDb;
         this.smallEhrQueue = smallEhrQueue;
         this.largeEhrQueue = largeEhrQueue;
@@ -105,10 +101,9 @@ class RepositoryE2ETests {
         this.negativeAcknowledgementObservabilityQueue = negativeAcknowledgementObservabilityQueue;
         this.gp2gpMessengerQueue = gp2gpMessengerQueue;
         this.testConfiguration = testConfiguration;
-        this.gp2GpMessengerPropertySource = gp2GpMessengerPropertySource;
-        this.queuePropertySource = queuePropertySource;
-        this.pdsAdaptorPropertySource = pdsAdaptorPropertySource;
-        this.nhsPropertySource = nhsPropertySource;
+        this.gp2GpMessengerProperties = gp2GpMessengerProperties;
+        this.pdsAdaptorProperties = pdsAdaptorProperties;
+        this.nhsProperties = nhsProperties;
     }
 
     PdsAdaptorClient pdsAdaptorClient;
@@ -125,8 +120,8 @@ class RepositoryE2ETests {
         gp2gpMessengerQueue.deleteAllMessages();
         pdsAdaptorClient = new PdsAdaptorClient(
                 "e2e-test",
-                pdsAdaptorPropertySource.getE2eTestApiKey(),
-                pdsAdaptorPropertySource.getPdsAdaptorUrl()
+                pdsAdaptorProperties.getE2eTestApiKey(),
+                pdsAdaptorProperties.getPdsAdaptorUrl()
         );
     }
 
@@ -136,7 +131,6 @@ class RepositoryE2ETests {
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev")
     void shouldIdentifyEhrRequestAsEhrOutMessage() {
         var ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05");
-        var inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, testConfiguration);
 
         String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
         inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
@@ -153,8 +147,6 @@ class RepositoryE2ETests {
         String nhsNumberForTestPatient = "9727018440";
         String previousGpForTestPatient = "M85019";
         String asidCodeForTestPatient = "200000000149";
-
-        SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, testConfiguration);
 
         String smallEhr = getSmallEhrWithoutLinebreaks(inboundConversationId.toUpperCase(), smallEhrMessageId);
         String ehrRequest = getEhrRequest(nhsNumberForTestPatient, previousGpForTestPatient, asidCodeForTestPatient, outboundConversationId);
@@ -203,8 +195,6 @@ class RepositoryE2ETests {
         String nhsNumberForTestPatient = "9727018157";
         String previousGpForTestPatient = "N82668";
         String newGpForTestPatient = "M85019";
-
-        SimpleAmqpQueue inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, testConfiguration);
 
         LargeEhrTestFiles largeEhrTestFiles = TestUtils.prepareTestFilesForLargeEhr(
                 inboundConversationId,
@@ -290,7 +280,7 @@ class RepositoryE2ETests {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhrAtEmisWithRepoMof)
                 .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
-                .withEhrDestinationAsRepo(nhsPropertySource.getNhsEnvironment())
+                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
                 .build();
 
         repoIncomingQueue.send(triggerMessage);
@@ -305,7 +295,7 @@ class RepositoryE2ETests {
         RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhr.patient())
                 .withEhrSourceGp(sourceSystem)
-                .withEhrDestinationAsRepo(nhsPropertySource.getNhsEnvironment())
+                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
                 .build();
 
         setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
@@ -349,7 +339,7 @@ class RepositoryE2ETests {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhr.patient())
                 .withEhrSourceGp(sourceSystem)
-                .withEhrDestinationAsRepo(nhsPropertySource.getNhsEnvironment())
+                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
                 .build();
 
         setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
@@ -387,7 +377,7 @@ class RepositoryE2ETests {
         var conversationIdsList = new ArrayList<String>();
 
         Instant requestedAt = null;
-        var iterationIndex = 1;
+        var iterationIndex = 1; // TODO PRMT-3574 - A manually incremented index within a for loop? Seems off to me.
         for (Arguments sourceSystemAndEhr : loadTestScenarios().collect(toList())) {
             var sourceSystem = (Gp2GpSystem) sourceSystemAndEhr.get()[0];
             var ehr = (LargeEhrVariant) sourceSystemAndEhr.get()[1];
@@ -396,7 +386,7 @@ class RepositoryE2ETests {
             var triggerMessage = new RepoIncomingMessageBuilder()
                     .withPatient(ehr.patient())
                     .withEhrSourceGp(sourceSystem)
-                    .withEhrDestinationAsRepo(nhsPropertySource.getNhsEnvironment())
+                    .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
                     .build();
 
             System.out.println("Trigger message: " + triggerMessage.toJsonString());
@@ -467,7 +457,7 @@ class RepositoryE2ETests {
         var triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
                 .withEhrSourceGpOdsCode(sourceSystem)
-                .withEhrDestinationAsRepo(nhsPropertySource.getNhsEnvironment())
+                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
                 .build();
 
         repoIncomingQueue.send(triggerMessage);
@@ -484,7 +474,7 @@ class RepositoryE2ETests {
     private Stream<Arguments> foundationSupplierSystemsWithoutEmisWhichIsCurrentlyHavingIssues() {
         return Stream.of(
             Arguments.of(
-                gp2GpMessengerPropertySource.getEmisPtlIntOdsCode()
+                gp2GpMessengerProperties.getEmisPtlIntOdsCode()
             )
         );
     }
@@ -492,7 +482,7 @@ class RepositoryE2ETests {
     private void setManagingOrganisationToRepo(String nhsNumber) {
         var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
         assertThat(pdsResponse.getIsSuspended()).as("%s should be suspended so that MOF is respected", nhsNumber).isTrue();
-        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsPropertySource.getNhsEnvironment()).odsCode();
+        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
         if (!repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorClient.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.getRecordETag());
         }

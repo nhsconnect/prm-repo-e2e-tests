@@ -1,7 +1,7 @@
 package uk.nhs.prm.e2etests.suspensions;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.queue.QueueMessageHelper;
 import org.springframework.stereotype.Component;
@@ -13,8 +13,8 @@ public class SuspensionMessageRealQueue extends QueueMessageHelper {
     @Autowired
     public SuspensionMessageRealQueue(
             ThinlyWrappedSqsClient thinlyWrappedSqsClient,
-            QueuePropertySource queuePropertySource
+            QueueProperties queueProperties
     ) {
-        super(thinlyWrappedSqsClient, queuePropertySource.getSuspensionsServiceSuspensionsQueueUrl());
+        super(thinlyWrappedSqsClient, queueProperties.getSuspensionsServiceSuspensionsQueueUrl());
     }
 }

@@ -2,7 +2,7 @@ package uk.nhs.prm.e2etests.mesh.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.e2etests.configuration.MeshPropertySource;
+import uk.nhs.prm.e2etests.property.MeshProperties;
 import uk.nhs.prm.e2etests.exception.AuthorizationTokenException;
 
 import javax.crypto.Mac;
@@ -23,9 +23,9 @@ public class AuthTokenGenerator {
     private final String mailboxPassword;
 
     @Autowired
-    public AuthTokenGenerator(MeshPropertySource meshPropertySource) {
-        this.mailboxId = meshPropertySource.getMailboxId();
-        this.mailboxPassword = meshPropertySource.getMailboxPassword();
+    public AuthTokenGenerator(MeshProperties meshProperties) {
+        this.mailboxId = meshProperties.getMailboxId();
+        this.mailboxPassword = meshProperties.getMailboxPassword();
     }
 
     private String toHexString(byte[] bytes) {

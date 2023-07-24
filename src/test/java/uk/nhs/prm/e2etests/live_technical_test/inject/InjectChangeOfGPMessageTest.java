@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
@@ -40,7 +40,7 @@ public class InjectChangeOfGPMessageTest {
     private SuspensionMessageObservabilityQueue suspensionMessageObservabilityQueue;
 
     @Autowired
-    QueuePropertySource queuePropertySource;
+    QueueProperties queueProperties;
 
     @Autowired
     ExampleAssumedRoleArn exampleAssumedRoleArn;
@@ -48,7 +48,7 @@ public class InjectChangeOfGPMessageTest {
     @BeforeEach
     public void setUp() {
         var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory(exampleAssumedRoleArn));
-        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
+        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new ThinlyWrappedSqsClient(sqsClient), queueProperties);
     }
 
 

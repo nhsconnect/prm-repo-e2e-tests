@@ -2,7 +2,7 @@ package uk.nhs.prm.e2etests.mesh;
 
 import uk.nhs.prm.e2etests.client.StackOverflowInsecureSSLContextLoader;
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.nhs.prm.e2etests.configuration.MeshPropertySource;
+import uk.nhs.prm.e2etests.property.MeshProperties;
 import uk.nhs.prm.e2etests.mesh.auth.AuthTokenGenerator;
 import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ import java.net.URL;
 @Component
 public class MeshClient {
     private final StackOverflowInsecureSSLContextLoader contextLoader;
-    private final MeshPropertySource meshPropertySource;
+    private final MeshProperties meshProperties;
     private final AuthTokenGenerator authTokenGenerator;
     private final Gson gson;
     private final String mailBoxId;
@@ -26,13 +26,13 @@ public class MeshClient {
     @Autowired
     public MeshClient(
         StackOverflowInsecureSSLContextLoader contextLoader,
-        MeshPropertySource meshPropertySource,
+        MeshProperties meshProperties,
         AuthTokenGenerator authTokenGenerator,
         Gson gson
     ) {
         this.contextLoader = contextLoader;
-        this.meshPropertySource = meshPropertySource;
-        this.mailBoxId = this.meshPropertySource.getMailboxId();
+        this.meshProperties = meshProperties;
+        this.mailBoxId = this.meshProperties.getMailboxId();
         this.authTokenGenerator = authTokenGenerator;
         this.gson = gson;
     }
@@ -55,8 +55,8 @@ public class MeshClient {
 
         final HttpResponse<String> response = HttpClient.newBuilder()
                 .sslContext(contextLoader.getClientAuthSslContext(
-                        meshPropertySource.getClientCert(),
-                        meshPropertySource.getClientKey()
+                        meshProperties.getClientCert(),
+                        meshProperties.getClientKey()
                 ))
                 .build()
                 .send(request, HttpResponse.BodyHandlers.ofString());

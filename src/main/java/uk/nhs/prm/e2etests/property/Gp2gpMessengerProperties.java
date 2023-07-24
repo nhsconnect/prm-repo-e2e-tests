@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.configuration;
+package uk.nhs.prm.e2etests.property;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import uk.nhs.prm.e2etests.services.SsmService;
 
 @Getter
 @Component
-public class Gp2gpMessengerPropertySource extends AbstractSsmRetriever {
+public class Gp2gpMessengerProperties extends AbstractSsmRetriever {
     @Value("${nhs.services.gp2gp.odsCodes.tppPtlInt}")
     private String tppPtlIntOdsCode;
 
@@ -24,7 +24,7 @@ public class Gp2gpMessengerPropertySource extends AbstractSsmRetriever {
     private String gp2gpMessengerUrl;
 
     @Autowired
-    public Gp2gpMessengerPropertySource(SsmService ssmService) {
+    public Gp2gpMessengerProperties(SsmService ssmService) {
         super(ssmService);
     }
 

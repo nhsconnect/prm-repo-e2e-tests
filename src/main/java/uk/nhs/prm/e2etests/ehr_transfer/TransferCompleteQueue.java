@@ -2,7 +2,7 @@ package uk.nhs.prm.e2etests.ehr_transfer;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.queue.QueueMessageHelper;
 import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 
@@ -11,7 +11,7 @@ public class TransferCompleteQueue extends QueueMessageHelper {
     @Autowired
     public TransferCompleteQueue(
             ThinlyWrappedSqsClient thinlyWrappedSqsClient,
-            QueuePropertySource queuePropertySource
+            QueueProperties queueProperties
     ) {
         /*
         TODO PRMT-3487 Refactor this into the end_of_transfer_service directory? The logic by the previous
@@ -19,6 +19,6 @@ public class TransferCompleteQueue extends QueueMessageHelper {
          to be the end of transfer service and didn't change directories.
          */
         super(thinlyWrappedSqsClient,
-                queuePropertySource.getEndOfTransferServiceTransferCompleteObservabilityQueueUrl());
+                queueProperties.getEndOfTransferServiceTransferCompleteObservabilityQueueUrl());
     }
 }

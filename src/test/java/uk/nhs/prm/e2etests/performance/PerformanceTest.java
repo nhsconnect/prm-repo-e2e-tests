@@ -1,29 +1,20 @@
 package uk.nhs.prm.e2etests.performance;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.e2etests.TestConfiguration;
-import uk.nhs.prm.e2etests.configuration.MeshPropertySource;
-import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
-import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
-import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.performance.load.*;
-import uk.nhs.prm.e2etests.queue.BasicSqsClient;
 import uk.nhs.prm.e2etests.queue.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.queue.SqsMessage;
-import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.suspensions.MofUpdatedMessageQueue;
-import uk.nhs.prm.e2etests.utility.QueueHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,19 +44,19 @@ public class PerformanceTest {
     private MeshMailbox meshMailbox;
     private TestConfiguration config;
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
-    PdsAdaptorPropertySource pdsAdaptorPropertySource;
+    PdsAdaptorProperties pdsAdaptorProperties;
 
     @Autowired
     public PerformanceTest(
             MeshMailbox meshMailbox,
             TestConfiguration config,
             MofUpdatedMessageQueue mofUpdatedMessageQueue,
-            PdsAdaptorPropertySource pdsAdaptorPropertySource
+            PdsAdaptorProperties pdsAdaptorProperties
     ) {
         this.meshMailbox = meshMailbox;
         this.config = config;
         this.mofUpdatedMessageQueue = mofUpdatedMessageQueue;
-        this.pdsAdaptorPropertySource = pdsAdaptorPropertySource;
+        this.pdsAdaptorProperties = pdsAdaptorProperties;
     }
 
     @Disabled("only used for perf test development not wanted on actual runs")
@@ -152,7 +143,7 @@ public class PerformanceTest {
 
     private void checkSuspended(List<String> suspendedNhsNumbers) {
         if (!config.getEnvironmentName().equals("perf")) {
-            PdsAdaptorClient pds = new PdsAdaptorClient("performance-test", pdsAdaptorPropertySource.getPerformanceApiKey(), pdsAdaptorPropertySource.getPdsAdaptorUrl());
+            PdsAdaptorClient pds = new PdsAdaptorClient("performance-test", pdsAdaptorProperties.getPerformanceApiKey(), pdsAdaptorProperties.getPdsAdaptorUrl());
             for (String nhsNumber: suspendedNhsNumbers) {
                 var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);
                 out.println(nhsNumber + ": " + patientStatus);
