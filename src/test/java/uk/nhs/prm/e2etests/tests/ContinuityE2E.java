@@ -8,9 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.active_suspensions_db.ActiveSuspensionsDB;
-import uk.nhs.prm.e2etests.configuration.EhrRepositoryPropertySource;
-import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
-import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
+import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.*;
@@ -18,23 +17,16 @@ import uk.nhs.prm.e2etests.nems.MeshForwarderQueue;
 import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import uk.nhs.prm.e2etests.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
-import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
-import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.queue.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
-import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
-import uk.nhs.prm.e2etests.queue.BasicSqsClient;
 import uk.nhs.prm.e2etests.reregistration.ReRegistrationMessageObservabilityQueue;
-import uk.nhs.prm.e2etests.reregistration.active_suspensions_db.ActiveSuspensionsDbClient;
 import uk.nhs.prm.e2etests.reregistration.models.ActiveSuspensionsMessage;
 import uk.nhs.prm.e2etests.services.ehr_repo.EhrRepoClient;
 import uk.nhs.prm.e2etests.suspensions.*;
 import uk.nhs.prm.e2etests.utility.NemsEventFactory;
-import uk.nhs.prm.e2etests.utility.QueueHelper;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -77,9 +69,9 @@ class ContinuityE2E {
     @Autowired
     private EhrRepoClient ehrRepoClient;
     @Autowired
-    private PdsAdaptorPropertySource pdsAdaptorPropertySource;
+    private PdsAdaptorProperties pdsAdaptorProperties;
     @Autowired
-    private NhsPropertySource nhsPropertySource;
+    private NhsProperties nhsProperties;
 
     private PdsAdaptorClient pdsAdaptorClient;
 
@@ -97,8 +89,8 @@ class ContinuityE2E {
         repoIncomingObservabilityQueue.deleteAllMessages();
         pdsAdaptorClient = new PdsAdaptorClient(
                 "e2e-test",
-                pdsAdaptorPropertySource.getE2eTestApiKey(),
-                pdsAdaptorPropertySource.getPdsAdaptorUrl()
+                pdsAdaptorProperties.getE2eTestApiKey(),
+                pdsAdaptorProperties.getPdsAdaptorUrl()
         );
     }
 
@@ -276,7 +268,7 @@ class ContinuityE2E {
 
     private void setManagingOrganisationToEMISOdsCode(String nhsNumber) {
         var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
-        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsPropertySource.getNhsEnvironment()).odsCode();
+        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
         if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorClient.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.getRecordETag());
         }
