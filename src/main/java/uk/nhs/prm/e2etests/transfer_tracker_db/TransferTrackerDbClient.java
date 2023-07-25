@@ -7,7 +7,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
-import uk.nhs.prm.e2etests.TestConfiguration;
+import uk.nhs.prm.e2etests.property.DatabaseProperties;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,15 +15,19 @@ import java.util.Map;
 @Component
 public class TransferTrackerDbClient {
 
+    DatabaseProperties databaseProperties;
+
     @Autowired
-    TestConfiguration testConfiguration;
+    public TransferTrackerDbClient(DatabaseProperties databaseProperties) {
+        this.databaseProperties = databaseProperties;
+    }
 
     public GetItemResponse queryDbWithConversationId(String conversationId) {
         Map<String, AttributeValue> key = new HashMap<>();
         System.out.println("Querying transfer tracker db with conversation id : "+conversationId);
         key.put("conversation_id", AttributeValue.builder().s(conversationId).build());
         var getItemResponse = DynamoDbClient.builder().build().getItem((GetItemRequest.builder()
-                .tableName(testConfiguration.getTransferTrackerDb())
+                .tableName(databaseProperties.getTransferTrackerDbName())
                 .key(key)
                 .build()));
         System.out.println("query response is: " + getItemResponse);
@@ -45,7 +49,7 @@ public class TransferTrackerDbClient {
 
 
         DynamoDbClient.builder().build().putItem(PutItemRequest.builder()
-                .tableName(testConfiguration.getTransferTrackerDb())
+                .tableName(databaseProperties.getTransferTrackerDbName())
                 .item(item)
                 .build()
         );

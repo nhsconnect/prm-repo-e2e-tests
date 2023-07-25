@@ -13,6 +13,7 @@ import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.suspensions.SuspensionMessageObservabilityQueue;
 
@@ -24,7 +25,7 @@ import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTe
 
 @SpringBootTest(classes = {
         MeshMailbox.class,
-        TestConfiguration.class,
+        SyntheticPatientProperties.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableScheduling
@@ -34,7 +35,7 @@ public class InjectChangeOfGPMessageTest {
     private MeshMailbox meshMailbox;
 
     @Autowired
-    private TestConfiguration testConfiguration;
+    private SyntheticPatientProperties syntheticPatientProperties;
 
     @Autowired
     private SuspensionMessageObservabilityQueue suspensionMessageObservabilityQueue;
@@ -55,7 +56,7 @@ public class InjectChangeOfGPMessageTest {
     @Test
     public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
         String nemsMessageId = randomNemsMessageId();
-        String nhsNumber = testConfiguration.getNhsNumberForSyntheticPatientInPreProd();
+        String nhsNumber = syntheticPatientProperties.getSyntheticPatientInPreProd();
         String previousGP = generateRandomOdsCode();
 
         suspensionMessageObservabilityQueue.deleteAllMessages();
