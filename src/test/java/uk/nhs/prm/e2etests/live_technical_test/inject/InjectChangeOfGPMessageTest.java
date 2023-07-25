@@ -61,7 +61,7 @@ public class InjectChangeOfGPMessageTest {
         suspensionMessageObservabilityQueue.deleteAllMessages();
 
         var nemsSuspension = createNemsEventFromTemplate(
-                "nems-event-templates/change-of-gp-suspension.xml",
+                "change-of-gp-suspension.xml",
                 nhsNumber,
                 nemsMessageId,
                 previousGP,
