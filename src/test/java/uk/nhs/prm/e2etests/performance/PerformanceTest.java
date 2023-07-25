@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.e2etests.TestConfiguration;
+import uk.nhs.prm.e2etests.configuration.ResourceConfiguration;
+import uk.nhs.prm.e2etests.model.NhsNumberTestData;
+import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
@@ -42,27 +45,33 @@ public class PerformanceTest {
 
     // BEANS
     private MeshMailbox meshMailbox;
-    private TestConfiguration config;
+    private TestConfiguration testConfiguration;
+    private NhsNumberTestData nhsNumbers;
     private MofUpdatedMessageQueue mofUpdatedMessageQueue;
-    PdsAdaptorProperties pdsAdaptorProperties;
+    private PdsAdaptorProperties pdsAdaptorProperties;
+    private NhsProperties nhsProperties;
 
     @Autowired
     public PerformanceTest(
             MeshMailbox meshMailbox,
-            TestConfiguration config,
+            TestConfiguration testConfiguration,
+            ResourceConfiguration resourceConfiguration,
             MofUpdatedMessageQueue mofUpdatedMessageQueue,
-            PdsAdaptorProperties pdsAdaptorProperties
+            PdsAdaptorProperties pdsAdaptorProperties,
+            NhsProperties nhsProperties
     ) {
         this.meshMailbox = meshMailbox;
-        this.config = config;
+        this.testConfiguration = testConfiguration;
+        nhsNumbers = resourceConfiguration.nhsNumbers();
         this.mofUpdatedMessageQueue = mofUpdatedMessageQueue;
         this.pdsAdaptorProperties = pdsAdaptorProperties;
+        this.nhsProperties = nhsProperties;
     }
 
     @Disabled("only used for perf test development not wanted on actual runs")
     @Test
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
-        var nhsNumberPool = new RoundRobinPool<>(config.suspendedNhsNumbers());
+        var nhsNumberPool = new RoundRobinPool<>(nhsNumbers.getNhsNumbers());
         var suspensions = new SuspensionCreatorPool(nhsNumberPool);
 
         var nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
@@ -78,11 +87,11 @@ public class PerformanceTest {
 
     @Test
     public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
-        final int overallTimeout = config.performanceTestTimeout();
+        final int overallTimeout = testConfiguration.getPerformanceTestTimeout();
         final var recorder = new PerformanceTestRecorder();
 
         var eventSource = createMixedSuspensionsAndNonSuspensionsTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
-        var loadSource = new LoadRegulatingPool<>(eventSource, config.performanceTestLoadPhases(List.<LoadPhase>of(
+        var loadSource = new LoadRegulatingPool<>(eventSource, testConfiguration.performanceTestLoadPhases(List.<LoadPhase>of(
                 atFlatRate(10, "1"),
                 atFlatRate(10, "2"))));
 
@@ -136,13 +145,13 @@ public class PerformanceTest {
     }
 
     private RoundRobinPool<String> suspendedNhsNumbers() {
-        List<String> suspendedNhsNumbers = config.suspendedNhsNumbers();
+        List<String> suspendedNhsNumbers = nhsNumbers.getNhsNumbers();
         checkSuspended(suspendedNhsNumbers);
         return new RoundRobinPool(suspendedNhsNumbers);
     }
 
     private void checkSuspended(List<String> suspendedNhsNumbers) {
-        if (!config.getEnvironmentName().equals("perf")) {
+        if (!nhsProperties.getNhsEnvironment().equals("perf")) {
             PdsAdaptorClient pds = new PdsAdaptorClient("performance-test", pdsAdaptorProperties.getPerformanceApiKey(), pdsAdaptorProperties.getPdsAdaptorUrl());
             for (String nhsNumber: suspendedNhsNumbers) {
                 var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);

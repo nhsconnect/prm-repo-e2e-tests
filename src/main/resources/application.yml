@@ -1,3 +1,4 @@
+# AWS Configuration Properties
 aws:
   configuration:
     accessKey: ${AWS_ACCESS_KEY_ID}
@@ -66,6 +67,11 @@ aws:
       gp2gpMessenger:
         messageSentObservability: hl7-message-sent-observability
 
+    databaseNames:
+      transferTrackerDb: ${NHS_ENVIRONMENT}-ehr-transfer-service-transfer-tracker
+      activeSuspensionsDb: ${NHS_ENVIRONMENT}-re-registration-service-active-suspensions
+
+# NHS Properties
 nhs:
   environment: ${NHS_ENVIRONMENT:dev}
   services:
@@ -75,10 +81,29 @@ nhs:
         emisPtlInt: N82668
         repoDev: B85002
         repoTest: B86041
-  syntheticPatientNhsNumberPrefix:
-    prod: 999
-    nonProd: 969
+  syntheticPatient:
+    nhsNumber:
+      patientWithCurrentGp:
+        dev: 9693796284
+        preProd: 9694179254
+      patientWithoutGp:
+        dev: 9693795997
+        preProd: 9694179343
+      deceasedPatient:
+        dev: 9693797264
+        preProd: 9694179394
+      syntheticPatientInPreProd: 9693642422 # not sure why the previous team named it like this. Hard to tell what it is.
+      NonSyntheticPatientWithoutGp: 9692295400 # not sure why the previous team named it like this. Hard to tell what it is.
+    nhsNumberPrefix:
+      prod: 999
+      nonProd: 969
 
+# Test Properties
+test:
+  numberOfPerfNhsNumbers: ${NUMBER_OF_PERF_NHS_NUMBERS:40}
+  performanceTestTimeout: ${PERFORMANCE_TEST_TIMEOUT:90}
+
+# Spring Properties
 spring:
   main:
     web-application-type: none

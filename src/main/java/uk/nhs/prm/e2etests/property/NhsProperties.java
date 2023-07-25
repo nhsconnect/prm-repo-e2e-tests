@@ -19,10 +19,10 @@ public class NhsProperties extends AbstractSsmRetriever {
     @Value("${aws.configuration.ssm.parameters.safeListedPatients}")
     private String safeListedPatients;
 
-    @Value("${nhs.syntheticPatientNhsNumberPrefix.prod}")
+    @Value("${nhs.syntheticPatient.nhsNumberPrefix.prod}")
     private String syntheticPatientNhsNumberPrefixProd;
 
-    @Value("${nhs.syntheticPatientNhsNumberPrefix.nonProd}")
+    @Value("${nhs.syntheticPatient.nhsNumberPrefix.nonProd}")
     private String syntheticPatientNhsNumberPrefixNonProd;
 
     public String getNhsEnvironment() {

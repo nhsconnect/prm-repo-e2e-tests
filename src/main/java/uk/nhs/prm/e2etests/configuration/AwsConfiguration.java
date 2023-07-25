@@ -3,8 +3,8 @@ package uk.nhs.prm.e2etests.configuration;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
-import org.springframework.context.annotation.Configuration;
 import uk.nhs.prm.e2etests.exception.UnknownAwsRegionException;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import uk.nhs.prm.e2etests.exception.AssumedRoleException;
 import software.amazon.awssdk.services.sts.StsClient;
@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 
 @Configuration
 public class AwsConfiguration {
+    private static final String AWS_REGION_REGEX = "(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\\d";
     private static final String REQUIRED_ROLE_ARN_DEFAULT_VALUE = "none";
 
     @Value("${aws.configuration.requiredRoleArn}")
@@ -60,7 +61,7 @@ public class AwsConfiguration {
 
     @PostConstruct
     private void validateAwsRegion() {
-        final Pattern pattern = Pattern.compile("(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\\d");
+        final Pattern pattern = Pattern.compile(AWS_REGION_REGEX);
         if(!pattern.matcher(this.region).find()) throw new UnknownAwsRegionException();
     }
 }

@@ -1,88 +1,31 @@
 package uk.nhs.prm.e2etests;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import software.amazon.awssdk.utils.ImmutableMap;
-import uk.nhs.prm.e2etests.performance.load.LoadPhase;
+import org.springframework.beans.factory.annotation.Value;
 import uk.nhs.prm.e2etests.performance.load.LoadSpecParser;
-import uk.nhs.prm.e2etests.services.SsmService;
+import uk.nhs.prm.e2etests.performance.load.LoadPhase;
+import org.springframework.stereotype.Component;
+import uk.nhs.prm.e2etests.annotation.Debt;
 
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getenv;
 
+@Debt(comments = "We'd prefer to remove this configuration class entirely, favouring breaking the logic out into " +
+    "properties and configuration classes, though the remaining components are tightly coupled and don't harm the " +
+    "future extensibility of the project.")
 @Component
 public class TestConfiguration {
-    // INSTANCE VARIABLES
-    public static final int SECONDS_IN_AN_HOUR = 3600;
-    private final ImmutableMap<String, List<String>> suspendedNhsNumbersByEnv = ImmutableMap.of(
-            "dev", TestData.dev(),
-            "pre-prod", TestData.preProd(),
-            "perf", TestData.perf(numberOfPerfNhsNumbers())
-    );
 
-    // BEANS
-    private final ExampleAssumedRoleArn exampleAssumedRoleArn;
-    private final SsmService ssmService;
+    @Value("test.performanceTestTimeout")
+    private String performanceTestTimeout;
 
-    public String getNhsNumberForSyntheticPatientWithCurrentGp() {
-        return getEnvironmentName().equals("dev") ? "9693796284" : "9694179254";
+    public int getPerformanceTestTimeout() {
+        return parseInt(performanceTestTimeout);
     }
 
-    public String getNhsNumberForSyntheticPatientWithoutGp() {
-        return getEnvironmentName().equals("dev") ? "9693795997" : "9694179343";
-    }
-
-    public String getNhsNumberForSyntheticDeceasedPatient() {
-        return getEnvironmentName().equals("dev") ? "9693797264" : "9694179394";
-    }
-
-    public String getNhsNumberForSyntheticPatientInPreProd() {
-        return "9693642422";
-    }
-
-    public String getNhsNumberForNonSyntheticPatientWithoutGp() {
-        return "9692295400";
-    }
-
-    @Autowired
-    public TestConfiguration(
-            ExampleAssumedRoleArn exampleAssumedRoleArn,
-            SsmService ssmService
-    ) {
-        this.ssmService = ssmService;
-        this.exampleAssumedRoleArn = exampleAssumedRoleArn;
-    }
-
-    public String getTransferTrackerDb() {
-        return getEnvironmentName() + "-ehr-transfer-service-transfer-tracker";
-    }
-
-    public String getActiveSuspensionsDb() {
-        return getEnvironmentName() + "-re-registration-service-active-suspensions";
-    }
-
-    public String getSyntheticPatientPrefix() {
-        return getEnvironmentName().equals("prod") ? "999" : "969";
-    }
-
-    public List<String> suspendedNhsNumbers() {
-        List<String> nhsNumbers = suspendedNhsNumbersByEnv.get(getEnvironmentName());
-        if (nhsNumbers == null) {
-            throw new RuntimeException("No NHS Numbers configured for " + getEnvironmentName() + " environment");
-        }
-        return nhsNumbers;
-    }
-
-    private int numberOfPerfNhsNumbers() {
-        String perfPatientsRequested = getenv("NUMBER_OF_PERF_NHS_NUMBERS");
-        if (perfPatientsRequested == null) {
-            return 40;
-        }
-        return parseInt(perfPatientsRequested);
-    }
-
+    @Debt(comments = "Trying to break this into a properties file involves addressing the 'LoadPhase' behaviour and" +
+            "it's quite a job to work out what that is doing.")
     public List<LoadPhase> performanceTestLoadPhases(List<LoadPhase> defaultLoadPhases) {
         String loadSpec = getenv("PERFORMANCE_LOAD_SPEC");
         if (loadSpec == null) {
@@ -91,17 +34,11 @@ public class TestConfiguration {
         return LoadSpecParser.parsePhases(loadSpec);
     }
 
-    public int performanceTestTimeout() {
-        String timeout = getenv("PERFORMANCE_TEST_TIMEOUT");
-        if (timeout == null) {
-            return 90;
-        }
-        return parseInt(timeout);
-    }
-
+    @Debt(comments = "Ideally we should replace this with the NhsProperties Spring component, but it's currently" +
+            "very tightly coupled to the Patient class.")
     public String getEnvironmentName() {
         return getRequiredEnvVar("NHS_ENVIRONMENT");
-    }
+    } //-> NhsProperties
 
     public static String getRequiredEnvVar(String name) {
         String value = getenv(name);
@@ -110,9 +47,4 @@ public class TestConfiguration {
         }
         return value;
     }
-
-    private String getEnvSuffix() {
-        return getEnvironmentName().equals("prod") ? "prod" : String.format("%s.non-prod", getEnvironmentName());
-    }
-
 }
