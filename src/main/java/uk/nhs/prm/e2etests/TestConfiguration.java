@@ -17,7 +17,7 @@ import static java.lang.System.getenv;
 @Component
 public class TestConfiguration {
 
-    @Value("test.performanceTestTimeout")
+    @Value("${test.performanceTestTimeout}")
     private String performanceTestTimeout;
 
     public int getPerformanceTestTimeout() {
