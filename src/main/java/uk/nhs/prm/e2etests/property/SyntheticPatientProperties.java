@@ -7,28 +7,28 @@ import org.springframework.stereotype.Component;
 @Component
 public class SyntheticPatientProperties {
 
-    @Value("nhs.syntheticPatient.nhsNumber.patientWithCurrentGp.dev")
+    @Value("${nhs.syntheticPatient.nhsNumber.patientWithCurrentGp.dev}")
     private String syntheticPatientWithCurrentGpDev;
 
-    @Value("nhs.syntheticPatient.nhsNumber.patientWithCurrentGp.preProd")
+    @Value("${nhs.syntheticPatient.nhsNumber.patientWithCurrentGp.preProd}")
     private String syntheticPatientWithCurrentGpPreProd;
 
-    @Value("nhs.syntheticPatient.nhsNumber.patientWithoutGp.dev")
+    @Value("${nhs.syntheticPatient.nhsNumber.patientWithoutGp.dev}")
     private String syntheticPatientWithoutGpDev;
 
-    @Value("nhs.syntheticPatient.nhsNumber.patientWithoutGp.preProd")
+    @Value("${nhs.syntheticPatient.nhsNumber.patientWithoutGp.preProd}")
     private String syntheticPatientWithoutGpPreProd;
 
-    @Value("nhs.syntheticPatient.nhsNumber.deceasedPatient.dev")
+    @Value("${nhs.syntheticPatient.nhsNumber.deceasedPatient.dev}")
     private String syntheticPatientDeceasedDev;
 
-    @Value("nhs.syntheticPatient.nhsNumber.deceasedPatient.preProd")
+    @Value("${nhs.syntheticPatient.nhsNumber.deceasedPatient.preProd}")
     private String syntheticPatientDeceasedPreProd;
 
-    @Value("nhs.syntheticPatient.nhsNumber.syntheticPatientInPreProd")
+    @Value("${nhs.syntheticPatient.nhsNumber.syntheticPatientInPreProd}")
     private String syntheticPatientInPreProd;
 
-    @Value("nhs.syntheticPatient.nhsNumber.NonSyntheticPatientWithoutGp")
+    @Value("${nhs.syntheticPatient.nhsNumber.NonSyntheticPatientWithoutGp}")
     private String NonSyntheticPatientWithoutGp;
 
     private String nhsEnvironment;
