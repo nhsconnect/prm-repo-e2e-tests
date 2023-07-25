@@ -22,7 +22,7 @@ public class NhsIdentityGenerator {
         return generatedString;
     }
 
-    @Debt(comments = "Misleading. The class states 'NhsIdentityGenerator' but this is a number picked at random.")
+    @Debt(comment = "Misleading. The class states 'NhsIdentityGenerator' but this is a number picked at random.")
     public static String randomNhsNumber() {
         return "9691234567" ;
     }

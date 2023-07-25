@@ -5,7 +5,7 @@ import uk.nhs.prm.e2etests.exception.InvalidNhsEnvironmentException;
 
 import static uk.nhs.prm.e2etests.annotation.Debt.Priority.MEDIUM;
 
-@Debt(comments = "Ideally we would not have the ods codes attached to these environments and could break them out" +
+@Debt(comment = "Ideally we would not have the ods codes attached to these environments and could break them out" +
         "into properties files. There are several cases in the codebase where the environments (dev, preprod, perf) etc" +
         "are being referred to as strings. This enum would be an ideal candidate to expand out.", priority = MEDIUM)
 public enum Gp2GpSystem {

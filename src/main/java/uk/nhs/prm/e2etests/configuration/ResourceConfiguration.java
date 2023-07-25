@@ -64,7 +64,7 @@ public class ResourceConfiguration {
                 .toList();
     }
 
-    @Debt(comments = "Address SonarLint comments.")
+    @Debt(comment = "Address SonarLint comments.")
     private String generateRandomNhsNumber() {
         final int randomSevenDigitNumber = (int) Math.floor(Math.random() * 9_000_000) + 1_000_000;
         return SYNTHETIC_PATIENT_NUMBER_PREFIX_DEV + randomSevenDigitNumber;
