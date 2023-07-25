@@ -2,6 +2,8 @@ package uk.nhs.prm.e2etests.transfer_tracker_db;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
@@ -14,24 +16,36 @@ import java.util.Map;
 
 @Component
 public class TransferTrackerDbClient {
+    private final DatabaseProperties databaseProperties;
 
-    DatabaseProperties databaseProperties;
+    private final AwsCredentialsProvider awsCredentialsProvider;
 
     @Autowired
-    public TransferTrackerDbClient(DatabaseProperties databaseProperties) {
+    public TransferTrackerDbClient(
+            DatabaseProperties databaseProperties,
+            AwsCredentialsProvider awsCredentialsProvider
+    ) {
         this.databaseProperties = databaseProperties;
+        this.awsCredentialsProvider = awsCredentialsProvider;
     }
 
     public GetItemResponse queryDbWithConversationId(String conversationId) {
-        Map<String, AttributeValue> key = new HashMap<>();
         System.out.println("Querying transfer tracker db with conversation id : "+conversationId);
-        key.put("conversation_id", AttributeValue.builder().s(conversationId).build());
-        var getItemResponse = DynamoDbClient.builder().build().getItem((GetItemRequest.builder()
+
+        final Map<String, AttributeValue> dynamoDbKey = Map.of(
+        "conversation_id", AttributeValue.builder().s(conversationId).build()
+        );
+
+        try(DynamoDbClient dynamoDbClient = DynamoDbClient.builder()
+                .credentialsProvider(awsCredentialsProvider)
+                .region(Region.EU_WEST_2)
+                .build()) {
+
+            return dynamoDbClient.getItem((GetItemRequest.builder()
                 .tableName(databaseProperties.getTransferTrackerDbName())
-                .key(key)
+                .key(dynamoDbKey)
                 .build()));
-        System.out.println("query response is: " + getItemResponse);
-        return getItemResponse;
+        }
     }
 
     public void save(TransferTrackerDbMessage transferTrackerDbMessage) {
