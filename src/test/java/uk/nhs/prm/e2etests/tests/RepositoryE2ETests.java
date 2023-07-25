@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.xmlunit.diff.*;
@@ -20,17 +19,13 @@ import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
 import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
 import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
 import uk.nhs.prm.e2etests.ehr_transfer.*;
-import uk.nhs.prm.e2etests.end_of_transfer_service.EndOfTransferMofUpdatedMessageQueue;
 import uk.nhs.prm.e2etests.model.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.e2etests.enumeration.LargeEhrVariant;
 import uk.nhs.prm.e2etests.enumeration.Patient;
-import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
-import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.queue.*;
-import uk.nhs.prm.e2etests.transfer_tracker_db.TransferTrackerDbClient;
 import uk.nhs.prm.e2etests.transfer_tracker_db.TrackerDb;
 import uk.nhs.prm.e2etests.configuration.Gp2gpMessengerPropertySource;
 import uk.nhs.prm.e2etests.utility.LargeEhrTestFiles;
@@ -135,7 +130,7 @@ class RepositoryE2ETests {
     @Test
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev")
     void shouldIdentifyEhrRequestAsEhrOutMessage() {
-        var ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05");
+        var ehrRequest = Resources.readTestResourceFile("ehr/ehr-request");
         var inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, testConfiguration);
 
         String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
@@ -260,7 +255,7 @@ class RepositoryE2ETests {
         inboundQueueFromMhs.sendMessage(continueRequest, outboundConversationId);
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        List<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("COPC_IN000001UK01");
+        List<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("ehr/continue-request");
         assertThat(allFragments.size()).isGreaterThanOrEqualTo(2);
 
         String largeEhrFragment1Payload = getPayloadOptional(largeEhrFragment1).orElseThrow();

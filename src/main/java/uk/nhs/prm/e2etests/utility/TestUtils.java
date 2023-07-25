@@ -146,12 +146,12 @@ public final class TestUtils {
                 .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
                 .replaceAll("<From>N82668</From>", "<From>B85002</From>");
 
-        String ehrRequest = Resources.readTestResourceFile("RCMR_IN010000UK05")
+        String ehrRequest = Resources.readTestResourceFile("ehr-request")
                 .replaceAll("9692842304", nhsNumberForTestPatient)
                 .replaceAll("A91720", newGpForTestPatient)
                 .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
 
-        String continueRequest = Resources.readTestResourceFile("COPC_IN000001UK01")
+        String continueRequest = Resources.readTestResourceFileFromEhrDirectory("continue-request")
                 .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", outboundConversationId);
 
         return new LargeEhrTestFiles(largeEhrCore, largeEhrFragment1, largeEhrFragment2, ehrRequest, continueRequest);
