@@ -16,7 +16,7 @@ public class QueueProperties extends AbstractSsmRetriever {
     private static final String TEMPLATE_QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/%s/%s-%s";
 
     @Value("${aws.configuration.queueNames.meshForwarder.nemsEventsObservability}")
-    private String nemsEventsObservabilityQueueName;
+    private String meshForwarderNemsEventsObservabilityQueueName;
 
     @Value("${aws.configuration.queueNames.nemsEventProcessor.unhandledEvents}")
     private String nemsEventProcessorUnhandledEventsQueueName;
@@ -113,8 +113,8 @@ public class QueueProperties extends AbstractSsmRetriever {
         return super.getAwsSsmParameterValue(this.mqAppPassword);
     }
 
-    public String getNemsEventsObservabilityQueueUrl() {
-        return getQueueUrl(nemsEventsObservabilityQueueName);
+    public String getMeshForwarderNemsEventsObservabilityQueueUri() {
+        return getQueueUrl(meshForwarderNemsEventsObservabilityQueueName);
     }
 
     public String getNemsEventProcessorUnhandledEventsQueueUrl() {

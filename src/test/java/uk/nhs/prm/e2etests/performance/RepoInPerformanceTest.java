@@ -1,6 +1,5 @@
 package uk.nhs.prm.e2etests.performance;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,11 +13,9 @@ import uk.nhs.prm.e2etests.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.e2etests.ehr_transfer.TransferCompleteQueue;
 import uk.nhs.prm.e2etests.model.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
-import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
 import uk.nhs.prm.e2etests.queue.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
-import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.queue.SqsMessage;
 import uk.nhs.prm.e2etests.timing.Sleeper;
 import uk.nhs.prm.e2etests.transfer_tracker_db.TrackerDb;
@@ -64,15 +61,6 @@ class RepoInPerformanceTest {
 
     @Autowired
     QueueProperties queueProperties;
-
-    @Autowired
-    AutoRefreshingRoleAssumingSqsClient appropriateAuthenticationSqsClient;
-
-    @BeforeAll
-    void init() {
-        transferCompleteQueue = new TransferCompleteQueue(new ThinlyWrappedSqsClient(appropriateAuthenticationSqsClient), queueProperties);
-        transferCompleteQueue.deleteAllMessages();
-    }
 
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {

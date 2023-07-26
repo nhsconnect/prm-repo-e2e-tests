@@ -62,7 +62,7 @@ public class PerformanceTest {
     ) {
         this.meshMailbox = meshMailbox;
         this.testConfiguration = testConfiguration;
-        nhsNumbers = resourceConfiguration.nhsNumbers();
+        this.nhsNumbers = resourceConfiguration.nhsNumbers();
         this.mofUpdatedMessageQueue = mofUpdatedMessageQueue;
         this.pdsAdaptorProperties = pdsAdaptorProperties;
         this.nhsProperties = nhsProperties;

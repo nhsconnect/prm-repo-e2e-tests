@@ -1,6 +1,5 @@
 package uk.nhs.prm.e2etests.live_technical_test.repo;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +15,6 @@ import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
-import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
-import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.services.ehr_repo.EhrRepoClient;
 
 import java.util.List;
@@ -47,11 +43,10 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
             TestPatientValidator testPatientValidator,
             PdsAdaptorProperties pdsAdaptorProperties,
-            EhrRepositoryProperties ehrRepositoryProperties,
             NhsProperties nhsProperties,
             QueueProperties queueProperties,
-            EhrRepoClient ehrRepoClient,
-            ExampleAssumedRoleArn exampleAssumedRoleArn
+            ExampleAssumedRoleArn exampleAssumedRoleArn,
+            RepoIncomingQueue repoIncomingQueue
     ) {
         patientValidator = testPatientValidator;
 
@@ -64,13 +59,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
         syntheticPatientPrefix = nhsProperties.getSyntheticPatientPrefix();
         this.queueProperties = queueProperties;
         this.exampleAssumedRoleArn = exampleAssumedRoleArn;
-    }
-
-    @BeforeEach
-    void setUp() {
-        // TODO PRMT-3523 - Refactor this to use dependency injection
-        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory(exampleAssumedRoleArn));
-        repoIncomingQueue = new RepoIncomingQueue(new ThinlyWrappedSqsClient(sqsClient), queueProperties);
+        this.repoIncomingQueue = repoIncomingQueue;
     }
 
     @Test
