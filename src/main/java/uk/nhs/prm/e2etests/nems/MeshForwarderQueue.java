@@ -8,13 +8,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class MeshForwarderQueue extends NemsEventMessageQueue {
-
     @Autowired
     public MeshForwarderQueue(
             ThinlyWrappedSqsClient thinlyWrappedSqsClient,
             QueueProperties queueProperties
     ) {
         super(thinlyWrappedSqsClient,
-              queueProperties.getNemsEventsObservabilityQueueUrl());
+              queueProperties.getMeshForwarderNemsEventsObservabilityQueueUri());
     }
 }

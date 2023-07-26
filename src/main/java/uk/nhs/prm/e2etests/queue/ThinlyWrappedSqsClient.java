@@ -11,7 +11,9 @@ public class ThinlyWrappedSqsClient {
 
     private AutoRefreshingRoleAssumingSqsClient sqsClient;
 
-    public ThinlyWrappedSqsClient(AutoRefreshingRoleAssumingSqsClient sqsClient) {
+    public ThinlyWrappedSqsClient(
+            AutoRefreshingRoleAssumingSqsClient sqsClient
+    ) {
         this.sqsClient = sqsClient;
     }
 
