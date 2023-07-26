@@ -63,15 +63,20 @@ public class AwsConfiguration {
             havingValue = DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET
     )
     public AwsCredentialsProvider assumeRoleAwsCredentialsProvider() {
-        final AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
-                .roleArn(exampleAssumedRoleArn().getTargetArn())
-                .roleSessionName("perf-test")
-                .build();
+        try(final StsClient stsClient = StsClient.builder()
+                .region(EU_WEST_2)
+                .build()) {
+            final AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
+                    .roleArn(exampleAssumedRoleArn().getTargetArn())
+                    .roleSessionName("perf-test")
+                    .build();
 
-        return StsAssumeRoleCredentialsProvider
-                .builder()
-                .refreshRequest(assumeRoleRequest)
-                .build();
+            return StsAssumeRoleCredentialsProvider
+                    .builder()
+                    .stsClient(stsClient)
+                    .refreshRequest(assumeRoleRequest)
+                    .build();
+        }
     }
 
     @Bean
