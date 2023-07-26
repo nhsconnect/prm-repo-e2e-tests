@@ -1,11 +1,11 @@
 # AWS Configuration Properties
 aws:
   configuration:
-    accessKey: ${AWS_ACCESS_KEY_ID}
-    secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
-    sessionToken: ${AWS_SESSION_TOKEN}
-    region: ${AWS_REGION}
-    requiredRoleArn: ${REQUIRED_ROLE_ARN:none}
+    accessKey: ${AWS_ACCESS_KEY_ID:unset}
+    secretAccessKey: ${AWS_SECRET_ACCESS_KEY:unset}
+    sessionToken: ${AWS_SESSION_TOKEN:unset}
+    region: ${AWS_REGION:eu-west-2}
+    requiredRoleArn: ${REQUIRED_ROLE_ARN:unset}
 
     ssm:
       parameters:
