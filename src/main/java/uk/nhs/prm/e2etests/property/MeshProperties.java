@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.configuration;
+package uk.nhs.prm.e2etests.property;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.services.SsmService;
 
 @Component
-public class MeshPropertySource extends AbstractSsmRetriever {
+public class MeshProperties extends AbstractSsmRetriever {
     @Value("${aws.configuration.ssm.parameters.mesh.mailboxId}")
     private String mailboxId;
 
@@ -22,7 +22,7 @@ public class MeshPropertySource extends AbstractSsmRetriever {
     private static final String MAILBOX_SERVICE_OUTBOX_URL = "https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox";
 
     @Autowired
-    public MeshPropertySource(SsmService ssmService) {
+    public MeshProperties(SsmService ssmService) {
         super(ssmService);
     }
 

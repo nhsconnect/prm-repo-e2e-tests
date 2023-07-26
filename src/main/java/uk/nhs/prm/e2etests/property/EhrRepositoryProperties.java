@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.configuration;
+package uk.nhs.prm.e2etests.property;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import uk.nhs.prm.e2etests.services.SsmService;
 
 @Getter
 @Component
-public class EhrRepositoryPropertySource extends AbstractSsmRetriever {
+public class EhrRepositoryProperties extends AbstractSsmRetriever {
 
     @Value("${nhs.services.gp2gp.odsCodes.repoDev}")
     private String repoDevOdsCode;
@@ -29,7 +29,7 @@ public class EhrRepositoryPropertySource extends AbstractSsmRetriever {
     private String ehrRepositoryUrl;
 
     @Autowired
-    public EhrRepositoryPropertySource(SsmService ssmService) {
+    public EhrRepositoryProperties(SsmService ssmService) {
         super(ssmService);
     }
 

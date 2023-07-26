@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
-import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
+import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
@@ -26,11 +25,11 @@ class ValidateSyntheticPatientIsSuspendedTest {
     @Autowired
     public ValidateSyntheticPatientIsSuspendedTest(
             TestPatientValidator testPatientValidator,
-            PdsAdaptorPropertySource pdsAdaptorPropertySource
+            PdsAdaptorProperties pdsAdaptorProperties
     ) {
         patientValidator = testPatientValidator;
-        pdsAdaptorApiKey = pdsAdaptorPropertySource.getLiveTestApiKey();
-        pdsAdaptorUrl = pdsAdaptorPropertySource.getPdsAdaptorUrl();
+        pdsAdaptorApiKey = pdsAdaptorProperties.getLiveTestApiKey();
+        pdsAdaptorUrl = pdsAdaptorProperties.getPdsAdaptorUrl();
     }
 
     // TODO: PRMT-3523 @TestPropertySource(properties = {"PDS_ADAPTOR_TEST_USERNAME = live-test", apiKey = something}) could be useful.
