@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.configuration;
 
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -62,21 +63,16 @@ public class AwsConfiguration {
             name = { "accessKey", "secretAccessKey" },
             havingValue = DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET
     )
-    public AwsCredentialsProvider assumeRoleAwsCredentialsProvider() {
-        try(final StsClient stsClient = StsClient.builder()
-                .region(EU_WEST_2)
-                .build()) {
-            final AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
-                    .roleArn(exampleAssumedRoleArn().getTargetArn())
-                    .roleSessionName("perf-test")
-                    .build();
+    public StsAssumeRoleCredentialsProvider assumeRoleAwsCredentialsProvider() {
+        final StsClient stsClient = StsClient.builder().build();
 
-            return StsAssumeRoleCredentialsProvider
-                    .builder()
-                    .stsClient(stsClient)
-                    .refreshRequest(assumeRoleRequest)
-                    .build();
-        }
+        return StsAssumeRoleCredentialsProvider.builder()
+                .stsClient(stsClient)
+                .refreshRequest(request -> {
+                    request.roleArn(exampleAssumedRoleArn().getTargetArn());
+                    request.roleSessionName("perf-test");
+                })
+                .build();
     }
 
     @Bean
