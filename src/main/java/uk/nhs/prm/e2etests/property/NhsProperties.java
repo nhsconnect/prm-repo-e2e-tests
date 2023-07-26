@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.configuration;
+package uk.nhs.prm.e2etests.property;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
-public class NhsPropertySource extends AbstractSsmRetriever {
+public class NhsProperties extends AbstractSsmRetriever {
     @Value("${nhs.environment}")
     private String nhsEnvironment;
 
@@ -19,10 +19,10 @@ public class NhsPropertySource extends AbstractSsmRetriever {
     @Value("${aws.configuration.ssm.parameters.safeListedPatients}")
     private String safeListedPatients;
 
-    @Value("${nhs.syntheticPatientNhsNumberPrefix.prod}")
+    @Value("${nhs.syntheticPatient.nhsNumberPrefix.prod}")
     private String syntheticPatientNhsNumberPrefixProd;
 
-    @Value("${nhs.syntheticPatientNhsNumberPrefix.nonProd}")
+    @Value("${nhs.syntheticPatient.nhsNumberPrefix.nonProd}")
     private String syntheticPatientNhsNumberPrefixNonProd;
 
     public String getNhsEnvironment() {
@@ -30,7 +30,7 @@ public class NhsPropertySource extends AbstractSsmRetriever {
     }
 
     @Autowired
-    public NhsPropertySource(SsmService ssmService) {
+    public NhsProperties(SsmService ssmService) {
         super(ssmService);
     }
 

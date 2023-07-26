@@ -1,9 +1,11 @@
 package uk.nhs.prm.e2etests.performance.awsauth;
 
 import org.springframework.context.annotation.Primary;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import uk.nhs.prm.e2etests.queue.BasicSqsClient;
@@ -13,31 +15,38 @@ import uk.nhs.prm.e2etests.queue.TestSqsClient;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@EnableScheduling
 @Component
 @Primary
 public class AutoRefreshingRoleAssumingSqsClient implements TestSqsClient {
+    private TestSqsClient client;
+    private final AssumeRoleCredentialsProviderFactory credentialsProviderFactory;
 
-    private volatile TestSqsClient client;
-    private AssumeRoleCredentialsProviderFactory credentialsProviderFactory;
-
-    public AutoRefreshingRoleAssumingSqsClient(AssumeRoleCredentialsProviderFactory credentialsProviderFactory) {
-        this.credentialsProviderFactory = credentialsProviderFactory;
+    public AutoRefreshingRoleAssumingSqsClient(
+            AssumeRoleCredentialsProviderFactory credentialsProviderFactory
+    ) {
         warnIfUsingStaticEnvironmentAuth();
-        this.client = createReauthenticatedSqsClient();
+        this.credentialsProviderFactory = credentialsProviderFactory;
+        this.client = reAuthenticateSqsClient();
     }
 
     @Scheduled(fixedRate = 30, initialDelay = 30, timeUnit = TimeUnit.MINUTES)
     public void refreshSqsClient() {
         System.out.println("Refreshing SQS client in " + getClass());
-        this.client = createReauthenticatedSqsClient();
+        this.client = reAuthenticateSqsClient();
     }
 
-    private TestSqsClient createReauthenticatedSqsClient() {
-        AwsCredentialsProvider credentialsProvider = credentialsProviderFactory.createProvider();
-        SqsClient awsSqsClient = SqsClient.builder()
+    private TestSqsClient reAuthenticateSqsClient() {
+        final AwsCredentialsProvider credentialsProvider = credentialsProviderFactory
+                .createProvider();
+
+        try(final SqsClient awsSqsClient = SqsClient.builder()
+                .region(Region.EU_WEST_2)
                 .credentialsProvider(credentialsProvider)
-                .build();
-        return new BasicSqsClient(awsSqsClient);
+                .build()) {
+
+            return new BasicSqsClient(awsSqsClient);
+        }
     }
 
     private void warnIfUsingStaticEnvironmentAuth() {

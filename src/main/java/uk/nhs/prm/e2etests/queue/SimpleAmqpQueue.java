@@ -4,8 +4,7 @@ import com.swiftmq.amqp.v100.generated.messaging.message_format.ApplicationPrope
 import com.swiftmq.amqp.v100.generated.messaging.message_format.AmqpValue;
 import com.swiftmq.amqp.v100.client.UnsupportedProtocolVersionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.nhs.prm.e2etests.TestConfiguration;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import com.swiftmq.amqp.v100.client.AuthenticationException;
 import com.swiftmq.amqp.v100.messaging.AMQPMessage;
 import com.swiftmq.amqp.v100.client.AMQPException;
@@ -23,16 +22,17 @@ import java.util.HashMap;
 
 @Component
 public class SimpleAmqpQueue {
-    private final TestConfiguration config;
+
+    private final QueueProperties queueProperties;
     private final String messageQueueUsername;
     private final String messageQueuePassword;
     private final Producer messageQueueProducer;
 
     @Autowired
-    public SimpleAmqpQueue(QueuePropertySource queuePropertySource, TestConfiguration config) {
-        this.config = config;
-        this.messageQueueUsername = queuePropertySource.getMqAppUsername();
-        this.messageQueuePassword = queuePropertySource.getMqAppPassword();
+    public SimpleAmqpQueue(QueueProperties queueProperties) {
+        this.queueProperties = queueProperties;
+        this.messageQueueUsername = queueProperties.getMqAppUsername();
+        this.messageQueuePassword = queueProperties.getMqAppPassword();
         this.messageQueueProducer = createProducer();
     }
 
@@ -63,9 +63,10 @@ public class SimpleAmqpQueue {
     }
 
     private Producer createProducer() {
-        var activeMqHostname = config.getAmqpEndpoint1();
-        var ctx = new AMQPContext(AMQPContext.CLIENT);
-        var connection = new Connection(ctx, activeMqHostname, 5671, messageQueueUsername, messageQueuePassword);
+        String activeMqHostname = queueProperties.getAmqpEndpoint().getHostname();
+        int activeMqPort = queueProperties.getAmqpEndpoint().getPort();
+        var context = new AMQPContext(AMQPContext.CLIENT);
+        var connection = new Connection(context, activeMqHostname, activeMqPort, messageQueueUsername, messageQueuePassword);
         connection.setSocketFactory(new JSSESocketFactory());
 
         try {

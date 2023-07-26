@@ -26,18 +26,23 @@ public class AssumeRoleCredentialsProviderFactory {
     }
 
     public AwsCredentialsProvider createProvider() {
-        StsClient stsClient = StsClient.builder()
+        try(final StsClient stsClient = StsClient.builder()
                 .region(EU_WEST_2)
-                .build();
+                .build()) {
+            AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
+                    .roleArn(roleArn)
+                    .roleSessionName("perf-test")
+                    .build();
 
-        AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
-                .roleArn(roleArn)
-                .roleSessionName("perf-test")
-                .build();
-        AssumeRoleResponse assumeRoleResponse = stsClient.assumeRole(assumeRoleRequest);
+            AssumeRoleResponse assumeRoleResponse = stsClient.assumeRole(assumeRoleRequest);
 
-        Credentials creds = assumeRoleResponse.credentials();
+            Credentials creds = assumeRoleResponse.credentials();
 
-        return StaticCredentialsProvider.create(AwsSessionCredentials.create(creds.accessKeyId(), creds.secretAccessKey(), creds.sessionToken()));
+            return StaticCredentialsProvider
+                    .create(
+                            AwsSessionCredentials
+                                    .create(creds.accessKeyId(), creds.secretAccessKey(), creds.sessionToken())
+                    );
+        }
     }
 }
