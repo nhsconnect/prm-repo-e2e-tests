@@ -1,9 +1,12 @@
 package uk.nhs.prm.e2etests.configuration;
 
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.e2etests.exception.UnknownAwsRegionException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,12 +15,15 @@ import software.amazon.awssdk.services.sts.StsClient;
 import org.springframework.context.annotation.Bean;
 import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.regex.Pattern;
 
 import static software.amazon.awssdk.regions.Region.EU_WEST_2;
 
+@Log4j2
 @Configuration
+@EnableScheduling
 public class AwsConfiguration {
     private static final String AWS_REGION_REGEX = "(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\\d";
     private static final String DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET = "unset";
@@ -48,6 +54,24 @@ public class AwsConfiguration {
                         AwsSessionCredentials
                                 .create(this.accessKey, this.secretAccessKey, this.sessionToken)
                 );
+    }
+
+    @Bean
+    @ConditionalOnProperty(
+            prefix = "aws.configuration",
+            name = { "accessKey", "secretAccessKey" },
+            havingValue = DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET
+    )
+    public AwsCredentialsProvider assumeRoleAwsCredentialsProvider() {
+        final AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
+                .roleArn(exampleAssumedRoleArn().getTargetArn())
+                .roleSessionName("perf-test")
+                .build();
+
+        return StsAssumeRoleCredentialsProvider
+                .builder()
+                .refreshRequest(assumeRoleRequest)
+                .build();
     }
 
     @Bean
