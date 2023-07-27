@@ -1,28 +1,41 @@
 package uk.nhs.prm.e2etests.tests;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.HttpClientErrorException;
-import uk.nhs.prm.e2etests.TestConfiguration;
-import uk.nhs.prm.e2etests.active_suspensions_db.ActiveSuspensionsDB;
+import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
+import uk.nhs.prm.e2etests.model.nems.DeceasedPatientMessageNems;
+import uk.nhs.prm.e2etests.model.nems.MofUpdatedMessageNems;
+import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
+import uk.nhs.prm.e2etests.model.nems.NoLongerSuspendedMessageNems;
+import uk.nhs.prm.e2etests.queue.suspensions.DeceasedPatientQueue;
+import uk.nhs.prm.e2etests.queue.suspensions.MofNotUpdatedMessageQueue;
+import uk.nhs.prm.e2etests.queue.suspensions.MofUpdatedMessageQueue;
+import uk.nhs.prm.e2etests.queue.suspensions.RepoIncomingObservabilityQueue;
+import uk.nhs.prm.e2etests.queue.suspensions.SuspensionMessageObservabilityQueue;
+import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceNotReallySuspensionsMessageQueue;
+import uk.nhs.prm.e2etests.services.ActiveSuspensionsDB;
+import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
-import uk.nhs.prm.e2etests.deadletter.NemsEventProcessorDeadLetterQueue;
+import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
-import uk.nhs.prm.e2etests.model.*;
-import uk.nhs.prm.e2etests.nems.MeshForwarderQueue;
-import uk.nhs.prm.e2etests.model.NemsEventMessage;
-import uk.nhs.prm.e2etests.nems.NemsEventProcessorUnhandledQueue;
-import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.queue.nems.MeshForwarderQueue;
+import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorUnhandledQueue;
+import uk.nhs.prm.e2etests.client.PdsAdaptorClient;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
-import uk.nhs.prm.e2etests.queue.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
-import uk.nhs.prm.e2etests.reregistration.ReRegistrationMessageObservabilityQueue;
-import uk.nhs.prm.e2etests.reregistration.models.ActiveSuspensionsMessage;
-import uk.nhs.prm.e2etests.services.ehr_repo.EhrRepoClient;
-import uk.nhs.prm.e2etests.suspensions.*;
+import uk.nhs.prm.e2etests.queue.reregistration.ReRegistrationMessageObservabilityQueue;
+import uk.nhs.prm.e2etests.client.EhrRepoClient;
 import uk.nhs.prm.e2etests.utility.NemsEventFactory;
 
 import java.time.ZoneOffset;
@@ -30,10 +43,9 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.nhs.prm.e2etests.nhs.NhsIdentityGenerator.*;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.*;
 import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
 
 @SpringBootTest

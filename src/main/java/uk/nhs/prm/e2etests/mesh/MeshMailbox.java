@@ -1,9 +1,10 @@
 package uk.nhs.prm.e2etests.mesh;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import uk.nhs.prm.e2etests.client.MeshClient;
 import uk.nhs.prm.e2etests.property.MeshProperties;
 import uk.nhs.prm.e2etests.exception.MeshMailboxException;
-import uk.nhs.prm.e2etests.model.NemsEventMessage;
+import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import org.springframework.stereotype.Component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

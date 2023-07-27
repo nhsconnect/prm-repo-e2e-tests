@@ -2,7 +2,9 @@ package uk.nhs.prm.e2etests.queue;
 
 import lombok.extern.log4j.Log4j2;
 import org.json.JSONException;
-import uk.nhs.prm.e2etests.model.NemsResolutionMessage;
+import uk.nhs.prm.e2etests.client.ThinlyWrappedSqsClient;
+import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
 import uk.nhs.prm.e2etests.utility.QueueHelper;
 
 import java.time.LocalDateTime;

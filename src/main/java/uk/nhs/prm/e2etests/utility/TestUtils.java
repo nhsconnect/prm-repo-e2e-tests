@@ -7,9 +7,9 @@ import org.json.JSONObject;
 import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
-import uk.nhs.prm.e2etests.transfer_tracker_db.TrackerDb;
-import uk.nhs.prm.e2etests.transfer_tracker_db.TransferTrackerDbMessage;
-import uk.nhs.prm.e2etests.nhs.NhsIdentityGenerator;
+import uk.nhs.prm.e2etests.model.LargeEhrTestFiles;
+import uk.nhs.prm.e2etests.services.TrackerDb;
+import uk.nhs.prm.e2etests.model.TransferTrackerDbMessage;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import uk.nhs.prm.e2etests.exception.AssumedRoleException;
 import software.amazon.awssdk.services.sts.StsClient;
 import org.springframework.context.annotation.Bean;
-import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
 

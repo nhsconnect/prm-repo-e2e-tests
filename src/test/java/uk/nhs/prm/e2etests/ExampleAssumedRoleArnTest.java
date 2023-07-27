@@ -1,6 +1,7 @@
 package uk.nhs.prm.e2etests;
 
 import org.junit.jupiter.api.Test;
+import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -3,7 +3,7 @@ package uk.nhs.prm.e2etests.performance;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import uk.nhs.prm.e2etests.queue.SqsMessage;
+import uk.nhs.prm.e2etests.model.SqsMessage;
 
 import java.io.PrintStream;
 import java.util.Date;
