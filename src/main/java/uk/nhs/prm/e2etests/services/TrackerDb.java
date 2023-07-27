@@ -13,7 +13,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 
-// TODO PRMT-3487: THIS IS A SERVICE, @Component -> @Service - RENAME TO TransferTrackerService.java MOVE TO services DIR
+// TODO PRMT-3487: THIS IS A SERVICE, @Component -> @Service - PRMT-3488 RENAME TO TransferTrackerService.java
 @Component
 public class TrackerDb {
 

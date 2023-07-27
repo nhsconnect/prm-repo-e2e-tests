@@ -135,7 +135,7 @@ class RepositoryE2ETests {
         String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
         inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
 
-        assertThat(ehrInUnhandledQueue.getMessageContaining(conversationId)).isNotNull();
+        assertThat(ehrInUnhandledQueue.getMessageContaining(ehrRequest)).isNotNull();
     }
 
     @Test
