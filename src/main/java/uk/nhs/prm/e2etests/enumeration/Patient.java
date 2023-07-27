@@ -1,6 +1,6 @@
 package uk.nhs.prm.e2etests.enumeration;
 
-import uk.nhs.prm.e2etests.TestConfiguration;
+import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 
 public enum Patient {
     SUSPENDED_WITH_EHR_AT_TPP("9693642937"),
