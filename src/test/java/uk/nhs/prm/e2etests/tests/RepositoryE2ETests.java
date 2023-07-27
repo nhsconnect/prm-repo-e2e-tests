@@ -130,7 +130,7 @@ class RepositoryE2ETests {
     @Test
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev")
     void shouldIdentifyEhrRequestAsEhrOutMessage() {
-        var ehrRequest = Resources.readTestResourceFile("ehr/ehr-request");
+        var ehrRequest = Resources.readTestResourceFileFromEhrDirectory("ehr-request");
         var inboundQueueFromMhs = new SimpleAmqpQueue(queuePropertySource, testConfiguration);
 
         String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";

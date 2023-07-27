@@ -39,7 +39,7 @@ public final class TestUtils {
             String asidCodeOfRequestSender,
             String newConversationId)
     {
-        return Resources.readTestResourceFile("RCMR_IN010000UK05")
+        return Resources.readTestResourceFileFromEhrDirectory("ehr-request")
                 .replaceAll("9692842304", newNhsNumber)
                 .replaceAll("A91720", odsCodeOfRequestSender)
                 .replaceAll("200000000631", asidCodeOfRequestSender)
