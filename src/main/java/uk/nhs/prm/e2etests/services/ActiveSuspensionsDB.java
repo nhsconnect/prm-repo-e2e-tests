@@ -4,7 +4,7 @@ import uk.nhs.prm.e2etests.client.ActiveSuspensionsDbClient;
 import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
 import org.springframework.stereotype.Component;
 
-// TODO PRMT-3487: THIS IS A SERVICE, @Component -> @Service - RENAME TO ActivateSuspensionsService.java MOVE TO services DIR
+// TODO PRMT-3523: THIS IS A SERVICE, @Component -> @Service - PRMT-3488 RENAME TO ActivateSuspensionsService.java
 @Component
 public class ActiveSuspensionsDB {
     ActiveSuspensionsDbClient activeSuspensionsDbClient;
