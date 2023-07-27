@@ -1,13 +1,13 @@
 package uk.nhs.prm.e2etests.live_technical_test.day2;
 
-import uk.nhs.prm.e2etests.services.gp2gp_messenger.Gp2GpMessengerClient;
+import uk.nhs.prm.e2etests.client.Gp2GpMessengerClient;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
+import uk.nhs.prm.e2etests.client.PdsAdaptorClient;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

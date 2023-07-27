@@ -1,6 +1,6 @@
 package uk.nhs.prm.e2etests.model;
 
-import uk.nhs.prm.e2etests.TestConfiguration;
+import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.enumeration.Patient;
 
 import java.time.ZoneOffset;

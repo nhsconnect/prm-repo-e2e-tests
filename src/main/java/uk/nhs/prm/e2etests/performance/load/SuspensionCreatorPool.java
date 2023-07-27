@@ -1,6 +1,6 @@
 package uk.nhs.prm.e2etests.performance.load;
 
-import uk.nhs.prm.e2etests.nhs.NhsIdentityGenerator;
+import uk.nhs.prm.e2etests.utility.NhsIdentityGenerator;
 import uk.nhs.prm.e2etests.performance.NemsTestEvent;
 import uk.nhs.prm.e2etests.utility.QueueHelper;
 

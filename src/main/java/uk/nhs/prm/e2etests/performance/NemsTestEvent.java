@@ -2,8 +2,8 @@ package uk.nhs.prm.e2etests.performance;
 
 import uk.nhs.prm.e2etests.performance.load.LoadPhase;
 import uk.nhs.prm.e2etests.performance.load.Phased;
-import uk.nhs.prm.e2etests.queue.SqsMessage;
-import uk.nhs.prm.e2etests.model.NemsEventMessage;
+import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import uk.nhs.prm.e2etests.utility.NemsEventFactory;
 
 import java.time.LocalDateTime;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static uk.nhs.prm.e2etests.nhs.NhsIdentityGenerator.generateRandomOdsCode;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.generateRandomOdsCode;
 
 public class NemsTestEvent implements Phased {
     private final String nemsMessageId;

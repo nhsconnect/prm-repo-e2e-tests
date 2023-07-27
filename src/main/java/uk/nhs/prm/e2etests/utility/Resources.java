@@ -2,6 +2,8 @@ package uk.nhs.prm.e2etests.utility;
 
 import java.io.*;
 
+// TODO PRMT-3574 - MAKE THIS A TRUE UTILITY OR REMOVE COMPLETELY IN FAVOR OF
+// RESOURCE LOADER.
 public class Resources {
 
     public static String readTestResourceFile(String filename) {
