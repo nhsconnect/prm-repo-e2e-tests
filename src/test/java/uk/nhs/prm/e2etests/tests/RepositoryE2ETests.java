@@ -255,7 +255,7 @@ class RepositoryE2ETests {
         inboundQueueFromMhs.sendMessage(continueRequest, outboundConversationId);
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        List<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("ehr/continue-request");
+        List<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("COPC_IN000001UK01");
         assertThat(allFragments.size()).isGreaterThanOrEqualTo(2);
 
         String largeEhrFragment1Payload = getPayloadOptional(largeEhrFragment1).orElseThrow();

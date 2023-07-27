@@ -146,7 +146,7 @@ public final class TestUtils {
                 .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
                 .replaceAll("<From>N82668</From>", "<From>B85002</From>");
 
-        String ehrRequest = Resources.readTestResourceFile("ehr-request")
+        String ehrRequest = Resources.readTestResourceFileFromEhrDirectory("ehr-request")
                 .replaceAll("9692842304", nhsNumberForTestPatient)
                 .replaceAll("A91720", newGpForTestPatient)
                 .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
