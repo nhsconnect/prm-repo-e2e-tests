@@ -1,13 +1,10 @@
 package uk.nhs.prm.e2etests.configuration;
 
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
-import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.e2etests.exception.UnknownAwsRegionException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +21,6 @@ import static software.amazon.awssdk.regions.Region.EU_WEST_2;
 
 @Log4j2
 @Configuration
-@EnableScheduling
 public class AwsConfiguration {
     private static final String AWS_REGION_REGEX = "(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\\d";
     private static final String DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET = "unset";
