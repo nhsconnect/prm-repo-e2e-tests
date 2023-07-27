@@ -1,19 +1,22 @@
-package uk.nhs.prm.e2etests.configuration;
+package uk.nhs.prm.e2etests.property;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.exception.InvalidAmqpEndpointException;
+import uk.nhs.prm.e2etests.model.AmqpEndpoint;
 import uk.nhs.prm.e2etests.services.SsmService;
-import lombok.AccessLevel;
-import lombok.Getter;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
-public class QueuePropertySource extends AbstractSsmRetriever {
+public class QueueProperties extends AbstractSsmRetriever {
     private static final String TEMPLATE_QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/%s/%s-%s";
 
     @Value("${aws.configuration.queueNames.meshForwarder.nemsEventsObservability}")
-    private String nemsEventsObservabilityQueueName;
+    private String meshForwarderNemsEventsObservabilityQueueName;
 
     @Value("${aws.configuration.queueNames.nemsEventProcessor.unhandledEvents}")
     private String nemsEventProcessorUnhandledEventsQueueName;
@@ -78,11 +81,12 @@ public class QueuePropertySource extends AbstractSsmRetriever {
     @Value("${aws.configuration.queueNames.gp2gpMessenger.messageSentObservability}")
     private String gp2gpMessengerObservabilityQueueName;
 
-    @Getter(AccessLevel.NONE)
+    @Value("${aws.configuration.ssm.parameters.queue.amqpEndpoint}")
+    private String amqpEndpoint;
+
     @Value("${aws.configuration.ssm.parameters.queue.mqAppUsername}")
     private String mqAppUsername;
 
-    @Getter(AccessLevel.NONE)
     @Value("${aws.configuration.ssm.parameters.queue.mqAppPassword}")
     private String mqAppPassword;
 
@@ -91,13 +95,13 @@ public class QueuePropertySource extends AbstractSsmRetriever {
     private final String awsAccountNumber;
 
     @Autowired
-    public QueuePropertySource(
+    public QueueProperties(
             SsmService ssmService,
-            NhsPropertySource nhsPropertySource,
+            NhsProperties nhsProperties,
             ExampleAssumedRoleArn exampleAssumedRoleArn
     ) {
         super(ssmService);
-        this.nhsEnvironment = nhsPropertySource.getNhsEnvironment();
+        this.nhsEnvironment = nhsProperties.getNhsEnvironment();
         this.awsAccountNumber = exampleAssumedRoleArn.getAccountNo();
     }
 
@@ -109,8 +113,8 @@ public class QueuePropertySource extends AbstractSsmRetriever {
         return super.getAwsSsmParameterValue(this.mqAppPassword);
     }
 
-    public String getNemsEventsObservabilityQueueUrl() {
-        return getQueueUrl(nemsEventsObservabilityQueueName);
+    public String getMeshForwarderNemsEventsObservabilityQueueUri() {
+        return getQueueUrl(meshForwarderNemsEventsObservabilityQueueName);
     }
 
     public String getNemsEventProcessorUnhandledEventsQueueUrl() {
@@ -197,7 +201,28 @@ public class QueuePropertySource extends AbstractSsmRetriever {
         return getQueueUrl(gp2gpMessengerObservabilityQueueName);
     }
 
+    public AmqpEndpoint getAmqpEndpoint() {
+        // In the event this fails, there is also an 'amqp-endpoint-1' in SSM
+        return formatAmqpEndpoint(super.getAwsSsmParameterValue(this.amqpEndpoint));
+    }
+
     private String getQueueUrl(String queueName) {
         return String.format(TEMPLATE_QUEUE_URL, this.awsAccountNumber, this.nhsEnvironment, queueName);
+    }
+
+    private AmqpEndpoint formatAmqpEndpoint(String endpoint) {
+        // Regex is splitting amqp endpoint into protocol://hostname:port
+        Pattern endpointRegex = Pattern.compile("(.+)://(.+):(.+)");
+        Matcher matcher = endpointRegex.matcher(endpoint);
+
+        if(matcher.find()) {
+            return AmqpEndpoint.builder()
+                    .protocol(matcher.group(1))
+                    .hostname(matcher.group(2))
+                    .port(Integer.parseInt(matcher.group(3)))
+                    .build();
+        } else {
+            throw new InvalidAmqpEndpointException(endpoint);
+        }
     }
 }

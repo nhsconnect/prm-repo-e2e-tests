@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.configuration;
+package uk.nhs.prm.e2etests.property;
 
 import uk.nhs.prm.e2etests.services.SsmService;
 

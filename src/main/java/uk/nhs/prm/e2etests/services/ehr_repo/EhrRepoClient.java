@@ -9,7 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import uk.nhs.prm.e2etests.configuration.EhrRepositoryPropertySource;
+import uk.nhs.prm.e2etests.property.EhrRepositoryProperties;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -25,10 +25,10 @@ public class EhrRepoClient {
 
     @Autowired
     public EhrRepoClient(
-            EhrRepositoryPropertySource ehrRepositoryPropertySource
+            EhrRepositoryProperties ehrRepositoryProperties
     ) {
-        this.ehrRepositoryApiKey = ehrRepositoryPropertySource.getE2eTestApiKey();
-        this.ehrRepositoryUri = ehrRepositoryPropertySource.getEhrRepositoryUrl();
+        this.ehrRepositoryApiKey = ehrRepositoryProperties.getE2eTestApiKey();
+        this.ehrRepositoryUri = ehrRepositoryProperties.getEhrRepositoryUrl();
     }
 
     public boolean isPatientHealthRecordStatusComplete(String nhsNumber, String conversationId) {

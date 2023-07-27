@@ -1,51 +1,37 @@
 package uk.nhs.prm.e2etests.performance.awsauth;
 
-import org.springframework.context.annotation.Primary;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
+import org.springframework.context.annotation.Primary;
+import software.amazon.awssdk.services.sqs.SqsClient;
 import uk.nhs.prm.e2etests.queue.BasicSqsClient;
-import uk.nhs.prm.e2etests.queue.SqsMessage;
+import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.queue.TestSqsClient;
+import software.amazon.awssdk.regions.Region;
+import uk.nhs.prm.e2etests.queue.SqsMessage;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @Primary
 public class AutoRefreshingRoleAssumingSqsClient implements TestSqsClient {
+    private final TestSqsClient client;
+    private final AwsCredentialsProvider awsCredentialsProvider;
 
-    private volatile TestSqsClient client;
-    private AssumeRoleCredentialsProviderFactory credentialsProviderFactory;
-
-    public AutoRefreshingRoleAssumingSqsClient(AssumeRoleCredentialsProviderFactory credentialsProviderFactory) {
-        this.credentialsProviderFactory = credentialsProviderFactory;
-        warnIfUsingStaticEnvironmentAuth();
-        this.client = createReauthenticatedSqsClient();
+    public AutoRefreshingRoleAssumingSqsClient(
+            AwsCredentialsProvider awsCredentialsProvider
+    ) {
+        this.awsCredentialsProvider = awsCredentialsProvider;
+        this.client = initialiseSqsClient();
     }
 
-    @Scheduled(fixedRate = 30, initialDelay = 30, timeUnit = TimeUnit.MINUTES)
-    public void refreshSqsClient() {
-        System.out.println("Refreshing SQS client in " + getClass());
-        this.client = createReauthenticatedSqsClient();
-    }
-
-    private TestSqsClient createReauthenticatedSqsClient() {
-        AwsCredentialsProvider credentialsProvider = credentialsProviderFactory.createProvider();
-        SqsClient awsSqsClient = SqsClient.builder()
-                .credentialsProvider(credentialsProvider)
+    private TestSqsClient initialiseSqsClient() {
+        final SqsClient awsSqsClient = SqsClient.builder()
+                .region(Region.EU_WEST_2)
+                .credentialsProvider(awsCredentialsProvider)
                 .build();
-        return new BasicSqsClient(awsSqsClient);
-    }
 
-    private void warnIfUsingStaticEnvironmentAuth() {
-        if (System.getenv("AWS_ACCESS_KEY_ID") != null) {
-            System.err.println("NB: Setup to assume-role on auto-refresh (creating " + getClass() +
-                    "), but currently using time-limited env auth (AWS_ACCESS_KEY_ID is set) " +
-                    "so this will fail after the base credentials expire...");
-        }
+        return new BasicSqsClient(awsSqsClient);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package uk.nhs.prm.e2etests.reregistration;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.nems.NemsEventMessageQueue;
 import org.springframework.stereotype.Component;
@@ -11,7 +11,7 @@ public class ReRegistrationMessageObservabilityQueue extends NemsEventMessageQue
     @Autowired
     public ReRegistrationMessageObservabilityQueue(
             ThinlyWrappedSqsClient thinlyWrappedSqsClient,
-            QueuePropertySource queuePropertySource) {
-        super(thinlyWrappedSqsClient, queuePropertySource.getNemsEventProcessorReregistrationObservabilityQueueUrl());
+            QueueProperties queueProperties) {
+        super(thinlyWrappedSqsClient, queueProperties.getNemsEventProcessorReregistrationObservabilityQueueUrl());
     }
 }

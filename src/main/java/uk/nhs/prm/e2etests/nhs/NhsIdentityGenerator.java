@@ -1,8 +1,11 @@
 package uk.nhs.prm.e2etests.nhs;
 
+import uk.nhs.prm.e2etests.annotation.Debt;
+
 import java.util.Random;
 import java.util.UUID;
 
+// TODO PRMT-3574 make this a proper utility class
 public class NhsIdentityGenerator {
 
     public static String generateRandomOdsCode() {
@@ -19,6 +22,7 @@ public class NhsIdentityGenerator {
         return generatedString;
     }
 
+    @Debt(comment = "Misleading. The class states 'NhsIdentityGenerator' but this is a number picked at random.")
     public static String randomNhsNumber() {
         return "9691234567" ;
     }
