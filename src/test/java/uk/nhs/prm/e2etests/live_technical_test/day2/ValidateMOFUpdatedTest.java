@@ -1,11 +1,11 @@
 package uk.nhs.prm.e2etests.live_technical_test.day2;
 
 import uk.nhs.prm.e2etests.services.gp2gp_messenger.Gp2GpMessengerClient;
-import uk.nhs.prm.e2etests.configuration.Gp2gpMessengerPropertySource;
-import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
+import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
+import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
+import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
 import org.junit.jupiter.api.TestInstance;
@@ -29,15 +29,15 @@ class ValidateMOFUpdatedTest {
 
     @Autowired
     public ValidateMOFUpdatedTest(
-            Gp2gpMessengerPropertySource gp2gpMessengerPropertySource,
-            PdsAdaptorPropertySource pdsAdaptorPropertySource,
-            NhsPropertySource nhsPropertySource
+            Gp2gpMessengerProperties gp2GpMessengerProperties,
+            PdsAdaptorProperties pdsAdaptorProperties,
+            NhsProperties nhsProperties
     ) {
-        gp2GpMessengerApiKey = gp2gpMessengerPropertySource.getLiveTestApiKey();
-        gp2GpMessengerUrl = gp2gpMessengerPropertySource.getGp2gpMessengerUrl();
-        safeListedPatientList = nhsPropertySource.getSafeListedPatientList();
-        pdsAdaptorApiKey = pdsAdaptorPropertySource.getLiveTestApiKey();
-        pdsAdaptorUrl = pdsAdaptorPropertySource.getPdsAdaptorUrl();
+        gp2GpMessengerApiKey = gp2GpMessengerProperties.getLiveTestApiKey();
+        gp2GpMessengerUrl = gp2GpMessengerProperties.getGp2gpMessengerUrl();
+        safeListedPatientList = nhsProperties.getSafeListedPatientList();
+        pdsAdaptorApiKey = pdsAdaptorProperties.getLiveTestApiKey();
+        pdsAdaptorUrl = pdsAdaptorProperties.getPdsAdaptorUrl();
     }
 
     @BeforeEach

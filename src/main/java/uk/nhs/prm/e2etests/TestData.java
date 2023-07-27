@@ -1,7 +1,7 @@
 package uk.nhs.prm.e2etests;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -60,12 +60,10 @@ public class TestData {
     }
 
     public static List<String> perf(int numberOfNhsNumbers) {
-        var perfList = new ArrayList<String>();
-        for (int i = 0; i < numberOfNhsNumbers ; i++) {
-            var nhsNumber = generateRandomNhsNumber();
-            perfList.add(nhsNumber);
-        }
-        return perfList;
+        return Stream
+                .generate(TestData::generateRandomNhsNumber)
+                .limit(numberOfNhsNumbers)
+                .toList();
     }
 
     public static String generateRandomNhsNumber() {

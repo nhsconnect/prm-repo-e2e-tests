@@ -1,11 +1,9 @@
 package uk.nhs.prm.e2etests.live_technical_test.day1;
 
-import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
-import uk.nhs.prm.e2etests.configuration.Gp2gpMessengerPropertySource;
-import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
-import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
-import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
+import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
+import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.e2etests.services.gp2gp_messenger.Gp2GpMessengerClient;
@@ -21,8 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.extractProperty;
-
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -30,39 +26,39 @@ class ChangeOfGPMessageReceivedTest {
     private SuspensionMessageRealQueue suspensionMessageRealQueue;
     private TestPatientValidator patientValidator;
     private Gp2GpMessengerClient gp2GpMessengerClient;
-    private Gp2gpMessengerPropertySource gp2gpMessengerPropertySource;
-    private QueuePropertySource queuePropertySource;
-    private NhsPropertySource nhsPropertySource;
-    private PdsAdaptorPropertySource pdsAdaptorPropertySource;
-    private ExampleAssumedRoleArn exampleAssumedRoleArn;
+    private Gp2gpMessengerProperties gp2GpMessengerProperties;
+    private QueueProperties queueProperties;
+    private NhsProperties nhsProperties;
+    private PdsAdaptorProperties pdsAdaptorProperties;
+
+    private AutoRefreshingRoleAssumingSqsClient sqsClient;
 
     @Autowired
     public ChangeOfGPMessageReceivedTest(
             TestPatientValidator testPatientValidator,
-            Gp2gpMessengerPropertySource gp2gpMessengerPropertySource,
-            QueuePropertySource queuePropertySource,
-            NhsPropertySource nhsPropertySource,
-            PdsAdaptorPropertySource pdsAdaptorPropertySource,
-            ExampleAssumedRoleArn exampleAssumedRoleArn
+            Gp2gpMessengerProperties gp2GpMessengerProperties,
+            QueueProperties queueProperties,
+            NhsProperties nhsProperties,
+            PdsAdaptorProperties pdsAdaptorProperties,
+            AutoRefreshingRoleAssumingSqsClient sqsClient
     ) {
-        patientValidator = testPatientValidator;
-        this.gp2gpMessengerPropertySource = gp2gpMessengerPropertySource;
-        this.queuePropertySource = queuePropertySource;
-        this.nhsPropertySource = nhsPropertySource;
-        this.pdsAdaptorPropertySource = pdsAdaptorPropertySource;
-        this.exampleAssumedRoleArn = exampleAssumedRoleArn;
+        this.patientValidator = testPatientValidator;
+        this.gp2GpMessengerProperties = gp2GpMessengerProperties;
+        this.queueProperties = queueProperties;
+        this.nhsProperties = nhsProperties;
+        this.pdsAdaptorProperties = pdsAdaptorProperties;
+        this.sqsClient = sqsClient;
     }
 
     @BeforeEach
     public void setUp() {
-        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory(exampleAssumedRoleArn));
-        suspensionMessageRealQueue = new SuspensionMessageRealQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
-        gp2GpMessengerClient = new Gp2GpMessengerClient(gp2gpMessengerPropertySource.getLiveTestApiKey(), gp2gpMessengerPropertySource.getGp2gpMessengerUrl());
+        suspensionMessageRealQueue = new SuspensionMessageRealQueue(new ThinlyWrappedSqsClient(sqsClient), queueProperties);
+        gp2GpMessengerClient = new Gp2GpMessengerClient(gp2GpMessengerProperties.getLiveTestApiKey(), gp2GpMessengerProperties.getGp2gpMessengerUrl());
     }
 
     @Test
     void shouldHaveReceivedSingleSuspensionChangeOfGpMessageRelatedToTestPatient() {
-        var safeListPatients = nhsPropertySource.getSafeListedPatientList();
+        var safeListPatients = nhsProperties.getSafeListedPatientList();
 
         if (safeListPatients.size() > 0) {
 
@@ -103,8 +99,8 @@ class ChangeOfGPMessageReceivedTest {
 
         var pds = new PdsAdaptorClient(
                 pdsAdaptorUsername,
-                pdsAdaptorPropertySource.getLiveTestApiKey(),
-                pdsAdaptorPropertySource.getPdsAdaptorUrl()
+                pdsAdaptorProperties.getLiveTestApiKey(),
+                pdsAdaptorProperties.getPdsAdaptorUrl()
         );
 
         return pds.getSuspendedPatientStatus(testPatientNhsNumber);

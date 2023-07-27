@@ -2,32 +2,50 @@ package uk.nhs.prm.e2etests.transfer_tracker_db;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
-import uk.nhs.prm.e2etests.TestConfiguration;
+import uk.nhs.prm.e2etests.property.DatabaseProperties;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class TransferTrackerDbClient {
+    private final DatabaseProperties databaseProperties;
+
+    private final AwsCredentialsProvider awsCredentialsProvider;
 
     @Autowired
-    TestConfiguration testConfiguration;
+    public TransferTrackerDbClient(
+            DatabaseProperties databaseProperties,
+            AwsCredentialsProvider awsCredentialsProvider
+    ) {
+        this.databaseProperties = databaseProperties;
+        this.awsCredentialsProvider = awsCredentialsProvider;
+    }
 
     public GetItemResponse queryDbWithConversationId(String conversationId) {
-        Map<String, AttributeValue> key = new HashMap<>();
         System.out.println("Querying transfer tracker db with conversation id : "+conversationId);
-        key.put("conversation_id", AttributeValue.builder().s(conversationId).build());
-        var getItemResponse = DynamoDbClient.builder().build().getItem((GetItemRequest.builder()
-                .tableName(testConfiguration.getTransferTrackerDb())
-                .key(key)
+
+        final Map<String, AttributeValue> dynamoDbKey = Map.of(
+        "conversation_id", AttributeValue.builder().s(conversationId).build()
+        );
+
+        try(DynamoDbClient dynamoDbClient = DynamoDbClient.builder()
+                .credentialsProvider(awsCredentialsProvider)
+                .region(Region.EU_WEST_2)
+                .build()) {
+
+            return dynamoDbClient.getItem((GetItemRequest.builder()
+                .tableName(databaseProperties.getTransferTrackerDbName())
+                .key(dynamoDbKey)
                 .build()));
-        System.out.println("query response is: " + getItemResponse);
-        return getItemResponse;
+        }
     }
 
     public void save(TransferTrackerDbMessage transferTrackerDbMessage) {
@@ -45,7 +63,7 @@ public class TransferTrackerDbClient {
 
 
         DynamoDbClient.builder().build().putItem(PutItemRequest.builder()
-                .tableName(testConfiguration.getTransferTrackerDb())
+                .tableName(databaseProperties.getTransferTrackerDbName())
                 .item(item)
                 .build()
         );

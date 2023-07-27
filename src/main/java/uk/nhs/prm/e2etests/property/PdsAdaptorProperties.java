@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.configuration;
+package uk.nhs.prm.e2etests.property;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.services.SsmService;
 
 @Component
-public class PdsAdaptorPropertySource extends AbstractSsmRetriever {
+public class PdsAdaptorProperties extends AbstractSsmRetriever {
     @Value("${aws.configuration.ssm.parameters.pdsAdaptor.performanceApiKey}")
     private String performanceApiKey;
 
@@ -20,7 +20,7 @@ public class PdsAdaptorPropertySource extends AbstractSsmRetriever {
     private String pdsAdaptorUrl;
 
     @Autowired
-    public PdsAdaptorPropertySource(SsmService ssmService) {
+    public PdsAdaptorProperties(SsmService ssmService) {
         super(ssmService);
     }
 

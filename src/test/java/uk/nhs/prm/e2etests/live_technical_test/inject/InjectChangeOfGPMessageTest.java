@@ -6,13 +6,15 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
 import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
+import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.suspensions.SuspensionMessageObservabilityQueue;
 
@@ -24,7 +26,7 @@ import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTe
 
 @SpringBootTest(classes = {
         MeshMailbox.class,
-        TestConfiguration.class,
+        SyntheticPatientProperties.class
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableScheduling
@@ -34,28 +36,30 @@ public class InjectChangeOfGPMessageTest {
     private MeshMailbox meshMailbox;
 
     @Autowired
-    private TestConfiguration testConfiguration;
+    private SyntheticPatientProperties syntheticPatientProperties;
 
     @Autowired
     private SuspensionMessageObservabilityQueue suspensionMessageObservabilityQueue;
 
     @Autowired
-    QueuePropertySource queuePropertySource;
+    QueueProperties queueProperties;
 
     @Autowired
     ExampleAssumedRoleArn exampleAssumedRoleArn;
 
+    @Autowired
+    AutoRefreshingRoleAssumingSqsClient sqsClient;
+
     @BeforeEach
     public void setUp() {
-        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory(exampleAssumedRoleArn));
-        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
+        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new ThinlyWrappedSqsClient(sqsClient), queueProperties);
     }
 
 
     @Test
     public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
         String nemsMessageId = randomNemsMessageId();
-        String nhsNumber = testConfiguration.getNhsNumberForSyntheticPatientInPreProd();
+        String nhsNumber = syntheticPatientProperties.getSyntheticPatientInPreProd();
         String previousGP = generateRandomOdsCode();
 
         suspensionMessageObservabilityQueue.deleteAllMessages();

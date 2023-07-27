@@ -1,24 +1,20 @@
 package uk.nhs.prm.e2etests.live_technical_test.repo;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
-import uk.nhs.prm.e2etests.configuration.EhrRepositoryPropertySource;
-import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
-import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
-import uk.nhs.prm.e2etests.configuration.QueuePropertySource;
+import uk.nhs.prm.e2etests.property.EhrRepositoryProperties;
+import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
+import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.ehr_transfer.RepoIncomingQueue;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.performance.awsauth.AssumeRoleCredentialsProviderFactory;
-import uk.nhs.prm.e2etests.performance.awsauth.AutoRefreshingRoleAssumingSqsClient;
-import uk.nhs.prm.e2etests.queue.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.services.ehr_repo.EhrRepoClient;
 
 import java.util.List;
@@ -40,37 +36,30 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     private List<String> safeListedPatientList;
     private String syntheticPatientPrefix;
     private RepoIncomingQueue repoIncomingQueue;
-    private QueuePropertySource queuePropertySource;
+    private QueueProperties queueProperties;
     private ExampleAssumedRoleArn exampleAssumedRoleArn;
 
     @Autowired
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
             TestPatientValidator testPatientValidator,
-            PdsAdaptorPropertySource pdsAdaptorPropertySource,
-            EhrRepositoryPropertySource ehrRepositoryPropertySource,
-            NhsPropertySource nhsPropertySource,
-            QueuePropertySource queuePropertySource,
-            EhrRepoClient ehrRepoClient,
-            ExampleAssumedRoleArn exampleAssumedRoleArn
+            PdsAdaptorProperties pdsAdaptorProperties,
+            NhsProperties nhsProperties,
+            QueueProperties queueProperties,
+            ExampleAssumedRoleArn exampleAssumedRoleArn,
+            RepoIncomingQueue repoIncomingQueue
     ) {
         patientValidator = testPatientValidator;
 
         pdsAdaptorClient = new PdsAdaptorClient(
                 PDS_ADAPTOR_TEST_USERNAME,
-                pdsAdaptorPropertySource.getLiveTestApiKey(),
-                pdsAdaptorPropertySource.getPdsAdaptorUrl());
-        repoOdsCode = nhsPropertySource.getRepoOdsCode();
-        safeListedPatientList = nhsPropertySource.getSafeListedPatientList();
-        syntheticPatientPrefix = nhsPropertySource.getSyntheticPatientPrefix();
-        this.queuePropertySource = queuePropertySource;
+                pdsAdaptorProperties.getLiveTestApiKey(),
+                pdsAdaptorProperties.getPdsAdaptorUrl());
+        repoOdsCode = nhsProperties.getRepoOdsCode();
+        safeListedPatientList = nhsProperties.getSafeListedPatientList();
+        syntheticPatientPrefix = nhsProperties.getSyntheticPatientPrefix();
+        this.queueProperties = queueProperties;
         this.exampleAssumedRoleArn = exampleAssumedRoleArn;
-    }
-
-    @BeforeEach
-    void setUp() {
-        // TODO PRMT-3523 - Refactor this to use dependency injection
-        var sqsClient = new AutoRefreshingRoleAssumingSqsClient(new AssumeRoleCredentialsProviderFactory(exampleAssumedRoleArn));
-        repoIncomingQueue = new RepoIncomingQueue(new ThinlyWrappedSqsClient(sqsClient), queuePropertySource);
+        this.repoIncomingQueue = repoIncomingQueue;
     }
 
     @Test

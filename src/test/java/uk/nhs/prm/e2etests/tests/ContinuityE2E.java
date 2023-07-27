@@ -8,8 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.e2etests.TestConfiguration;
 import uk.nhs.prm.e2etests.active_suspensions_db.ActiveSuspensionsDB;
-import uk.nhs.prm.e2etests.configuration.NhsPropertySource;
-import uk.nhs.prm.e2etests.configuration.PdsAdaptorPropertySource;
+import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.deadletter.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.*;
@@ -17,6 +17,7 @@ import uk.nhs.prm.e2etests.nems.MeshForwarderQueue;
 import uk.nhs.prm.e2etests.model.NemsEventMessage;
 import uk.nhs.prm.e2etests.nems.NemsEventProcessorUnhandledQueue;
 import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.queue.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.reregistration.ReRegistrationMessageObservabilityQueue;
 import uk.nhs.prm.e2etests.reregistration.models.ActiveSuspensionsMessage;
@@ -61,7 +62,7 @@ class ContinuityE2E {
     @Autowired
     private MeshMailbox meshMailbox;
     @Autowired
-    private TestConfiguration config;
+    private SyntheticPatientProperties syntheticPatientProperties;
     @Autowired
     private RepoIncomingObservabilityQueue repoIncomingObservabilityQueue;
     @Autowired
@@ -69,9 +70,9 @@ class ContinuityE2E {
     @Autowired
     private EhrRepoClient ehrRepoClient;
     @Autowired
-    private PdsAdaptorPropertySource pdsAdaptorPropertySource;
+    private PdsAdaptorProperties pdsAdaptorProperties;
     @Autowired
-    private NhsPropertySource nhsPropertySource;
+    private NhsProperties nhsProperties;
 
     private PdsAdaptorClient pdsAdaptorClient;
 
@@ -89,8 +90,8 @@ class ContinuityE2E {
         repoIncomingObservabilityQueue.deleteAllMessages();
         pdsAdaptorClient = new PdsAdaptorClient(
                 "e2e-test",
-                pdsAdaptorPropertySource.getE2eTestApiKey(),
-                pdsAdaptorPropertySource.getPdsAdaptorUrl()
+                pdsAdaptorProperties.getE2eTestApiKey(),
+                pdsAdaptorProperties.getPdsAdaptorUrl()
         );
     }
 
@@ -99,7 +100,7 @@ class ContinuityE2E {
     @Order(1)
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();
-        String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
+        String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         var now = now();
         String previousGp = generateRandomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
@@ -134,7 +135,7 @@ class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = generateRandomOdsCode();
         var now = now();
-        String currentlyRegisteredPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
+        String currentlyRegisteredPatientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp, now);
 
@@ -180,7 +181,7 @@ class ContinuityE2E {
 
         var suspensionTime = now();
         var nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml",
-                config.getNhsNumberForNonSyntheticPatientWithoutGp(),
+                syntheticPatientProperties.getNonSyntheticPatientWithoutGp(),
                 nemsMessageId, previousGp, suspensionTime);
 
         meshMailbox.postMessage(nemsSuspension);
@@ -194,7 +195,7 @@ class ContinuityE2E {
     @Order(3)
     public void shouldMoveDeceasedPatientEventToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
-        String patientNhsNumber = config.getNhsNumberForSyntheticDeceasedPatient();
+        String patientNhsNumber = syntheticPatientProperties.getDeceasedPatient();
         var eventTime = now();
         String previousGp = generateRandomOdsCode();
 
@@ -214,7 +215,7 @@ class ContinuityE2E {
     @Order(7)
     public void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
         var nemsMessageId = randomNemsMessageId();
-        String patientNhsNumber = config.getNhsNumberForSyntheticPatientWithCurrentGp();
+        String patientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
         var reregistrationTime = now();
         storeEhrInRepositoryFor(patientNhsNumber);
         activeSuspensionsDB.save(new ActiveSuspensionsMessage(patientNhsNumber,generateRandomOdsCode(), now()));
@@ -245,7 +246,7 @@ class ContinuityE2E {
     @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="true")
     void shouldSaveActiveSuspensionInDbWhenMofUpdatedToPreviousGp() {
         String nemsMessageId = randomNemsMessageId();
-        String suspendedPatientNhsNumber = config.getNhsNumberForSyntheticPatientWithoutGp();
+        String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         var now = now();
         String previousGp = generateRandomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
@@ -268,7 +269,7 @@ class ContinuityE2E {
 
     private void setManagingOrganisationToEMISOdsCode(String nhsNumber) {
         var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(nhsNumber);
-        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsPropertySource.getNhsEnvironment()).odsCode();
+        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
         if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorClient.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.getRecordETag());
         }
