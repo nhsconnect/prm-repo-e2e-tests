@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
-import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.client.PdsAdaptorClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

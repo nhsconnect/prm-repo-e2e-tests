@@ -1,14 +1,12 @@
 package uk.nhs.prm.e2etests.utility;
 
-import uk.nhs.prm.e2etests.model.NemsEventMessage;
+import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-
-import uk.nhs.prm.e2etests.nhs.NhsIdentityGenerator;
 
 
 public class NemsEventFactory {

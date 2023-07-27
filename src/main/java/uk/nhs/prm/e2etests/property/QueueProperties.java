@@ -3,7 +3,7 @@ package uk.nhs.prm.e2etests.property;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.e2etests.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
 import uk.nhs.prm.e2etests.exception.InvalidAmqpEndpointException;
 import uk.nhs.prm.e2etests.model.AmqpEndpoint;
 import uk.nhs.prm.e2etests.services.SsmService;

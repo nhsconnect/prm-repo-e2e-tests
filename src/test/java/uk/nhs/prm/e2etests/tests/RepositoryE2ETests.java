@@ -14,21 +14,21 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.xmlunit.diff.*;
-import uk.nhs.prm.e2etests.TestConfiguration;
+import uk.nhs.prm.e2etests.configuration.TestConfiguration;
+import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
-import uk.nhs.prm.e2etests.property.QueueProperties;
-import uk.nhs.prm.e2etests.ehr_transfer.*;
-import uk.nhs.prm.e2etests.model.Gp2GpSystem;
+import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
-import uk.nhs.prm.e2etests.pdsadaptor.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.client.PdsAdaptorClient;
 import uk.nhs.prm.e2etests.enumeration.LargeEhrVariant;
 import uk.nhs.prm.e2etests.enumeration.Patient;
 import uk.nhs.prm.e2etests.queue.*;
-import uk.nhs.prm.e2etests.transfer_tracker_db.TrackerDb;
+import uk.nhs.prm.e2etests.queue.ehr_transfer.*;
+import uk.nhs.prm.e2etests.services.TrackerDb;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
-import uk.nhs.prm.e2etests.utility.LargeEhrTestFiles;
+import uk.nhs.prm.e2etests.model.LargeEhrTestFiles;
 import uk.nhs.prm.e2etests.utility.Resources;
 import uk.nhs.prm.e2etests.utility.TestUtils;
 
@@ -135,7 +135,7 @@ class RepositoryE2ETests {
         String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
         inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
 
-        assertThat(ehrInUnhandledQueue.getMessageContaining(ehrRequest)).isNotNull();
+        assertThat(ehrInUnhandledQueue.getMessageContaining(conversationId)).isNotNull();
     }
 
     @Test
