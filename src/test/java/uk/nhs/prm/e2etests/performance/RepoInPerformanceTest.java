@@ -5,7 +5,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.configuration.TestData;
 import uk.nhs.prm.e2etests.property.QueueProperties;
@@ -57,7 +57,7 @@ class RepoInPerformanceTest {
     EhrTransferServiceTransferCompleteOQ transferCompleteQueue;
 
     @Autowired
-    ExampleAssumedRoleArn exampleAssumedRoleArn;
+    ActiveRoleArn activeRoleArn;
 
     @Autowired
     QueueProperties queueProperties;

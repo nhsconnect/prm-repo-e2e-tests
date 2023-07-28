@@ -8,7 +8,7 @@ import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import uk.nhs.prm.e2etests.exception.UnknownAwsRegionException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
-import uk.nhs.prm.e2etests.exception.AssumedRoleException;
+import uk.nhs.prm.e2etests.exception.ActiveRoleArnException;
 import software.amazon.awssdk.services.sts.StsClient;
 import org.springframework.context.annotation.Bean;
 import jakarta.annotation.PostConstruct;
@@ -63,26 +63,26 @@ public class AwsConfiguration {
         return StsAssumeRoleCredentialsProvider.builder()
                 .stsClient(stsClient)
                 .refreshRequest(request -> {
-                    request.roleArn(exampleAssumedRoleArn().getTargetArn());
+                    request.roleArn(activeRoleArn().getTargetArn());
                     request.roleSessionName("perf-test");
                 })
                 .build();
     }
 
     @Bean
-    public ExampleAssumedRoleArn exampleAssumedRoleArn() {
+    public ActiveRoleArn activeRoleArn() {
         if(this.requiredRoleArn.equalsIgnoreCase(DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET)) {
             try(final StsClient stsClient = StsClient.builder()
                     .region(EU_WEST_2)
                     .credentialsProvider(awsumeAwsCredentialsProvider())
                     .build()) {
-                return new ExampleAssumedRoleArn(stsClient.getCallerIdentity().arn());
+                return new ActiveRoleArn(stsClient.getCallerIdentity().arn());
             } catch (Exception exception) {
-                throw new AssumedRoleException(exception.getMessage());
+                throw new ActiveRoleArnException(exception.getMessage());
             }
         }
         else {
-            return new ExampleAssumedRoleArn(this.requiredRoleArn);
+            return new ActiveRoleArn(this.requiredRoleArn);
         }
     }
 

@@ -3,7 +3,7 @@ package uk.nhs.prm.e2etests.property;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.exception.InvalidAmqpEndpointException;
 import uk.nhs.prm.e2etests.model.AmqpEndpoint;
 import uk.nhs.prm.e2etests.service.SsmService;
@@ -98,11 +98,11 @@ public class QueueProperties extends AbstractSsmRetriever {
     public QueueProperties(
             SsmService ssmService,
             NhsProperties nhsProperties,
-            ExampleAssumedRoleArn exampleAssumedRoleArn
+            ActiveRoleArn activeRoleArn
     ) {
         super(ssmService);
         this.nhsEnvironment = nhsProperties.getNhsEnvironment();
-        this.awsAccountNumber = exampleAssumedRoleArn.getAccountNo();
+        this.awsAccountNumber = activeRoleArn.getAccountNo();
     }
 
     public String getMqAppUsername() {
