@@ -4,7 +4,7 @@ import uk.nhs.prm.e2etests.exception.InvalidAmqpEndpointException;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
-import uk.nhs.prm.e2etests.services.SsmService;
+import uk.nhs.prm.e2etests.service.SsmService;
 import uk.nhs.prm.e2etests.model.AmqpEndpoint;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

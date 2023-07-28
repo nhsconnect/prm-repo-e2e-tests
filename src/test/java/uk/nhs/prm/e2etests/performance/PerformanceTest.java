@@ -13,11 +13,11 @@ import uk.nhs.prm.e2etests.model.NhsNumberTestData;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
-import uk.nhs.prm.e2etests.client.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import uk.nhs.prm.e2etests.performance.load.*;
 import uk.nhs.prm.e2etests.tests.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import uk.nhs.prm.e2etests.queue.suspensions.MofUpdatedMessageQueue;
+import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceMofUpdatedQueue;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,7 +47,7 @@ public class PerformanceTest {
     private MeshMailbox meshMailbox;
     private TestConfiguration testConfiguration;
     private NhsNumberTestData nhsNumbers;
-    private MofUpdatedMessageQueue mofUpdatedMessageQueue;
+    private SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
     private PdsAdaptorProperties pdsAdaptorProperties;
     private NhsProperties nhsProperties;
 
@@ -56,14 +56,14 @@ public class PerformanceTest {
             MeshMailbox meshMailbox,
             TestConfiguration testConfiguration,
             ResourceConfiguration resourceConfiguration,
-            MofUpdatedMessageQueue mofUpdatedMessageQueue,
+            SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue,
             PdsAdaptorProperties pdsAdaptorProperties,
             NhsProperties nhsProperties
     ) {
         this.meshMailbox = meshMailbox;
         this.testConfiguration = testConfiguration;
         this.nhsNumbers = resourceConfiguration.nhsNumbers();
-        this.mofUpdatedMessageQueue = mofUpdatedMessageQueue;
+        this.suspensionServiceMofUpdatedQueue = suspensionServiceMofUpdatedQueue;
         this.pdsAdaptorProperties = pdsAdaptorProperties;
         this.nhsProperties = nhsProperties;
     }
@@ -78,7 +78,7 @@ public class PerformanceTest {
 
         out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
-        var successMessage = mofUpdatedMessageQueue.getMessageContaining(nemsEvent.nemsMessageId());
+        var successMessage = suspensionServiceMofUpdatedQueue.getMessageContaining(nemsEvent.nemsMessageId());
 
         assertThat(successMessage).isNotNull();
 
@@ -107,7 +107,7 @@ public class PerformanceTest {
         try {
             final var timeout = now().plusSeconds(overallTimeout);
             while (before(timeout) && recorder.hasUnfinishedEvents()) {
-                for (SqsMessage nextMessage : mofUpdatedMessageQueue.getNextMessages(timeout)) {
+                for (SqsMessage nextMessage : suspensionServiceMofUpdatedQueue.getNextMessages(timeout)) {
                     recorder.finishMatchingMessage(nextMessage);
                 }
             }
@@ -152,7 +152,7 @@ public class PerformanceTest {
 
     private void checkSuspended(List<String> suspendedNhsNumbers) {
         if (!nhsProperties.getNhsEnvironment().equals("perf")) {
-            PdsAdaptorClient pds = new PdsAdaptorClient("performance-test", pdsAdaptorProperties.getPerformanceApiKey(), pdsAdaptorProperties.getPdsAdaptorUrl());
+            PdsAdaptorService pds = new PdsAdaptorService("performance-test", pdsAdaptorProperties.getPerformanceApiKey(), pdsAdaptorProperties.getPdsAdaptorUrl());
             for (String nhsNumber: suspendedNhsNumbers) {
                 var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);
                 out.println(nhsNumber + ": " + patientStatus);

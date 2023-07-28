@@ -10,7 +10,6 @@ import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
-import uk.nhs.prm.e2etests.client.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.client.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionMessageObservabilityQueue;
@@ -36,7 +35,7 @@ public class InjectChangeOfGPMessageTest {
     private SyntheticPatientProperties syntheticPatientProperties;
 
     @Autowired
-    private SuspensionMessageObservabilityQueue suspensionMessageObservabilityQueue;
+    private NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
 
     @Autowired
     QueueProperties queueProperties;
@@ -59,7 +58,7 @@ public class InjectChangeOfGPMessageTest {
         String nhsNumber = syntheticPatientProperties.getSyntheticPatientInPreProd();
         String previousGP = generateRandomOdsCode();
 
-        suspensionMessageObservabilityQueue.deleteAllMessages();
+        nemsEventProcessorSuspensionsOQ.deleteAllMessages();
 
         var nemsSuspension = createNemsEventFromTemplate(
                 "change-of-gp-suspension.xml",
