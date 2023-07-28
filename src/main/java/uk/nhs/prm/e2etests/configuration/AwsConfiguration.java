@@ -52,8 +52,7 @@ public class AwsConfiguration {
                 );
     }
 
-    @Bean
-    @ConditionalOnProperty(
+    @Bean @ConditionalOnProperty(
             prefix = "aws.configuration",
             name = { "accessKey", "secretAccessKey" },
             havingValue = DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET

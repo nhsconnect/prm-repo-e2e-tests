@@ -8,7 +8,7 @@ import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.e2etests.model.LargeEhrTestFiles;
-import uk.nhs.prm.e2etests.services.TrackerDb;
+import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.model.TransferTrackerDbMessage;
 
 import java.time.ZoneOffset;
@@ -70,10 +70,10 @@ public final class TestUtils {
         return true;
     }
 
-    public static void addRecordToTrackerDb(TrackerDb trackerDb, String inboundConversationId, String largeEhrCoreMessageId, String nhsNumberForTestPatient, String previousGpForTestPatient, String state) {
+    public static void addRecordToTrackerDb(TransferTrackerService transferTrackerService, String inboundConversationId, String largeEhrCoreMessageId, String nhsNumberForTestPatient, String previousGpForTestPatient, String state) {
         String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
-        trackerDb.save(new TransferTrackerDbMessage(
+        transferTrackerService.save(new TransferTrackerDbMessage(
                 inboundConversationId,
                 largeEhrCoreMessageId,
                 NhsIdentityGenerator.randomNemsMessageId(),

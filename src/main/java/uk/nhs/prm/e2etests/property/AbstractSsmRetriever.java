@@ -1,6 +1,6 @@
 package uk.nhs.prm.e2etests.property;
 
-import uk.nhs.prm.e2etests.services.SsmService;
+import uk.nhs.prm.e2etests.service.SsmService;
 
 public abstract class AbstractSsmRetriever {
     private final SsmService ssmService;

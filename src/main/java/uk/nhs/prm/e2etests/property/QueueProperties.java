@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
 import uk.nhs.prm.e2etests.exception.InvalidAmqpEndpointException;
 import uk.nhs.prm.e2etests.model.AmqpEndpoint;
-import uk.nhs.prm.e2etests.services.SsmService;
+import uk.nhs.prm.e2etests.service.SsmService;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
