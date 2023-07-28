@@ -12,8 +12,8 @@ class MixerPoolTest {
         NemsTestEvent eventOne = NemsTestEvent.nonSuspensionEvent("1111" , "111");
         NemsTestEvent eventTwo = NemsTestEvent.nonSuspensionEvent("2222" , "222");
 
-        Pool sourceOne = new BoringNemsTestEventPool(eventOne);
-        Pool sourceTwo = new BoringNemsTestEventPool(eventTwo);
+        Pool sourceOne = new NemsTestEventPool(eventOne);
+        Pool sourceTwo = new NemsTestEventPool(eventTwo);
 
         MixerPool mixerPool = new MixerPool(50, sourceOne, 50, sourceTwo);
 
@@ -28,8 +28,8 @@ class MixerPoolTest {
         NemsTestEvent eventOne = NemsTestEvent.nonSuspensionEvent("1111" , "111");
         NemsTestEvent eventTwo = NemsTestEvent.nonSuspensionEvent("2222" , "222");
 
-        Pool sourceOne = new BoringNemsTestEventPool(eventOne);
-        Pool sourceTwo = new BoringNemsTestEventPool(eventTwo);
+        Pool sourceOne = new NemsTestEventPool(eventOne);
+        Pool sourceTwo = new NemsTestEventPool(eventTwo);
 
         MixerPool mixerPool = new MixerPool(1000, sourceOne, 3000, sourceTwo);
 

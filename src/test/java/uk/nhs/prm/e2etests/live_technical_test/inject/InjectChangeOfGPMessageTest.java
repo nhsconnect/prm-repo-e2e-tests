@@ -6,7 +6,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
@@ -41,7 +41,7 @@ public class InjectChangeOfGPMessageTest {
     QueueProperties queueProperties;
 
     @Autowired
-    ExampleAssumedRoleArn exampleAssumedRoleArn;
+    ActiveRoleArn activeRoleArn;
 
     @Autowired
     SqsService sqsService;

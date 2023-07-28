@@ -138,7 +138,7 @@ public class PerformanceTest {
 
     private MixerPool<NemsTestEvent> createMixedSuspensionsAndNonSuspensionsTestEventSource(int suspensionMessagesPerDay, int nonSuspensionMessagesPerDay) {
         var suspensionsSource = new SuspensionCreatorPool(suspendedNhsNumbers());
-        var nonSuspensionsSource = new BoringNemsTestEventPool(nonSuspensionEvent(randomNhsNumber(), randomNemsMessageId()));
+        var nonSuspensionsSource = new NemsTestEventPool(nonSuspensionEvent(randomNhsNumber(), randomNemsMessageId()));
         return new MixerPool<>(
                 suspensionMessagesPerDay, suspensionsSource,
                 nonSuspensionMessagesPerDay, nonSuspensionsSource);

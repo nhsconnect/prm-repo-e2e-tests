@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.property.QueueProperties;
@@ -36,7 +36,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     private String syntheticPatientPrefix;
     private EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
     private QueueProperties queueProperties;
-    private ExampleAssumedRoleArn exampleAssumedRoleArn;
+    private ActiveRoleArn activeRoleArn;
 
     @Autowired
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
@@ -44,7 +44,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
             PdsAdaptorProperties pdsAdaptorProperties,
             NhsProperties nhsProperties,
             QueueProperties queueProperties,
-            ExampleAssumedRoleArn exampleAssumedRoleArn,
+            ActiveRoleArn activeRoleArn,
             EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue
     ) {
         patientValidator = testPatientValidator;
@@ -57,7 +57,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
         safeListedPatientList = nhsProperties.getSafeListedPatientList();
         syntheticPatientPrefix = nhsProperties.getSyntheticPatientPrefix();
         this.queueProperties = queueProperties;
-        this.exampleAssumedRoleArn = exampleAssumedRoleArn;
+        this.activeRoleArn = activeRoleArn;
         this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
     }
 
