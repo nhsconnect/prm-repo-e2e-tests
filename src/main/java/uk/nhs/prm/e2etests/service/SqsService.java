@@ -91,7 +91,7 @@ public class SqsService {
         final SendMessageRequest messageRequest = SendMessageRequest.builder()
                 .queueUrl(queueUrl)
                 .messageBody(message)
-                .messageAttributes(attributes)
+                .messageAttributes(messageAttributes)
                 .build();
 
         sqsClient.sendMessage(messageRequest);
