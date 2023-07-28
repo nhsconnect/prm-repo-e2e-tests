@@ -11,11 +11,11 @@ import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-//import uk.nhs.prm.e2etests.client.ThinlyWrappedSqsClient;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.nhs.prm.e2etests.service.SqsService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,7 +30,7 @@ class ChangeOfGPMessageReceivedTest {
     private NhsProperties nhsProperties;
     private PdsAdaptorProperties pdsAdaptorProperties;
 
-    private AutoRefreshingRoleAssumingSqsClient sqsClient;
+    private SqsService sqsService;
 
     @Autowired
     public ChangeOfGPMessageReceivedTest(
@@ -39,14 +39,14 @@ class ChangeOfGPMessageReceivedTest {
             QueueProperties queueProperties,
             NhsProperties nhsProperties,
             PdsAdaptorProperties pdsAdaptorProperties,
-            AutoRefreshingRoleAssumingSqsClient sqsClient
+            SqsService sqsService
     ) {
         this.patientValidator = testPatientValidator;
         this.gp2GpMessengerProperties = gp2GpMessengerProperties;
         this.queueProperties = queueProperties;
         this.nhsProperties = nhsProperties;
         this.pdsAdaptorProperties = pdsAdaptorProperties;
-        this.sqsClient = sqsClient;
+        this.sqsService = sqsService;
     }
 
     @BeforeEach
@@ -90,8 +90,8 @@ class ChangeOfGPMessageReceivedTest {
     }
 
     private PdsAdaptorResponse getPatientStatusOnPDSForSyntheticPatient(String testPatientNhsNumber) {
-        String pdsAdaptorUsernameXXX = "live-test"; // TODO PRMT-3488 'XXX'? could do with a rename
-        return fetchPdsPatientStatus(pdsAdaptorUsernameXXX, testPatientNhsNumber);
+        String pdsAdaptorUsername = "live-test";
+        return fetchPdsPatientStatus(pdsAdaptorUsername, testPatientNhsNumber);
     }
 
     private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {

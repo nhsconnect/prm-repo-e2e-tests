@@ -452,7 +452,7 @@ class RepositoryE2ETests {
     }
 
     @ParameterizedTest
-    @MethodSource("foundationSupplierSystemsWithoutEmisWhichIsCurrentlyHavingIssues")
+    @MethodSource("properWorkingFoundationSupplierSystems")
     void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromGppSystems(String sourceSystem) {
         final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
 
@@ -473,10 +473,11 @@ class RepositoryE2ETests {
     }
 
     // TODO: PRMT-3488 Rename; "CurrentlyHavingIssues" implies method name is temporary
-    private Stream<Arguments> foundationSupplierSystemsWithoutEmisWhichIsCurrentlyHavingIssues() {
+    private Stream<Arguments> properWorkingFoundationSupplierSystems() {
+        // Exclude EMIS here as our Ptl EMIS instance is not working properly
         return Stream.of(
             Arguments.of(
-                gp2GpMessengerProperties.getEmisPtlIntOdsCode()
+                gp2GpMessengerProperties.getTppPtlIntOdsCode()
             )
         );
     }

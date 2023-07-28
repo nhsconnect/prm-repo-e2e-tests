@@ -11,8 +11,8 @@ import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
-import uk.nhs.prm.e2etests.client.ThinlyWrappedSqsClient;
-import uk.nhs.prm.e2etests.queue.suspensions.SuspensionMessageObservabilityQueue;
+import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorSuspensionsOQ;
+import uk.nhs.prm.e2etests.service.SqsService;
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
@@ -44,13 +44,12 @@ public class InjectChangeOfGPMessageTest {
     ExampleAssumedRoleArn exampleAssumedRoleArn;
 
     @Autowired
-    AutoRefreshingRoleAssumingSqsClient sqsClient;
+    SqsService sqsService;
 
     @BeforeEach
     public void setUp() {
-        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new ThinlyWrappedSqsClient(sqsClient), queueProperties);
+        nemsEventProcessorSuspensionsOQ = new NemsEventProcessorSuspensionsOQ(sqsService, queueProperties);
     }
-
 
     @Test
     public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
