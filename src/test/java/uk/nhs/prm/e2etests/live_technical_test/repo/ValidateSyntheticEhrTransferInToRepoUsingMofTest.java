@@ -42,6 +42,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
             TestPatientValidator testPatientValidator,
             PdsAdaptorProperties pdsAdaptorProperties,
+            EhrRepositoryService ehrRepositoryService,
             NhsProperties nhsProperties,
             QueueProperties queueProperties,
             ActiveRoleArn activeRoleArn,
@@ -53,6 +54,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
                 PDS_ADAPTOR_TEST_USERNAME,
                 pdsAdaptorProperties.getLiveTestApiKey(),
                 pdsAdaptorProperties.getPdsAdaptorUrl());
+        this.ehrRepositoryService = ehrRepositoryService;
         repoOdsCode = nhsProperties.getRepoOdsCode();
         safeListedPatientList = nhsProperties.getSafeListedPatientList();
         syntheticPatientPrefix = nhsProperties.getSyntheticPatientPrefix();
