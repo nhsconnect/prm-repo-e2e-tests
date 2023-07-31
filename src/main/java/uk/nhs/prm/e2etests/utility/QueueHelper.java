@@ -7,7 +7,7 @@ import uk.nhs.prm.e2etests.model.SqsMessage;
 public final class QueueHelper {
     public static NemsResolutionMessage getNonSensitiveDataMessage(SqsMessage jsonBody) {
         return new Gson()
-                .fromJson(jsonBody.body(), NemsResolutionMessage.class);
+                .fromJson(jsonBody.getBody(), NemsResolutionMessage.class);
     }
 
     public static boolean checkIfMessageIsExpectedMessage(NemsResolutionMessage expectedMessage, NemsResolutionMessage actualMessage) {

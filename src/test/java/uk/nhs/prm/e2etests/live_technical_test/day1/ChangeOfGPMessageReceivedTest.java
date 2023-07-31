@@ -4,34 +4,33 @@ import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.property.QueueProperties;
-import uk.nhs.prm.e2etests.client.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
-import uk.nhs.prm.e2etests.client.Gp2GpMessengerClient;
-import uk.nhs.prm.e2etests.queue.suspensions.SuspensionMessageRealQueue;
+import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
+import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceSuspensionsQueue;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.client.ThinlyWrappedSqsClient;
-import uk.nhs.prm.e2etests.client.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.nhs.prm.e2etests.service.SqsService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChangeOfGPMessageReceivedTest {
-    private SuspensionMessageRealQueue suspensionMessageRealQueue;
+    private SuspensionServiceSuspensionsQueue suspensionServiceSuspensionsQueue;
     private TestPatientValidator patientValidator;
-    private Gp2GpMessengerClient gp2GpMessengerClient;
+    private Gp2GpMessengerService gp2GpMessengerService;
     private Gp2gpMessengerProperties gp2GpMessengerProperties;
     private QueueProperties queueProperties;
     private NhsProperties nhsProperties;
     private PdsAdaptorProperties pdsAdaptorProperties;
 
-    private AutoRefreshingRoleAssumingSqsClient sqsClient;
+    private SqsService sqsService;
 
     @Autowired
     public ChangeOfGPMessageReceivedTest(
@@ -40,20 +39,20 @@ class ChangeOfGPMessageReceivedTest {
             QueueProperties queueProperties,
             NhsProperties nhsProperties,
             PdsAdaptorProperties pdsAdaptorProperties,
-            AutoRefreshingRoleAssumingSqsClient sqsClient
+            SqsService sqsService
     ) {
         this.patientValidator = testPatientValidator;
         this.gp2GpMessengerProperties = gp2GpMessengerProperties;
         this.queueProperties = queueProperties;
         this.nhsProperties = nhsProperties;
         this.pdsAdaptorProperties = pdsAdaptorProperties;
-        this.sqsClient = sqsClient;
+        this.sqsService = sqsService;
     }
 
     @BeforeEach
     public void setUp() {
-        suspensionMessageRealQueue = new SuspensionMessageRealQueue(new ThinlyWrappedSqsClient(sqsClient), queueProperties);
-        gp2GpMessengerClient = new Gp2GpMessengerClient(gp2GpMessengerProperties.getLiveTestApiKey(), gp2GpMessengerProperties.getGp2gpMessengerUrl());
+        suspensionServiceSuspensionsQueue = new SuspensionServiceSuspensionsQueue(sqsService, queueProperties);
+        gp2GpMessengerService = new Gp2GpMessengerService(gp2GpMessengerProperties.getLiveTestApiKey(), gp2GpMessengerProperties.getGp2gpMessengerUrl());
     }
 
     @Test
@@ -73,14 +72,14 @@ class ChangeOfGPMessageReceivedTest {
                 System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
 
                 System.out.println("Checking patient status on HL7 PDs lookup - see gp2gp messenger logs for insights");
-                gp2GpMessengerClient.getPdsRecordViaHlv7(nhsNumber);
+                gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
 
                 System.out.println("Finding related message for nhs number");
 
-                var suspensionMessage = suspensionMessageRealQueue.getMessageContainingForTechnicalTestRun(nhsNumber);
+                var suspensionMessage = suspensionServiceSuspensionsQueue.getMessageContainingForTechnicalTestRun(nhsNumber);
 
                 System.out.println("got message related to test patient");
-                TestParameters.outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.nemsMessageId());
+                TestParameters.outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.getNemsMessageId());
             });
 
 
@@ -91,13 +90,13 @@ class ChangeOfGPMessageReceivedTest {
     }
 
     private PdsAdaptorResponse getPatientStatusOnPDSForSyntheticPatient(String testPatientNhsNumber) {
-        String pdsAdaptorUsernameXXX = "live-test"; // TODO PRMT-3488 'XXX'? could do with a rename
-        return fetchPdsPatientStatus(pdsAdaptorUsernameXXX, testPatientNhsNumber);
+        String pdsAdaptorUsername = "live-test";
+        return fetchPdsPatientStatus(pdsAdaptorUsername, testPatientNhsNumber);
     }
 
     private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
 
-        var pds = new PdsAdaptorClient(
+        var pds = new PdsAdaptorService(
                 pdsAdaptorUsername,
                 pdsAdaptorProperties.getLiveTestApiKey(),
                 pdsAdaptorProperties.getPdsAdaptorUrl()

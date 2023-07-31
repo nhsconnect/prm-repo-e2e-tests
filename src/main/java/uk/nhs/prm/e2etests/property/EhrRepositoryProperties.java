@@ -5,7 +5,7 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.e2etests.services.SsmService;
+import uk.nhs.prm.e2etests.service.SsmService;
 
 @Getter
 @Component

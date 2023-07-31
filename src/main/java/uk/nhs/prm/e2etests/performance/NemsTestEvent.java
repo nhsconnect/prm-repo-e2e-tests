@@ -94,7 +94,7 @@ public class NemsTestEvent implements Phased {
         else {
             firstTimeFinisher = true;
             isFinished = true;
-            finishedAt = successMessage.queuedAt();
+            finishedAt = successMessage.getQueuedAt();
             processingTimeMs = startedAt().until(finishedAt, ChronoUnit.MILLIS);
         }
         return firstTimeFinisher;

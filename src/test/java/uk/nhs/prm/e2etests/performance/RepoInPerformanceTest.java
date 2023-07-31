@@ -5,12 +5,12 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.configuration.TestData;
 import uk.nhs.prm.e2etests.property.QueueProperties;
-import uk.nhs.prm.e2etests.queue.ehr_transfer.RepoIncomingQueue;
-import uk.nhs.prm.e2etests.queue.ehr_transfer.TransferCompleteQueue;
+import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
+import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
@@ -18,7 +18,7 @@ import uk.nhs.prm.e2etests.tests.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsin
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.timing.Sleeper;
-import uk.nhs.prm.e2etests.services.TrackerDb;
+import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.utility.Resources;
 
 import java.time.LocalDateTime;
@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RepoInPerformanceTest {
     @Autowired
-    RepoIncomingQueue repoIncomingQueue;
+    EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
 
     @Autowired
     SimpleAmqpQueue inboundQueueFromMhs;
@@ -51,13 +51,13 @@ class RepoInPerformanceTest {
     TestConfiguration config;
 
     @Autowired
-    TrackerDb trackerDb;
+    TransferTrackerService transferTrackerService;
 
     @Autowired
-    TransferCompleteQueue transferCompleteQueue;
+    EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
 
     @Autowired
-    ExampleAssumedRoleArn exampleAssumedRoleArn;
+    ActiveRoleArn activeRoleArn;
 
     @Autowired
     QueueProperties queueProperties;
@@ -84,12 +84,12 @@ class RepoInPerformanceTest {
         var messagesProcessed = new ArrayList<RepoInPerfMessageWrapper>();
         var timeout = now().plusMinutes(timeoutInMinutes);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
-            for (SqsMessage sqsMessage : transferCompleteQueue.getNextMessages(timeout)) {
-                var conversationId = sqsMessage.attributes().get("conversationId").stringValue();
+            for (SqsMessage sqsMessage : ehrTransferServiceTransferCompleteOQ.getNextMessages(timeout)) {
+                var conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
                     if (message.getMessage().conversationId().equals(conversationId)) {
-                        message.finish(sqsMessage.queuedAt());
-                        transferCompleteQueue.deleteMessage(sqsMessage);
+                        message.finish(sqsMessage.getQueuedAt());
+                        ehrTransferServiceTransferCompleteOQ.deleteMessage(sqsMessage);
                         System.out.println("Found in transfer complete queue message with conversationId "
                                 + conversationId
                                 + " which took "
@@ -174,7 +174,7 @@ class RepoInPerformanceTest {
             messagesToBeProcessed.add(new RepoInPerfMessageWrapper(message));
         }
 
-        messagesToBeProcessed.forEach(message -> repoIncomingQueue.send(message.getMessage()));
+        messagesToBeProcessed.forEach(message -> ehrTransferServiceRepoIncomingQueue.send(message.getMessage()));
         return messagesToBeProcessed;
     }
 

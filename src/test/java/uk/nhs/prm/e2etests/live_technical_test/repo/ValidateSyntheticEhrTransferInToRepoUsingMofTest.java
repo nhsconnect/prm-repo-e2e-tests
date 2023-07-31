@@ -4,17 +4,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
-import uk.nhs.prm.e2etests.queue.ehr_transfer.RepoIncomingQueue;
+import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
-import uk.nhs.prm.e2etests.client.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.client.EhrRepoClient;
+import uk.nhs.prm.e2etests.service.EhrRepositoryService;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -29,36 +29,38 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
 
     private static final String PDS_ADAPTOR_TEST_USERNAME = "live-test";
     private TestPatientValidator patientValidator;
-    private PdsAdaptorClient pdsAdaptorClient;
-    private EhrRepoClient ehrRepoClient;
+    private PdsAdaptorService pdsAdaptorService;
+    private EhrRepositoryService ehrRepositoryService;
     private String repoOdsCode;
     private List<String> safeListedPatientList;
     private String syntheticPatientPrefix;
-    private RepoIncomingQueue repoIncomingQueue;
+    private EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
     private QueueProperties queueProperties;
-    private ExampleAssumedRoleArn exampleAssumedRoleArn;
+    private ActiveRoleArn activeRoleArn;
 
     @Autowired
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
             TestPatientValidator testPatientValidator,
             PdsAdaptorProperties pdsAdaptorProperties,
+            EhrRepositoryService ehrRepositoryService,
             NhsProperties nhsProperties,
             QueueProperties queueProperties,
-            ExampleAssumedRoleArn exampleAssumedRoleArn,
-            RepoIncomingQueue repoIncomingQueue
+            ActiveRoleArn activeRoleArn,
+            EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue
     ) {
         patientValidator = testPatientValidator;
 
-        pdsAdaptorClient = new PdsAdaptorClient(
+        pdsAdaptorService = new PdsAdaptorService(
                 PDS_ADAPTOR_TEST_USERNAME,
                 pdsAdaptorProperties.getLiveTestApiKey(),
                 pdsAdaptorProperties.getPdsAdaptorUrl());
+        this.ehrRepositoryService = ehrRepositoryService;
         repoOdsCode = nhsProperties.getRepoOdsCode();
         safeListedPatientList = nhsProperties.getSafeListedPatientList();
         syntheticPatientPrefix = nhsProperties.getSyntheticPatientPrefix();
         this.queueProperties = queueProperties;
-        this.exampleAssumedRoleArn = exampleAssumedRoleArn;
-        this.repoIncomingQueue = repoIncomingQueue;
+        this.activeRoleArn = activeRoleArn;
+        this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
     }
 
     @Test
@@ -75,12 +77,12 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
                 .withEhrDestination(repoOdsCode)
                 .build();
 
-        repoIncomingQueue.send(triggerMessage);
+        ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
 
         int timeout = 1;
         System.out.println("Checking ehr repo for " + timeout + " hours until health record is stored successfully");
         await().atMost(timeout, TimeUnit.HOURS).with().pollInterval(10, TimeUnit.SECONDS)
-                .until(() -> ehrRepoClient.isPatientHealthRecordStatusComplete(testPatientNhsNumber, triggerMessage.conversationId()),
+                .until(() -> ehrRepositoryService.isPatientHealthRecordStatusComplete(testPatientNhsNumber, triggerMessage.conversationId()),
                         equalTo(true));
 
     }
@@ -91,14 +93,14 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
         if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             System.out.println("Not sending update request because managing organisation already set to repo ods code");
         } else {
-            var updatedMofResponse = pdsAdaptorClient.updateManagingOrganisation(testPatientNhsNumber, repoOdsCode, pdsResponse.getRecordETag());
+            var updatedMofResponse = pdsAdaptorService.updateManagingOrganisation(testPatientNhsNumber, repoOdsCode, pdsResponse.getRecordETag());
             System.out.println("Confirming patient managing organisation is set to repo ods code");
             assertThat(updatedMofResponse.getManagingOrganisation()).isEqualTo(repoOdsCode);
         }
     }
 
     private PdsAdaptorResponse getPdsAdaptorResponse(String testPatientNhsNumber) {
-        var pdsResponse = pdsAdaptorClient.getSuspendedPatientStatus(testPatientNhsNumber);
+        var pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(testPatientNhsNumber);
         System.out.println("Confirming patient status is suspended");
         assertThat(pdsResponse.getIsSuspended()).isTrue();
         return pdsResponse;

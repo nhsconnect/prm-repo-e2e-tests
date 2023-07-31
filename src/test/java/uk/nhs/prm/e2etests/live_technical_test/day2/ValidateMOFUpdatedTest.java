@@ -1,13 +1,13 @@
 package uk.nhs.prm.e2etests.live_technical_test.day2;
 
-import uk.nhs.prm.e2etests.client.Gp2GpMessengerClient;
+import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.client.PdsAdaptorClient;
+import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ class ValidateMOFUpdatedTest {
     private final String pdsAdaptorApiKey;
     private final String pdsAdaptorUrl;
     private String pdsAdaptorUsername = "live-test";
-    private Gp2GpMessengerClient gp2GpMessengerClient;
+    private Gp2GpMessengerService gp2GpMessengerService;
 
     @Autowired
     public ValidateMOFUpdatedTest(
@@ -42,7 +42,7 @@ class ValidateMOFUpdatedTest {
 
     @BeforeEach
     void setUp() {
-        gp2GpMessengerClient = new Gp2GpMessengerClient(gp2GpMessengerApiKey, gp2GpMessengerUrl);
+        gp2GpMessengerService = new Gp2GpMessengerService(gp2GpMessengerApiKey, gp2GpMessengerUrl);
     }
 
     @Test
@@ -55,14 +55,14 @@ class ValidateMOFUpdatedTest {
                 System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
 
                 System.out.println("Checking patient status with hl7 pds request - see logs for more details");
-                gp2GpMessengerClient.getPdsRecordViaHlv7(nhsNumber);
+                gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
             });
         }
     }
 
     // TODO: PRMT-3523 @TestPropertySource(properties = {"PDS_ADAPTOR_TEST_USERNAME = live-test", apiKey = something}) could be useful.
     private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
-        PdsAdaptorClient pds = new PdsAdaptorClient(pdsAdaptorUsername, pdsAdaptorApiKey, pdsAdaptorUrl);
+        PdsAdaptorService pds = new PdsAdaptorService(pdsAdaptorUsername, pdsAdaptorApiKey, pdsAdaptorUrl);
         return pds.getSuspendedPatientStatus(testPatientNhsNumber);
     }
 }
