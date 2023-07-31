@@ -3,7 +3,7 @@ package uk.nhs.prm.e2etests.service;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import uk.nhs.prm.e2etests.repository.TransferTrackerDatabaseRepository;
-import uk.nhs.prm.e2etests.model.TransferTrackerDbMessage;
+import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
 
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +50,7 @@ public class TransferTrackerService {
                 .until(() -> transferTrackerDatabaseRepository.queryWithConversationId(conversationId).item().get("state").s(), containsString(partialStatus));
     }
 
-    public void save(TransferTrackerDbMessage message) {
+    public void save(TransferTrackerDynamoDbEntry message) {
         transferTrackerDatabaseRepository.save(message);
     }
 }

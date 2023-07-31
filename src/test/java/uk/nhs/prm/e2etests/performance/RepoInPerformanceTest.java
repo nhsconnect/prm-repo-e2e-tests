@@ -17,9 +17,8 @@ import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator
 import uk.nhs.prm.e2etests.tests.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import uk.nhs.prm.e2etests.timing.Sleeper;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
-import uk.nhs.prm.e2etests.utility.Resources;
+import uk.nhs.prm.e2etests.utility.ResourceUtility;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,6 +32,7 @@ import static java.lang.System.getenv;
 import static java.time.LocalDateTime.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
@@ -43,9 +43,6 @@ class RepoInPerformanceTest {
 
     @Autowired
     SimpleAmqpQueue inboundQueueFromMhs;
-
-    @Autowired
-    Sleeper sleeper;
 
     @Autowired
     TestConfiguration config;
@@ -117,7 +114,7 @@ class RepoInPerformanceTest {
         var intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
 //            var inboundQueueFromMhs = new SimpleAmqpQueue(queueProperties, config);
-            var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
+            var messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
             var counter = new AtomicInteger(0);
             String smallEhr;
 
@@ -132,7 +129,7 @@ class RepoInPerformanceTest {
                 System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
 
-                sleeper.sleep(intervalBetweenMessagesSentToMq);
+                sleepFor(intervalBetweenMessagesSentToMq);
             }
 
             System.out.println("All messages sent, about to close mhs producer...");
@@ -159,7 +156,7 @@ class RepoInPerformanceTest {
         inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
 
 
-        sleeper.sleep(100);
+        sleepFor(100);
         message.finish(LocalDateTime.now());
     }
 

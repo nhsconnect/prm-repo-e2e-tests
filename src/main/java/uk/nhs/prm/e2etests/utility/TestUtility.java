@@ -9,7 +9,7 @@ import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.e2etests.model.LargeEhrTestFiles;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
-import uk.nhs.prm.e2etests.model.TransferTrackerDbMessage;
+import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -17,9 +17,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import static uk.nhs.prm.e2etests.utility.ResourceUtility.Directory.EHR_DIRECTORY;
+import static uk.nhs.prm.e2etests.utility.ResourceUtility.readTestResourceFile;
 
-public final class TestUtils {
-    private static final Logger LOGGER = LogManager.getLogger(TestUtils.class);
+
+public final class TestUtility {
+    private static final Logger LOGGER = LogManager.getLogger(TestUtility.class);
     private static final Pattern UUID_REGEX_PATTERN =
             Pattern.compile("^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$");
 
@@ -28,7 +31,7 @@ public final class TestUtils {
     }
 
     public static String getSmallEhrWithoutLinebreaks(String newConversationId, String newMessageId) {
-        return Resources.readTestResourceFileFromEhrDirectory("small-ehr-without-linebreaks")
+        return readTestResourceFile(EHR_DIRECTORY, "small-ehr-without-linebreaks")
                 .replaceAll("1632CD65-FD8F-4914-B62A-9763B50FC04A", newConversationId.toUpperCase())
                 .replaceAll("0206C270-E9A0-11ED-808B-AC162D1F16F0", newMessageId);
     }
@@ -37,9 +40,9 @@ public final class TestUtils {
             String newNhsNumber,
             String odsCodeOfRequestSender,
             String asidCodeOfRequestSender,
-            String newConversationId)
-    {
-        return Resources.readTestResourceFileFromEhrDirectory("ehr-request")
+            String newConversationId
+    ) {
+        return readTestResourceFile(EHR_DIRECTORY,"ehr-request")
                 .replaceAll("9692842304", newNhsNumber)
                 .replaceAll("A91720", odsCodeOfRequestSender)
                 .replaceAll("200000000631", asidCodeOfRequestSender)
@@ -73,7 +76,7 @@ public final class TestUtils {
     public static void addRecordToTrackerDb(TransferTrackerService transferTrackerService, String inboundConversationId, String largeEhrCoreMessageId, String nhsNumberForTestPatient, String previousGpForTestPatient, String state) {
         String timeNow = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
-        transferTrackerService.save(new TransferTrackerDbMessage(
+        transferTrackerService.save(new TransferTrackerDynamoDbEntry(
                 inboundConversationId,
                 largeEhrCoreMessageId,
                 NhsIdentityGenerator.randomNemsMessageId(),
@@ -107,7 +110,7 @@ public final class TestUtils {
     public static Diff comparePayloads(String message1, String message2) {
         return DiffBuilder.compare(message1).withTest(message2)
                 .withNodeMatcher(new DefaultNodeMatcher(ElementSelectors.byName))
-                .withNodeFilter(TestUtils::excludeComparisons)
+                .withNodeFilter(TestUtility::excludeComparisons)
                 .withDifferenceEvaluator(DifferenceEvaluators.chain(DifferenceEvaluators.Default,
                         DifferenceEvaluators.downgradeDifferencesToEqual(ComparisonType.XML_STANDALONE)))
                 .checkForSimilar().build();
@@ -128,30 +131,30 @@ public final class TestUtils {
         fragment1MessageId = fragment1MessageId.toUpperCase();
         fragment2MessageId = fragment2MessageId.toUpperCase();
 
-        String largeEhrCore = Resources.readTestResourceFileFromEhrDirectory("large-ehr-core")
+        String largeEhrCore = ResourceUtility.readTestResourceFileFromEhrDirectory("large-ehr-core")
                 .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId)
                 .replaceAll("B8DC074D-C039-4FD2-8BBB-D4BFBBBF9AFA", largeEhrCoreMessageId)
                 .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId);
 
-        String largeEhrFragment1 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-1")
+        String largeEhrFragment1 = ResourceUtility.readTestResourceFileFromEhrDirectory("large-ehr-fragment-1")
                 .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId)
                 .replaceAll("3DBFC9EB-32FA-444F-B996-AB680D64148E", fragment1MessageId)
                 .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId)
                 .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
                 .replaceAll("<From>N82668</From>", "<From>B85002</From>");
 
-        String largeEhrFragment2 = Resources.readTestResourceFileFromEhrDirectory("large-ehr-fragment-2")
+        String largeEhrFragment2 = ResourceUtility.readTestResourceFileFromEhrDirectory("large-ehr-fragment-2")
                 .replaceAll("71118F7D-59CE-4552-B7AE-45A6801F4334", inboundConversationId.toUpperCase())
                 .replaceAll("03CBFB18-0F7E-4BB6-B9EF-46AF564D3B9C", fragment2MessageId)
                 .replaceAll("<Recipient>B85002</Recipient>", "<Recipient>" + newGpForTestPatient + "</Recipient>")
                 .replaceAll("<From>N82668</From>", "<From>B85002</From>");
 
-        String ehrRequest = Resources.readTestResourceFileFromEhrDirectory("ehr-request")
+        String ehrRequest = ResourceUtility.readTestResourceFileFromEhrDirectory("ehr-request")
                 .replaceAll("9692842304", nhsNumberForTestPatient)
                 .replaceAll("A91720", newGpForTestPatient)
                 .replaceAll("17a757f2-f4d2-444e-a246-9cb77bef7f22", outboundConversationId);
 
-        String continueRequest = Resources.readTestResourceFileFromEhrDirectory("continue-request")
+        String continueRequest = ResourceUtility.readTestResourceFileFromEhrDirectory("continue-request")
                 .replaceAll("DBC31D30-F984-11ED-A4C4-956AA80C6B4E", outboundConversationId);
 
         return new LargeEhrTestFiles(largeEhrCore, largeEhrFragment1, largeEhrFragment2, ehrRequest, continueRequest);

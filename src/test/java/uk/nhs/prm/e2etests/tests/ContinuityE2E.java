@@ -114,7 +114,7 @@ class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         var now = now();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
@@ -145,7 +145,7 @@ class ContinuityE2E {
     @Order(2)
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
         String nemsMessageId = randomNemsMessageId();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
         var now = now();
         String currentlyRegisteredPatientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
 
@@ -189,7 +189,7 @@ class ContinuityE2E {
     @Disabled(" 'process_only_synthetic_or_safe_listed_patients' toggle is set to false across all the environments. ")
     public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
         String nemsMessageId = randomNemsMessageId();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
 
         var suspensionTime = now();
         var nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml",
@@ -209,7 +209,7 @@ class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = syntheticPatientProperties.getDeceasedPatient();
         var eventTime = now();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
 
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
@@ -230,7 +230,7 @@ class ContinuityE2E {
         String patientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
         var reregistrationTime = now();
         storeEhrInRepositoryFor(patientNhsNumber);
-        activeSuspensionsService.save(new ActiveSuspensionsMessage(patientNhsNumber,generateRandomOdsCode(), now()));
+        activeSuspensionsService.save(new ActiveSuspensionsMessage(patientNhsNumber, randomOdsCode(), now()));
 
         var reRegistration = createNemsEventFromTemplate(
                 "change-of-gp-re-registration.xml", patientNhsNumber, nemsMessageId, reregistrationTime);
@@ -260,7 +260,7 @@ class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         var now = now();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);

@@ -16,7 +16,7 @@ public class NemsEventFactory {
     }
 
     public static NemsEventMessage createNemsEventFromTemplate(String nemsEventFilename, String nhsNumber, String nemsMessageId, String previousGP, String timestamp) {
-        return new NemsEventMessage(nemsMessageId, Resources.readTestResourceFileFromNemsEventTemplatesDirectory(nemsEventFilename)
+        return new NemsEventMessage(nemsMessageId, ResourceUtility.readTestResourceFileFromNemsEventTemplatesDirectory(nemsEventFilename)
                 .replaceAll("__NHS_NUMBER__", nhsNumber)
                 .replaceAll("__NEMS_MESSAGE_ID__", nemsMessageId)
                 .replaceAll("__PREVIOUS_GP_ODS_CODE__", previousGP)
