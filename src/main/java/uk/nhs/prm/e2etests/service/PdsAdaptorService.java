@@ -2,10 +2,12 @@ package uk.nhs.prm.e2etests.service;
 
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.e2etests.annotation.Debt;
 import uk.nhs.prm.e2etests.model.request.PdsAdaptorRequest;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 
-// TODO PRMT-3523 -> THIS SHOULD BE A SERVICE
+@Debt(comment = "This needs to be annotated as a service and autowired in. There's a nested structure involving heavy" +
+        "use of the 'new' keyword that we should aim to remove.", ticket = "PRMT-3532")
 public class PdsAdaptorService {
 
     private final String apiKey;
