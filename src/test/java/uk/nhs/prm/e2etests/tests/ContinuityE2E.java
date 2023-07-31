@@ -54,13 +54,13 @@ import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTe
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ContinuityE2E {
     @Autowired
-    private MeshForwarderOQ meshForwarderQueue;
+    private MeshForwarderOQ meshForwarderOQ;
     @Autowired
     private NemsEventProcessorUnhandledEventsQueue nemsEventProcessorUnhandledEventsQueue;
     @Autowired
-    private NemsEventProcessorSuspensionsOQ suspensionsMessageQueue;
+    private NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
     @Autowired
-    private SuspensionServiceNotSuspendedOQ notReallySuspensionsMessageQueue;
+    private SuspensionServiceNotSuspendedOQ suspensionServiceNotSuspendedOQ;
     @Autowired
     private SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
     @Autowired
@@ -93,11 +93,11 @@ class ContinuityE2E {
 
     @BeforeAll
     void init() {
-        meshForwarderQueue.deleteAllMessages();
+        meshForwarderOQ.deleteAllMessages();
         nemsEventProcessorDeadLetterQueue.deleteAllMessages();
-        suspensionsMessageQueue.deleteAllMessages();
+        nemsEventProcessorSuspensionsOQ.deleteAllMessages();
         nemsEventProcessorUnhandledEventsQueue.deleteAllMessages();
-        notReallySuspensionsMessageQueue.deleteAllMessages();
+        suspensionServiceNotSuspendedOQ.deleteAllMessages();
         nemsEventProcessorReRegistrationsOQ.deleteAllMessages();
         suspensionsServiceRepoIncomingOQ.deleteAllMessages();
         pdsAdaptorService = new PdsAdaptorService(
@@ -121,7 +121,7 @@ class ContinuityE2E {
         meshMailbox.postMessage(nemsSuspension);
         MofUpdatedMessageNems expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
-        assertThat(meshForwarderQueue.hasMessage(nemsSuspension.getMessage())); // TODO PRMT-3574 an 'assertThat' without a matching 'isTrue'? I think these instances need a change
+        assertThat(meshForwarderOQ.hasMessage(nemsSuspension.getMessage())); // TODO PRMT-3574 an 'assertThat' without a matching 'isTrue'? I think these instances need a change
         assertThat(suspensionServiceMofUpdatedQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
@@ -154,7 +154,7 @@ class ContinuityE2E {
         NoLongerSuspendedMessageNems expectedMessageOnQueue = new NoLongerSuspendedMessageNems(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
         meshMailbox.postMessage(nemsSuspension);
-        assertThat(notReallySuspensionsMessageQueue.hasResolutionMessage(expectedMessageOnQueue));
+        assertThat(suspensionServiceNotSuspendedOQ.hasResolutionMessage(expectedMessageOnQueue));
 
     }
 
@@ -250,7 +250,7 @@ class ContinuityE2E {
         });
 
 
-        assertThat(meshForwarderQueue.hasMessage(reRegistration.getMessage()));
+        assertThat(meshForwarderOQ.hasMessage(reRegistration.getMessage()));
         assertThat(nemsEventProcessorReRegistrationsOQ.hasMessage(expectedMessageOnQueue));
     }
 
