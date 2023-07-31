@@ -54,7 +54,7 @@ class RepoInPerformanceTest {
     TransferTrackerService transferTrackerService;
 
     @Autowired
-    EhrTransferServiceTransferCompleteOQ transferCompleteQueue;
+    EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
 
     @Autowired
     ActiveRoleArn activeRoleArn;
@@ -84,12 +84,12 @@ class RepoInPerformanceTest {
         var messagesProcessed = new ArrayList<RepoInPerfMessageWrapper>();
         var timeout = now().plusMinutes(timeoutInMinutes);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
-            for (SqsMessage sqsMessage : transferCompleteQueue.getNextMessages(timeout)) {
+            for (SqsMessage sqsMessage : ehrTransferServiceTransferCompleteOQ.getNextMessages(timeout)) {
                 var conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
                     if (message.getMessage().conversationId().equals(conversationId)) {
                         message.finish(sqsMessage.getQueuedAt());
-                        transferCompleteQueue.deleteMessage(sqsMessage);
+                        ehrTransferServiceTransferCompleteOQ.deleteMessage(sqsMessage);
                         System.out.println("Found in transfer complete queue message with conversationId "
                                 + conversationId
                                 + " which took "
