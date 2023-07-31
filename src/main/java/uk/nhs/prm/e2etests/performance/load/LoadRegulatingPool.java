@@ -1,8 +1,6 @@
 package uk.nhs.prm.e2etests.performance.load;
 
 import uk.nhs.prm.e2etests.performance.reporting.Reportable;
-import uk.nhs.prm.e2etests.timing.Sleeper;
-import uk.nhs.prm.e2etests.timing.Timer;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -12,19 +10,11 @@ public class LoadRegulatingPool<T extends Phased> implements FinitePool<T>, Repo
     private final Pool<T> sourcePool;
     private List<LoadPhase> phases;
     private int phaseIndex;
-    private Timer timer;
-    private Sleeper sleeper;
     private Long lastItemTimeMillis = null;
 
     public LoadRegulatingPool(Pool<T> sourcePool, List<LoadPhase> phases) {
-        this(sourcePool, phases, new Timer(), new Sleeper());
-    }
-
-    public LoadRegulatingPool(Pool<T> sourcePool, List<LoadPhase> phases, Timer timer, Sleeper sleeper) {
         this.sourcePool = sourcePool;
         this.phases = phases;
-        this.timer = timer;
-        this.sleeper = sleeper;
         this.count = 0;
         this.phaseIndex = 0;
     }
@@ -32,7 +22,7 @@ public class LoadRegulatingPool<T extends Phased> implements FinitePool<T>, Repo
     @Override
     public T next() {
         LoadPhase loadPhase = currentPhase();
-        lastItemTimeMillis = loadPhase.applyDelay(timer, sleeper, lastItemTimeMillis);
+        lastItemTimeMillis = loadPhase.applyDelay(lastItemTimeMillis);
         count++;
         loadPhase.incrementPhaseCount();
 

@@ -1,25 +1,26 @@
 package uk.nhs.prm.e2etests.utility;
 
+import lombok.extern.log4j.Log4j2;
 import uk.nhs.prm.e2etests.annotation.Debt;
 
 import java.util.Random;
 import java.util.UUID;
 
-// TODO PRMT-3574 make this a proper utility class
-public class NhsIdentityGenerator {
+@Log4j2
+public final class NhsIdentityGenerator {
+    private NhsIdentityGenerator() { }
 
-    public static String generateRandomOdsCode() {
+    public static String randomOdsCode() {
         int leftLimit = 48; // numeral '0'
         int rightLimit = 122; // letter 'z'
         int targetStringLength = 5;
         Random random = new Random();
 
-        String generatedString = random.ints(leftLimit, rightLimit + 1)
-                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+        return random.ints(leftLimit, rightLimit + 1)
+                .filter(integer -> (integer <= 57 || integer >= 65) && (integer <= 90 || integer >= 97))
                 .limit(targetStringLength)
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
-        return generatedString;
     }
 
     @Debt(comment = "Misleading. The class states 'NhsIdentityGenerator' but this is a number picked at random.")
@@ -32,10 +33,6 @@ public class NhsIdentityGenerator {
     }
 
     public static String randomNemsMessageId(boolean shouldLog) {
-        String nemsMessageId = UUID.randomUUID().toString();
-        if (shouldLog) {
-            System.out.println("Generated Nems Message ID " + nemsMessageId);
-        }
-        return nemsMessageId;
+        return UUID.randomUUID().toString();
     }
 }

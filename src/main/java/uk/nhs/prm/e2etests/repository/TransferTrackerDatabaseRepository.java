@@ -9,7 +9,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
-import uk.nhs.prm.e2etests.model.TransferTrackerDbMessage;
+import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
 import uk.nhs.prm.e2etests.property.DatabaseProperties;
 
 import java.util.HashMap;
@@ -49,18 +49,18 @@ public class TransferTrackerDatabaseRepository {
         }
     }
 
-    public void save(TransferTrackerDbMessage transferTrackerDbMessage) {
+    public void save(TransferTrackerDynamoDbEntry transferTrackerDynamoDbEntry) {
         Map<String, AttributeValue> item = new HashMap<>();
 
-        item.put("conversation_id", AttributeValue.builder().s(transferTrackerDbMessage.getConversationId()).build());
-        item.put("large_ehr_core_message_id", AttributeValue.builder().s(transferTrackerDbMessage.getLargeEhrCoreMessageId()).build());
-        item.put("nems_message_id", AttributeValue.builder().s(transferTrackerDbMessage.getNemsMessageId()).build());
-        item.put("nhs_number", AttributeValue.builder().s(transferTrackerDbMessage.getNhsNumber()).build());
-        item.put("source_gp", AttributeValue.builder().s(transferTrackerDbMessage.getSourceGp()).build());
-        item.put("state", AttributeValue.builder().s(transferTrackerDbMessage.getState()).build());
-        item.put("nems_event_last_updated", AttributeValue.builder().s(transferTrackerDbMessage.getNemsEventLastUpdated()).build());
-        item.put("created_at", AttributeValue.builder().s(transferTrackerDbMessage.getCreatedAt()).build());
-        item.put("last_updated_at", AttributeValue.builder().s(transferTrackerDbMessage.getLastUpdatedAt()).build());
+        item.put("conversation_id", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getConversationId()).build());
+        item.put("large_ehr_core_message_id", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getLargeEhrCoreMessageId()).build());
+        item.put("nems_message_id", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getNemsMessageId()).build());
+        item.put("nhs_number", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getNhsNumber()).build());
+        item.put("source_gp", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getSourceGp()).build());
+        item.put("state", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getState()).build());
+        item.put("nems_event_last_updated", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getNemsEventLastUpdated()).build());
+        item.put("created_at", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getCreatedAt()).build());
+        item.put("last_updated_at", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getLastUpdatedAt()).build());
 
 
         DynamoDbClient.builder().build().putItem(PutItemRequest.builder()

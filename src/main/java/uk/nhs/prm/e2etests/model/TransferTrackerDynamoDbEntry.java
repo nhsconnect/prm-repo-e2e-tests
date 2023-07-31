@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder(toBuilder = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TransferTrackerDbMessage {
-
+// TODO PRMT-3744 refine this class so it's a proper entity, right now it's used in one place and can be made more concise
+public class TransferTrackerDynamoDbEntry {
     private String conversationId;
     private String largeEhrCoreMessageId;
     private String nemsMessageId;
@@ -22,15 +22,15 @@ public class TransferTrackerDbMessage {
     private String createdAt;
     private String lastUpdatedAt;
 
-    public TransferTrackerDbMessage(String conversationId,
-                                    String largeEhrCoreMessageId,
-                                    String nemsMessageId,
-                                    String nhsNumber,
-                                    String sourceGp,
-                                    String state,
-                                    String nemsEventLastUpdated,
-                                    String createdAt,
-                                    String lastUpdatedAt){
+    public TransferTrackerDynamoDbEntry(String conversationId,
+                                        String largeEhrCoreMessageId,
+                                        String nemsMessageId,
+                                        String nhsNumber,
+                                        String sourceGp,
+                                        String state,
+                                        String nemsEventLastUpdated,
+                                        String createdAt,
+                                        String lastUpdatedAt){
         this.conversationId = conversationId;
         this.largeEhrCoreMessageId = largeEhrCoreMessageId;
         this.nemsMessageId = nemsMessageId;

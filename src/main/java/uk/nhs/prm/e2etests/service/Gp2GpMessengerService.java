@@ -3,9 +3,11 @@ package uk.nhs.prm.e2etests.service;
 import org.springframework.http.*;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.e2etests.annotation.Debt;
 import uk.nhs.prm.e2etests.model.request.HealthRecordRequest;
 
-// TODO PRMT-3523 WHY ISN'T THIS A COMPONENT?
+@Debt(comment = "This needs to be annotated as a service and autowired in. There's a nested structure involving heavy" +
+        "use of the 'new' keyword that we should aim to remove.", ticket = "PRMT-3532")
 public class Gp2GpMessengerService {
 
     private final String apiKey;

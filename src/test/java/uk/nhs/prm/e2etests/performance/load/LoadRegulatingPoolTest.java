@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.prm.e2etests.performance.RoundRobinPool;
-import uk.nhs.prm.e2etests.timing.Sleeper;
+import uk.nhs.prm.e2etests.utility.ThreadUtility;
 import uk.nhs.prm.e2etests.timing.Timer;
 
 import java.util.List;
@@ -23,7 +23,7 @@ class LoadRegulatingPoolTest {
     private List<Integer> integers = of(1, 2, 3, 4, 5);
 
     @Mock
-    private Sleeper sleeper;
+    private ThreadUtility sleeper;
 
     @Mock
     private Timer timer;
@@ -35,7 +35,7 @@ class LoadRegulatingPoolTest {
         var item = pool.next();
 
         assertThat(item).isEqualTo(new PhasedInteger(1));
-        verify(sleeper, never()).sleep(anyInt());
+        verify(sleeper, never()).sleepFor(anyInt());
     }
 
     @Test
@@ -53,7 +53,7 @@ class LoadRegulatingPoolTest {
 
         assertThat(pool.next()).isEqualTo(new PhasedInteger(2));
 
-        verify(sleeper, times(1)).sleep(600);
+        verify(sleeper, times(1)).sleepFor(600);
     }
 
     @Test
@@ -64,22 +64,22 @@ class LoadRegulatingPoolTest {
 
         when(timer.milliseconds()).thenReturn(0L);
         pool.next();
-        verify(sleeper, never()).sleep(anyInt());
+        verify(sleeper, never()).sleepFor(anyInt());
 
         when(timer.milliseconds()).thenReturn(800L);
-        when(sleeper.sleep(anyInt())).thenReturn(1000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(1000L);
         pool.next();
-        verify(sleeper, times(1)).sleep(200);
+        verify(sleeper, times(1)).sleepFor(200);
 
         when(timer.milliseconds()).thenReturn(1700L);
-        when(sleeper.sleep(anyInt())).thenReturn(2000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(2000L);
         pool.next();
-        verify(sleeper, times(1)).sleep(300);
+        verify(sleeper, times(1)).sleepFor(300);
 
         when(timer.milliseconds()).thenReturn(2600L);
-        when(sleeper.sleep(anyInt())).thenReturn(3000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(3000L);
         pool.next();
-        verify(sleeper, times(1)).sleep(400);
+        verify(sleeper, times(1)).sleepFor(400);
     }
 
     @Test
@@ -109,15 +109,15 @@ class LoadRegulatingPoolTest {
         when(timer.milliseconds()).thenReturn(startTimeMillis);
         pool.next();
 
-        verify(sleeper, never()).sleep(anyInt());
+        verify(sleeper, never()).sleepFor(anyInt());
 
         long elapsedMillisDuringFirstItemLoad = 20L;
         when(timer.milliseconds()).thenReturn(startTimeMillis + elapsedMillisDuringFirstItemLoad);
-        when(sleeper.sleep(anyInt())).thenReturn(startTimeMillis + elapsedMillisDuringFirstItemLoad + 80);
+        when(sleeper.sleepFor(anyInt())).thenReturn(startTimeMillis + elapsedMillisDuringFirstItemLoad + 80);
 
         pool.next();
 
-        verify(sleeper, times(1)).sleep(80);
+        verify(sleeper, times(1)).sleepFor(80);
     }
 
     @Test
@@ -130,14 +130,14 @@ class LoadRegulatingPoolTest {
         when(timer.milliseconds()).thenReturn(startTimeMillis);
         pool.next();
 
-        verify(sleeper, never()).sleep(anyInt());
+        verify(sleeper, never()).sleepFor(anyInt());
 
         long elapsedMillisDuringFirstItemLoad = 100L;
         when(timer.milliseconds()).thenReturn(startTimeMillis + elapsedMillisDuringFirstItemLoad);
 
         pool.next();
 
-        verify(sleeper, never()).sleep(anyInt());
+        verify(sleeper, never()).sleepFor(anyInt());
     }
 
     @Test
@@ -149,13 +149,13 @@ class LoadRegulatingPoolTest {
         when(timer.milliseconds()).thenReturn(0l);
         pool.next();
 
-        verify(sleeper, never()).sleep(anyInt());
+        verify(sleeper, never()).sleepFor(anyInt());
 
         when(timer.milliseconds()).thenReturn(0L);
-        when(sleeper.sleep(anyInt())).thenReturn(100 * 1000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(100 * 1000L);
         pool.next();
 
-        verify(sleeper, times(1)).sleep(100 * 1000);
+        verify(sleeper, times(1)).sleepFor(100 * 1000);
     }
 
     @Test
@@ -191,26 +191,26 @@ class LoadRegulatingPoolTest {
 
         when(timer.milliseconds()).thenReturn(0L);
         pool.next();
-        verify(sleeper, never()).sleep(1000);
+        verify(sleeper, never()).sleepFor(1000);
 
-        when(sleeper.sleep(anyInt())).thenReturn(1000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(1000L);
         pool.next();
-        verify(sleeper, times(1)).sleep(1000);
+        verify(sleeper, times(1)).sleepFor(1000);
 
         when(timer.milliseconds()).thenReturn(1000L);
-        when(sleeper.sleep(anyInt())).thenReturn(1200L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(1200L);
         pool.next();
-        verify(sleeper, times(1)).sleep(200); // first 200ms delay
+        verify(sleeper, times(1)).sleepFor(200); // first 200ms delay
 
         when(timer.milliseconds()).thenReturn(1300L);
-        when(sleeper.sleep(anyInt())).thenReturn(1400L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(1400L);
         pool.next();
-        verify(sleeper, times(1)).sleep(100); // second 200ms delay
+        verify(sleeper, times(1)).sleepFor(100); // second 200ms delay
     }
 
-    private LoadRegulatingPool createPool(List<Integer> items, Timer timer, Sleeper sleeper, List<LoadPhase> phases) {
+    private LoadRegulatingPool createPool(List<Integer> items, Timer timer, ThreadUtility sleeper, List<LoadPhase> phases) {
         List<PhasedInteger> phasedItems = items.stream().map(integer -> new PhasedInteger(integer)).collect(toList());
-        return new LoadRegulatingPool(new RoundRobinPool(phasedItems), phases, timer, sleeper);
+        return new LoadRegulatingPool(new RoundRobinPool(phasedItems), phases);
     }
 
     @EqualsAndHashCode

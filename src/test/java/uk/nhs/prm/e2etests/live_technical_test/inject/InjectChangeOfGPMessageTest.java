@@ -16,7 +16,7 @@ import uk.nhs.prm.e2etests.service.SqsService;
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.generateRandomOdsCode;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomOdsCode;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomNemsMessageId;
 import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
 
@@ -55,7 +55,7 @@ public class InjectChangeOfGPMessageTest {
     public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
         String nemsMessageId = randomNemsMessageId();
         String nhsNumber = syntheticPatientProperties.getSyntheticPatientInPreProd();
-        String previousGP = generateRandomOdsCode();
+        String previousGP = randomOdsCode();
 
         nemsEventProcessorSuspensionsOQ.deleteAllMessages();
 

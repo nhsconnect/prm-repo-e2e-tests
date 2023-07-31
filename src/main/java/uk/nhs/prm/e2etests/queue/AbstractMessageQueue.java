@@ -140,9 +140,8 @@ public abstract class AbstractMessageQueue {
     private boolean hasResolutionMessageNow(NemsResolutionMessage messageToCheck) {
         final List<SqsMessage> allMessages = sqsService.readMessagesFrom(this.queueUri);
         return allMessages.stream()
-                .map(QueueHelper::getNonSensitiveDataMessage)
-                .anyMatch(resolutionMessage ->
-                    QueueHelper.checkIfMessageIsExpectedMessage(resolutionMessage, messageToCheck));
+                .map(QueueHelper::mapToNemsResolutionMessage)
+                .anyMatch(nemsResolutionMessage -> nemsResolutionMessage.equals(messageToCheck));
     }
 
     protected void postAMessageWithAttributes(String message, Map<String, String> attributes) {

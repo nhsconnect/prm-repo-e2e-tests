@@ -31,8 +31,8 @@ import uk.nhs.prm.e2etests.queue.ehrtransfer.*;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.model.LargeEhrTestFiles;
-import uk.nhs.prm.e2etests.utility.Resources;
-import uk.nhs.prm.e2etests.utility.TestUtils;
+import uk.nhs.prm.e2etests.utility.ResourceUtility;
+import uk.nhs.prm.e2etests.utility.TestUtility;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -46,7 +46,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
-import static uk.nhs.prm.e2etests.utility.TestUtils.*;
+import static uk.nhs.prm.e2etests.utility.TestUtility.*;
 
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
@@ -132,7 +132,7 @@ class RepositoryE2ETests {
     @Test
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev")
     void shouldIdentifyEhrRequestAsEhrOutMessage() {
-        var ehrRequest = Resources.readTestResourceFileFromEhrDirectory("ehr-request");
+        var ehrRequest = ResourceUtility.readTestResourceFileFromEhrDirectory("ehr-request");
 
         String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
         inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
@@ -198,7 +198,7 @@ class RepositoryE2ETests {
         String previousGpForTestPatient = "N82668";
         String newGpForTestPatient = "M85019";
 
-        LargeEhrTestFiles largeEhrTestFiles = TestUtils.prepareTestFilesForLargeEhr(
+        LargeEhrTestFiles largeEhrTestFiles = TestUtility.prepareTestFilesForLargeEhr(
                 inboundConversationId,
                 outboundConversationId,
                 largeEhrCoreMessageId,

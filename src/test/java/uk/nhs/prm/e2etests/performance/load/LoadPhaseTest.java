@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.prm.e2etests.timing.Sleeper;
+import uk.nhs.prm.e2etests.utility.ThreadUtility;
 import uk.nhs.prm.e2etests.timing.Timer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
 class LoadPhaseTest {
 
     @Mock
-    private Sleeper sleeper;
+    private ThreadUtility sleeper;
 
     @Mock
     private Timer timer;
@@ -24,9 +24,9 @@ class LoadPhaseTest {
     public void applyDelayShouldNotDelayIfThereIsNoPreviousTimeThatDelayApplied_WhichCouldBeMovingToNextPhaseWhichIsWhyTheLastTimeStateIsExternalised() {
         var loadPhase = LoadPhase.atFlatRate(5, "1");
 
-        loadPhase.applyDelay(timer, sleeper, null);
+        loadPhase.applyDelay(null);
 
-        verify(sleeper, never()).sleep(anyInt());
+        verify(sleeper, never()).sleepFor(anyInt());
     }
 
     @Test
@@ -35,7 +35,7 @@ class LoadPhaseTest {
 
         when(timer.milliseconds()).thenReturn(123L);
 
-        var timeAfterDelay = loadPhase.applyDelay(timer, sleeper, null);
+        var timeAfterDelay = loadPhase.applyDelay(null);
 
         assertThat(timeAfterDelay).isEqualTo(123L);
     }
@@ -46,13 +46,13 @@ class LoadPhaseTest {
 
         when(timer.milliseconds()).thenReturn(1000L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(timer, sleeper, null);
+        var timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(1000L);
 
-        loadPhase.applyDelay(timer, sleeper, timeAfterFirstDelay);
+        loadPhase.applyDelay(timeAfterFirstDelay);
 
-        verify(sleeper, times(1)).sleep(1000);
+        verify(sleeper, times(1)).sleepFor(1000);
     }
 
     @Test
@@ -61,12 +61,12 @@ class LoadPhaseTest {
 
         when(timer.milliseconds()).thenReturn(1000L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(timer, sleeper, null);
+        var timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(1000L);
-        when(sleeper.sleep(anyInt())).thenReturn(2000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(2000L);
 
-        var timeAfterSecondDelay = loadPhase.applyDelay(timer, sleeper, timeAfterFirstDelay);
+        var timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
 
         assertThat(timeAfterSecondDelay).isEqualTo(2000L);
     }
@@ -77,14 +77,14 @@ class LoadPhaseTest {
 
         when(timer.milliseconds()).thenReturn(1000L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(timer, sleeper, null);
+        var timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(1500L);
-        when(sleeper.sleep(anyInt())).thenReturn(2000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(2000L);
 
-        var timeAfterSecondDelay = loadPhase.applyDelay(timer, sleeper, timeAfterFirstDelay);
+        var timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
 
-        verify(sleeper, times(1)).sleep(500);
+        verify(sleeper, times(1)).sleepFor(500);
         assertThat(timeAfterSecondDelay).isEqualTo(2000L);
     }
 
@@ -94,21 +94,21 @@ class LoadPhaseTest {
 
         when(timer.milliseconds()).thenReturn(0L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(timer, sleeper, null);
+        var timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(10L);
-        when(sleeper.sleep(anyInt())).thenReturn(50L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(50L);
 
-        var timeAfterSecondDelay = loadPhase.applyDelay(timer, sleeper, timeAfterFirstDelay);
+        var timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
 
-        verify(sleeper, times(1)).sleep(40);
+        verify(sleeper, times(1)).sleepFor(40);
 
         when(timer.milliseconds()).thenReturn(72L);
-        when(sleeper.sleep(anyInt())).thenReturn(100L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(100L);
 
-        loadPhase.applyDelay(timer, sleeper, timeAfterSecondDelay);
+        loadPhase.applyDelay(timeAfterSecondDelay);
 
-        verify(sleeper, times(1)).sleep(28);
+        verify(sleeper, times(1)).sleepFor(28);
     }
 
     @Test
@@ -117,21 +117,21 @@ class LoadPhaseTest {
 
         when(timer.milliseconds()).thenReturn(0L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(timer, sleeper, null);
+        var timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(10 * 1000L);
-        when(sleeper.sleep(anyInt())).thenReturn(50 * 1000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(50 * 1000L);
 
-        var timeAfterSecondDelay = loadPhase.applyDelay(timer, sleeper, timeAfterFirstDelay);
+        var timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
 
-        verify(sleeper, times(1)).sleep(40 * 1000);
+        verify(sleeper, times(1)).sleepFor(40 * 1000);
 
         when(timer.milliseconds()).thenReturn(72 * 1000L);
-        when(sleeper.sleep(anyInt())).thenReturn(100 * 1000L);
+        when(sleeper.sleepFor(anyInt())).thenReturn(100 * 1000L);
 
-        loadPhase.applyDelay(timer, sleeper, timeAfterSecondDelay);
+        loadPhase.applyDelay(timeAfterSecondDelay);
 
-        verify(sleeper, times(1)).sleep(28 * 1000);
+        verify(sleeper, times(1)).sleepFor(28 * 1000);
     }
 
     @Test
@@ -140,12 +140,12 @@ class LoadPhaseTest {
 
         when(timer.milliseconds()).thenReturn(0L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(timer, sleeper, null);
+        var timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(200L);
 
-        loadPhase.applyDelay(timer, sleeper, timeAfterFirstDelay);
+        loadPhase.applyDelay(timeAfterFirstDelay);
 
-        verify(sleeper, never()).sleep(anyInt());
+        verify(sleeper, never()).sleepFor(anyInt());
     }
 }
