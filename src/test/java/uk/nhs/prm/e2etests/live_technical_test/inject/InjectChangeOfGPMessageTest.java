@@ -6,14 +6,13 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import uk.nhs.prm.e2etests.configuration.ExampleAssumedRoleArn;
+import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
-import uk.nhs.prm.e2etests.client.AutoRefreshingRoleAssumingSqsClient;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
-import uk.nhs.prm.e2etests.client.ThinlyWrappedSqsClient;
-import uk.nhs.prm.e2etests.queue.suspensions.SuspensionMessageObservabilityQueue;
+import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorSuspensionsOQ;
+import uk.nhs.prm.e2etests.service.SqsService;
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
@@ -36,22 +35,21 @@ public class InjectChangeOfGPMessageTest {
     private SyntheticPatientProperties syntheticPatientProperties;
 
     @Autowired
-    private SuspensionMessageObservabilityQueue suspensionMessageObservabilityQueue;
+    private NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
 
     @Autowired
     QueueProperties queueProperties;
 
     @Autowired
-    ExampleAssumedRoleArn exampleAssumedRoleArn;
+    ActiveRoleArn activeRoleArn;
 
     @Autowired
-    AutoRefreshingRoleAssumingSqsClient sqsClient;
+    SqsService sqsService;
 
     @BeforeEach
     public void setUp() {
-        suspensionMessageObservabilityQueue = new SuspensionMessageObservabilityQueue(new ThinlyWrappedSqsClient(sqsClient), queueProperties);
+        nemsEventProcessorSuspensionsOQ = new NemsEventProcessorSuspensionsOQ(sqsService, queueProperties);
     }
-
 
     @Test
     public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
@@ -59,7 +57,7 @@ public class InjectChangeOfGPMessageTest {
         String nhsNumber = syntheticPatientProperties.getSyntheticPatientInPreProd();
         String previousGP = generateRandomOdsCode();
 
-        suspensionMessageObservabilityQueue.deleteAllMessages();
+        nemsEventProcessorSuspensionsOQ.deleteAllMessages();
 
         var nemsSuspension = createNemsEventFromTemplate(
                 "change-of-gp-suspension.xml",
