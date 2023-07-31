@@ -1,16 +1,19 @@
 package uk.nhs.prm.e2etests;
 
-import org.junit.jupiter.api.Test;
+import uk.nhs.prm.e2etests.exception.AccountNumberParsingException;
+import uk.nhs.prm.e2etests.exception.TargetArnParsingException;
 import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ActiveRoleArnTest {
     private static final String EXAMPLE_ARN = "arn:aws:sts::123456789154:assumed-role/RepoAdmin/1644843111269401788";
+    private static final String INVALID_EXAMPLE_ARN = "invalid-arn";
 
-    // TODO: PRMT-3488 Test name no longer matches logic!
     @Test
-    void shouldParseATargetRoleForAssumeRoleFromACurrentAssumedRoleExampleArn() {
+    void Given_ExampleArn_When_GetTargetArnIsCalled_Then_ExpectSuccessfulReturn() {
         // Given
         final ActiveRoleArn activeRoleArn = new ActiveRoleArn(EXAMPLE_ARN);
 
@@ -18,13 +21,31 @@ class ActiveRoleArnTest {
         assertThat(activeRoleArn.getTargetArn()).isEqualTo("arn:aws:sts::123456789154:role/RepoAdmin");
     }
 
-    // TODO: PRMT-3488 Test name no longer matches logic!
     @Test
-    void shouldParseAssumedRoleAccountNumberFromACurrentAssumedRoleExampleArn() {
+    void Given_ExampleArn_When_GetTargetArnIsCalled_Then_ExpectToThrowTargetArnParsingException() {
+        // Given
+        final ActiveRoleArn activeRoleArn = new ActiveRoleArn(INVALID_EXAMPLE_ARN);
+
+        // Then
+        assertThrows(TargetArnParsingException.class, activeRoleArn::getTargetArn);
+    }
+
+
+    @Test
+    void Given_ExampleArn_When_GetAccountNo_Then_ExpectSuccessfulReturn() {
         // Given
         final ActiveRoleArn activeRoleArn = new ActiveRoleArn(EXAMPLE_ARN);
 
-        // While
+        // Then
         assertThat(activeRoleArn.getAccountNo()).isEqualTo("123456789154");
+    }
+
+    @Test
+    void Given_ExampleArn_When_GetAccountNo_Then_ExpectToThrowAccountNumberParsingException() {
+        // Given
+        final ActiveRoleArn activeRoleArn = new ActiveRoleArn(INVALID_EXAMPLE_ARN);
+
+        // Then
+        assertThrows(AccountNumberParsingException.class, activeRoleArn::getAccountNo);
     }
 }
