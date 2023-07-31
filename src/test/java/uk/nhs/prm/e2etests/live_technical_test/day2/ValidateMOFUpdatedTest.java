@@ -55,7 +55,7 @@ class ValidateMOFUpdatedTest {
                 System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
 
                 System.out.println("Checking patient status with hl7 pds request - see logs for more details");
-                gp2GpMessengerService.getPdsRecordViaHlv7(nhsNumber);
+                gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
             });
         }
     }

@@ -31,7 +31,7 @@ public class Gp2GpMessengerService {
         }
     }
 
-    public void getPdsRecordViaHlv7(String nhsNumber) {
+    public void getPdsRecordViaHl7v3(String nhsNumber) {
         var requestUrl = buildPdsUrl(rootUrl, nhsNumber);
         try {
             System.out.println("Sending pds hl7 request to gp2gp messenger");

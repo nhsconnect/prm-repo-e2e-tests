@@ -72,7 +72,7 @@ class ChangeOfGPMessageReceivedTest {
                 System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
 
                 System.out.println("Checking patient status on HL7 PDs lookup - see gp2gp messenger logs for insights");
-                gp2GpMessengerService.getPdsRecordViaHlv7(nhsNumber);
+                gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
 
                 System.out.println("Finding related message for nhs number");
 
