@@ -1,8 +1,8 @@
 package uk.nhs.prm.e2etests.live_technical_test.day2;
 
+import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
-import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.property.NhsProperties;
@@ -16,28 +16,26 @@ import java.util.List;
 
 
 @SpringBootTest
+@TestPropertySource(properties = {"test.pds.username=live-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ValidateMOFUpdatedTest {
 
     private final String gp2GpMessengerApiKey;
     private final String gp2GpMessengerUrl;
     private final List<String> safeListedPatientList;
-    private final String pdsAdaptorApiKey;
-    private final String pdsAdaptorUrl;
-    private String pdsAdaptorUsername = "live-test";
     private Gp2GpMessengerService gp2GpMessengerService;
+    private final PdsAdaptorService pdsAdaptorService;
 
     @Autowired
     public ValidateMOFUpdatedTest(
             Gp2gpMessengerProperties gp2GpMessengerProperties,
-            PdsAdaptorProperties pdsAdaptorProperties,
-            NhsProperties nhsProperties
+            NhsProperties nhsProperties,
+            PdsAdaptorService pdsAdaptorService
     ) {
         gp2GpMessengerApiKey = gp2GpMessengerProperties.getLiveTestApiKey();
         gp2GpMessengerUrl = gp2GpMessengerProperties.getGp2gpMessengerUrl();
         safeListedPatientList = nhsProperties.getSafeListedPatientList();
-        pdsAdaptorApiKey = pdsAdaptorProperties.getLiveTestApiKey();
-        pdsAdaptorUrl = pdsAdaptorProperties.getPdsAdaptorUrl();
+        this.pdsAdaptorService = pdsAdaptorService;
     }
 
     @BeforeEach
@@ -51,7 +49,7 @@ class ValidateMOFUpdatedTest {
             System.out.println("Safe list patient has size " + safeListedPatientList.size()); // TODO PRMT-3574 refactor to a consistent logging approach
 
             safeListedPatientList.forEach(nhsNumber -> {
-                var pdsResponse = fetchPdsPatientStatus(pdsAdaptorUsername, nhsNumber);
+                var pdsResponse = fetchPdsPatientStatus(nhsNumber);
                 System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
 
                 System.out.println("Checking patient status with hl7 pds request - see logs for more details");
@@ -60,9 +58,7 @@ class ValidateMOFUpdatedTest {
         }
     }
 
-    // TODO: PRMT-3523 @TestPropertySource(properties = {"PDS_ADAPTOR_TEST_USERNAME = live-test", apiKey = something}) could be useful.
-    private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
-        PdsAdaptorService pds = new PdsAdaptorService(pdsAdaptorUsername, pdsAdaptorApiKey, pdsAdaptorUrl);
-        return pds.getSuspendedPatientStatus(testPatientNhsNumber);
+    private PdsAdaptorResponse fetchPdsPatientStatus(String testPatientNhsNumber) {
+        return pdsAdaptorService.getSuspendedPatientStatus(testPatientNhsNumber);
     }
 }

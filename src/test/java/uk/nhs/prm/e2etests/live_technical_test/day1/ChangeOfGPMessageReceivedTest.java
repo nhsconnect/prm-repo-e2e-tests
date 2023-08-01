@@ -1,8 +1,8 @@
 package uk.nhs.prm.e2etests.live_technical_test.day1;
 
+import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
@@ -20,6 +20,7 @@ import uk.nhs.prm.e2etests.service.SqsService;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@TestPropertySource(properties = {"test.pds.username=live-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChangeOfGPMessageReceivedTest {
     private SuspensionServiceSuspensionsQueue suspensionServiceSuspensionsQueue;
@@ -28,9 +29,8 @@ class ChangeOfGPMessageReceivedTest {
     private Gp2gpMessengerProperties gp2GpMessengerProperties;
     private QueueProperties queueProperties;
     private NhsProperties nhsProperties;
-    private PdsAdaptorProperties pdsAdaptorProperties;
-
     private SqsService sqsService;
+    private PdsAdaptorService pdsAdaptorService;
 
     @Autowired
     public ChangeOfGPMessageReceivedTest(
@@ -38,15 +38,15 @@ class ChangeOfGPMessageReceivedTest {
             Gp2gpMessengerProperties gp2GpMessengerProperties,
             QueueProperties queueProperties,
             NhsProperties nhsProperties,
-            PdsAdaptorProperties pdsAdaptorProperties,
-            SqsService sqsService
+            SqsService sqsService,
+            PdsAdaptorService pdsAdaptorService
     ) {
         this.patientValidator = testPatientValidator;
         this.gp2GpMessengerProperties = gp2GpMessengerProperties;
         this.queueProperties = queueProperties;
         this.nhsProperties = nhsProperties;
-        this.pdsAdaptorProperties = pdsAdaptorProperties;
         this.sqsService = sqsService;
+        this.pdsAdaptorService = pdsAdaptorService;
     }
 
     @BeforeEach
@@ -58,6 +58,8 @@ class ChangeOfGPMessageReceivedTest {
     @Test
     void shouldHaveReceivedSingleSuspensionChangeOfGpMessageRelatedToTestPatient() {
         var safeListPatients = nhsProperties.getSafeListedPatientList();
+
+        System.out.println(safeListPatients);
 
         if (safeListPatients.size() > 0) {
 
@@ -90,18 +92,6 @@ class ChangeOfGPMessageReceivedTest {
     }
 
     private PdsAdaptorResponse getPatientStatusOnPDSForSyntheticPatient(String testPatientNhsNumber) {
-        String pdsAdaptorUsername = "live-test";
-        return fetchPdsPatientStatus(pdsAdaptorUsername, testPatientNhsNumber);
-    }
-
-    private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
-
-        var pds = new PdsAdaptorService(
-                pdsAdaptorUsername,
-                pdsAdaptorProperties.getLiveTestApiKey(),
-                pdsAdaptorProperties.getPdsAdaptorUrl()
-        );
-
-        return pds.getSuspendedPatientStatus(testPatientNhsNumber);
+        return pdsAdaptorService.getSuspendedPatientStatus(testPatientNhsNumber);
     }
 }
