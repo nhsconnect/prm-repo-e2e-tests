@@ -5,9 +5,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
@@ -16,7 +14,6 @@ import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.service.EhrRepositoryService;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,11 +28,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     private PdsAdaptorService pdsAdaptorService;
     private EhrRepositoryService ehrRepositoryService;
     private String repoOdsCode;
-    private List<String> safeListedPatientList;
-    private String syntheticPatientPrefix;
     private EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
-    private QueueProperties queueProperties;
-    private ActiveRoleArn activeRoleArn;
 
     @Autowired
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
@@ -43,8 +36,6 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
             PdsAdaptorService pdsAdaptorService,
             EhrRepositoryService ehrRepositoryService,
             NhsProperties nhsProperties,
-            QueueProperties queueProperties,
-            ActiveRoleArn activeRoleArn,
             EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue
     ) {
         patientValidator = testPatientValidator;
@@ -52,10 +43,6 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
         this.pdsAdaptorService = pdsAdaptorService;
         this.ehrRepositoryService = ehrRepositoryService;
         repoOdsCode = nhsProperties.getRepoOdsCode();
-        safeListedPatientList = nhsProperties.getSafeListedPatientList();
-        syntheticPatientPrefix = nhsProperties.getSyntheticPatientPrefix();
-        this.queueProperties = queueProperties;
-        this.activeRoleArn = activeRoleArn;
         this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
     }
 

@@ -3,6 +3,7 @@ package uk.nhs.prm.e2etests.service;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -12,6 +13,10 @@ import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 
 @Log4j2
+@ConditionalOnProperty(
+        prefix = "test.pds",
+        name = { "username" }
+)
 @Service
 public class PdsAdaptorService {
 
@@ -23,8 +28,8 @@ public class PdsAdaptorService {
 
     @Autowired
     public PdsAdaptorService(PdsAdaptorProperties pdsAdaptorProperties, @Value("${test.pds.username}") String username) {
-        this.username = username;
         this.patientRootUrl = pdsAdaptorProperties.getPdsAdaptorUrl();
+        this.username = username;
 
         switch (username) {
             case "live-test" -> this.apiKey = pdsAdaptorProperties.getLiveTestApiKey();
