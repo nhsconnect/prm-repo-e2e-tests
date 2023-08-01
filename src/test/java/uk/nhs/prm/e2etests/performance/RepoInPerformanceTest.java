@@ -5,10 +5,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
-import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.configuration.TestData;
-import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
@@ -17,7 +14,6 @@ import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator
 import uk.nhs.prm.e2etests.tests.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.utility.ResourceUtility;
 
 import java.time.LocalDateTime;
@@ -38,26 +34,21 @@ import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RepoInPerformanceTest {
-    @Autowired
-    EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
+
+    private final EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
+    private final SimpleAmqpQueue inboundQueueFromMhs;
+    private final EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
 
     @Autowired
-    SimpleAmqpQueue inboundQueueFromMhs;
-
-    @Autowired
-    TestConfiguration config;
-
-    @Autowired
-    TransferTrackerService transferTrackerService;
-
-    @Autowired
-    EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
-
-    @Autowired
-    ActiveRoleArn activeRoleArn;
-
-    @Autowired
-    QueueProperties queueProperties;
+    public RepoInPerformanceTest(
+            EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue,
+            SimpleAmqpQueue inboundQueueFromMhs,
+            EhrTransferServiceTransferCompleteOQ ehrTransferServiceCompleteOQ
+    ) {
+        this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
+        this.inboundQueueFromMhs = inboundQueueFromMhs;
+        this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceCompleteOQ;
+    }
 
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
@@ -113,7 +104,6 @@ class RepoInPerformanceTest {
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
         var intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
-//            var inboundQueueFromMhs = new SimpleAmqpQueue(queueProperties, config);
             var messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
             var counter = new AtomicInteger(0);
             String smallEhr;
