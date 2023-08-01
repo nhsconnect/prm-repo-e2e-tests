@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 public @interface Debt {
     String comment() default "This has been marked as technical debt to be addressed.";
     Priority priority() default Priority.LOW;
-    String ticket() default "Not assigned.";;
+    String ticket() default "Not assigned.";
 
     enum Priority {
         LOW,

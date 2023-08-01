@@ -4,9 +4,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
@@ -24,10 +24,9 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 
 @SpringBootTest
+@TestPropertySource(properties = {"test.pds.username=live-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
-
-    private static final String PDS_ADAPTOR_TEST_USERNAME = "live-test";
     private TestPatientValidator patientValidator;
     private PdsAdaptorService pdsAdaptorService;
     private EhrRepositoryService ehrRepositoryService;
@@ -41,7 +40,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     @Autowired
     public ValidateSyntheticEhrTransferInToRepoUsingMofTest(
             TestPatientValidator testPatientValidator,
-            PdsAdaptorProperties pdsAdaptorProperties,
+            PdsAdaptorService pdsAdaptorService,
             EhrRepositoryService ehrRepositoryService,
             NhsProperties nhsProperties,
             QueueProperties queueProperties,
@@ -50,10 +49,7 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
     ) {
         patientValidator = testPatientValidator;
 
-        pdsAdaptorService = new PdsAdaptorService(
-                PDS_ADAPTOR_TEST_USERNAME,
-                pdsAdaptorProperties.getLiveTestApiKey(),
-                pdsAdaptorProperties.getPdsAdaptorUrl());
+        this.pdsAdaptorService = pdsAdaptorService;
         this.ehrRepositoryService = ehrRepositoryService;
         repoOdsCode = nhsProperties.getRepoOdsCode();
         safeListedPatientList = nhsProperties.getSafeListedPatientList();

@@ -7,11 +7,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.configuration.ResourceConfiguration;
 import uk.nhs.prm.e2etests.model.NhsNumberTestData;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import uk.nhs.prm.e2etests.performance.load.*;
@@ -34,6 +34,7 @@ import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerato
 
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
+@TestPropertySource(properties = {"test.pds.username=performance-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableScheduling
 public class PerformanceTest {
@@ -48,8 +49,9 @@ public class PerformanceTest {
     private TestConfiguration testConfiguration;
     private NhsNumberTestData nhsNumbers;
     private SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
-    private PdsAdaptorProperties pdsAdaptorProperties;
     private NhsProperties nhsProperties;
+
+    private PdsAdaptorService pdsAdaptorService;
 
     @Autowired
     public PerformanceTest(
@@ -57,15 +59,15 @@ public class PerformanceTest {
             TestConfiguration testConfiguration,
             ResourceConfiguration resourceConfiguration,
             SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue,
-            PdsAdaptorProperties pdsAdaptorProperties,
-            NhsProperties nhsProperties
+            NhsProperties nhsProperties,
+            PdsAdaptorService pdsAdaptorService
     ) {
         this.meshMailbox = meshMailbox;
         this.testConfiguration = testConfiguration;
         this.nhsNumbers = resourceConfiguration.nhsNumbers();
         this.suspensionServiceMofUpdatedQueue = suspensionServiceMofUpdatedQueue;
-        this.pdsAdaptorProperties = pdsAdaptorProperties;
         this.nhsProperties = nhsProperties;
+        this.pdsAdaptorService = pdsAdaptorService;
     }
 
     @Disabled("only used for perf test development not wanted on actual runs")
@@ -152,9 +154,8 @@ public class PerformanceTest {
 
     private void checkSuspended(List<String> suspendedNhsNumbers) {
         if (!nhsProperties.getNhsEnvironment().equals("perf")) {
-            PdsAdaptorService pds = new PdsAdaptorService("performance-test", pdsAdaptorProperties.getPerformanceApiKey(), pdsAdaptorProperties.getPdsAdaptorUrl());
             for (String nhsNumber: suspendedNhsNumbers) {
-                var patientStatus = pds.getSuspendedPatientStatus(nhsNumber);
+                var patientStatus = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
                 out.println(nhsNumber + ": " + patientStatus);
                 assertThat(patientStatus.getIsSuspended()).isTrue();
             }

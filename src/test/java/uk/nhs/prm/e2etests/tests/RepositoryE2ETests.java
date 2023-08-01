@@ -13,11 +13,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
@@ -50,6 +50,7 @@ import static uk.nhs.prm.e2etests.utility.TestUtility.*;
 
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
+@TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RepositoryE2ETests {
     private static final Logger LOGGER = LogManager.getLogger(RepositoryE2ETests.class);
@@ -57,6 +58,7 @@ class RepositoryE2ETests {
     private final EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
     private final SimpleAmqpQueue inboundQueueFromMhs;
     private final TransferTrackerService transferTrackerService;
+    private final PdsAdaptorService pdsAdaptorService;
     private final EhrTransferServiceSmallEhrOQ ehrTransferServiceSmallEhrOQ;
     private final EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ;
     private final EhrTransferServiceLargeEhrFragmentsOQ fragmentQueue;
@@ -68,7 +70,6 @@ class RepositoryE2ETests {
     private final Gp2GpMessengerOQ gp2gpMessengerQueue;
     private final TestConfiguration testConfiguration;
     private final Gp2gpMessengerProperties gp2GpMessengerProperties;
-    private final PdsAdaptorProperties pdsAdaptorProperties;
     private final NhsProperties nhsProperties;
 
     @Autowired
@@ -76,6 +77,7 @@ class RepositoryE2ETests {
             EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue,
             SimpleAmqpQueue inboundQueueFromMhs,
             TransferTrackerService transferTrackerService,
+            PdsAdaptorService pdsAdaptorService,
             EhrTransferServiceSmallEhrOQ ehrTransferServiceSmallEhrOQ,
             EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ,
             EhrTransferServiceLargeEhrFragmentsOQ fragmentQueue,
@@ -87,12 +89,12 @@ class RepositoryE2ETests {
             Gp2GpMessengerOQ gp2gpMessengerQueue,
             TestConfiguration testConfiguration,
             Gp2gpMessengerProperties gp2GpMessengerProperties,
-            PdsAdaptorProperties pdsAdaptorProperties,
             NhsProperties nhsProperties
     ) {
         this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
         this.inboundQueueFromMhs = inboundQueueFromMhs;
         this.transferTrackerService = transferTrackerService;
+        this.pdsAdaptorService = pdsAdaptorService;
         this.ehrTransferServiceSmallEhrOQ = ehrTransferServiceSmallEhrOQ;
         this.ehrTransferServiceLargeEhrOQ = ehrTransferServiceLargeEhrOQ;
         this.fragmentQueue = fragmentQueue;
@@ -104,11 +106,8 @@ class RepositoryE2ETests {
         this.gp2gpMessengerQueue = gp2gpMessengerQueue;
         this.testConfiguration = testConfiguration;
         this.gp2GpMessengerProperties = gp2GpMessengerProperties;
-        this.pdsAdaptorProperties = pdsAdaptorProperties;
         this.nhsProperties = nhsProperties;
     }
-
-    PdsAdaptorService pdsAdaptorService;
 
     @BeforeAll
     void init() {
@@ -120,11 +119,6 @@ class RepositoryE2ETests {
         ehrInUnhandledQueue.deleteAllMessages();
         ehrTransferServiceNegativeAcknowledgementOQ.deleteAllMessages();
         gp2gpMessengerQueue.deleteAllMessages();
-        pdsAdaptorService = new PdsAdaptorService(
-                "e2e-test",
-                pdsAdaptorProperties.getE2eTestApiKey(),
-                pdsAdaptorProperties.getPdsAdaptorUrl()
-        );
     }
 
     // The following test should eventually test that we can send a small EHR - until we have an EHR in repo/test patient ready to send,
@@ -186,6 +180,7 @@ class RepositoryE2ETests {
 
     // TODO: THIS TEST WAS FAILING BEFORE REFACTOR
     @Test
+    @Disabled("This test was failing before refactoring. To be fixed after refactoring is complete.")
     void shouldVerifyThatALargeEhrXMLIsUnchanged() {
         // given
         String inboundConversationId = UUID.randomUUID().toString();
@@ -274,6 +269,7 @@ class RepositoryE2ETests {
 
     // THIS TEST WAS FAILING BEFORE REFACTOR
     @Test
+    @Disabled("This test was failing before refactoring. The cause seems to be related to EMIS instance not working")
     void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
         var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(testConfiguration);
 

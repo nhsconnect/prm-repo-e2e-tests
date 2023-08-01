@@ -11,6 +11,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
 import uk.nhs.prm.e2etests.model.nems.DeceasedPatientMessageNems;
@@ -27,7 +28,6 @@ import uk.nhs.prm.e2etests.queue.suspensions.observability.SuspensionServiceNotS
 import uk.nhs.prm.e2etests.service.ActiveSuspensionsService;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.queue.nems.observability.MeshForwarderOQ;
@@ -50,6 +50,7 @@ import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTe
 
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
+@TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ContinuityE2E {
@@ -82,11 +83,9 @@ class ContinuityE2E {
     @Autowired
     private EhrRepositoryService ehrRepositoryService;
     @Autowired
-    private PdsAdaptorProperties pdsAdaptorProperties;
+    private PdsAdaptorService pdsAdaptorService;
     @Autowired
     private NhsProperties nhsProperties;
-
-    private PdsAdaptorService pdsAdaptorService;
 
     private final String EMIS_PTL_INT = "N82668";
     private final String SUSPENDED_PATIENT_NHS_NUMBER = "9693796047";
@@ -100,11 +99,6 @@ class ContinuityE2E {
         suspensionServiceNotSuspendedOQ.deleteAllMessages();
         nemsEventProcessorReRegistrationsOQ.deleteAllMessages();
         suspensionsServiceRepoIncomingOQ.deleteAllMessages();
-        pdsAdaptorService = new PdsAdaptorService(
-                "e2e-test",
-                pdsAdaptorProperties.getE2eTestApiKey(),
-                pdsAdaptorProperties.getPdsAdaptorUrl()
-        );
     }
 
     @Test
