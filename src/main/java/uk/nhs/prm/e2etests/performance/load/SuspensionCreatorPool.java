@@ -12,7 +12,7 @@ public class SuspensionCreatorPool implements Pool<NemsTestEvent> {
 
     public NemsTestEvent next() {
         var nhsNumber = nhsNumberPool.next();
-        var nemsMessageId = NhsIdentityGenerator.randomNemsMessageId(false);
+        var nemsMessageId = NhsIdentityGenerator.randomNemsMessageId();
         return NemsTestEvent.suspensionEvent(nhsNumber, nemsMessageId);
     }
 }
