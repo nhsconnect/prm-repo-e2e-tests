@@ -9,11 +9,12 @@ public class NemsResolutionMessage {
     String nemsMessageId;
     String status;
 
-    public boolean hasTheSameContentAs(Object o) {
+    @Override
+    public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         NemsResolutionMessage that = (NemsResolutionMessage) o;
-        return nemsMessageId.equalsIgnoreCase(that.nemsMessageId) && status.equalsIgnoreCase(that.status);
+        return Objects.equals(nemsMessageId, that.nemsMessageId) && Objects.equals(status, that.status);
     }
 
     @Override
