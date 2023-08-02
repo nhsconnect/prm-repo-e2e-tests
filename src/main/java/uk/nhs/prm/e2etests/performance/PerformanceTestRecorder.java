@@ -63,7 +63,7 @@ public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestR
         out.println("Total messages received: " + (knownEventCount + unknownEventCount));
         out.println("Total messages received from messages sent in test: " + knownEventCount);
         out.println("Total messages received from messages received outside of test: " + unknownEventCount);
-        for (var event : testEvents()) {
+        for (NemsTestEvent event : testEvents()) {
             if (event.hasWarnings()) {
                 System.out.println("Event had warnings: " + event);
             }

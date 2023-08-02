@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
+import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorSuspensionsOQ;
 
@@ -44,7 +45,7 @@ public class InjectChangeOfGPMessageTest {
 
         nemsEventProcessorSuspensionsOQ.deleteAllMessages();
 
-        var nemsSuspension = createNemsEventFromTemplate(
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate(
                 "change-of-gp-suspension.xml",
                 nhsNumber,
                 nemsMessageId,

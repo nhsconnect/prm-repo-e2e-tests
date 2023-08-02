@@ -34,7 +34,7 @@ public class SqsService {
     }
 
     public List<SqsMessage> readMessagesFrom(String queueUrl) {
-        var receiveMessageRequest = ReceiveMessageRequest.builder()
+        ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
                 .visibilityTimeout(0)
                 .queueUrl(queueUrl)
                 .waitTimeSeconds(5)
@@ -53,7 +53,7 @@ public class SqsService {
     public List<SqsMessage> readThroughMessages(String queueUrl, int visibilityTimeout) {
         int safeVisibilityTimeout = Math.min(visibilityTimeout, MAX_VISIBILITY_TIMEOUT);
 
-        var receiveMessageRequest = ReceiveMessageRequest.builder()
+        ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
             .visibilityTimeout(safeVisibilityTimeout)
             .queueUrl(queueUrl)
             .waitTimeSeconds(5)

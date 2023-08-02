@@ -39,7 +39,7 @@ class ValidateMOFUpdatedTest {
             System.out.println("Safe list patient has size " + safeListedPatientList.size()); // TODO PRMT-3574 refactor to a consistent logging approach
 
             safeListedPatientList.forEach(nhsNumber -> {
-                var pdsResponse = fetchPdsPatientStatus(nhsNumber);
+                PdsAdaptorResponse pdsResponse = fetchPdsPatientStatus(nhsNumber);
                 System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
 
                 System.out.println("Checking patient status with hl7 pds request - see logs for more details");

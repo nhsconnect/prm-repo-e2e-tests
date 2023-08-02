@@ -1,6 +1,7 @@
 package uk.nhs.prm.e2etests.live_technical_test.day1;
 
 import org.springframework.test.context.TestPropertySource;
+import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
@@ -12,6 +13,9 @@ import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,7 +46,7 @@ class ChangeOfGPMessageReceivedTest {
 
     @Test
     void shouldHaveReceivedSingleSuspensionChangeOfGpMessageRelatedToTestPatient() {
-        var safeListPatients = nhsProperties.getSafeListedPatientList();
+        List<String> safeListPatients = nhsProperties.getSafeListedPatientList();
 
         System.out.println(safeListPatients);
 
@@ -54,7 +58,7 @@ class ChangeOfGPMessageReceivedTest {
                 System.out.println("Checking if nhs number is synthetic");
                 assertThat(patientValidator.isIncludedInTheTest(nhsNumber)).isTrue();
 
-                var pdsResponse = getPatientStatusOnPDSForSyntheticPatient(nhsNumber);
+                PdsAdaptorResponse pdsResponse = getPatientStatusOnPDSForSyntheticPatient(nhsNumber);
 
                 System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
 
@@ -63,7 +67,8 @@ class ChangeOfGPMessageReceivedTest {
 
                 System.out.println("Finding related message for nhs number");
 
-                var suspensionMessage = suspensionServiceSuspensionsQueue.getMessageContainingForTechnicalTestRun(nhsNumber);
+                Optional<SqsMessage> suspensionMessage = suspensionServiceSuspensionsQueue.getMessageContainingForTechnicalTestRun(nhsNumber);
+                assertThat(suspensionMessage.isPresent()).isTrue();
 
                 System.out.println("got message related to test patient");
                 TestParameters.outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.getNemsMessageId());

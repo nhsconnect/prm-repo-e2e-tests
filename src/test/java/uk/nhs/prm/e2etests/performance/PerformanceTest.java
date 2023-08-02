@@ -11,6 +11,8 @@ import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.configuration.ResourceConfiguration;
 import uk.nhs.prm.e2etests.model.NhsNumberTestData;
+import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
@@ -73,14 +75,14 @@ public class PerformanceTest {
     @Disabled("only used for perf test development not wanted on actual runs")
     @Test
     public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
-        var nhsNumberPool = new RoundRobinPool<>(nhsNumbers.getNhsNumbers());
-        var suspensions = new SuspensionCreatorPool(nhsNumberPool);
+        RoundRobinPool<String> nhsNumberPool = new RoundRobinPool<>(nhsNumbers.getNhsNumbers());
+        SuspensionCreatorPool suspensions = new SuspensionCreatorPool(nhsNumberPool);
 
-        var nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
+        NemsTestEvent nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
 
         out.println("looking for message containing: " + nemsEvent.nemsMessageId());
 
-        var successMessage = suspensionServiceMofUpdatedQueue.getMessageContaining(nemsEvent.nemsMessageId());
+        SqsMessage successMessage = suspensionServiceMofUpdatedQueue.getMessageContaining(nemsEvent.nemsMessageId());
 
         assertThat(successMessage).isNotNull();
 
@@ -90,14 +92,14 @@ public class PerformanceTest {
     @Test
     public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
         final int overallTimeout = testConfiguration.getPerformanceTestTimeout();
-        final var recorder = new PerformanceTestRecorder();
+        final PerformanceTestRecorder recorder = new PerformanceTestRecorder();
 
-        var eventSource = createMixedSuspensionsAndNonSuspensionsTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
-        var loadSource = new LoadRegulatingPool<>(eventSource, testConfiguration.performanceTestLoadPhases(List.<LoadPhase>of(
+        MixerPool<NemsTestEvent> eventSource = createMixedSuspensionsAndNonSuspensionsTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
+        LoadRegulatingPool<NemsTestEvent> loadSource = new LoadRegulatingPool<>(eventSource, testConfiguration.performanceTestLoadPhases(List.<LoadPhase>of(
                 atFlatRate(10, "1"),
                 atFlatRate(10, "2"))));
 
-        var suspensionsOnlyRecorder = new SuspensionsOnlyEventListener(recorder);
+        SuspensionsOnlyEventListener suspensionsOnlyRecorder = new SuspensionsOnlyEventListener(recorder);
         while (loadSource.unfinished()) {
             injectSingleNemsSuspension(suspensionsOnlyRecorder, loadSource.next());
         }
@@ -107,7 +109,7 @@ public class PerformanceTest {
         out.println("Checking mof updated message queue...");
 
         try {
-            final var timeout = now().plusSeconds(overallTimeout);
+            final LocalDateTime timeout = now().plusSeconds(overallTimeout);
             while (before(timeout) && recorder.hasUnfinishedEvents()) {
                 for (SqsMessage nextMessage : suspensionServiceMofUpdatedQueue.getNextMessages(timeout)) {
                     recorder.finishMatchingMessage(nextMessage);
@@ -125,7 +127,7 @@ public class PerformanceTest {
     }
 
     private NemsTestEvent injectSingleNemsSuspension(NemsTestEventListener listener, NemsTestEvent testEvent) {
-        var nemsSuspension = testEvent.createMessage();
+        NemsEventMessage nemsSuspension = testEvent.createMessage();
 
         listener.onStartingTestItem(testEvent);
 
@@ -139,8 +141,8 @@ public class PerformanceTest {
     }
 
     private MixerPool<NemsTestEvent> createMixedSuspensionsAndNonSuspensionsTestEventSource(int suspensionMessagesPerDay, int nonSuspensionMessagesPerDay) {
-        var suspensionsSource = new SuspensionCreatorPool(suspendedNhsNumbers());
-        var nonSuspensionsSource = new NemsTestEventPool(nonSuspensionEvent(randomNhsNumber(), randomNemsMessageId()));
+        SuspensionCreatorPool suspensionsSource = new SuspensionCreatorPool(suspendedNhsNumbers());
+        NemsTestEventPool nonSuspensionsSource = new NemsTestEventPool(nonSuspensionEvent(randomNhsNumber(), randomNemsMessageId()));
         return new MixerPool<>(
                 suspensionMessagesPerDay, suspensionsSource,
                 nonSuspensionMessagesPerDay, nonSuspensionsSource);
@@ -155,7 +157,7 @@ public class PerformanceTest {
     private void checkSuspended(List<String> suspendedNhsNumbers) {
         if (!nhsProperties.getNhsEnvironment().equals("perf")) {
             for (String nhsNumber: suspendedNhsNumbers) {
-                var patientStatus = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
+                PdsAdaptorResponse patientStatus = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
                 out.println(nhsNumber + ": " + patientStatus);
                 assertThat(patientStatus.getIsSuspended()).isTrue();
             }

@@ -24,7 +24,7 @@ public class ActiveSuspensionsDatabaseRepository {
         Map<String, AttributeValue> key = new HashMap<>();
         System.out.println("Querying active-suspensions db with nhsNumber.");
         key.put("nhs_number", AttributeValue.builder().s(nhsNumber).build());
-        var getItemResponse = DynamoDbClient.builder().build().getItem((GetItemRequest.builder()
+        GetItemResponse getItemResponse = DynamoDbClient.builder().build().getItem((GetItemRequest.builder()
                 .tableName(databaseProperties.getActiveSuspensionsDbName())
                 .key(key)
                 .build()));

@@ -2,10 +2,7 @@ package uk.nhs.prm.e2etests.service;
 
 import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -16,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -33,10 +31,10 @@ public class EhrRepositoryService {
     }
 
     public boolean isPatientHealthRecordStatusComplete(String nhsNumber, String conversationId) {
-        var ehrHealthRecordUrl = buildUrl(ehrRepositoryUri, nhsNumber, conversationId);
+        String ehrHealthRecordUrl = buildUrl(ehrRepositoryUri, nhsNumber, conversationId);
         try {
             System.out.printf("Sending ehr status request to ehr repor: %s%n", ehrHealthRecordUrl);
-            var exchange = restTemplate.exchange(ehrHealthRecordUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(ehrRepositoryApiKey)), String.class);
+            ResponseEntity<String> exchange = restTemplate.exchange(ehrHealthRecordUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(ehrRepositoryApiKey)), String.class);
             System.out.println("Ehr request successfully stored in ehr repo");
             return exchange.getStatusCode().is2xxSuccessful();
         } catch (HttpStatusCodeException e) {
@@ -46,12 +44,12 @@ public class EhrRepositoryService {
     }
 
     public void createEhr(String nhsNumber) throws Exception {
-        var conversationId = UUID.randomUUID();
-        var messageId = UUID.randomUUID();
-        var messageType = "ehrExtract";
-        var fragmentMessageIds = Collections.EMPTY_LIST;
+        UUID conversationId = UUID.randomUUID();
+        UUID messageId = UUID.randomUUID();
+        String messageType = "ehrExtract";
+        List<UUID> fragmentMessageIds = Collections.EMPTY_LIST;
 
-        var jsonPayloadString = new Gson().toJson(new StoreMessageRequestBody(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds));
+        String jsonPayloadString = new Gson().toJson(new StoreMessageRequestBody(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds));
 
          restTemplate.exchange(new URL(ehrRepositoryUri + "messages").toURI(), HttpMethod.POST,
                  new HttpEntity<>(jsonPayloadString, createHeaders(ehrRepositoryApiKey)), String.class);

@@ -2,6 +2,7 @@ package uk.nhs.prm.e2etests.service;
 
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import uk.nhs.prm.e2etests.repository.TransferTrackerDatabaseRepository;
 import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
 
@@ -22,7 +23,7 @@ public class TransferTrackerService {
     }
 
     public boolean conversationIdExists(String conversationId) {
-        var response = transferTrackerDatabaseRepository.queryWithConversationId(conversationId);
+        GetItemResponse response = transferTrackerDatabaseRepository.queryWithConversationId(conversationId);
         if (response != null) {
             return true;
         }
@@ -34,7 +35,7 @@ public class TransferTrackerService {
     }
 
     public boolean statusForConversationIdIs(String conversationId, String status, long timeout) {
-        var defaultState = AttributeValue.builder().s("NOPE-AKA-DEFAULT-VALUE-TO-AVOID-NULL-EXCEPTION").build();
+        AttributeValue defaultState = AttributeValue.builder().s("NOPE-AKA-DEFAULT-VALUE-TO-AVOID-NULL-EXCEPTION").build();
         await().atMost(timeout, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)

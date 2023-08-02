@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.configuration.TestData;
+import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
@@ -53,8 +54,8 @@ class RepoInPerformanceTest {
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
         System.out.println("BEGINNING PROBLEMATIC TEST");
-        var numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
-        var messagesToBeProcessed = setupMessagesToBeProcessed(numberOfMessagesToBeProcessed);
+        int numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
+        List<RepoInPerfMessageWrapper> messagesToBeProcessed = setupMessagesToBeProcessed(numberOfMessagesToBeProcessed);
 
         System.out.println("Setup completed. About to send messages to mq...");
         sendMessagesToMq(messagesToBeProcessed);
@@ -64,16 +65,16 @@ class RepoInPerformanceTest {
     }
 
     private void assertMessagesAreInTransferCompleteQueue(int numberOfMessagesToBeProcessed, List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
-        var messagesReadFromQueueEveryMinute = 100;
-        var additionalMinutesBuffer = 5;
-        var timeoutInMinutes = Math.round(numberOfMessagesToBeProcessed / messagesReadFromQueueEveryMinute) + additionalMinutesBuffer;
+        int messagesReadFromQueueEveryMinute = 100;
+        int additionalMinutesBuffer = 5;
+        int timeoutInMinutes = Math.round(numberOfMessagesToBeProcessed / messagesReadFromQueueEveryMinute) + additionalMinutesBuffer;
         System.out.println("Polling messages from transfer complete queue, timeout for this operation set to " + timeoutInMinutes + " minutes.");
 
-        var messagesProcessed = new ArrayList<RepoInPerfMessageWrapper>();
-        var timeout = now().plusMinutes(timeoutInMinutes);
+        List<RepoInPerfMessageWrapper> messagesProcessed = new ArrayList<>();
+        LocalDateTime timeout = now().plusMinutes(timeoutInMinutes);
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
             for (SqsMessage sqsMessage : ehrTransferServiceTransferCompleteOQ.getNextMessages(timeout)) {
-                var conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
+                String conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
                     if (message.getMessage().conversationId().equals(conversationId)) {
                         message.finish(sqsMessage.getQueuedAt());
@@ -88,7 +89,7 @@ class RepoInPerformanceTest {
                     }
                     return false;
                 });
-                var numberOfMessagesProcessed = numberOfMessagesToBeProcessed - messagesToBeProcessed.size();
+                int numberOfMessagesProcessed = numberOfMessagesToBeProcessed - messagesToBeProcessed.size();
                 System.out.println("Processed " + numberOfMessagesProcessed + " messages out of " + numberOfMessagesToBeProcessed);
             }
         }
@@ -102,10 +103,10 @@ class RepoInPerformanceTest {
     }
 
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
-        var intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
+        int intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
-            var messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
-            var counter = new AtomicInteger(0);
+            String messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
+            AtomicInteger counter = new AtomicInteger(0);
             String smallEhr;
 
             // TODO PRMT-3574 traditional for loop here that could be refactored
@@ -137,9 +138,9 @@ class RepoInPerformanceTest {
             SimpleAmqpQueue inboundQueueFromMhs
     ) {
         counter.incrementAndGet();
-        var conversationId = message.getMessage().conversationId();
+        String conversationId = message.getMessage().conversationId();
 
-        var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
+        String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
         message.start();
 
         System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
@@ -151,10 +152,10 @@ class RepoInPerformanceTest {
     }
 
     private List<RepoInPerfMessageWrapper> setupMessagesToBeProcessed(int numberOfMessagesToBeProcessed) {
-        var messagesToBeProcessed = new ArrayList<RepoInPerfMessageWrapper>();
+        List<RepoInPerfMessageWrapper> messagesToBeProcessed = new ArrayList<>();
 
         for (int i = 0; i < numberOfMessagesToBeProcessed ; i++) {
-            var message = new RepoIncomingMessageBuilder()
+            RepoIncomingMessage message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
                     .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
                     .build();
@@ -166,17 +167,17 @@ class RepoInPerformanceTest {
     }
 
     private int getNumberOfMessagesToBeProcessed() {
-        var result = getenv("NUMBER_OF_MESSAGES_TO_BE_PROCESSED");
+        String result = getenv("NUMBER_OF_MESSAGES_TO_BE_PROCESSED");
         return result == null ? 500 : parseInt(result);
     }
 
     private int getIntervalBetweenMessagesSentToMq() {
-        var result = getenv("INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ");
+        String result = getenv("INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ");
         return result == null ? 100 : parseInt(result);
     }
 
     private String getSmallMessageWithUniqueConversationIdAndMessageId(String message, String conversationId) {
-        var messageId = randomUUID().toString();
+        String messageId = randomUUID().toString();
         message = message.replaceAll("__CONVERSATION_ID__", conversationId);
         message = message.replaceAll("__MESSAGE_ID__", messageId);
         return message;

@@ -134,9 +134,9 @@ public class NemsTestEvent implements Phased {
     }
 
     public NemsEventMessage createMessage() {
-        var previousGP = randomOdsCode();
+        String previousGP = randomOdsCode();
         NemsEventMessage nemsSuspension;
-        var timestamp = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+        String timestamp = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
         if (isSuspension()) {
             nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-suspension.xml",
