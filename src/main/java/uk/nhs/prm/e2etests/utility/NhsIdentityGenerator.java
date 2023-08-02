@@ -29,10 +29,8 @@ public final class NhsIdentityGenerator {
     }
 
     public static String randomNemsMessageId() {
-        return randomNemsMessageId(true);
-    }
-
-    public static String randomNemsMessageId(boolean shouldLog) {
-        return UUID.randomUUID().toString();
+        final String nemsEventMessageId = UUID.randomUUID().toString();
+        log.info("Generated random NEMS Event Message ID: {}", nemsEventMessageId);
+        return nemsEventMessageId;
     }
 }
