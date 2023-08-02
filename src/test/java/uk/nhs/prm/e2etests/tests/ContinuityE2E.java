@@ -11,6 +11,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
 import uk.nhs.prm.e2etests.model.nems.DeceasedPatientMessageNems;
@@ -27,7 +28,6 @@ import uk.nhs.prm.e2etests.queue.suspensions.observability.SuspensionServiceNotS
 import uk.nhs.prm.e2etests.service.ActiveSuspensionsService;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.queue.nems.observability.MeshForwarderOQ;
@@ -50,46 +50,67 @@ import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTe
 
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
+@TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ContinuityE2E {
-    @Autowired
-    private MeshForwarderOQ meshForwarderOQ;
-    @Autowired
-    private NemsEventProcessorUnhandledEventsQueue nemsEventProcessorUnhandledEventsQueue;
-    @Autowired
-    private NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
-    @Autowired
-    private SuspensionServiceNotSuspendedOQ suspensionServiceNotSuspendedOQ;
-    @Autowired
-    private SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
-    @Autowired
-    private SuspensionServiceMofNotUpdatedQueue suspensionServiceMofNotUpdatedQueue;
-    @Autowired
-    private NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue;
-    @Autowired
-    private SuspensionServiceDeceasedPatientQueue suspensionServiceDeceasedPatientQueue;
-    @Autowired
-    private NemsEventProcessorReRegistrationsOQ nemsEventProcessorReRegistrationsOQ;
-    @Autowired
-    private MeshMailbox meshMailbox;
-    @Autowired
-    private SyntheticPatientProperties syntheticPatientProperties;
-    @Autowired
-    private SuspensionsServiceRepoIncomingOQ suspensionsServiceRepoIncomingOQ;
-    @Autowired
-    private ActiveSuspensionsService activeSuspensionsService;
-    @Autowired
-    private EhrRepositoryService ehrRepositoryService;
-    @Autowired
-    private PdsAdaptorProperties pdsAdaptorProperties;
-    @Autowired
-    private NhsProperties nhsProperties;
-
-    private PdsAdaptorService pdsAdaptorService;
 
     private final String EMIS_PTL_INT = "N82668";
     private final String SUSPENDED_PATIENT_NHS_NUMBER = "9693796047";
+
+    private final MeshMailbox meshMailbox;
+    private final MeshForwarderOQ meshForwarderOQ;
+    private final NemsEventProcessorUnhandledEventsQueue nemsEventProcessorUnhandledEventsQueue;
+    private final NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
+    private final NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue;
+    private final NemsEventProcessorReRegistrationsOQ nemsEventProcessorReRegistrationsOQ;
+    private final SuspensionServiceNotSuspendedOQ suspensionServiceNotSuspendedOQ;
+    private final SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
+    private final SuspensionServiceMofNotUpdatedQueue suspensionServiceMofNotUpdatedQueue;
+    private final SuspensionServiceDeceasedPatientQueue suspensionServiceDeceasedPatientQueue;
+    private final SuspensionsServiceRepoIncomingOQ suspensionsServiceRepoIncomingOQ;
+    private final SyntheticPatientProperties syntheticPatientProperties;
+    private final ActiveSuspensionsService activeSuspensionsService;
+    private final EhrRepositoryService ehrRepositoryService;
+    private final PdsAdaptorService pdsAdaptorService;
+    private final NhsProperties nhsProperties;
+
+    @Autowired
+    public ContinuityE2E(
+            MeshMailbox meshMailbox,
+            MeshForwarderOQ meshForwarderOQ,
+            NemsEventProcessorUnhandledEventsQueue nemsEventProcessorUnhandledEventsQueue,
+            NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ,
+            NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue,
+            NemsEventProcessorReRegistrationsOQ nemsEventProcessorReRegistrationsOQ,
+            SuspensionServiceNotSuspendedOQ suspensionServiceNotSuspendedOQ,
+            SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue,
+            SuspensionServiceMofNotUpdatedQueue suspensionServiceMofNotUpdatedQueue,
+            SuspensionServiceDeceasedPatientQueue suspensionServiceDeceasedPatientQueue,
+            SuspensionsServiceRepoIncomingOQ suspensionsServiceRepoIncomingOQ,
+            SyntheticPatientProperties syntheticPatientProperties,
+            ActiveSuspensionsService activeSuspensionsService,
+            EhrRepositoryService ehrRepositoryService,
+            PdsAdaptorService pdsAdaptorService,
+            NhsProperties nhsProperties
+    ) {
+        this.meshMailbox = meshMailbox;
+        this.meshForwarderOQ =  meshForwarderOQ;
+        this.nemsEventProcessorUnhandledEventsQueue = nemsEventProcessorUnhandledEventsQueue;
+        this.nemsEventProcessorSuspensionsOQ = nemsEventProcessorSuspensionsOQ;
+        this.nemsEventProcessorDeadLetterQueue = nemsEventProcessorDeadLetterQueue;
+        this.nemsEventProcessorReRegistrationsOQ = nemsEventProcessorReRegistrationsOQ;
+        this.suspensionServiceNotSuspendedOQ = suspensionServiceNotSuspendedOQ;
+        this.suspensionServiceMofUpdatedQueue = suspensionServiceMofUpdatedQueue;
+        this.suspensionServiceMofNotUpdatedQueue = suspensionServiceMofNotUpdatedQueue;
+        this.suspensionServiceDeceasedPatientQueue = suspensionServiceDeceasedPatientQueue;
+        this.suspensionsServiceRepoIncomingOQ = suspensionsServiceRepoIncomingOQ;
+        this.syntheticPatientProperties = syntheticPatientProperties;
+        this.activeSuspensionsService = activeSuspensionsService;
+        this.ehrRepositoryService = ehrRepositoryService;
+        this.pdsAdaptorService = pdsAdaptorService;
+        this.nhsProperties = nhsProperties;
+    }
 
     @BeforeAll
     void init() {
@@ -97,14 +118,10 @@ class ContinuityE2E {
         nemsEventProcessorDeadLetterQueue.deleteAllMessages();
         nemsEventProcessorSuspensionsOQ.deleteAllMessages();
         nemsEventProcessorUnhandledEventsQueue.deleteAllMessages();
+        suspensionServiceMofUpdatedQueue.deleteAllMessages();
         suspensionServiceNotSuspendedOQ.deleteAllMessages();
         nemsEventProcessorReRegistrationsOQ.deleteAllMessages();
         suspensionsServiceRepoIncomingOQ.deleteAllMessages();
-        pdsAdaptorService = new PdsAdaptorService(
-                "e2e-test",
-                pdsAdaptorProperties.getE2eTestApiKey(),
-                pdsAdaptorProperties.getPdsAdaptorUrl()
-        );
     }
 
     @Test
@@ -114,15 +131,15 @@ class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         var now = now();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
         meshMailbox.postMessage(nemsSuspension);
-        MofUpdatedMessageNems expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
+        NemsResolutionMessage expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
         assertThat(meshForwarderOQ.hasMessage(nemsSuspension.getMessage())); // TODO PRMT-3574 an 'assertThat' without a matching 'isTrue'? I think these instances need a change
-        assertThat(suspensionServiceMofUpdatedQueue.hasResolutionMessage(expectedMessageOnQueue));
+        assertThat(suspensionServiceMofUpdatedQueue.hasResolutionMessage( expectedMessageOnQueue));
     }
 
     @Test
@@ -145,7 +162,7 @@ class ContinuityE2E {
     @Order(2)
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
         String nemsMessageId = randomNemsMessageId();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
         var now = now();
         String currentlyRegisteredPatientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
 
@@ -189,7 +206,7 @@ class ContinuityE2E {
     @Disabled(" 'process_only_synthetic_or_safe_listed_patients' toggle is set to false across all the environments. ")
     public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
         String nemsMessageId = randomNemsMessageId();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
 
         var suspensionTime = now();
         var nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml",
@@ -209,7 +226,7 @@ class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = syntheticPatientProperties.getDeceasedPatient();
         var eventTime = now();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
 
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
@@ -230,7 +247,7 @@ class ContinuityE2E {
         String patientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
         var reregistrationTime = now();
         storeEhrInRepositoryFor(patientNhsNumber);
-        activeSuspensionsService.save(new ActiveSuspensionsMessage(patientNhsNumber,generateRandomOdsCode(), now()));
+        activeSuspensionsService.save(new ActiveSuspensionsMessage(patientNhsNumber, randomOdsCode(), now()));
 
         var reRegistration = createNemsEventFromTemplate(
                 "change-of-gp-re-registration.xml", patientNhsNumber, nemsMessageId, reregistrationTime);
@@ -260,7 +277,7 @@ class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         var now = now();
-        String previousGp = generateRandomOdsCode();
+        String previousGp = randomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);

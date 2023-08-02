@@ -39,7 +39,8 @@ public class NhsProperties extends AbstractSsmRetriever {
     }
 
     public List<String> getSafeListedPatientList() {
-        return Arrays.asList(safeListedPatients.split(","));
+        String rawSafeListedPatientListStringFromSsm = super.getAwsSsmParameterValue(safeListedPatients);
+        return Arrays.asList(rawSafeListedPatientListStringFromSsm.split(","));
     }
 
     public String getSyntheticPatientPrefix() {
