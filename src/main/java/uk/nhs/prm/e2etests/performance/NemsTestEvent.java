@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.generateRandomOdsCode;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomOdsCode;
 
 public class NemsTestEvent implements Phased {
     private final String nemsMessageId;
@@ -134,7 +134,7 @@ public class NemsTestEvent implements Phased {
     }
 
     public NemsEventMessage createMessage() {
-        var previousGP = generateRandomOdsCode();
+        var previousGP = randomOdsCode();
         NemsEventMessage nemsSuspension;
         var timestamp = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 

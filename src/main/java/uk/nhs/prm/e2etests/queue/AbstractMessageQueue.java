@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.queue;
 
+import software.amazon.awssdk.services.sqs.model.PurgeQueueInProgressException;
 import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
 import uk.nhs.prm.e2etests.utility.QueueHelper;
 import uk.nhs.prm.e2etests.service.SqsService;
@@ -29,7 +30,13 @@ public abstract class AbstractMessageQueue {
 
     public void deleteAllMessages() {
         log.info("Attempting to delete all the messages on: {}", this.queueUri);
-        sqsService.deleteAllMessagesFrom(queueUri);
+        try {
+            sqsService.deleteAllMessagesFrom(queueUri);
+        } catch (PurgeQueueInProgressException exception) {
+            // PurgeQueueInProgressException is related to the limitation of sqs allowing only one purge queue every 60 sec.
+            // We will ignore this exception and just let the test continue.
+            log.info(exception);
+        }
     }
 
     public void deleteMessage(SqsMessage sqsMessage) {
@@ -139,10 +146,10 @@ public abstract class AbstractMessageQueue {
 
     private boolean hasResolutionMessageNow(NemsResolutionMessage messageToCheck) {
         final List<SqsMessage> allMessages = sqsService.readMessagesFrom(this.queueUri);
+
         return allMessages.stream()
-                .map(QueueHelper::getNonSensitiveDataMessage)
-                .anyMatch(resolutionMessage ->
-                    QueueHelper.checkIfMessageIsExpectedMessage(resolutionMessage, messageToCheck));
+                .map(QueueHelper::mapToNemsResolutionMessage)
+                .anyMatch(nemsResolutionMessage -> nemsResolutionMessage.hasTheSameContentAs(messageToCheck));
     }
 
     protected void postAMessageWithAttributes(String message, Map<String, String> attributes) {

@@ -5,10 +5,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
-import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.configuration.TestData;
-import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
@@ -17,9 +14,7 @@ import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator
 import uk.nhs.prm.e2etests.tests.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import uk.nhs.prm.e2etests.timing.Sleeper;
-import uk.nhs.prm.e2etests.service.TransferTrackerService;
-import uk.nhs.prm.e2etests.utility.Resources;
+import uk.nhs.prm.e2etests.utility.ResourceUtility;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,34 +28,27 @@ import static java.lang.System.getenv;
 import static java.time.LocalDateTime.now;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RepoInPerformanceTest {
-    @Autowired
-    EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
+
+    private final EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
+    private final SimpleAmqpQueue inboundQueueFromMhs;
+    private final EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
 
     @Autowired
-    SimpleAmqpQueue inboundQueueFromMhs;
-
-    @Autowired
-    Sleeper sleeper;
-
-    @Autowired
-    TestConfiguration config;
-
-    @Autowired
-    TransferTrackerService transferTrackerService;
-
-    @Autowired
-    EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
-
-    @Autowired
-    ActiveRoleArn activeRoleArn;
-
-    @Autowired
-    QueueProperties queueProperties;
+    public RepoInPerformanceTest(
+            EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue,
+            SimpleAmqpQueue inboundQueueFromMhs,
+            EhrTransferServiceTransferCompleteOQ ehrTransferServiceCompleteOQ
+    ) {
+        this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
+        this.inboundQueueFromMhs = inboundQueueFromMhs;
+        this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceCompleteOQ;
+    }
 
     @Test
     public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
@@ -116,8 +104,7 @@ class RepoInPerformanceTest {
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
         var intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
-//            var inboundQueueFromMhs = new SimpleAmqpQueue(queueProperties, config);
-            var messageTemplate = Resources.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
+            var messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
             var counter = new AtomicInteger(0);
             String smallEhr;
 
@@ -132,7 +119,7 @@ class RepoInPerformanceTest {
                 System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
 
-                sleeper.sleep(intervalBetweenMessagesSentToMq);
+                sleepFor(intervalBetweenMessagesSentToMq);
             }
 
             System.out.println("All messages sent, about to close mhs producer...");
@@ -159,7 +146,7 @@ class RepoInPerformanceTest {
         inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
 
 
-        sleeper.sleep(100);
+        sleepFor(100);
         message.finish(LocalDateTime.now());
     }
 

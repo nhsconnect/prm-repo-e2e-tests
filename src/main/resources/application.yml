@@ -102,6 +102,8 @@ nhs:
 test:
   numberOfPerfNhsNumbers: ${NUMBER_OF_PERF_NHS_NUMBERS:40}
   performanceTestTimeout: ${PERFORMANCE_TEST_TIMEOUT:90}
+  pds:
+    username: false
 
 # Spring Properties
 spring:

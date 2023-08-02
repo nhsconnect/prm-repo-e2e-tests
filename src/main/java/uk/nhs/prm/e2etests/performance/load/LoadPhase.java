@@ -1,10 +1,9 @@
 package uk.nhs.prm.e2etests.performance.load;
 
-import uk.nhs.prm.e2etests.timing.Sleeper;
-import uk.nhs.prm.e2etests.timing.Timer;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+
+import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
 public class LoadPhase {
     private static final BigDecimal ONE_THOUSAND = new BigDecimal(1000);
@@ -45,15 +44,16 @@ public class LoadPhase {
      *
      * @return Time after delay applied
      */
-    public Long applyDelay(Timer timer, Sleeper sleeper, Long lastItemTimeMillis) {
-        var now = timer.milliseconds();
+    public Long applyDelay(Long lastItemTimeMillis) {
+        long now = System.currentTimeMillis();
+
         if (lastItemTimeMillis == null) {
             return now;
         }
         var elapsed = now - lastItemTimeMillis;
         int requiredDelay = (int) (targetDelayMilliseconds() - elapsed);
         if (requiredDelay > 0) {
-            return sleeper.sleep(requiredDelay);
+            return sleepFor(requiredDelay);
         }
         return now;
     }

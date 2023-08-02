@@ -1,61 +1,46 @@
 package uk.nhs.prm.e2etests.live_technical_test.inject;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
-import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorSuspensionsOQ;
-import uk.nhs.prm.e2etests.service.SqsService;
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.generateRandomOdsCode;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomOdsCode;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomNemsMessageId;
 import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
 
-@SpringBootTest(classes = {
-        MeshMailbox.class,
-        SyntheticPatientProperties.class
-})
+@SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnableScheduling
 public class InjectChangeOfGPMessageTest {
 
-    @Autowired
     private MeshMailbox meshMailbox;
-
-    @Autowired
     private SyntheticPatientProperties syntheticPatientProperties;
-
-    @Autowired
     private NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
 
     @Autowired
-    QueueProperties queueProperties;
-
-    @Autowired
-    ActiveRoleArn activeRoleArn;
-
-    @Autowired
-    SqsService sqsService;
-
-    @BeforeEach
-    public void setUp() {
-        nemsEventProcessorSuspensionsOQ = new NemsEventProcessorSuspensionsOQ(sqsService, queueProperties);
+    public InjectChangeOfGPMessageTest(
+            MeshMailbox meshMailbox,
+            SyntheticPatientProperties syntheticPatientProperties,
+            NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ
+    ) {
+        this.meshMailbox = meshMailbox;
+        this.syntheticPatientProperties = syntheticPatientProperties;
+        this.nemsEventProcessorSuspensionsOQ = nemsEventProcessorSuspensionsOQ;
     }
 
     @Test
     public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
         String nemsMessageId = randomNemsMessageId();
         String nhsNumber = syntheticPatientProperties.getSyntheticPatientInPreProd();
-        String previousGP = generateRandomOdsCode();
+        String previousGP = randomOdsCode();
 
         nemsEventProcessorSuspensionsOQ.deleteAllMessages();
 

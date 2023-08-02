@@ -1,20 +1,26 @@
 package uk.nhs.prm.e2etests.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.e2etests.annotation.Debt;
 import uk.nhs.prm.e2etests.model.request.HealthRecordRequest;
+import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 
-// TODO PRMT-3523 WHY ISN'T THIS A COMPONENT?
+@Service
 public class Gp2GpMessengerService {
 
     private final String apiKey;
     private final String rootUrl;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public Gp2GpMessengerService(String apiKey, String rootUrl) {
-        this.apiKey = apiKey;
-        this.rootUrl = rootUrl;
+    @Autowired
+    public Gp2GpMessengerService(Gp2gpMessengerProperties gp2gpMessengerProperties) {
+        this.apiKey = gp2gpMessengerProperties.getLiveTestApiKey();
+        this.rootUrl = gp2gpMessengerProperties.getGp2gpMessengerUrl();
     }
 
     public boolean isHealthRecordRequestSentSuccessful(String nhsNumber, String repoOdsCode, String repoAsid, String previousPractiseOdsCode, String conversationId) {

@@ -1,9 +1,7 @@
 package uk.nhs.prm.e2etests.live_technical_test.day1;
 
-import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
+import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
-import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.live_technical_test.helpers.TestPatientValidator;
 import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceSuspensionsQueue;
@@ -13,51 +11,40 @@ import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uk.nhs.prm.e2etests.service.SqsService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@TestPropertySource(properties = {"test.pds.username=live-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ChangeOfGPMessageReceivedTest {
     private SuspensionServiceSuspensionsQueue suspensionServiceSuspensionsQueue;
     private TestPatientValidator patientValidator;
     private Gp2GpMessengerService gp2GpMessengerService;
-    private Gp2gpMessengerProperties gp2GpMessengerProperties;
-    private QueueProperties queueProperties;
     private NhsProperties nhsProperties;
-    private PdsAdaptorProperties pdsAdaptorProperties;
-
-    private SqsService sqsService;
+    private PdsAdaptorService pdsAdaptorService;
 
     @Autowired
     public ChangeOfGPMessageReceivedTest(
             TestPatientValidator testPatientValidator,
-            Gp2gpMessengerProperties gp2GpMessengerProperties,
-            QueueProperties queueProperties,
             NhsProperties nhsProperties,
-            PdsAdaptorProperties pdsAdaptorProperties,
-            SqsService sqsService
+            PdsAdaptorService pdsAdaptorService,
+            Gp2GpMessengerService gp2GpMessengerService,
+            SuspensionServiceSuspensionsQueue suspensionServiceSuspensionsQueue
     ) {
         this.patientValidator = testPatientValidator;
-        this.gp2GpMessengerProperties = gp2GpMessengerProperties;
-        this.queueProperties = queueProperties;
         this.nhsProperties = nhsProperties;
-        this.pdsAdaptorProperties = pdsAdaptorProperties;
-        this.sqsService = sqsService;
-    }
-
-    @BeforeEach
-    public void setUp() {
-        suspensionServiceSuspensionsQueue = new SuspensionServiceSuspensionsQueue(sqsService, queueProperties);
-        gp2GpMessengerService = new Gp2GpMessengerService(gp2GpMessengerProperties.getLiveTestApiKey(), gp2GpMessengerProperties.getGp2gpMessengerUrl());
+        this.pdsAdaptorService = pdsAdaptorService;
+        this.gp2GpMessengerService = gp2GpMessengerService;
+        this.suspensionServiceSuspensionsQueue = suspensionServiceSuspensionsQueue;
     }
 
     @Test
     void shouldHaveReceivedSingleSuspensionChangeOfGpMessageRelatedToTestPatient() {
         var safeListPatients = nhsProperties.getSafeListedPatientList();
+
+        System.out.println(safeListPatients);
 
         if (safeListPatients.size() > 0) {
 
@@ -90,18 +77,6 @@ class ChangeOfGPMessageReceivedTest {
     }
 
     private PdsAdaptorResponse getPatientStatusOnPDSForSyntheticPatient(String testPatientNhsNumber) {
-        String pdsAdaptorUsername = "live-test";
-        return fetchPdsPatientStatus(pdsAdaptorUsername, testPatientNhsNumber);
-    }
-
-    private PdsAdaptorResponse fetchPdsPatientStatus(String pdsAdaptorUsername, String testPatientNhsNumber) {
-
-        var pds = new PdsAdaptorService(
-                pdsAdaptorUsername,
-                pdsAdaptorProperties.getLiveTestApiKey(),
-                pdsAdaptorProperties.getPdsAdaptorUrl()
-        );
-
-        return pds.getSuspendedPatientStatus(testPatientNhsNumber);
+        return pdsAdaptorService.getSuspendedPatientStatus(testPatientNhsNumber);
     }
 }
