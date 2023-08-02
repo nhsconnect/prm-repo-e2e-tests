@@ -30,13 +30,13 @@ public class RepoInPerformanceChartGenerator {
     }
 
     private static XYSeries createThroughputDataSeries(List<RepoInPerfMessageWrapper> messagesProcessed) {
-        var throughputBucketSeconds = 1;
-        var series = new XYSeries("Throughput in events per second");
-        var processingStartTime = messagesProcessed.get(0).getStartedAt();
-        var bucketStartTime = processingStartTime;
-        var bucketEndTime = bucketStartTime;
-        var bucketFinishedCount = 0;
-        for (var message : messagesProcessed) {
+        int throughputBucketSeconds = 1;
+        XYSeries series = new XYSeries("Throughput in events per second");
+        LocalDateTime processingStartTime = messagesProcessed.get(0).getStartedAt();
+        LocalDateTime bucketStartTime = processingStartTime;
+        LocalDateTime bucketEndTime = bucketStartTime;
+        int bucketFinishedCount = 0;
+        for (RepoInPerfMessageWrapper message : messagesProcessed) {
             while (bucketEndTime.isBefore(message.getFinishedAt())) {
                 addThroughputToSeries(series, throughputBucketSeconds, bucketEndTime, bucketFinishedCount, processingStartTime);
                 bucketStartTime = bucketEndTime;

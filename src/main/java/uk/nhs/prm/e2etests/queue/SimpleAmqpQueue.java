@@ -1,24 +1,20 @@
 package uk.nhs.prm.e2etests.queue;
 
+import com.swiftmq.amqp.v100.client.*;
 import com.swiftmq.amqp.v100.generated.messaging.message_format.ApplicationProperties;
 import com.swiftmq.amqp.v100.generated.messaging.message_format.AmqpValue;
-import com.swiftmq.amqp.v100.client.UnsupportedProtocolVersionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.nhs.prm.e2etests.property.QueueProperties;
-import com.swiftmq.amqp.v100.client.AuthenticationException;
 import com.swiftmq.amqp.v100.messaging.AMQPMessage;
-import com.swiftmq.amqp.v100.client.AMQPException;
 import org.springframework.stereotype.Component;
-import com.swiftmq.amqp.v100.client.Connection;
 import com.swiftmq.amqp.v100.types.AMQPString;
-import com.swiftmq.amqp.v100.client.Producer;
 import com.swiftmq.amqp.v100.types.AMQPType;
 import com.swiftmq.net.JSSESocketFactory;
-import com.swiftmq.amqp.v100.client.QoS;
 import com.swiftmq.amqp.AMQPContext;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class SimpleAmqpQueue {
@@ -38,11 +34,11 @@ public class SimpleAmqpQueue {
 
     public void sendMessage(String messageBody, String correlationId) {
         try {
-            var map = new HashMap<AMQPType, AMQPType>();
+            Map<AMQPType, AMQPType> map = new HashMap<>();
             map.put(new AMQPString("correlation-id"), new AMQPString(correlationId));
-            var properties = new ApplicationProperties(map);
+            ApplicationProperties properties = new ApplicationProperties(map);
 
-            var msg = new AMQPMessage();
+            AMQPMessage msg = new AMQPMessage();
             msg.setApplicationProperties(properties);
             msg.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
 
@@ -65,13 +61,13 @@ public class SimpleAmqpQueue {
     private Producer createProducer() {
         String activeMqHostname = queueProperties.getAmqpEndpoint().getHostname();
         int activeMqPort = queueProperties.getAmqpEndpoint().getPort();
-        var context = new AMQPContext(AMQPContext.CLIENT);
-        var connection = new Connection(context, activeMqHostname, activeMqPort, messageQueueUsername, messageQueuePassword);
+        AMQPContext context = new AMQPContext(AMQPContext.CLIENT);
+        Connection connection = new Connection(context, activeMqHostname, activeMqPort, messageQueueUsername, messageQueuePassword);
         connection.setSocketFactory(new JSSESocketFactory());
 
         try {
             connection.connect();
-            var session = connection.createSession(100, 100);
+            Session session = connection.createSession(100, 100);
             return session.createProducer("inbound", QoS.AT_MOST_ONCE);
         }
         catch (IOException | AMQPException | AuthenticationException | UnsupportedProtocolVersionException e) {

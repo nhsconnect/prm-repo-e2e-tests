@@ -14,31 +14,31 @@ class RoundRobinPoolTest {
 
     @Test
     public void shouldGiveFirstItemFirst() {
-        var pool = new RoundRobinPool<>(integers);
+        RoundRobinPool<Integer> pool = new RoundRobinPool<>(integers);
 
-        var first = pool.next();
+        Integer first = pool.next();
 
         assertThat(first).isEqualTo(1);
     }
 
     @Test
     public void shouldGiveSecondItemSecond() {
-        var pool = new RoundRobinPool<>(integers);
+        RoundRobinPool<Integer> pool = new RoundRobinPool<>(integers);
 
         pool.next();
-        var second = pool.next();
+        Integer second = pool.next();
 
         assertThat(second).isEqualTo(2);
     }
 
     @Test
     public void shouldLoopRoundToFirstItemAgainAfterPoolExhausted() {
-        var poolOfThree = new RoundRobinPool<>(integers);
+        RoundRobinPool<Integer> poolOfThree = new RoundRobinPool<>(integers);
 
         poolOfThree.next();
         poolOfThree.next();
-        var third = poolOfThree.next();
-        var fourth = poolOfThree.next();
+        Integer third = poolOfThree.next();
+        Integer fourth = poolOfThree.next();
 
         assertThat(third).isEqualTo(3);
         assertThat(fourth).isEqualTo(1);

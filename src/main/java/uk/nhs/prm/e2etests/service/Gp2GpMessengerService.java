@@ -24,11 +24,11 @@ public class Gp2GpMessengerService {
     }
 
     public boolean isHealthRecordRequestSentSuccessful(String nhsNumber, String repoOdsCode, String repoAsid, String previousPractiseOdsCode, String conversationId) {
-        var healthRecordRequestUrl = buildHealthRecordUrl(rootUrl, nhsNumber);
+        String healthRecordRequestUrl = buildHealthRecordUrl(rootUrl, nhsNumber);
         try {
-            var healthRecordRequest = new HealthRecordRequest(repoOdsCode, repoAsid, previousPractiseOdsCode, conversationId);
+            HealthRecordRequest healthRecordRequest = new HealthRecordRequest(repoOdsCode, repoAsid, previousPractiseOdsCode, conversationId);
             System.out.printf("Sending health record request to gp2gp messenger: %s. Request body: %s%n", healthRecordRequestUrl, healthRecordRequest);
-            var exchange = restTemplate.exchange(healthRecordRequestUrl, HttpMethod.POST, new HttpEntity<>(healthRecordRequest, createHeaders(apiKey)), String.class);
+            ResponseEntity<String> exchange = restTemplate.exchange(healthRecordRequestUrl, HttpMethod.POST, new HttpEntity<>(healthRecordRequest, createHeaders(apiKey)), String.class);
             System.out.println("Successfully sent ehr request to gp2gp messenger");
             return exchange.getStatusCode().is2xxSuccessful();
         } catch (HttpStatusCodeException e) {
@@ -38,7 +38,7 @@ public class Gp2GpMessengerService {
     }
 
     public void getPdsRecordViaHl7v3(String nhsNumber) {
-        var requestUrl = buildPdsUrl(rootUrl, nhsNumber);
+        String requestUrl = buildPdsUrl(rootUrl, nhsNumber);
         try {
             System.out.println("Sending pds hl7 request to gp2gp messenger");
             restTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(apiKey)), String.class);

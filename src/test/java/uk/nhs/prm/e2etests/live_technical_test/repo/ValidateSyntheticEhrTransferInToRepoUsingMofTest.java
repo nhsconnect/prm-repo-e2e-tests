@@ -5,6 +5,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
@@ -48,13 +49,13 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
 
     @Test
     void shouldUpdateMofToRepoAndSuccessfullyRetrieveEhrFromPreviousPractise() {
-        var testPatientNhsNumber = TestParameters.fetchTestParameter("LIVE_TECHNICAL_TEST_NHS_NUMBER");
-        var testPatientPreviousGp = TestParameters.fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
+        String testPatientNhsNumber = TestParameters.fetchTestParameter("LIVE_TECHNICAL_TEST_NHS_NUMBER");
+        String testPatientPreviousGp = TestParameters.fetchTestParameter("LIVE_TECHNICAL_TEST_PREVIOUS_GP");
 
         assertThat(patientValidator.isIncludedInTheTest(testPatientNhsNumber)).isTrue();
         updateMofToRepoOdsCode(testPatientNhsNumber);
 
-        var triggerMessage = new RepoIncomingMessageBuilder()
+        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
                 .withNhsNumber(testPatientNhsNumber)
                 .withEhrSourceGpOdsCode(testPatientPreviousGp)
                 .withEhrDestination(repoOdsCode)
@@ -76,14 +77,14 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
         if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             System.out.println("Not sending update request because managing organisation already set to repo ods code");
         } else {
-            var updatedMofResponse = pdsAdaptorService.updateManagingOrganisation(testPatientNhsNumber, repoOdsCode, pdsResponse.getRecordETag());
+            PdsAdaptorResponse updatedMofResponse = pdsAdaptorService.updateManagingOrganisation(testPatientNhsNumber, repoOdsCode, pdsResponse.getRecordETag());
             System.out.println("Confirming patient managing organisation is set to repo ods code");
             assertThat(updatedMofResponse.getManagingOrganisation()).isEqualTo(repoOdsCode);
         }
     }
 
     private PdsAdaptorResponse getPdsAdaptorResponse(String testPatientNhsNumber) {
-        var pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(testPatientNhsNumber);
+        PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(testPatientNhsNumber);
         System.out.println("Confirming patient status is suspended");
         assertThat(pdsResponse.getIsSuspended()).isTrue();
         return pdsResponse;

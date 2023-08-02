@@ -32,7 +32,7 @@ class LoadRegulatingPoolTest {
     public void shouldProvideFirstItemWithoutDelay() {
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(1, "1")));
 
-        var item = pool.next();
+        PhasedInteger item = pool.next();
 
         assertThat(item).isEqualTo(new PhasedInteger(1));
         verify(sleeper, never()).sleepFor(anyInt());
@@ -40,7 +40,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateLoad() {
-        var ratePerSecond = "1";
+        String ratePerSecond = "1";
         long startTimeMillis = 2000L;
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
@@ -58,7 +58,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldProvideSubsequentItemsAfterAppropriateSleepsToAchieveFlatRateLoad() {
-        var ratePerSecond = "1";
+        String ratePerSecond = "1";
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
 
@@ -84,7 +84,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldBeFinishedIfSinglePhaseCompleted() {
-        var ratePerSecond = "1";
+        String ratePerSecond = "1";
 
         int phaseCount = 3;
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(phaseCount, ratePerSecond)));
@@ -101,7 +101,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateAboveOnePerSecond() {
-        var ratePerSecond = "10";
+        String ratePerSecond = "10";
         long startTimeMillis = 3000L;
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
@@ -122,7 +122,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldUseNotSleepIfAlreadyElapsedMoreThanRequiredDelayForRate() {
-        var ratePerSecond = "10";
+        String ratePerSecond = "10";
         long startTimeMillis = 1000L;
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
@@ -142,7 +142,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateSlowerThanOnePerSecond() {
-        var oneEvery100SecondsRatePerSecond = "0.01";
+        String oneEvery100SecondsRatePerSecond = "0.01";
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, oneEvery100SecondsRatePerSecond)));
 
@@ -160,7 +160,7 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldMoveToSecondPhaseAndOnlyBeFinishedIfThatRunsOut() {
-        var ratePerSecond = "1";
+        String ratePerSecond = "1";
 
         pool = createPool(integers, timer, sleeper, of(
                 LoadPhase.atFlatRate(3, ratePerSecond),
@@ -182,8 +182,8 @@ class LoadRegulatingPoolTest {
 
     @Test
     public void shouldMoveToSecondPhaseAndUseItsRateAfterFirstPhaseCompletes() {
-        var initialRatePerSecond = "1";
-        var secondRatePerSecondFor200msDelay = "5";
+        String initialRatePerSecond = "1";
+        String secondRatePerSecondFor200msDelay = "5";
         pool = createPool(integers, timer, sleeper, of(
                 LoadPhase.atFlatRate(2, initialRatePerSecond),
                 LoadPhase.atFlatRate(2, secondRatePerSecondFor200msDelay)

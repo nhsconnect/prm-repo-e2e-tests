@@ -42,7 +42,7 @@ public class PdsAdaptorService {
     }
 
     public PdsAdaptorResponse getSuspendedPatientStatus(String nhsNumber) {
-        var patientUrl = buildUrl(patientRootUrl, nhsNumber);
+        String patientUrl = buildUrl(patientRootUrl, nhsNumber);
         log.info("Requesting patient status from pds adaptor: {}", patientRootUrl);
         ResponseEntity<PdsAdaptorResponse> response =
             restTemplate.exchange(patientUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(username, apiKey)), PdsAdaptorResponse.class);
@@ -51,7 +51,7 @@ public class PdsAdaptorService {
     }
 
     public PdsAdaptorResponse updateManagingOrganisation(String nhsNumber, String previousGp, String recordETag) {
-        var patientUrl = buildUrl(patientRootUrl, nhsNumber);
+        String patientUrl = buildUrl(patientRootUrl, nhsNumber);
         PdsAdaptorRequest request = new PdsAdaptorRequest(previousGp, recordETag);
         log.info("Request to update patient : url - {} , request - {}", patientUrl, request);
         ResponseEntity<PdsAdaptorResponse> response =

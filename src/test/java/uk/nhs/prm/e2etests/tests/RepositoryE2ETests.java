@@ -126,7 +126,7 @@ class RepositoryE2ETests {
     @Test
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev")
     void shouldIdentifyEhrRequestAsEhrOutMessage() {
-        var ehrRequest = ResourceUtility.readTestResourceFileFromEhrDirectory("ehr-request");
+        String ehrRequest = ResourceUtility.readTestResourceFileFromEhrDirectory("ehr-request");
 
         String conversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
         inboundQueueFromMhs.sendMessage(ehrRequest, conversationId);
@@ -271,11 +271,11 @@ class RepositoryE2ETests {
     @Test
     @Disabled("This test was failing before refactoring. The cause seems to be related to EMIS instance not working")
     void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
-        var largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(testConfiguration);
+        Patient largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(testConfiguration);
 
         setManagingOrganisationToRepo(largeEhrAtEmisWithRepoMof.nhsNumber());
 
-        var triggerMessage = new RepoIncomingMessageBuilder()
+        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhrAtEmisWithRepoMof)
                 .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
                 .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
@@ -334,7 +334,7 @@ class RepositoryE2ETests {
     @EnabledIfEnvironmentVariable(named = "NHS_ENVIRONMENT", matches = "dev", disabledReason = "We have only one set of variants for large ehr")
     @EnabledIfEnvironmentVariable(named = "RUN_ALL_VARIANTS", matches = "true", disabledReason = "Too slow / problematic for on-commit run")
     void shouldTransferRemainingSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
-        var triggerMessage = new RepoIncomingMessageBuilder()
+        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(largeEhr.patient())
                 .withEhrSourceGp(sourceSystem)
                 .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
@@ -372,16 +372,16 @@ class RepositoryE2ETests {
     @Disabled("Running manually in dev environment.")
     @Test
     void shouldHandleMultipleEhrsAtOnceLoadTest_PerfTest() {
-        var conversationIdsList = new ArrayList<String>();
+        List<String> conversationIdsList = new ArrayList<>();
 
         Instant requestedAt = null;
-        var iterationIndex = 1; // TODO PRMT-3574 - A manually incremented index within a for loop? Seems off to me.
+        int iterationIndex = 1; // TODO PRMT-3574 - A manually incremented index within a for loop? Seems off to me.
         for (Arguments sourceSystemAndEhr : loadTestScenarios().collect(toList())) {
-            var sourceSystem = (Gp2GpSystem) sourceSystemAndEhr.get()[0];
-            var ehr = (LargeEhrVariant) sourceSystemAndEhr.get()[1];
-            var patient = ehr.patient();
+            Gp2GpSystem sourceSystem = (Gp2GpSystem) sourceSystemAndEhr.get()[0];
+            LargeEhrVariant ehr = (LargeEhrVariant) sourceSystemAndEhr.get()[1];
+            Patient patient = ehr.patient();
 
-            var triggerMessage = new RepoIncomingMessageBuilder()
+            RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
                     .withPatient(ehr.patient())
                     .withEhrSourceGp(sourceSystem)
                     .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
@@ -409,9 +409,9 @@ class RepositoryE2ETests {
         checkThatTransfersHaveCompletedSuccessfully(conversationIdsList, requestedAt);
     }
 
-    private void checkThatTransfersHaveCompletedSuccessfully(ArrayList<String> conversationIdsList, Instant timeLastRequestSent) {
+    private void checkThatTransfersHaveCompletedSuccessfully(List<String> conversationIdsList, Instant timeLastRequestSent) {
         Instant finishedAt;
-        for (var conversationId : conversationIdsList) {
+        for (String conversationId : conversationIdsList) {
             assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId, 5, TimeUnit.MINUTES));
 
             // get actual transfer time from completion message?
@@ -450,9 +450,9 @@ class RepositoryE2ETests {
     @ParameterizedTest
     @MethodSource("properWorkingFoundationSupplierSystems")
     void shouldUpdateDbStatusAndPublishToTransferCompleteQueueWhenReceivedNackFromGppSystems(String sourceSystem) {
-        final var REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
+        final String REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE = "19";
 
-        var triggerMessage = new RepoIncomingMessageBuilder()
+        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
                 .withPatient(Patient.SUSPENDED_WITH_EHR_AT_TPP)
                 .withEhrSourceGpOdsCode(sourceSystem)
                 .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
@@ -481,7 +481,7 @@ class RepositoryE2ETests {
     private void setManagingOrganisationToRepo(String nhsNumber) {
         var pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
         assertThat(pdsResponse.getIsSuspended()).as("%s should be suspended so that MOF is respected", nhsNumber).isTrue();
-        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
+        String repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
         if (!repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorService.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.getRecordETag());
         }

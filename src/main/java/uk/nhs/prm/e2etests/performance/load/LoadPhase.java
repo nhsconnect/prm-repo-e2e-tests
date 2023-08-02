@@ -50,7 +50,7 @@ public class LoadPhase {
         if (lastItemTimeMillis == null) {
             return now;
         }
-        var elapsed = now - lastItemTimeMillis;
+        long elapsed = now - lastItemTimeMillis;
         int requiredDelay = (int) (targetDelayMilliseconds() - elapsed);
         if (requiredDelay > 0) {
             return sleepFor(requiredDelay);

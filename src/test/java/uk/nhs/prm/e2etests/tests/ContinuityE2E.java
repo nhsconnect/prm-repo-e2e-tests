@@ -19,6 +19,7 @@ import uk.nhs.prm.e2etests.model.nems.MofUpdatedMessageNems;
 import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
 import uk.nhs.prm.e2etests.model.nems.NoLongerSuspendedMessageNems;
+import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceDeceasedPatientQueue;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceMofNotUpdatedQueue;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceMofUpdatedQueue;
@@ -130,7 +131,7 @@ class ContinuityE2E {
     public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
-        var now = now();
+        String now = now();
         String previousGp = randomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
@@ -147,7 +148,7 @@ class ContinuityE2E {
     public void shouldPutAMessageForASuspendedPatientWithSafeListedODSCodeOnRepoIncomingWhenTheToggleIsTrue() {
         String nemsMessageId = randomNemsMessageId();
         String safeListedOdsCode = EMIS_PTL_INT;
-        var now = now();
+        String now = now();
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", SUSPENDED_PATIENT_NHS_NUMBER, nemsMessageId, safeListedOdsCode, now);
 
         setManagingOrganisationToEMISOdsCode(SUSPENDED_PATIENT_NHS_NUMBER);
@@ -163,7 +164,7 @@ class ContinuityE2E {
     public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = randomOdsCode();
-        var now = now();
+        String now = now();
         String currentlyRegisteredPatientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp, now);
@@ -178,9 +179,9 @@ class ContinuityE2E {
     @Test
     @Order(5)
     public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
-        var nemsMessageId = randomNemsMessageId();
+        String nemsMessageId = randomNemsMessageId();
 
-        var nemsNonSuspension = createNemsEventFromTemplate(
+        NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate(
                 "change-of-gp-non-suspension.xml", randomNhsNumber(), nemsMessageId, now());
 
         meshMailbox.postMessage(nemsNonSuspension);
@@ -208,8 +209,8 @@ class ContinuityE2E {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = randomOdsCode();
 
-        var suspensionTime = now();
-        var nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml",
+        String suspensionTime = now();
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml",
                 syntheticPatientProperties.getNonSyntheticPatientWithoutGp(),
                 nemsMessageId, previousGp, suspensionTime);
 
@@ -225,17 +226,17 @@ class ContinuityE2E {
     public void shouldMoveDeceasedPatientEventToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = syntheticPatientProperties.getDeceasedPatient();
-        var eventTime = now();
+        String eventTime = now();
         String previousGp = randomOdsCode();
 
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
-        var deceasedEvent = createNemsEventFromTemplate("change-of-gp-suspension.xml",
+        NemsEventMessage deceasedEvent = createNemsEventFromTemplate("change-of-gp-suspension.xml",
                 patientNhsNumber, nemsMessageId, previousGp, eventTime);
 
         meshMailbox.postMessage(deceasedEvent);
 
-        var expectedMessageOnQueue = new DeceasedPatientMessageNems(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
+        DeceasedPatientMessageNems expectedMessageOnQueue = new DeceasedPatientMessageNems(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
 
         assertThat(suspensionServiceDeceasedPatientQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
@@ -243,13 +244,13 @@ class ContinuityE2E {
     @Test
     @Order(7)
     public void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
-        var nemsMessageId = randomNemsMessageId();
+        String nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
-        var reregistrationTime = now();
+        String reregistrationTime = now();
         storeEhrInRepositoryFor(patientNhsNumber);
         activeSuspensionsService.save(new ActiveSuspensionsMessage(patientNhsNumber, randomOdsCode(), now()));
 
-        var reRegistration = createNemsEventFromTemplate(
+        NemsEventMessage reRegistration = createNemsEventFromTemplate(
                 "change-of-gp-re-registration.xml", patientNhsNumber, nemsMessageId, reregistrationTime);
 
         meshMailbox.postMessage(reRegistration);
@@ -276,7 +277,7 @@ class ContinuityE2E {
     void shouldSaveActiveSuspensionInDbWhenMofUpdatedToPreviousGp() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
-        var now = now();
+        String now = now();
         String previousGp = randomOdsCode();
         System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
 
@@ -297,8 +298,8 @@ class ContinuityE2E {
     }
 
     private void setManagingOrganisationToEMISOdsCode(String nhsNumber) {
-        var pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
-        var repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
+        PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
+        String repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
         if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorService.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.getRecordETag());
         }

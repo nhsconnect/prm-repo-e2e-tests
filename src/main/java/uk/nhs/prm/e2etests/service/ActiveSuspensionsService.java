@@ -1,6 +1,7 @@
 package uk.nhs.prm.e2etests.service;
 
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import uk.nhs.prm.e2etests.repository.ActiveSuspensionsDatabaseRepository;
 import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
 
@@ -15,7 +16,7 @@ public class ActiveSuspensionsService {
     }
 
     public boolean nhsNumberExists(String conversationId) {
-        var response = activeSuspensionsDatabaseRepository.queryWithNhsNumber(conversationId);
+        GetItemResponse response = activeSuspensionsDatabaseRepository.queryWithNhsNumber(conversationId);
         if (response != null) {
             return true;
         }
