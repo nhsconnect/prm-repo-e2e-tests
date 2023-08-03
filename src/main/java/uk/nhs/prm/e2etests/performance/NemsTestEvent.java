@@ -1,11 +1,12 @@
 package uk.nhs.prm.e2etests.performance;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import uk.nhs.prm.e2etests.performance.load.LoadPhase;
-import uk.nhs.prm.e2etests.performance.load.Phased;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
-import uk.nhs.prm.e2etests.utility.NemsEventFactory;
+import uk.nhs.prm.e2etests.performance.load.LoadPhase;
+import uk.nhs.prm.e2etests.performance.load.Phased;
+import uk.nhs.prm.e2etests.utility.NemsEventGenerator;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -15,12 +16,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomOdsCode;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
 
 @Log4j2
 public class NemsTestEvent implements Phased {
     private final String nemsMessageId;
     private final String nhsNumber;
+    @Getter
     private final boolean suspension;
 
     private String meshMessageId;
@@ -29,7 +31,7 @@ public class NemsTestEvent implements Phased {
     private boolean isFinished = false;
     private long processingTimeMs;
 
-    private List<String> warnings = new ArrayList<>();
+    private final List<String> warnings = new ArrayList<>();
     private LocalDateTime finishedAt;
 
     private NemsTestEvent(String nemsMessageId, String nhsNumber, boolean suspension) {
@@ -131,24 +133,20 @@ public class NemsTestEvent implements Phased {
                 '}';
     }
 
-    public boolean isSuspension() {
-        return suspension;
-    }
-
     public NemsEventMessage createMessage() {
         String previousGP = randomOdsCode();
         NemsEventMessage nemsSuspension;
         String timestamp = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
 
         if (isSuspension()) {
-            nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-suspension.xml",
+            nemsSuspension = NemsEventGenerator.createNemsEventFromTemplate("change-of-gp-suspension.xml",
                     nhsNumber(),
                     nemsMessageId(),
                     previousGP,
                     timestamp);
         }
         else {
-            nemsSuspension = NemsEventFactory.createNemsEventFromTemplate("change-of-gp-non-suspension.xml",
+            nemsSuspension = NemsEventGenerator.createNemsEventFromTemplate("change-of-gp-non-suspension.xml",
                     nhsNumber(),
                     nemsMessageId(),
                     timestamp);

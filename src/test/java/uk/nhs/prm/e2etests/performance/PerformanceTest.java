@@ -9,18 +9,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.test.context.TestPropertySource;
-import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.configuration.ResourceConfiguration;
+import uk.nhs.prm.e2etests.configuration.TestConfiguration;
+import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.NhsNumberTestData;
+import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
+import uk.nhs.prm.e2etests.performance.load.LoadRegulatingPool;
+import uk.nhs.prm.e2etests.performance.load.MixerPool;
+import uk.nhs.prm.e2etests.performance.load.NemsTestEventPool;
+import uk.nhs.prm.e2etests.performance.load.SuspensionCreatorPool;
 import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.mesh.MeshMailbox;
-import uk.nhs.prm.e2etests.service.PdsAdaptorService;
-import uk.nhs.prm.e2etests.performance.load.*;
-import uk.nhs.prm.e2etests.tests.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
-import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceMofUpdatedQueue;
+import uk.nhs.prm.e2etests.service.PdsAdaptorService;
+import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,12 +33,12 @@ import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomNhsNumber;
 import static uk.nhs.prm.e2etests.performance.NemsTestEvent.nonSuspensionEvent;
 import static uk.nhs.prm.e2etests.performance.load.LoadPhase.atFlatRate;
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateProcessingDurationScatterPlot;
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateThroughputPlot;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNhsNumber;
 
 @Log4j2
 @SpringBootTest
@@ -79,7 +82,7 @@ public class PerformanceTest {
     @Disabled("only used for perf test development not wanted on actual runs")
     @Test
     void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
-        RoundRobinPool<String> nhsNumberPool = new RoundRobinPool<>(nhsNumbers.getNhsNumbers());
+        RoundRobinPool<String> nhsNumberPool = new RoundRobinPool<>(nhsNumbers.nhsNumbers());
         SuspensionCreatorPool suspensions = new SuspensionCreatorPool(nhsNumberPool);
 
         NemsTestEvent nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
@@ -99,7 +102,7 @@ public class PerformanceTest {
         final PerformanceTestRecorder recorder = new PerformanceTestRecorder();
 
         MixerPool<NemsTestEvent> eventSource = createMixedSuspensionsAndNonSuspensionsTestEventSource(SUSPENSION_MESSAGES_PER_DAY, NON_SUSPENSION_MESSAGES_PER_DAY);
-        LoadRegulatingPool<NemsTestEvent> loadSource = new LoadRegulatingPool<>(eventSource, testConfiguration.performanceTestLoadPhases(List.<LoadPhase>of(
+        LoadRegulatingPool<NemsTestEvent> loadSource = new LoadRegulatingPool<>(eventSource, testConfiguration.performanceTestLoadPhases(List.of(
                 atFlatRate(10, "1"),
                 atFlatRate(10, "2"))));
 
@@ -135,7 +138,7 @@ public class PerformanceTest {
 
         listener.onStartingTestItem(testEvent);
 
-        String meshMessageId = meshMailbox.postMessage(nemsSuspension);
+        String meshMessageId = meshMailbox.sendMessage(nemsSuspension);
 
         testEvent.started(meshMessageId);
 
@@ -153,7 +156,7 @@ public class PerformanceTest {
     }
 
     private RoundRobinPool<String> suspendedNhsNumbers() {
-        List<String> suspendedNhsNumbers = nhsNumbers.getNhsNumbers();
+        List<String> suspendedNhsNumbers = nhsNumbers.nhsNumbers();
         checkSuspended(suspendedNhsNumbers);
         return new RoundRobinPool(suspendedNhsNumbers);
     }
@@ -163,7 +166,7 @@ public class PerformanceTest {
             for (String nhsNumber: suspendedNhsNumbers) {
                 PdsAdaptorResponse patientStatus = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
                 log.info("{}:{}", nhsNumber, patientStatus);
-                assertTrue(patientStatus.getIsSuspended());
+                assertTrue(patientStatus.isSuspended());
             }
         }
     }

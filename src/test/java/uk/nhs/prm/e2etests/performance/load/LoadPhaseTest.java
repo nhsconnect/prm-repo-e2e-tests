@@ -4,11 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.prm.e2etests.utility.ThreadUtility;
 import uk.nhs.prm.e2etests.timing.Timer;
+import uk.nhs.prm.e2etests.utility.ThreadUtility;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -21,7 +20,7 @@ class LoadPhaseTest {
     private Timer timer;
 
     @Test
-    public void applyDelayShouldNotDelayIfThereIsNoPreviousTimeThatDelayApplied_WhichCouldBeMovingToNextPhaseWhichIsWhyTheLastTimeStateIsExternalised() {
+    void applyDelayShouldNotDelayIfThereIsNoPreviousTimeThatDelayApplied_WhichCouldBeMovingToNextPhaseWhichIsWhyTheLastTimeStateIsExternalised() {
         LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         loadPhase.applyDelay(null);
@@ -30,7 +29,7 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldReturnTimeNowIfNoDelayApplied() {
+    void applyDelayShouldReturnTimeNowIfNoDelayApplied() {
         LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         when(timer.milliseconds()).thenReturn(123L);
@@ -41,7 +40,7 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldSleepTheFullRequiredDelayTimeIfNoTimeHasElapsedSinceLastTime() {
+    void applyDelayShouldSleepTheFullRequiredDelayTimeIfNoTimeHasElapsedSinceLastTime() {
         LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         when(timer.milliseconds()).thenReturn(1000L);
@@ -56,7 +55,7 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldReturnTheTimeAfterDelayIfSleptAsReturnedByTheSleeper() {
+    void applyDelayShouldReturnTheTimeAfterDelayIfSleptAsReturnedByTheSleeper() {
         LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         when(timer.milliseconds()).thenReturn(1000L);
@@ -72,7 +71,7 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldMakeUpTheTimeAppropriatelyIfSomeTimeElapsedFromLastTime() {
+    void applyDelayShouldMakeUpTheTimeAppropriatelyIfSomeTimeElapsedFromLastTime() {
         LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         when(timer.milliseconds()).thenReturn(1000L);
@@ -89,7 +88,7 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldWorkForRatesHigherThanOnePerSecond() {
+    void applyDelayShouldWorkForRatesHigherThanOnePerSecond() {
         LoadPhase loadPhase = LoadPhase.atFlatRate(5, "20"); // 20 per second, every 50 ms
 
         when(timer.milliseconds()).thenReturn(0L);
@@ -112,7 +111,7 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldWorkForRatesLowerThanOnePerSecond() {
+    void applyDelayShouldWorkForRatesLowerThanOnePerSecond() {
         LoadPhase loadPhase = LoadPhase.atFlatRate(5, "0.02"); // one every 50 seconds
 
         when(timer.milliseconds()).thenReturn(0L);
@@ -135,7 +134,7 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldApplyNoDelayIfAlreadyTooSlowForDesiredRate() {
+    void applyDelayShouldApplyNoDelayIfAlreadyTooSlowForDesiredRate() {
         LoadPhase loadPhase = LoadPhase.atFlatRate(5, "10");
 
         when(timer.milliseconds()).thenReturn(0L);

@@ -1,31 +1,20 @@
 package uk.nhs.prm.e2etests.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.GsonBuilder;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.Objects;
 
-@Data
-@NoArgsConstructor
-@Builder(toBuilder = true)
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class ActiveSuspensionsMessage {
-
-    private String nhsNumber;
-    private String previousOdsCode;
-    private String nemsLastUpdatedDate;
-
-    public ActiveSuspensionsMessage(@JsonProperty("nhsNumber") String nhsNumber,
-                                    @JsonProperty("previousOdsCode") String previousOdsCode,
-                                    @JsonProperty("nemsLastUpdatedDate") String nemsLastUpdatedDate) {
-        this.nhsNumber = nhsNumber;
-        this.previousOdsCode = previousOdsCode;
-        this.nemsLastUpdatedDate = nemsLastUpdatedDate;
+public record ActiveSuspensionsMessage(String nhsNumber,
+                                       String previousOdsCode,
+                                       String nemsLastUpdatedDate) {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ActiveSuspensionsMessage that = (ActiveSuspensionsMessage) o;
+        return Objects.equals(nhsNumber, that.nhsNumber) && Objects.equals(previousOdsCode, that.previousOdsCode) && Objects.equals(nemsLastUpdatedDate, that.nemsLastUpdatedDate);
     }
 
-    public String toJsonString() {
-        return new GsonBuilder().disableHtmlEscaping().create().toJson(this);
+    @Override
+    public int hashCode() {
+        return Objects.hash(nhsNumber, previousOdsCode, nemsLastUpdatedDate);
     }
 }

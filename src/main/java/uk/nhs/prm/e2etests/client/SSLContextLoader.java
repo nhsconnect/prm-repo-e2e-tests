@@ -1,29 +1,19 @@
 package uk.nhs.prm.e2etests.client;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import jakarta.xml.bind.DatatypeConverter;
+import lombok.extern.log4j.Log4j2;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
-import jakarta.xml.bind.DatatypeConverter;
 import org.springframework.stereotype.Component;
+import uk.nhs.prm.e2etests.exception.SSLContextException;
 
+import javax.net.ssl.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
-import java.security.Security;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -32,13 +22,11 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
+@Log4j2
 @Component
-public class StackOverflowInsecureSSLContextLoader {
-    private static final Logger LOGGER = LogManager.getLogger(StackOverflowInsecureSSLContextLoader.class);
-
+public class SSLContextLoader {
     public SSLContext getClientAuthSslContext(String clientCertInPemFormat, String clientKeyInPemFormat){
-        LOGGER.info("Attempting to initialise the SSL context so that we can make requests to the Mesh Mailbox.");
-
+        log.info("Attempting to initialise the SSL context so that we can make requests to the Mesh Mailbox.");
         SSLContext sslContext = null;
 
         try {
@@ -51,7 +39,7 @@ public class StackOverflowInsecureSSLContextLoader {
             KeyStore keystore = KeyStore.getInstance("JKS");
             keystore.load(null);
             keystore.setCertificateEntry("client-cert", cert);
-            keystore.setKeyEntry("client-key", key, "password".toCharArray(), new Certificate[]{cert});
+            keystore.setKeyEntry("client-key", key, "password".toCharArray(), new Certificate[]{ cert });
 
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(keystore, "password".toCharArray());
@@ -72,12 +60,12 @@ public class StackOverflowInsecureSSLContextLoader {
             };
 
             sslContext.init(km, new TrustManager[]{acceptAll}, null);
-
-            LOGGER.info("The SSL Context has successfully been initialised.");
+            log.info("The SSL Context has successfully been initialised.");
 
         } catch (Exception exception){
-            LOGGER.error("The application encountered the following exception: {}", exception.getMessage());
+            throw new SSLContextException(exception.getMessage());
         }
+
         return sslContext;
     }
 

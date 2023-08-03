@@ -7,8 +7,8 @@ public enum LargeEhrVariant {
     HIGH_FRAGMENT_COUNT(Patient.WITH_HIGH_FRAGMENT_COUNT_LARGE_EHR, 150), // as of 2023-01-09 includes 402 message fragments
     SUPER_LARGE(Patient.WITH_SUPER_LARGE_EHR, 150);
 
-    private Patient patient;
-    private int timeoutMinutes;
+    private final Patient patient;
+    private final int timeoutMinutes;
 
     LargeEhrVariant(Patient patient, int timeoutMinutes) {
         this.patient = patient;

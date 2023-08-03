@@ -1,15 +1,15 @@
-package uk.nhs.prm.e2etests.live_technical_test.day2;
+package uk.nhs.prm.e2etests.livetechnicaltest.day2;
 
 import lombok.extern.log4j.Log4j2;
-import org.springframework.test.context.TestPropertySource;
-import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.property.NhsProperties;
+import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
+import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ class ValidateMOFUpdatedTest {
 
             safeListedPatientList.forEach(nhsNumber -> {
                 PdsAdaptorResponse pdsResponse = fetchPdsPatientStatus(nhsNumber);
-                log.info("The patient's suspended status is: {}.", pdsResponse.getIsSuspended());
+                log.info("The patient's suspended status is: {}.", pdsResponse.isSuspended());
 
                 log.info("Checking patient status with HL7v3 PDS request - reference logs for more details.");
                 gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);

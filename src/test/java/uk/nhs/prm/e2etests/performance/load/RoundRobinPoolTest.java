@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RoundRobinPoolTest {
 
-    private List<Integer> integers = of(1, 2, 3);
+    private final List<Integer> integers = of(1, 2, 3);
 
     @Test
     public void shouldGiveFirstItemFirst() {

@@ -6,6 +6,9 @@ import java.util.List;
 import static java.lang.Integer.parseInt;
 
 public class LoadSpecParser {
+
+    private LoadSpecParser() {}
+
     public static List<LoadPhase> parsePhases(String loadSpecString) {
         List<LoadPhase> phases = new ArrayList<>();
         String[] phaseSpecs = loadSpecString.split(",");

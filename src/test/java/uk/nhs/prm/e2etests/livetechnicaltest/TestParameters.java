@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.live_technical_test;
+package uk.nhs.prm.e2etests.livetechnicaltest;
 
 import lombok.extern.log4j.Log4j2;
 

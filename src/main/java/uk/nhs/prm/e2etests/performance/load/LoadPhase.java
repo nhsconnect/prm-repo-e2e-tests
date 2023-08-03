@@ -19,7 +19,7 @@ public class LoadPhase {
     private LoadPhase(int totalCount, BigDecimal ratePerSecond) {
         this.totalCount = totalCount;
         this.ratePerSecond = ratePerSecond;
-        runningCount = 0;
+        this.runningCount = 0;
     }
 
     public String toString() {
