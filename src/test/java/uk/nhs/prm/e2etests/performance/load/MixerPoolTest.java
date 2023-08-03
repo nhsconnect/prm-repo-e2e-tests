@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MixerPoolTest {
 
     @Test
-    public void shouldProvideAlternatelyFromEachSourcePoolAtFiftyFiftyMix() {
+    void shouldProvideAlternatelyFromEachSourcePoolAtFiftyFiftyMix() {
         NemsTestEvent eventOne = NemsTestEvent.nonSuspensionEvent("1111" , "111");
         NemsTestEvent eventTwo = NemsTestEvent.nonSuspensionEvent("2222" , "222");
 
@@ -24,7 +24,7 @@ class MixerPoolTest {
     }
 
     @Test
-    public void shouldProvideFirstAndEveryFourFromFirstPoolForOneQuarterMix() {
+    void shouldProvideFirstAndEveryFourFromFirstPoolForOneQuarterMix() {
         NemsTestEvent eventOne = NemsTestEvent.nonSuspensionEvent("1111" , "111");
         NemsTestEvent eventTwo = NemsTestEvent.nonSuspensionEvent("2222" , "222");
 

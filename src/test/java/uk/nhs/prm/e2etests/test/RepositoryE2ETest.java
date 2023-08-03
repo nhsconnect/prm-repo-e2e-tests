@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.tests;
+package uk.nhs.prm.e2etests.test;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
@@ -15,24 +15,24 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.xmlunit.diff.*;
-import uk.nhs.prm.e2etests.configuration.TestConfiguration;
-import uk.nhs.prm.e2etests.model.SqsMessage;
-import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.property.NhsProperties;
+import org.xmlunit.diff.Diff;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
+import uk.nhs.prm.e2etests.enumeration.LargeEhrVariant;
+import uk.nhs.prm.e2etests.enumeration.Patient;
+import uk.nhs.prm.e2etests.model.LargeEhrTestFiles;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
+import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
+import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
+import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
+import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceParsingDeadLetterQueue;
+import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.*;
 import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
-import uk.nhs.prm.e2etests.enumeration.LargeEhrVariant;
-import uk.nhs.prm.e2etests.enumeration.Patient;
-import uk.nhs.prm.e2etests.queue.*;
-import uk.nhs.prm.e2etests.queue.ehrtransfer.*;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
-import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
-import uk.nhs.prm.e2etests.model.LargeEhrTestFiles;
 import uk.nhs.prm.e2etests.utility.ResourceUtility;
 import uk.nhs.prm.e2etests.utility.TestUtility;
 
@@ -54,8 +54,8 @@ import static uk.nhs.prm.e2etests.utility.TestUtility.*;
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RepositoryE2ETests {
-    private static final Logger LOGGER = LogManager.getLogger(RepositoryE2ETests.class);
+class RepositoryE2ETest {
+    private static final Logger LOGGER = LogManager.getLogger(RepositoryE2ETest.class);
 
     private final EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
     private final SimpleAmqpQueue inboundQueueFromMhs;
@@ -70,12 +70,11 @@ class RepositoryE2ETests {
     private final EhrTransferServiceUnhandledOQ ehrInUnhandledQueue;
     private final EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ;
     private final Gp2GpMessengerOQ gp2gpMessengerQueue;
-    private final TestConfiguration testConfiguration;
     private final Gp2gpMessengerProperties gp2GpMessengerProperties;
     private final NhsProperties nhsProperties;
 
     @Autowired
-    public RepositoryE2ETests(
+    public RepositoryE2ETest(
             EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue,
             SimpleAmqpQueue inboundQueueFromMhs,
             TransferTrackerService transferTrackerService,
@@ -89,7 +88,6 @@ class RepositoryE2ETests {
             EhrTransferServiceUnhandledOQ ehrInUnhandledQueue,
             EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ,
             Gp2GpMessengerOQ gp2gpMessengerQueue,
-            TestConfiguration testConfiguration,
             Gp2gpMessengerProperties gp2GpMessengerProperties,
             NhsProperties nhsProperties
     ) {
@@ -106,7 +104,6 @@ class RepositoryE2ETests {
         this.ehrInUnhandledQueue = ehrInUnhandledQueue;
         this.ehrTransferServiceNegativeAcknowledgementOQ = ehrTransferServiceNegativeAcknowledgementOQ;
         this.gp2gpMessengerQueue = gp2gpMessengerQueue;
-        this.testConfiguration = testConfiguration;
         this.gp2GpMessengerProperties = gp2GpMessengerProperties;
         this.nhsProperties = nhsProperties;
     }
@@ -180,7 +177,6 @@ class RepositoryE2ETests {
         assertFalse(myDiff.toString(), myDiff.hasDifferences());
     }
 
-    // TODO: THIS TEST WAS FAILING BEFORE REFACTOR
     @Test
     @Disabled("This test was failing before refactoring. To be fixed after refactoring is complete.")
     void shouldVerifyThatALargeEhrXMLIsUnchanged() {
@@ -205,11 +201,11 @@ class RepositoryE2ETests {
                 nhsNumberForTestPatient
         );
 
-        String largeEhrCore = largeEhrTestFiles.largeEhrCore;
-        String largeEhrFragment1 = largeEhrTestFiles.largeEhrFragment1;
-        String largeEhrFragment2 = largeEhrTestFiles.largeEhrFragment2;
-        String ehrRequest = largeEhrTestFiles.ehrRequest;
-        String continueRequest = largeEhrTestFiles.continueRequest;
+        String largeEhrCore = largeEhrTestFiles.largeEhrCore();
+        String largeEhrFragment1 = largeEhrTestFiles.largeEhrFragment1();
+        String largeEhrFragment2 = largeEhrTestFiles.largeEhrFragment2();
+        String ehrRequest = largeEhrTestFiles.ehrRequest();
+        String continueRequest = largeEhrTestFiles.continueRequest();
 
         addRecordToTrackerDb(transferTrackerService, inboundConversationId, largeEhrCoreMessageId, nhsNumberForTestPatient, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
 
@@ -269,11 +265,10 @@ class RepositoryE2ETests {
         });
     }
 
-    // THIS TEST WAS FAILING BEFORE REFACTOR
     @Test
     @Disabled("This test was failing before refactoring. The cause seems to be related to EMIS instance not working")
     void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
-        Patient largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(testConfiguration);
+        Patient largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(this.nhsProperties.getNhsEnvironment());
 
         setManagingOrganisationToRepo(largeEhrAtEmisWithRepoMof.nhsNumber());
 
@@ -284,8 +279,8 @@ class RepositoryE2ETests {
                 .build();
 
         ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
-        assertThat(ehrTransferServiceEhrCompleteOQ.getMessageContaining(triggerMessage.conversationId())).isNotNull();
-        assertTrue(transferTrackerService.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+        assertThat(ehrTransferServiceEhrCompleteOQ.getMessageContaining(triggerMessage.getConversationId())).isNotNull();
+        assertTrue(transferTrackerService.statusForConversationIdIs(triggerMessage.getConversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
     @ParameterizedTest
@@ -304,12 +299,12 @@ class RepositoryE2ETests {
 
         assertThat(transferCompleteQueue.getMessageContainingAttribute(
                 "conversationId",
-                triggerMessage.conversationId(),
+                triggerMessage.getConversationId(),
                 largeEhr.timeoutMinutes(),
                 TimeUnit.MINUTES))
                 .isNotNull();
 
-        assertTrue(transferTrackerService.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+        assertTrue(transferTrackerService.statusForConversationIdIs(triggerMessage.getConversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
 
         // option: assert in ehr-repo - check all messages complete - evaluate need based on:
         //  - ehr out round trip testing
@@ -349,12 +344,12 @@ class RepositoryE2ETests {
 
         assertThat(transferCompleteQueue.getMessageContainingAttribute(
                 "conversationId",
-                triggerMessage.conversationId(),
+                triggerMessage.getConversationId(),
                 largeEhr.timeoutMinutes(),
                 TimeUnit.MINUTES))
                 .isNotNull();
 
-        assertTrue(transferTrackerService.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
+        assertTrue(transferTrackerService.statusForConversationIdIs(triggerMessage.getConversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
 
     private static Stream<Arguments> largeEhrScenariosToBeRunAsRequired() {
@@ -404,7 +399,7 @@ class RepositoryE2ETests {
 
             LOGGER.info("Time after sending the triggerMessage to repoIncomingQueue: {}", requestedAt);
 
-            conversationIdsList.add(triggerMessage.getConversationIdAsString());
+            conversationIdsList.add(triggerMessage.getConversationId());
             conversationIdsList.forEach(log::info);
         }
 
@@ -466,15 +461,14 @@ class RepositoryE2ETests {
 
         ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
 
-        assertThat(ehrTransferServiceNegativeAcknowledgementOQ.getMessageContaining(triggerMessage.conversationId())).isNotNull();
-        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId())).isNotNull();
+        assertThat(ehrTransferServiceNegativeAcknowledgementOQ.getMessageContaining(triggerMessage.getConversationId())).isNotNull();
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.getConversationId())).isNotNull();
 
 
-        String status = transferTrackerService.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
+        String status = transferTrackerService.waitForStatusMatching(triggerMessage.getConversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
     }
 
-    // TODO: PRMT-3488 Rename; "CurrentlyHavingIssues" implies method name is temporary
     private Stream<Arguments> properWorkingFoundationSupplierSystems() {
         // Exclude EMIS here as our Ptl EMIS instance is not working properly
         return Stream.of(
@@ -486,10 +480,10 @@ class RepositoryE2ETests {
 
     private void setManagingOrganisationToRepo(String nhsNumber) {
         PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
-        assertThat(pdsResponse.getIsSuspended()).as("%s should be suspended so that MOF is respected", nhsNumber).isTrue();
+        assertThat(pdsResponse.isSuspended()).as("%s should be suspended so that MOF is respected", nhsNumber).isTrue();
         String repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
-        if (!repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
-            pdsAdaptorService.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.getRecordETag());
+        if (!repoOdsCode.equals(pdsResponse.managingOrganisation())) {
+            pdsAdaptorService.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.recordETag());
         }
     }
 }

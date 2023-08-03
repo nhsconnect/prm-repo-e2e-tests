@@ -7,8 +7,8 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
-import uk.nhs.prm.e2etests.property.DatabaseProperties;
 import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
+import uk.nhs.prm.e2etests.property.DatabaseProperties;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,9 +37,9 @@ public class ActiveSuspensionsDatabaseRepository {
     public void save(ActiveSuspensionsMessage activeSuspensionMessage) {
         Map<String, AttributeValue> item = new HashMap<>();
 
-        item.put("nhs_number", AttributeValue.builder().s(activeSuspensionMessage.getNhsNumber()).build());
-        item.put("previous_gp", AttributeValue.builder().s(activeSuspensionMessage.getPreviousOdsCode()).build());
-        item.put("nems_last_updated_date", AttributeValue.builder().s(activeSuspensionMessage.getNemsLastUpdatedDate()).build());
+        item.put("nhs_number", AttributeValue.builder().s(activeSuspensionMessage.nhsNumber()).build());
+        item.put("previous_gp", AttributeValue.builder().s(activeSuspensionMessage.previousOdsCode()).build());
+        item.put("nems_last_updated_date", AttributeValue.builder().s(activeSuspensionMessage.nemsLastUpdatedDate()).build());
 
         DynamoDbClient.builder().build().putItem(PutItemRequest.builder()
                 .tableName(databaseProperties.getActiveSuspensionsDbName())

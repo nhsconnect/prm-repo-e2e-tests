@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LoadSpecParserTest {
 
     @Test
-    public void shouldParseStringOfTotalCountsAtRatesIntoListOfPhases() {
+    void shouldParseStringOfTotalCountsAtRatesIntoListOfPhases() {
         List<LoadPhase> phases = LoadSpecParser.parsePhases("20@0.2,30@0.4");
 
         assertThat(phases.get(0).totalCount).isEqualTo(20);

@@ -1,15 +1,13 @@
 package uk.nhs.prm.e2etests.utility;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.e2etests.model.LargeEhrTestFiles;
-import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
+import uk.nhs.prm.e2etests.service.TransferTrackerService;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -22,7 +20,8 @@ import static uk.nhs.prm.e2etests.utility.ResourceUtility.readTestResourceFile;
 
 
 public final class TestUtility {
-    private static final Logger LOGGER = LogManager.getLogger(TestUtility.class);
+    private TestUtility() { }
+
     private static final Pattern UUID_REGEX_PATTERN =
             Pattern.compile("^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$");
 
@@ -79,7 +78,7 @@ public final class TestUtility {
         transferTrackerService.save(new TransferTrackerDynamoDbEntry(
                 inboundConversationId,
                 largeEhrCoreMessageId,
-                NhsIdentityGenerator.randomNemsMessageId(),
+                NhsIdentityUtility.randomNemsMessageId(),
                 nhsNumberForTestPatient,
                 previousGpForTestPatient,
                 state,

@@ -49,7 +49,7 @@ public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestR
     }
 
     private String extractNemsMessageIdFromBody(SqsMessage sqsMessage) {
-        JsonNode parent = null;
+        JsonNode parent;
         try {
             parent = new ObjectMapper().readTree(sqsMessage.getBody());
         } catch (JsonProcessingException e) {

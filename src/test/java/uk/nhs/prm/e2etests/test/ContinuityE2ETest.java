@@ -1,44 +1,34 @@
-package uk.nhs.prm.e2etests.tests;
+package uk.nhs.prm.e2etests.test;
 
 import lombok.extern.log4j.Log4j2;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.HttpClientErrorException;
+import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
+import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
-import uk.nhs.prm.e2etests.model.nems.DeceasedPatientMessageNems;
-import uk.nhs.prm.e2etests.model.nems.MofUpdatedMessageNems;
-import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
-import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
-import uk.nhs.prm.e2etests.model.nems.NoLongerSuspendedMessageNems;
+import uk.nhs.prm.e2etests.model.nems.*;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
+import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
+import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorDeadLetterQueue;
+import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorUnhandledEventsQueue;
+import uk.nhs.prm.e2etests.queue.nems.observability.MeshForwarderOQ;
+import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorReRegistrationsOQ;
+import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorSuspensionsOQ;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceDeceasedPatientQueue;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceMofNotUpdatedQueue;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceMofUpdatedQueue;
-import uk.nhs.prm.e2etests.queue.suspensions.observability.SuspensionsServiceRepoIncomingOQ;
-import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorSuspensionsOQ;
 import uk.nhs.prm.e2etests.queue.suspensions.observability.SuspensionServiceNotSuspendedOQ;
+import uk.nhs.prm.e2etests.queue.suspensions.observability.SuspensionsServiceRepoIncomingOQ;
 import uk.nhs.prm.e2etests.service.ActiveSuspensionsService;
-import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
-import uk.nhs.prm.e2etests.property.NhsProperties;
-import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorDeadLetterQueue;
-import uk.nhs.prm.e2etests.mesh.MeshMailbox;
-import uk.nhs.prm.e2etests.queue.nems.observability.MeshForwarderOQ;
-import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorUnhandledEventsQueue;
-import uk.nhs.prm.e2etests.service.PdsAdaptorService;
-import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
-import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorReRegistrationsOQ;
 import uk.nhs.prm.e2etests.service.EhrRepositoryService;
-import uk.nhs.prm.e2etests.utility.NemsEventFactory;
+import uk.nhs.prm.e2etests.service.PdsAdaptorService;
+import uk.nhs.prm.e2etests.utility.NemsEventGenerator;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -47,8 +37,8 @@ import java.util.Map;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.*;
-import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
+import static uk.nhs.prm.e2etests.utility.NemsEventGenerator.createNemsEventFromTemplate;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.*;
 
 @Log4j2
 @SpringBootTest
@@ -56,10 +46,9 @@ import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTe
 @TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class ContinuityE2E {
-
-    private final String EMIS_PTL_INT = "N82668";
-    private final String SUSPENDED_PATIENT_NHS_NUMBER = "9693796047";
+class ContinuityE2ETest {
+    private static final String EMIS_PTL_INT = "N82668";
+    private static final String SUSPENDED_PATIENT_NHS_NUMBER = "9693796047";
 
     private final MeshMailbox meshMailbox;
     private final MeshForwarderOQ meshForwarderOQ;
@@ -79,7 +68,7 @@ class ContinuityE2E {
     private final NhsProperties nhsProperties;
 
     @Autowired
-    public ContinuityE2E(
+    public ContinuityE2ETest(
             MeshMailbox meshMailbox,
             MeshForwarderOQ meshForwarderOQ,
             NemsEventProcessorUnhandledEventsQueue nemsEventProcessorUnhandledEventsQueue,
@@ -138,7 +127,7 @@ class ContinuityE2E {
         log.info("Generated a random ODS code for previous GP: {}", previousGp);
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
-        meshMailbox.postMessage(nemsSuspension);
+        meshMailbox.sendMessage(nemsSuspension);
         NemsResolutionMessage expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
         assertTrue(meshForwarderOQ.hasMessage(nemsSuspension.getMessage()));
@@ -149,13 +138,12 @@ class ContinuityE2E {
     @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="false") //The toggle status for repo_process_only_safe_listed_ods_codes is true in dev and test
     void shouldPutAMessageForASuspendedPatientWithSafeListedODSCodeOnRepoIncomingWhenTheToggleIsTrue() {
         String nemsMessageId = randomNemsMessageId();
-        String safeListedOdsCode = EMIS_PTL_INT;
         String now = now();
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", SUSPENDED_PATIENT_NHS_NUMBER, nemsMessageId, safeListedOdsCode, now);
+        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", SUSPENDED_PATIENT_NHS_NUMBER, nemsMessageId, EMIS_PTL_INT, now);
 
         setManagingOrganisationToEMISOdsCode(SUSPENDED_PATIENT_NHS_NUMBER);
 
-        meshMailbox.postMessage(nemsSuspension);
+        meshMailbox.sendMessage(nemsSuspension);
 
         assertThat(suspensionsServiceRepoIncomingOQ.getMessageContaining(nemsMessageId)).isNotNull();
     }
@@ -172,19 +160,19 @@ class ContinuityE2E {
 
         NoLongerSuspendedMessageNems expectedMessageOnQueue = new NoLongerSuspendedMessageNems(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
-        meshMailbox.postMessage(nemsSuspension);
+        meshMailbox.sendMessage(nemsSuspension);
         assertTrue(suspensionServiceNotSuspendedOQ.hasResolutionMessage(expectedMessageOnQueue));
     }
 
     @Test
     @Order(5)
-    void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
+    void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() {
         String nemsMessageId = randomNemsMessageId();
 
         NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate(
                 "change-of-gp-non-suspension.xml", randomNhsNumber(), nemsMessageId, now());
 
-        meshMailbox.postMessage(nemsNonSuspension);
+        meshMailbox.sendMessage(nemsNonSuspension);
 
         assertTrue(nemsEventProcessorUnhandledEventsQueue.hasMessage("{\"nemsMessageId\":\"" + nemsMessageId + "\",\"messageStatus\":\"NO_ACTION:NON_SUSPENSION\"}"));
     }
@@ -192,11 +180,11 @@ class ContinuityE2E {
     @Test
     @Order(6)
     void shouldSendUnprocessableMessagesToDlQ() throws Exception {
-        Map<String, NemsEventMessage> dlqMessages = NemsEventFactory.getDLQNemsEventMessages();
+        Map<String, NemsEventMessage> dlqMessages = NemsEventGenerator.getDLQNemsEventMessages();
         log.info("Posting DLQ messages.");
 
         for (Map.Entry<String, NemsEventMessage> message : dlqMessages.entrySet()) {
-            meshMailbox.postMessage(message.getValue());
+            meshMailbox.sendMessage(message.getValue());
             log.info("Posted {} messages.", message.getKey());
             assertTrue(nemsEventProcessorDeadLetterQueue.hasMessage(message.getValue().getMessage()));
         }
@@ -214,7 +202,7 @@ class ContinuityE2E {
                 syntheticPatientProperties.getNonSyntheticPatientWithoutGp(),
                 nemsMessageId, previousGp, suspensionTime);
 
-        meshMailbox.postMessage(nemsSuspension);
+        meshMailbox.sendMessage(nemsSuspension);
 
         NemsResolutionMessage expectedMessageOnQueue = new NemsResolutionMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC_OR_SAFE_LISTED");
 
@@ -234,7 +222,7 @@ class ContinuityE2E {
         NemsEventMessage deceasedEvent = createNemsEventFromTemplate("change-of-gp-suspension.xml",
                 patientNhsNumber, nemsMessageId, previousGp, eventTime);
 
-        meshMailbox.postMessage(deceasedEvent);
+        meshMailbox.sendMessage(deceasedEvent);
 
         DeceasedPatientMessageNems expectedMessageOnQueue = new DeceasedPatientMessageNems(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
 
@@ -243,7 +231,7 @@ class ContinuityE2E {
 
     @Test
     @Order(7)
-    public void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
+    void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
         String nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
         String reregistrationTime = now();
@@ -253,7 +241,7 @@ class ContinuityE2E {
         NemsEventMessage reRegistration = createNemsEventFromTemplate(
                 "change-of-gp-re-registration.xml", patientNhsNumber, nemsMessageId, reregistrationTime);
 
-        meshMailbox.postMessage(reRegistration);
+        meshMailbox.sendMessage(reRegistration);
 
         String expectedMessageOnQueue = "{\"nhsNumber\":\"" + patientNhsNumber + "\"," +
                 "\"newlyRegisteredOdsCode\":\"B86056\"," +
@@ -276,7 +264,7 @@ class ContinuityE2E {
         log.info("Generated a random ODS code for previous GP: {}.", previousGp);
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
-        meshMailbox.postMessage(nemsSuspension);
+        meshMailbox.sendMessage(nemsSuspension);
 
         assertTrue(activeSuspensionsService.nhsNumberExists(suspendedPatientNhsNumber));
     }
@@ -294,8 +282,8 @@ class ContinuityE2E {
     private void setManagingOrganisationToEMISOdsCode(String nhsNumber) {
         PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
         String repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
-        if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
-            pdsAdaptorService.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.getRecordETag());
+        if (repoOdsCode.equals(pdsResponse.managingOrganisation())) {
+            pdsAdaptorService.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.recordETag());
         }
     }
 }

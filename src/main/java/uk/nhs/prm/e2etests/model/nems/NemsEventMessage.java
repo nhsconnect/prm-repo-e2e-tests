@@ -18,6 +18,6 @@ public class NemsEventMessage {
 
     @Override
     public String toString() {
-        return String.format("NemsEventMessage{id=%s, message='%s'}", id, message);
+        return String.format("Nems event message with ID %s and message: %s", this.id, this.message);
     }
 }

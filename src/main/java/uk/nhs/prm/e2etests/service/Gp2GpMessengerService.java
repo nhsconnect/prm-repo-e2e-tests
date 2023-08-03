@@ -6,17 +6,15 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import uk.nhs.prm.e2etests.annotation.Debt;
+import uk.nhs.prm.e2etests.exception.ServiceException;
 import uk.nhs.prm.e2etests.model.request.HealthRecordRequest;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 
 @Log4j2
 @Service
 public class Gp2GpMessengerService {
-
     private final String apiKey;
     private final String rootUrl;
-
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
@@ -34,10 +32,7 @@ public class Gp2GpMessengerService {
             log.info("Successfully sent EHR request to GP2GP Messenger.");
             return exchange.getStatusCode().is2xxSuccessful();
         } catch (HttpStatusCodeException exception) {
-            log.info("An error occurred while sending EHR request to GP2GP Messenger with status code {}, details: {}.",
-                    exception.getStatusCode(),
-                    exception.getMessage());
-            return false;
+            throw new ServiceException(getClass().getName(), exception.getMessage());
         }
     }
 

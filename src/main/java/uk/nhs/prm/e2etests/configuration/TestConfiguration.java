@@ -1,10 +1,10 @@
 package uk.nhs.prm.e2etests.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
-import uk.nhs.prm.e2etests.performance.load.LoadSpecParser;
-import uk.nhs.prm.e2etests.performance.load.LoadPhase;
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.annotation.Debt;
+import uk.nhs.prm.e2etests.performance.load.LoadPhase;
+import uk.nhs.prm.e2etests.performance.load.LoadSpecParser;
 
 import java.util.List;
 
@@ -32,19 +32,5 @@ public class TestConfiguration {
             return defaultLoadPhases;
         }
         return LoadSpecParser.parsePhases(loadSpec);
-    }
-
-    @Debt(comment = "Ideally we should replace this with the NhsProperties Spring component, but it's currently" +
-            "very tightly coupled to the Patient class.")
-    public String getEnvironmentName() {
-        return getRequiredEnvVar("NHS_ENVIRONMENT");
-    } //-> NhsProperties
-
-    public static String getRequiredEnvVar(String name) {
-        String value = getenv(name);
-        if (value == null) {
-            throw new RuntimeException("Required environment variable has not been set: " + name);
-        }
-        return value;
     }
 }

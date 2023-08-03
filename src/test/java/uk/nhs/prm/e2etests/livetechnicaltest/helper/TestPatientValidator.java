@@ -1,9 +1,9 @@
-package uk.nhs.prm.e2etests.live_technical_test.helpers;
+package uk.nhs.prm.e2etests.livetechnicaltest.helper;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import uk.nhs.prm.e2etests.property.NhsProperties;
-import org.springframework.stereotype.Component;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import uk.nhs.prm.e2etests.property.NhsProperties;
 
 import java.util.List;
 

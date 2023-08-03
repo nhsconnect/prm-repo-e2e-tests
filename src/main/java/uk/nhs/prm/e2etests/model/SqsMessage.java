@@ -28,14 +28,6 @@ public class SqsMessage {
         this.queuedAt = getDateFromMillisecondsAsString(message.attributesAsStrings().get("SentTimestamp"));
     }
 
-    public String getNemsMessageId() {
-        return getAttributeByJsonKey("nemsMessageId");
-    }
-
-    public String getPreviousGp() {
-        return getAttributeByJsonKey("previousOdsCode");
-    }
-
     public boolean contains(String substring) {
         return body.toLowerCase().contains(substring.toLowerCase());
     }
@@ -49,10 +41,10 @@ public class SqsMessage {
         return instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
-    private String getAttributeByJsonKey(String key) {
+    public String getNemsMessageId() {
         try {
             return new JSONObject(getBody())
-                    .get(key)
+                    .get("nemsMessageId")
                     .toString();
         } catch (JSONException exception) {
             throw new SqsMessageException(exception.getMessage());

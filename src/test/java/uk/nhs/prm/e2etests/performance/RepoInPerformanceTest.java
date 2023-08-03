@@ -7,15 +7,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.configuration.TestData;
+import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
+import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
+import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
+import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
-import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
-import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
-import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
-import uk.nhs.prm.e2etests.tests.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
-import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
-import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.utility.ResourceUtility;
 
 import java.time.LocalDateTime;
@@ -76,12 +76,12 @@ class RepoInPerformanceTest {
         List<RepoInPerfMessageWrapper> messagesProcessed = new ArrayList<>();
         LocalDateTime timeout = now().plusMinutes(timeoutInMinutes);
 
-        while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
+        while (now().isBefore(timeout) && !messagesToBeProcessed.isEmpty()) {
 
             for (SqsMessage sqsMessage : ehrTransferServiceTransferCompleteOQ.getNextMessages(timeout)) {
                 String conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
-                    if (message.getMessage().conversationId().equals(conversationId)) {
+                    if (message.getMessage().getConversationId().equals(conversationId)) {
                         message.finish(sqsMessage.getQueuedAt());
                         ehrTransferServiceTransferCompleteOQ.deleteMessage(sqsMessage);
                         log.info("Message found on transfer complete queue with Conversation ID: {}, which took {} seconds to be processed.",
@@ -115,7 +115,7 @@ class RepoInPerformanceTest {
 
             for (int i = 0; i < messagesToBeProcessed.size(); i++) {
                 counter.updateAndGet(v -> v + 1);
-                String conversationId = messagesToBeProcessed.get(i).getMessage().conversationId();
+                String conversationId = messagesToBeProcessed.get(i).getMessage().getConversationId();
                 smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
                 messagesToBeProcessed.get(i).start();
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
@@ -142,7 +142,7 @@ class RepoInPerformanceTest {
             SimpleAmqpQueue inboundQueueFromMhs
     ) {
         counter.incrementAndGet();
-        String conversationId = message.getMessage().conversationId();
+        String conversationId = message.getMessage().getConversationId();
 
         String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
         message.start();

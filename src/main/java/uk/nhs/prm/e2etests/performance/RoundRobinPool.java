@@ -6,7 +6,7 @@ import java.util.List;
 
 public class RoundRobinPool<T> implements FinitePool<T> {
     private final List<T> items;
-    private int nextIndex = 0;
+    private int nextIndex;
 
     public RoundRobinPool(List<T> items) {
         this.items = items;

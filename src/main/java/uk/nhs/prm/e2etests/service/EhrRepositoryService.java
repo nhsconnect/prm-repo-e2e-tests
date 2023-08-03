@@ -7,8 +7,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.e2etests.exception.ServiceException;
+import uk.nhs.prm.e2etests.model.MessageData;
 import uk.nhs.prm.e2etests.property.EhrRepositoryProperties;
-import uk.nhs.prm.e2etests.model.request.StoreMessageRequestBody;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -40,10 +41,7 @@ public class EhrRepositoryService {
             log.info("Ehr request successfully stored in EHR Repository.");
             return exchange.getStatusCode().is2xxSuccessful();
         } catch (HttpStatusCodeException exception) {
-            log.info("An error occurred while attempting to retrieve EHR Health Record status from EHR Repository with status {}, details: {}",
-                    exception.getStatusCode(),
-                    exception.getMessage());
-            return false;
+            throw new ServiceException(getClass().getName(), exception.getMessage());
         }
     }
 
@@ -51,9 +49,9 @@ public class EhrRepositoryService {
         UUID conversationId = UUID.randomUUID();
         UUID messageId = UUID.randomUUID();
         String messageType = "ehrExtract";
-        List<UUID> fragmentMessageIds = Collections.EMPTY_LIST;
+        List<UUID> fragmentMessageIds = Collections.emptyList();
 
-        String jsonPayloadString = new Gson().toJson(new StoreMessageRequestBody(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds));
+        String jsonPayloadString = new Gson().toJson(new MessageData(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds));
 
          restTemplate.exchange(new URL(ehrRepositoryUri + "messages").toURI(), HttpMethod.POST,
                  new HttpEntity<>(jsonPayloadString, createHeaders(ehrRepositoryApiKey)), String.class);

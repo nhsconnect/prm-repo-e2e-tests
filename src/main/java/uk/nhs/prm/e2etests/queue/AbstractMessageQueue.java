@@ -1,19 +1,19 @@
 package uk.nhs.prm.e2etests.queue;
 
-import software.amazon.awssdk.services.sqs.model.PurgeQueueInProgressException;
-import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
-import uk.nhs.prm.e2etests.utility.QueueHelper;
-import uk.nhs.prm.e2etests.service.SqsService;
-import uk.nhs.prm.e2etests.model.SqsMessage;
 import lombok.extern.log4j.Log4j2;
+import software.amazon.awssdk.services.sqs.model.PurgeQueueInProgressException;
+import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
+import uk.nhs.prm.e2etests.service.SqsService;
+import uk.nhs.prm.e2etests.utility.MappingUtility;
 
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static org.awaitility.Awaitility.await;
@@ -147,14 +147,14 @@ public abstract class AbstractMessageQueue {
     }
 
     private boolean hasResolutionMessageNow(NemsResolutionMessage messageToCheck) {
-        final List<SqsMessage> allMessages = sqsService.readMessagesFrom(this.queueUri);
+        final List<SqsMessage> allMessages = this.sqsService.readMessagesFrom(this.queueUri);
 
         return allMessages.stream()
-                .map(QueueHelper::mapToNemsResolutionMessage)
+                .map(MappingUtility::mapToNemsResolutionMessage)
                 .anyMatch(nemsResolutionMessage -> nemsResolutionMessage.hasTheSameContentAs(messageToCheck));
     }
 
     protected void postAMessageWithAttributes(String message, Map<String, String> attributes) {
-        sqsService.postAMessage(queueUri, message, attributes);
+        this.sqsService.postAMessage(queueUri, message, attributes);
     }
 }

@@ -1,11 +1,11 @@
-package uk.nhs.prm.e2etests.live_technical_test.inject;
+package uk.nhs.prm.e2etests.livetechnicaltest.inject;
 
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
+import uk.nhs.prm.e2etests.livetechnicaltest.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
@@ -13,9 +13,9 @@ import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorSuspension
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomOdsCode;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
+import static uk.nhs.prm.e2etests.utility.NemsEventGenerator.createNemsEventFromTemplate;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
 
 @Log4j2
 @SpringBootTest
@@ -51,7 +51,7 @@ class InjectChangeOfGPMessageTest {
                 previousGP,
                 now(ofHours(0)).toString());
 
-        meshMailbox.postMessage(nemsSuspension);
+        meshMailbox.sendMessage(nemsSuspension);
 
         log.info("Injected NEMS Event Message ID: {}", nemsMessageId);
         TestParameters.outputTestParameter("live_technical_test_nhs_number", nhsNumber);

@@ -19,11 +19,9 @@ import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 )
 @Service
 public class PdsAdaptorService {
-
-    private final String apiKey;
     private final String patientRootUrl;
     private final String username;
-
+    private final String apiKey;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
@@ -35,8 +33,7 @@ public class PdsAdaptorService {
             case "live-test" -> this.apiKey = pdsAdaptorProperties.getLiveTestApiKey();
             case "e2e-test" -> this.apiKey = pdsAdaptorProperties.getE2eTestApiKey();
             case "performance-test" -> this.apiKey = pdsAdaptorProperties.getPerformanceApiKey();
-            default ->
-                    throw new InvalidPdsAdaptorUsernameException(String.format("Received username: %s", username));
+            default -> throw new InvalidPdsAdaptorUsernameException(String.format("Received username: %s", username));
         }
 
     }

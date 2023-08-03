@@ -2,20 +2,20 @@ package uk.nhs.prm.e2etests.model.nems;
 
 import lombok.Getter;
 
+import java.util.UUID;
+
 @Getter
 public class NemsResolutionMessage {
-    String nemsMessageId;
-    String status;
+    private final UUID id;
+    private final String status;
 
-    public boolean hasTheSameContentAs(Object o) {
-        if (this == o) return true;
-        if (o == null) return false;
-        NemsResolutionMessage that = (NemsResolutionMessage) o;
-        return nemsMessageId.equalsIgnoreCase(that.nemsMessageId) && status.equalsIgnoreCase(that.status);
+    public boolean hasTheSameContentAs(NemsResolutionMessage nemsResolutionMessage) {
+        if (nemsResolutionMessage == null) return false;
+        return id.equals(nemsResolutionMessage.id) && status.equalsIgnoreCase(nemsResolutionMessage.status);
     }
 
-    public NemsResolutionMessage(String nemsMessageId, String status) {
-        this.nemsMessageId = nemsMessageId;
+    public NemsResolutionMessage(String id, String status) {
+        this.id = UUID.fromString(id);
         this.status = status;
     }
 }

@@ -1,16 +1,16 @@
 package uk.nhs.prm.e2etests.property;
 
-import uk.nhs.prm.e2etests.exception.InvalidAmqpEndpointException;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
-import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
-import uk.nhs.prm.e2etests.service.SsmService;
-import uk.nhs.prm.e2etests.model.AmqpEndpoint;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import uk.nhs.prm.e2etests.exception.InvalidAmqpEndpointException;
+import uk.nhs.prm.e2etests.model.AmqpEndpoint;
+import uk.nhs.prm.e2etests.service.SsmService;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -23,12 +23,6 @@ class QueuePropertiesTest {
     // MOCKING
     @Mock
     private SsmService ssmService;
-
-    @Mock
-    private NhsProperties nhsProperties;
-
-    @Mock
-    private ActiveRoleArn activeRoleArn;
 
     @InjectMocks
     private QueueProperties queueProperties;

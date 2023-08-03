@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.tests;
+package uk.nhs.prm.e2etests.test;
 
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
