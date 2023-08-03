@@ -13,7 +13,7 @@ class RoundRobinPoolTest {
     private final List<Integer> integers = of(1, 2, 3);
 
     @Test
-    public void shouldGiveFirstItemFirst() {
+    void shouldGiveFirstItemFirst() {
         RoundRobinPool<Integer> pool = new RoundRobinPool<>(integers);
 
         Integer first = pool.next();
@@ -22,7 +22,7 @@ class RoundRobinPoolTest {
     }
 
     @Test
-    public void shouldGiveSecondItemSecond() {
+    void shouldGiveSecondItemSecond() {
         RoundRobinPool<Integer> pool = new RoundRobinPool<>(integers);
 
         pool.next();
@@ -32,7 +32,7 @@ class RoundRobinPoolTest {
     }
 
     @Test
-    public void shouldLoopRoundToFirstItemAgainAfterPoolExhausted() {
+    void shouldLoopRoundToFirstItemAgainAfterPoolExhausted() {
         RoundRobinPool<Integer> poolOfThree = new RoundRobinPool<>(integers);
 
         poolOfThree.next();
