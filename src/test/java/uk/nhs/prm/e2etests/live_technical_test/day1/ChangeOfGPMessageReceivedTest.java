@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.live_technical_test.day1;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.property.NhsProperties;
@@ -19,6 +20,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Log4j2
 @SpringBootTest
 @TestPropertySource(properties = {"test.pds.username=live-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -47,38 +49,31 @@ class ChangeOfGPMessageReceivedTest {
     @Test
     void shouldHaveReceivedSingleSuspensionChangeOfGpMessageRelatedToTestPatient() {
         List<String> safeListPatients = nhsProperties.getSafeListedPatientList();
+        log.info("Safe listed patients: {}", safeListPatients);
 
-        System.out.println(safeListPatients);
-
-        if (safeListPatients.size() > 0) {
-
-            System.out.println("Safe list patient has size " + safeListPatients.size());
+        if (!safeListPatients.isEmpty()) {
+            log.info("The list of safe listed patients has a size of: {}.", safeListPatients.size());
 
             safeListPatients.forEach(nhsNumber -> {
-                System.out.println("Checking if nhs number is synthetic");
+                log.info("Checking if the NHS number is synthetic.");
                 assertThat(patientValidator.isIncludedInTheTest(nhsNumber)).isTrue();
 
                 PdsAdaptorResponse pdsResponse = getPatientStatusOnPDSForSyntheticPatient(nhsNumber);
+                log.info("The current patient's suspended status is: {}.", pdsResponse.getIsSuspended());
 
-                System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
-
-                System.out.println("Checking patient status on HL7 PDs lookup - see gp2gp messenger logs for insights");
+                log.info("Checking the patient's status on HL7v3 PDS lookup, reference GP2GP Messenger logs for insights.");
                 gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
 
-                System.out.println("Finding related message for nhs number");
-
+                log.info("Finding related message for NHS number: {}.", nhsNumber);
                 Optional<SqsMessage> suspensionMessage = suspensionServiceSuspensionsQueue.getMessageContainingForTechnicalTestRun(nhsNumber);
                 assertThat(suspensionMessage.isPresent()).isTrue();
 
-                System.out.println("got message related to test patient");
-                TestParameters.outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.getNemsMessageId());
+                log.info("Found message related to test patient with NHS number: {}", nhsNumber);
+                TestParameters.outputTestParameter("live_technical_test_nems_message_id", suspensionMessage.get().getNemsMessageId());
             });
-
-
         } else {
-            System.out.println("No safe list patients for test");
+           log.warn("No safe list patients found for test.");
         }
-
     }
 
     private PdsAdaptorResponse getPatientStatusOnPDSForSyntheticPatient(String testPatientNhsNumber) {

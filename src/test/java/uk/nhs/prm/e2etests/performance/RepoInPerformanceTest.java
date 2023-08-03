@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.performance;
 
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
+@Log4j2
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -52,15 +54,15 @@ class RepoInPerformanceTest {
     }
 
     @Test
-    public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
-        System.out.println("BEGINNING PROBLEMATIC TEST");
+    void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
+        log.info("Starting problematic test.");
         int numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
         List<RepoInPerfMessageWrapper> messagesToBeProcessed = setupMessagesToBeProcessed(numberOfMessagesToBeProcessed);
 
-        System.out.println("Setup completed. About to send messages to mq...");
+        log.info("The messages have been pre-processed successfully, about to send to message queue.");
         sendMessagesToMq(messagesToBeProcessed);
 
-        System.out.println("All messages sent. Ensuring they reached transfer complete queue...");
+        log.info("All of the messages have been sent, total: {}. Ensuring they exist on the transfer complete queue.", numberOfMessagesToBeProcessed);
         assertMessagesAreInTransferCompleteQueue(numberOfMessagesToBeProcessed, messagesToBeProcessed);
     }
 
@@ -68,29 +70,31 @@ class RepoInPerformanceTest {
         int messagesReadFromQueueEveryMinute = 100;
         int additionalMinutesBuffer = 5;
         int timeoutInMinutes = Math.round(numberOfMessagesToBeProcessed / messagesReadFromQueueEveryMinute) + additionalMinutesBuffer;
-        System.out.println("Polling messages from transfer complete queue, timeout for this operation set to " + timeoutInMinutes + " minutes.");
+
+        log.info("Polling messages from transfer complete queue, the timeout for this operation has been set to {} minutes.", timeoutInMinutes);
 
         List<RepoInPerfMessageWrapper> messagesProcessed = new ArrayList<>();
         LocalDateTime timeout = now().plusMinutes(timeoutInMinutes);
+
         while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
+
             for (SqsMessage sqsMessage : ehrTransferServiceTransferCompleteOQ.getNextMessages(timeout)) {
                 String conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
                     if (message.getMessage().conversationId().equals(conversationId)) {
                         message.finish(sqsMessage.getQueuedAt());
                         ehrTransferServiceTransferCompleteOQ.deleteMessage(sqsMessage);
-                        System.out.println("Found in transfer complete queue message with conversationId "
-                                + conversationId
-                                + " which took "
-                                + message.getProcessingTimeInSeconds()
-                                + " seconds to be processed");
+                        log.info("Message found on transfer complete queue with Conversation ID: {}, which took {} seconds to be processed.",
+                                conversationId,
+                                message.getProcessingTimeInSeconds());
                         messagesProcessed.add(message);
                         return true;
                     }
                     return false;
                 });
+
                 int numberOfMessagesProcessed = numberOfMessagesToBeProcessed - messagesToBeProcessed.size();
-                System.out.println("Processed " + numberOfMessagesProcessed + " messages out of " + numberOfMessagesToBeProcessed);
+                log.info("Processed {} of {} messages.", numberOfMessagesProcessed, numberOfMessagesToBeProcessed);
             }
         }
 
@@ -109,27 +113,27 @@ class RepoInPerformanceTest {
             AtomicInteger counter = new AtomicInteger(0);
             String smallEhr;
 
-            // TODO PRMT-3574 traditional for loop here that could be refactored
             for (int i = 0; i < messagesToBeProcessed.size(); i++) {
                 counter.updateAndGet(v -> v + 1);
                 String conversationId = messagesToBeProcessed.get(i).getMessage().conversationId();
-
                 smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
                 messagesToBeProcessed.get(i).start();
-
-                System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
                 inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-
                 sleepFor(intervalBetweenMessagesSentToMq);
             }
 
-            System.out.println("All messages sent, about to close mhs producer...");
+            log.info("All the messages hae been sent, about to close MHS inbound queue producer.");
             inboundQueueFromMhs.close();
-        } catch (OutOfMemoryError outOfMemoryError) {
-            System.out.println("Whoops, mq client went out of memory again!");
+        } catch (OutOfMemoryError error) {
+            log.fatal(
+                    "The SwiftMQ client has run out of memory, details: {} - cause: {}.",
+                    error.getMessage(),
+                    error.getCause()
+            );
             System.exit(1);
         }
     }
+
 
     private synchronized void processMessage(
             RepoInPerfMessageWrapper message,
@@ -143,9 +147,8 @@ class RepoInPerformanceTest {
         String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
         message.start();
 
-        System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
+        log.info("[ITEM #{}] [CONVERSATION ID: {}]- Sending to message queue.", counter.get(), conversationId);
         inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-
 
         sleepFor(100);
         message.finish(LocalDateTime.now());
@@ -154,7 +157,7 @@ class RepoInPerformanceTest {
     private List<RepoInPerfMessageWrapper> setupMessagesToBeProcessed(int numberOfMessagesToBeProcessed) {
         List<RepoInPerfMessageWrapper> messagesToBeProcessed = new ArrayList<>();
 
-        for (int i = 0; i < numberOfMessagesToBeProcessed ; i++) {
+        for (int i = 0; i < numberOfMessagesToBeProcessed; i++) {
             RepoIncomingMessage message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
                     .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)

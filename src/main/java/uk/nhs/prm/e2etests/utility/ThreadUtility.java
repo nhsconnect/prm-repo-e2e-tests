@@ -1,6 +1,6 @@
 package uk.nhs.prm.e2etests.utility;
 
-import uk.nhs.prm.e2etests.exception.UtilityException;
+import uk.nhs.prm.e2etests.exception.GenericException;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -13,7 +13,7 @@ public final class ThreadUtility {
             return System.currentTimeMillis();
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new UtilityException(exception.getMessage());
+            throw new GenericException(ThreadUtility.class.getName(), exception.getMessage());
         }
     }
 }

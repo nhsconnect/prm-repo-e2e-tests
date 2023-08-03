@@ -1,15 +1,18 @@
 package uk.nhs.prm.e2etests.live_technical_test;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+@Log4j2
 public class TestParameters {
     public static void outputTestParameter(String name, String value) {
         File output = new File(name);
-        System.out.println("Writing output test parameter to: " + output.getAbsolutePath());
-        System.out.println(name + ": " + value);
+        log.info("Writing output test parameter to: {}.", output.getAbsolutePath());
+        log.info("{}:{}", name, value);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(output))) {
             writer.write(value);
         }
@@ -19,10 +22,10 @@ public class TestParameters {
     }
 
     public static String fetchTestParameter(String name) {
-        System.out.println("getting test parameter for " + name.toUpperCase());
+        log.info("Getting test parameter for: {}.", name.toUpperCase());
         String envValue = System.getenv(name.toUpperCase());
         if (envValue != null) {
-            System.out.println("got from environment");
+            log.info("Found {} from test environment.", name.toUpperCase());
             return envValue;
         }
         throw new RuntimeException("test parameter" +

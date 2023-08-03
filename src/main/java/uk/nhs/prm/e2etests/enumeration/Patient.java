@@ -24,7 +24,7 @@ public enum Patient {
     }
 
     public static Patient largeEhrAtEmisWithRepoMof(TestConfiguration config) {
-        var environmentName = config.getEnvironmentName();
+        String environmentName = config.getEnvironmentName();
         if ("dev".equals(environmentName)) {
             return PATIENT_WITH_LARGE_EHR_AT_EMIS_WITH_MOF_SET_TO_REPO_DEV_ODS;
         }

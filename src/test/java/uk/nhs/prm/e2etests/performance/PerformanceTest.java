@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.performance;
 
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -27,6 +28,8 @@ import java.util.List;
 import static java.lang.System.out;
 import static java.time.LocalDateTime.now;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomNemsMessageId;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomNhsNumber;
 import static uk.nhs.prm.e2etests.performance.NemsTestEvent.nonSuspensionEvent;
@@ -34,6 +37,7 @@ import static uk.nhs.prm.e2etests.performance.load.LoadPhase.atFlatRate;
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateProcessingDurationScatterPlot;
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateThroughputPlot;
 
+@Log4j2
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestPropertySource(properties = {"test.pds.username=performance-test"})
@@ -47,13 +51,13 @@ public class PerformanceTest {
     public static final int THROUGHPUT_BUCKET_SECONDS = 60;
 
     // BEANS
-    private MeshMailbox meshMailbox;
-    private TestConfiguration testConfiguration;
-    private NhsNumberTestData nhsNumbers;
-    private SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
-    private NhsProperties nhsProperties;
+    private final MeshMailbox meshMailbox;
+    private final TestConfiguration testConfiguration;
+    private final NhsNumberTestData nhsNumbers;
+    private final SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
+    private final NhsProperties nhsProperties;
 
-    private PdsAdaptorService pdsAdaptorService;
+    private final PdsAdaptorService pdsAdaptorService;
 
     @Autowired
     public PerformanceTest(
@@ -74,13 +78,13 @@ public class PerformanceTest {
 
     @Disabled("only used for perf test development not wanted on actual runs")
     @Test
-    public void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
+    void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
         RoundRobinPool<String> nhsNumberPool = new RoundRobinPool<>(nhsNumbers.getNhsNumbers());
         SuspensionCreatorPool suspensions = new SuspensionCreatorPool(nhsNumberPool);
 
         NemsTestEvent nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
 
-        out.println("looking for message containing: " + nemsEvent.nemsMessageId());
+        log.info("Attempting to find message containing: {}.", nemsEvent.nemsMessageId());
 
         SqsMessage successMessage = suspensionServiceMofUpdatedQueue.getMessageContaining(nemsEvent.nemsMessageId());
 
@@ -90,7 +94,7 @@ public class PerformanceTest {
     }
 
     @Test
-    public void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
+    void testAllSuspensionMessagesAreProcessedWhenLoadedWithProfileOfRatesAndInjectedMessageCounts() {
         final int overallTimeout = testConfiguration.getPerformanceTestTimeout();
         final PerformanceTestRecorder recorder = new PerformanceTestRecorder();
 
@@ -106,7 +110,7 @@ public class PerformanceTest {
 
         loadSource.summariseTo(out);
 
-        out.println("Checking mof updated message queue...");
+        log.info("Checking the MOF updated message queue.");
 
         try {
             final LocalDateTime timeout = now().plusSeconds(overallTimeout);
@@ -123,7 +127,7 @@ public class PerformanceTest {
             generateThroughputPlot(recorder, THROUGHPUT_BUCKET_SECONDS, "Suspension event mean throughput per second in " + THROUGHPUT_BUCKET_SECONDS + " second buckets");
         }
 
-        assertThat(recorder.hasUnfinishedEvents()).isFalse();
+        assertFalse(recorder.hasUnfinishedEvents());
     }
 
     private NemsTestEvent injectSingleNemsSuspension(NemsTestEventListener listener, NemsTestEvent testEvent) {
@@ -158,8 +162,8 @@ public class PerformanceTest {
         if (!nhsProperties.getNhsEnvironment().equals("perf")) {
             for (String nhsNumber: suspendedNhsNumbers) {
                 PdsAdaptorResponse patientStatus = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
-                out.println(nhsNumber + ": " + patientStatus);
-                assertThat(patientStatus.getIsSuspended()).isTrue();
+                log.info("{}:{}", nhsNumber, patientStatus);
+                assertTrue(patientStatus.getIsSuspended());
             }
         }
     }

@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.live_technical_test.day2;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.service.Gp2GpMessengerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-
+@Log4j2
 @SpringBootTest
 @TestPropertySource(properties = {"test.pds.username=live-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -36,13 +37,13 @@ class ValidateMOFUpdatedTest {
     @Test
     void shouldMoveSingleSuspensionMessageFromMeshMailBoxToNemsIncomingQueue() {
         if (safeListedPatientList.size() > 0) {
-            System.out.println("Safe list patient has size " + safeListedPatientList.size()); // TODO PRMT-3574 refactor to a consistent logging approach
+            log.info("The safe list of patients has size: {}.", safeListedPatientList.size());
 
             safeListedPatientList.forEach(nhsNumber -> {
                 PdsAdaptorResponse pdsResponse = fetchPdsPatientStatus(nhsNumber);
-                System.out.println("Patient suspended status is:" + pdsResponse.getIsSuspended());
+                log.info("The patient's suspended status is: {}.", pdsResponse.getIsSuspended());
 
-                System.out.println("Checking patient status with hl7 pds request - see logs for more details");
+                log.info("Checking patient status with HL7v3 PDS request - reference logs for more details.");
                 gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
             });
         }
