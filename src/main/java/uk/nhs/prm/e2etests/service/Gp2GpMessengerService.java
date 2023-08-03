@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.service;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import uk.nhs.prm.e2etests.annotation.Debt;
 import uk.nhs.prm.e2etests.model.request.HealthRecordRequest;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 
+@Log4j2
 @Service
 public class Gp2GpMessengerService {
 
@@ -27,12 +29,14 @@ public class Gp2GpMessengerService {
         String healthRecordRequestUrl = buildHealthRecordUrl(rootUrl, nhsNumber);
         try {
             HealthRecordRequest healthRecordRequest = new HealthRecordRequest(repoOdsCode, repoAsid, previousPractiseOdsCode, conversationId);
-            System.out.printf("Sending health record request to gp2gp messenger: %s. Request body: %s%n", healthRecordRequestUrl, healthRecordRequest);
+            log.info("Sending health record request to GP2GP Messenger {} with request body: {}", healthRecordRequestUrl, healthRecordRequest);
             ResponseEntity<String> exchange = restTemplate.exchange(healthRecordRequestUrl, HttpMethod.POST, new HttpEntity<>(healthRecordRequest, createHeaders(apiKey)), String.class);
-            System.out.println("Successfully sent ehr request to gp2gp messenger");
+            log.info("Successfully sent EHR request to GP2GP Messenger.");
             return exchange.getStatusCode().is2xxSuccessful();
-        } catch (HttpStatusCodeException e) {
-            System.out.printf("Error sending ehr request from gp2gp-messenger. Status code: %s. Error: %s%n", e.getStatusCode(), e.getMessage());
+        } catch (HttpStatusCodeException exception) {
+            log.info("An error occurred while sending EHR request to GP2GP Messenger with status code {}, details: {}.",
+                    exception.getStatusCode(),
+                    exception.getMessage());
             return false;
         }
     }
@@ -40,18 +44,19 @@ public class Gp2GpMessengerService {
     public void getPdsRecordViaHl7v3(String nhsNumber) {
         String requestUrl = buildPdsUrl(rootUrl, nhsNumber);
         try {
-            System.out.println("Sending pds hl7 request to gp2gp messenger");
+            log.info("Sending PDS HL7v3 request to GP2GP Messenger.");
             restTemplate.exchange(requestUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(apiKey)), String.class);
-            System.out.println("Successfully sent pds request to gp2gp messenger");
-        } catch (HttpStatusCodeException e) {
-            System.out.printf("Error sending pds request from gp2gp-messenger. Status code: %s. Error: %s%n", e.getStatusCode(), e.getMessage());
+            log.info("Successfully sent PDS HL7v3 request to GP2GP Messenger.");
+        } catch (HttpStatusCodeException exception) {
+            log.info("An error occurred while sending PDS request from GP2GP Messenger with status code {}, details: {}.",
+                    exception.getStatusCode(),
+                    exception.getMessage());
         }
     }
 
     private String buildHealthRecordUrl(String baseUrl, String nhsNumber) {
         return buildUrl(baseUrl, "health-record-requests/", nhsNumber);
     }
-
 
     private String buildPdsUrl(String baseUrl, String nhsNumber) {
         return buildUrl(baseUrl, "patient-demographics/", nhsNumber);

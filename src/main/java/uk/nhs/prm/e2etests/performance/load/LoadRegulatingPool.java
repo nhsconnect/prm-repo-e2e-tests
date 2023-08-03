@@ -1,14 +1,16 @@
 package uk.nhs.prm.e2etests.performance.load;
 
+import lombok.extern.log4j.Log4j2;
 import uk.nhs.prm.e2etests.performance.reporting.Reportable;
 
 import java.io.PrintStream;
 import java.util.List;
 
+@Log4j2
 public class LoadRegulatingPool<T extends Phased> implements FinitePool<T>, Reportable {
     private int count;
     private final Pool<T> sourcePool;
-    private List<LoadPhase> phases;
+    private final List<LoadPhase> phases;
     private int phaseIndex;
     private Long lastItemTimeMillis = null;
 
@@ -38,8 +40,7 @@ public class LoadRegulatingPool<T extends Phased> implements FinitePool<T>, Repo
 
     @Override
     public void summariseTo(PrintStream out) {
-        out.println();
-        out.println("Total number of items of load provided: " + count);
+        log.info("Total number of items of load provided: {}.", count);
     }
 
     private LoadPhase currentPhase() {

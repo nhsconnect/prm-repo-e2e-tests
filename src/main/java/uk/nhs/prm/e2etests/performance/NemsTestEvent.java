@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.performance;
 
+import lombok.extern.log4j.Log4j2;
 import uk.nhs.prm.e2etests.performance.load.LoadPhase;
 import uk.nhs.prm.e2etests.performance.load.Phased;
 import uk.nhs.prm.e2etests.model.SqsMessage;
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomOdsCode;
 
+@Log4j2
 public class NemsTestEvent implements Phased {
     private final String nemsMessageId;
     private final String nhsNumber;
@@ -101,7 +103,7 @@ public class NemsTestEvent implements Phased {
     }
 
     private void addWarning(String warning) {
-        System.out.println(warning);
+        log.warn(warning);
         warnings.add(warning);
     }
 

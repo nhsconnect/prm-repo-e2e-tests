@@ -1,6 +1,7 @@
 package uk.nhs.prm.e2etests.service;
 
 import com.google.gson.Gson;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+@Log4j2
 @Service
 public class EhrRepositoryService {
     private final String ehrRepositoryApiKey;
@@ -33,12 +35,14 @@ public class EhrRepositoryService {
     public boolean isPatientHealthRecordStatusComplete(String nhsNumber, String conversationId) {
         String ehrHealthRecordUrl = buildUrl(ehrRepositoryUri, nhsNumber, conversationId);
         try {
-            System.out.printf("Sending ehr status request to ehr repor: %s%n", ehrHealthRecordUrl);
+            log.info("Sending EHR status request to EHR Repository: {}.", ehrHealthRecordUrl);
             ResponseEntity<String> exchange = restTemplate.exchange(ehrHealthRecordUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(ehrRepositoryApiKey)), String.class);
-            System.out.println("Ehr request successfully stored in ehr repo");
+            log.info("Ehr request successfully stored in EHR Repository.");
             return exchange.getStatusCode().is2xxSuccessful();
-        } catch (HttpStatusCodeException e) {
-            System.out.printf("Error retrieving ehr health record status from ehr repo. Status code: %s. Error: %s%n", e.getStatusCode(), e.getMessage());
+        } catch (HttpStatusCodeException exception) {
+            log.info("An error occurred while attempting to retrieve EHR Health Record status from EHR Repository with status {}, details: {}",
+                    exception.getStatusCode(),
+                    exception.getMessage());
             return false;
         }
     }

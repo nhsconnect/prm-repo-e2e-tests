@@ -8,18 +8,23 @@ import uk.nhs.prm.e2etests.model.SqsMessage;
 import lombok.extern.log4j.Log4j2;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
-import static org.hamcrest.Matchers.notNullValue;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 
 @Log4j2
 public abstract class AbstractMessageQueue {
+    private static final String CHECKING_QUEUE_LOG_MESSAGE = "Checking if message is present on: {}";
+    private static final String DELETE_ALL_MESSAGES_LOG_MESSAGE = "Attempting to delete all messages on: {}";
+    private static final String MESSAGE_FOUND_LOG_MESSAGE = "The message has been found on: {}";
+
     protected final SqsService sqsService;
     protected final String queueUri;
 
@@ -29,7 +34,7 @@ public abstract class AbstractMessageQueue {
     }
 
     public void deleteAllMessages() {
-        log.info("Attempting to delete all the messages on: {}", this.queueUri);
+        log.info(DELETE_ALL_MESSAGES_LOG_MESSAGE, this.queueUri);
         try {
             sqsService.deleteAllMessagesFrom(queueUri);
         } catch (PurgeQueueInProgressException exception) {
@@ -44,29 +49,28 @@ public abstract class AbstractMessageQueue {
     }
 
     public SqsMessage getMessageContaining(String substring) {
-        log.info("Checking if message is present on: {}", this.queueUri);
+        log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
         final SqsMessage foundMessage = await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS)
-                .until(() -> findMessageContaining(substring), notNullValue());
-        log.info("The message has been found on: {}", this.queueUri);
+                .until(() -> findMessageContaining(substring), Optional::isPresent).get();
+        log.info(MESSAGE_FOUND_LOG_MESSAGE, this.queueUri);
         return foundMessage;
     }
 
-    public List<SqsMessage> getAllMessageContaining(String substring) {
-        log.info(String.format("Checking if message is present on : %s", this.queueUri));
+    public List<SqsMessage> getAllMessageContaining(String substring, int expectedNumberOfMessages) {
+        // This method for now only try to get at least 2 messages from the queue. May need renaming or amending
+        log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
         List<SqsMessage> allMessages = new ArrayList<>();
         await().atMost(2, TimeUnit.MINUTES)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-                    SqsMessage found = findMessageContaining(substring);
-                    if (found != null) {
-                        allMessages.add(found);
-                    }
-                    return (allMessages.size() >= 2);
+                    Optional<SqsMessage> found = findMessageContaining(substring);
+                    found.ifPresent(allMessages::add);
+                    return (allMessages.size() >= expectedNumberOfMessages);
                 }, equalTo(true));
 
-        log.info(String.format("Found message on : %s", this.queueUri));
+        log.info(MESSAGE_FOUND_LOG_MESSAGE, this.queueUri);
         return allMessages;
     }
 
@@ -75,15 +79,15 @@ public abstract class AbstractMessageQueue {
     }
 
     public SqsMessage getMessageContainingAttribute(String attribute, String expectedValue, int timeout, TimeUnit timeUnit) {
-        log.info(String.format("Checking if message is present on : %s", this.queueUri));
+        log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
         return await().atMost(timeout, timeUnit)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS)
-                .until(() -> findMessageWithAttribute(attribute, expectedValue), notNullValue());
+                .until(() -> findMessageWithAttribute(attribute, expectedValue), Optional::isPresent).get();
     }
 
     public boolean hasResolutionMessage(NemsResolutionMessage resolutionMessage) {
-        log.info(String.format("Checking if message is present on : %s", this.queueUri));
+        log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
         await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
@@ -92,56 +96,54 @@ public abstract class AbstractMessageQueue {
     }
 
     public List<SqsMessage> getNextMessages(LocalDateTime timeoutAt) {
-        log.info(String.format("Checking for messages on : %s", this.queueUri));
+        log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
         int pollInterval = 5;
         long timeoutSeconds = Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval + 1);
+
         return await().atMost(timeoutSeconds, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(pollInterval, TimeUnit.SECONDS)
-                .until(() -> findMessagesOnQueue((int) timeoutSeconds), notNullValue());
+                .until(() -> findMessagesOnQueue((int) timeoutSeconds), messages -> !messages.isEmpty());
     }
 
     private List<SqsMessage> findMessagesOnQueue(int visibilityTimeout) {
-        List<SqsMessage> messages = sqsService.readThroughMessages(this.queueUri, visibilityTimeout);
-        return messages.isEmpty() ? null : messages;
+        return sqsService.readThroughMessages(this.queueUri, visibilityTimeout);
     }
 
-    private SqsMessage findMessageContaining(String substring) {
-        List<SqsMessage>  allMessages = sqsService.readThroughMessages(this.queueUri, 180);
-        for (SqsMessage message : allMessages) {
-            log.info(String.format("just finding message, checking conversationId: %s", this.queueUri));
-            if (message.contains(substring)) {
-                return message;
-            }
-        }
-        return null;
-    }
+    private Optional<SqsMessage> findMessageWithCondition(Predicate<SqsMessage> condition) {
+        log.info(CHECKING_QUEUE_LOG_MESSAGE, String.format("%s, with a provided condition", this.queueUri));
 
-    public SqsMessage findMessageWithAttribute(String attribute, String expectedValue) {
         List<SqsMessage> allMessages = sqsService.readThroughMessages(this.queueUri, 180);
-        for (SqsMessage message : allMessages) {
-            System.out.println("just finding message, checking attribute : " + attribute + " expected value is : " + expectedValue);
-            if (message.getAttributes().get(attribute).stringValue().equals(expectedValue)) {
-                return message;
-            }
-        }
-        return null;
+        return allMessages.stream().filter(condition).findFirst();
+    }
+    
+    private Optional<SqsMessage> findMessageContaining(String substring) {
+        return findMessageWithCondition(message -> message.contains(substring));
     }
 
-    public SqsMessage getMessageContainingForTechnicalTestRun(String substring) {
-        log.info(String.format("Checking if message is present on : %s", this.queueUri));
-        return await().atMost(1800, TimeUnit.SECONDS)
-                .with()
-                .pollInterval(100, TimeUnit.MILLISECONDS)
-                .until(() -> findMessageContainingWitHigherVisibilityTimeOut(substring), notNullValue());
+    public Optional<SqsMessage> findMessageWithAttribute(String attribute, String expectedValue) {
+        log.info("Checking if message is present on {} with attribute {}.", this.queueUri, attribute);
+
+        return findMessageWithCondition(message ->
+                message.getAttributes().get(attribute).stringValue().equals(expectedValue)
+        );
     }
 
-    private SqsMessage findMessageContainingWitHigherVisibilityTimeOut(String substring) {
+    public Optional<SqsMessage> getMessageContainingForTechnicalTestRun(String substring) {
+            log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
+
+            return await().atMost(30, TimeUnit.MINUTES)
+                    .with()
+                    .pollInterval(100, TimeUnit.MILLISECONDS)
+                    .until(() -> findMessageContainingWitHigherVisibilityTimeOut(substring), Optional::isPresent);
+    }
+
+    private Optional<SqsMessage> findMessageContainingWitHigherVisibilityTimeOut(String substring) {
         final List<SqsMessage> allMessages = sqsService.readThroughMessages(this.queueUri, 600);
+
         return allMessages.stream()
                 .filter(message -> message.contains(substring))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     private boolean hasResolutionMessageNow(NemsResolutionMessage messageToCheck) {

@@ -3,6 +3,7 @@ package uk.nhs.prm.e2etests.performance;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.log4j.Log4j2;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 
 import java.io.PrintStream;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
+@Log4j2
 public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestRecording {
     private final Map<String, NemsTestEvent> nemsEventsById = new HashMap<>();
     private int knownEventCount = 0;
@@ -23,26 +25,24 @@ public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestR
     public void onStartingTestItem(NemsTestEvent testEvent) {
         nemsEventsById.put(testEvent.nemsMessageId(), testEvent);
         if (nemsEventsById.size() % 20 == 0) {
-            System.out.println();
-            System.out.println("Recorded " + nemsEventsById.size() + " test events at " + new Date());
+            log.info("Recorded {} test events at {}.", nemsEventsById.size(), new Date());
         }
     }
 
     @Override
     public void onStartedTestItem(NemsTestEvent testEvent) {
-        System.out.print(testEvent.isSuspension() ? "S" : "n");
+        log.info(testEvent.isSuspension() ? "Suspension Event" : "Non-Suspension Event");
     }
 
     public boolean finishMatchingMessage(SqsMessage sqsMessage)  {
         String nemsMessageIdFromBody = extractNemsMessageIdFromBody(sqsMessage);
+
         if (nemsEventsById.containsKey(nemsMessageIdFromBody)) {
-            if (nemsEventsById.get(nemsMessageIdFromBody).finished(sqsMessage)) {
-                knownEventCount++;
-            };
-            System.out.print("M");
+            if (nemsEventsById.get(nemsMessageIdFromBody).finished(sqsMessage)) knownEventCount++;
+            log.info("Known event found.");
             return true;
         } else {
-            System.out.print(".");
+            log.info("Unknown event found.");
             unknownEventCount++;
             return false;
         }
@@ -60,15 +60,16 @@ public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestR
 
     @Override
     public void summariseTo(PrintStream out) {
-        out.println("Total messages received: " + (knownEventCount + unknownEventCount));
-        out.println("Total messages received from messages sent in test: " + knownEventCount);
-        out.println("Total messages received from messages received outside of test: " + unknownEventCount);
+        log.info("Total messages received: {}.", (knownEventCount + unknownEventCount));
+        log.info("Total messages received from messages sent in test: {}", knownEventCount);
+        log.info("Total messages received from messages received outside of test: {}", unknownEventCount);
+
         for (NemsTestEvent event : testEvents()) {
             if (event.hasWarnings()) {
-                System.out.println("Event had warnings: " + event);
+                log.warn("Event had warnings: {}.", event);
             }
             if (!event.isFinished()) {
-                System.out.println("Event was never finished: " + event);
+                log.info("Event was never finished: {}.", event);
             }
         }
     }

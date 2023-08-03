@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.model;
 
+import lombok.extern.log4j.Log4j2;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.enumeration.Patient;
 
@@ -7,6 +8,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+@Log4j2
 public class RepoIncomingMessageBuilder {
     private String nhsNumber;
     private UUID nemsMessageId;
@@ -67,8 +69,7 @@ public class RepoIncomingMessageBuilder {
 
     public RepoIncomingMessageBuilder withRandomlyGeneratedConversationId() {
         conversationId = UUID.randomUUID();
-        System.out.println("generated conversation id " + conversationId);
-        System.out.flush();
+        log.info("Generated Conversation ID: {}.", conversationId);
         return this;
     }
 

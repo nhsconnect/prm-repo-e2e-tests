@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.repository;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -15,6 +16,7 @@ import uk.nhs.prm.e2etests.property.DatabaseProperties;
 import java.util.HashMap;
 import java.util.Map;
 
+@Log4j2
 @Component
 public class TransferTrackerDatabaseRepository {
     private final DatabaseProperties databaseProperties;
@@ -31,7 +33,7 @@ public class TransferTrackerDatabaseRepository {
     }
 
     public GetItemResponse queryWithConversationId(String conversationId) {
-        System.out.println("Querying transfer tracker db with conversation id : "+conversationId);
+        log.info("Querying transfer tracker database with Conversation ID: {}.", conversationId);
 
         final Map<String, AttributeValue> dynamoDbKey = Map.of(
         "conversation_id", AttributeValue.builder().s(conversationId).build()

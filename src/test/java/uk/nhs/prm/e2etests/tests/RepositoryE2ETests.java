@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.tests;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
@@ -17,6 +18,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.xmlunit.diff.*;
 import uk.nhs.prm.e2etests.configuration.TestConfiguration;
 import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
@@ -42,12 +44,12 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 import static uk.nhs.prm.e2etests.utility.TestUtility.*;
 
+@Log4j2
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestPropertySource(properties = {"test.pds.username=e2e-test"})
@@ -166,7 +168,7 @@ class RepositoryE2ETests {
         SqsMessage gp2gpMessage = gp2gpMessengerQueue.getMessageContaining(outboundConversationId);
 
         assertThat(gp2gpMessage).isNotNull();
-        assertThat(gp2gpMessage.contains("RCMR_IN030000UK06")).isTrue();
+        assertTrue(gp2gpMessage.contains("RCMR_IN030000UK06"));
 
         String gp2gpMessengerPayload = getPayloadOptional(gp2gpMessage.getBody()).orElseThrow();
         String smallEhrPayload = getPayloadOptional(smallEhr).orElseThrow();
@@ -234,7 +236,7 @@ class RepositoryE2ETests {
         SqsMessage gp2gpMessageUK06 = gp2gpMessengerQueue.getMessageContaining(outboundConversationId);
 
         assertThat(gp2gpMessageUK06).isNotNull();
-        assertThat(gp2gpMessageUK06.contains("RCMR_IN030000UK06")).isTrue();
+        assertTrue(gp2gpMessageUK06.contains("RCMR_IN030000UK06"));
 
         String gp2gpMessengerEhrCorePayload = getPayloadOptional(gp2gpMessageUK06.getBody()).orElseThrow();
         String largeEhrCorePayload = getPayloadOptional(largeEhrCore).orElseThrow();
@@ -247,14 +249,14 @@ class RepositoryE2ETests {
         inboundQueueFromMhs.sendMessage(continueRequest, outboundConversationId);
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        List<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("COPC_IN000001UK01");
+        List<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("COPC_IN000001UK01", 2);
         assertThat(allFragments.size()).isGreaterThanOrEqualTo(2);
 
         String largeEhrFragment1Payload = getPayloadOptional(largeEhrFragment1).orElseThrow();
         String largeEhrFragment2Payload = getPayloadOptional(largeEhrFragment2).orElseThrow();
 
         allFragments.forEach(fragment -> {
-            assertThat(fragment.contains(outboundConversationId)).isTrue();
+            assertTrue(fragment.contains(outboundConversationId));
 
             String fragmentPayload = getPayloadOptional(fragment.getBody()).orElseThrow();
             Diff compareWithFragment1 = comparePayloads(fragmentPayload, largeEhrFragment1Payload);
@@ -304,7 +306,8 @@ class RepositoryE2ETests {
                 "conversationId",
                 triggerMessage.conversationId(),
                 largeEhr.timeoutMinutes(),
-                TimeUnit.MINUTES));
+                TimeUnit.MINUTES))
+                .isNotNull();
 
         assertTrue(transferTrackerService.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
 
@@ -348,7 +351,8 @@ class RepositoryE2ETests {
                 "conversationId",
                 triggerMessage.conversationId(),
                 largeEhr.timeoutMinutes(),
-                TimeUnit.MINUTES));
+                TimeUnit.MINUTES))
+                .isNotNull();
 
         assertTrue(transferTrackerService.statusForConversationIdIs(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
     }
@@ -375,8 +379,9 @@ class RepositoryE2ETests {
         List<String> conversationIdsList = new ArrayList<>();
 
         Instant requestedAt = null;
-        int iterationIndex = 1; // TODO PRMT-3574 - A manually incremented index within a for loop? Seems off to me.
-        for (Arguments sourceSystemAndEhr : loadTestScenarios().collect(toList())) {
+
+        // using classical for loop here due to the use of a mutable requestedAt
+        for (Arguments sourceSystemAndEhr : loadTestScenarios().toList()) {
             Gp2GpSystem sourceSystem = (Gp2GpSystem) sourceSystemAndEhr.get()[0];
             LargeEhrVariant ehr = (LargeEhrVariant) sourceSystemAndEhr.get()[1];
             Patient patient = ehr.patient();
@@ -387,40 +392,41 @@ class RepositoryE2ETests {
                     .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
                     .build();
 
-            System.out.println("Trigger message: " + triggerMessage.toJsonString());
-            //System.out.println("NHS Number in " + sourceSystem + " for patient " + patient + " is: " + patient.nhsNumber());
+            LOGGER.info("Trigger message: {}", triggerMessage.toJsonString());
+            LOGGER.info("NHS Number in {} for patient {} is: {}", sourceSystem, patient, patient.nhsNumber());
 
             setManagingOrganisationToRepo(patient.nhsNumber());
 
-            System.out.println("Iteration Scenario : " + iterationIndex + " : Patient " + patient);
-            System.out.println("Sending to repoIncomingQueue...");
+            LOGGER.info("Iteration Scenario : Patient {}", patient);
+            LOGGER.info("Sending to repoIncomingQueue...");
             ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
             requestedAt = Instant.now();
 
-            System.out.println("Time after sending the triggerMessage to repoIncomingQueue: " + requestedAt);
+            LOGGER.info("Time after sending the triggerMessage to repoIncomingQueue: {}", requestedAt);
 
             conversationIdsList.add(triggerMessage.getConversationIdAsString());
-            conversationIdsList.forEach(System.out::println);
-
-            iterationIndex++;
-
+            conversationIdsList.forEach(log::info);
         }
 
         checkThatTransfersHaveCompletedSuccessfully(conversationIdsList, requestedAt);
     }
 
+
     private void checkThatTransfersHaveCompletedSuccessfully(List<String> conversationIdsList, Instant timeLastRequestSent) {
         Instant finishedAt;
         for (String conversationId : conversationIdsList) {
-            assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", conversationId, 5, TimeUnit.MINUTES));
+            assertThat(transferCompleteQueue.getMessageContainingAttribute(
+                    "conversationId", conversationId,
+                    5, TimeUnit.MINUTES))
+                    .isNotNull();
 
             // get actual transfer time from completion message?
             finishedAt = Instant.now();
 
-            System.out.println("Time after request sent that completion message found in transferCompleteQueue: " + finishedAt);
+            LOGGER.info("Time after request sent that completion message found in transferCompleteQueue: {}", finishedAt);
 
             long timeElapsed = Duration.between(timeLastRequestSent, finishedAt).toSeconds();
-            System.out.println("Total time taken for: " + conversationId + " in seconds was no more than : " + timeElapsed);
+            LOGGER.info("Total time taken for: " + conversationId + " in seconds was no more than : {}", timeElapsed);
 
             assertTrue(transferTrackerService.statusForConversationIdIs(conversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE"));
         }
@@ -460,11 +466,11 @@ class RepositoryE2ETests {
 
         ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
 
-        assertThat(ehrTransferServiceNegativeAcknowledgementOQ.getMessageContaining(triggerMessage.conversationId()));
-        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId()));
+        assertThat(ehrTransferServiceNegativeAcknowledgementOQ.getMessageContaining(triggerMessage.conversationId())).isNotNull();
+        assertThat(transferCompleteQueue.getMessageContainingAttribute("conversationId", triggerMessage.conversationId())).isNotNull();
 
 
-        var status = transferTrackerService.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
+        String status = transferTrackerService.waitForStatusMatching(triggerMessage.conversationId(), "ACTION:EHR_TRANSFER_FAILED");
         assertThat(status).isEqualTo("ACTION:EHR_TRANSFER_FAILED:" + REQUESTER_NOT_REGISTERED_PRACTICE_FOR_PATIENT_CODE);
     }
 
@@ -479,7 +485,7 @@ class RepositoryE2ETests {
     }
 
     private void setManagingOrganisationToRepo(String nhsNumber) {
-        var pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
+        PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
         assertThat(pdsResponse.getIsSuspended()).as("%s should be suspended so that MOF is respected", nhsNumber).isTrue();
         String repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
         if (!repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {

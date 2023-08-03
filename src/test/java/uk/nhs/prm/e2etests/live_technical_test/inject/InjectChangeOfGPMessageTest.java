@@ -1,10 +1,10 @@
 package uk.nhs.prm.e2etests.live_technical_test.inject;
 
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.nhs.prm.e2etests.live_technical_test.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
@@ -17,14 +17,13 @@ import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomOdsCode;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.randomNemsMessageId;
 import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
 
+@Log4j2
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnableScheduling
-public class InjectChangeOfGPMessageTest {
-
-    private MeshMailbox meshMailbox;
-    private SyntheticPatientProperties syntheticPatientProperties;
-    private NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
+class InjectChangeOfGPMessageTest {
+    private final MeshMailbox meshMailbox;
+    private final SyntheticPatientProperties syntheticPatientProperties;
+    private final NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
 
     @Autowired
     public InjectChangeOfGPMessageTest(
@@ -38,7 +37,7 @@ public class InjectChangeOfGPMessageTest {
     }
 
     @Test
-    public void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
+    void shouldInjectTestMessageOnlyIntendedToRunInNonProdEnvironment() {
         String nemsMessageId = randomNemsMessageId();
         String nhsNumber = syntheticPatientProperties.getSyntheticPatientInPreProd();
         String previousGP = randomOdsCode();
@@ -54,9 +53,7 @@ public class InjectChangeOfGPMessageTest {
 
         meshMailbox.postMessage(nemsSuspension);
 
-        // MAYBE add some extra synthetic patient change of gps to simulate UK-wide synthetic activity??
-
-        System.out.println("injected nemsMessageId: " + nemsMessageId + " of course this will not be known in prod, so should be picked up when change of gp received");
+        log.info("Injected NEMS Event Message ID: {}", nemsMessageId);
         TestParameters.outputTestParameter("live_technical_test_nhs_number", nhsNumber);
         TestParameters.outputTestParameter("live_technical_test_previous_gp", previousGP);
     }

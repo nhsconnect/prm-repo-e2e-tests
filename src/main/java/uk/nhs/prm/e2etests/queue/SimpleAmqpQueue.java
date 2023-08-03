@@ -3,7 +3,9 @@ package uk.nhs.prm.e2etests.queue;
 import com.swiftmq.amqp.v100.client.*;
 import com.swiftmq.amqp.v100.generated.messaging.message_format.ApplicationProperties;
 import com.swiftmq.amqp.v100.generated.messaging.message_format.AmqpValue;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import uk.nhs.prm.e2etests.exception.GenericException;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import com.swiftmq.amqp.v100.messaging.AMQPMessage;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Log4j2
 @Component
 public class SimpleAmqpQueue {
 
@@ -43,18 +46,17 @@ public class SimpleAmqpQueue {
             msg.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
 
             messageQueueProducer.send(msg);
-        }
-        catch (AMQPException | IOException e) {
-            throw new RuntimeException(e);
+        } catch (AMQPException | IOException exception) {
+            log.error(exception.getMessage());
+            throw new GenericException(this.getClass().getName(), exception.getMessage());
         }
     }
 
     public void close() {
         try {
             messageQueueProducer.close();
-        }
-        catch (AMQPException e) {
-            throw new RuntimeException(e);
+        } catch (AMQPException exception) {
+            throw new GenericException(this.getClass().getName(), exception.getMessage());
         }
     }
 
@@ -69,10 +71,9 @@ public class SimpleAmqpQueue {
             connection.connect();
             Session session = connection.createSession(100, 100);
             return session.createProducer("inbound", QoS.AT_MOST_ONCE);
-        }
-        catch (IOException | AMQPException | AuthenticationException | UnsupportedProtocolVersionException e) {
-            System.out.println(e.getMessage());
-            throw new RuntimeException(e);
+        } catch (IOException | AMQPException | AuthenticationException | UnsupportedProtocolVersionException exception) {
+            log.error(exception.getMessage());
+            throw new GenericException(this.getClass().getName(), exception.getMessage());
         }
     }
 }

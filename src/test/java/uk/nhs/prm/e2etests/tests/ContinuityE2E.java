@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.tests;
 
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.MethodOrderer;
@@ -49,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityGenerator.*;
 import static uk.nhs.prm.e2etests.utility.NemsEventFactory.createNemsEventFromTemplate;
 
+@Log4j2
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestPropertySource(properties = {"test.pds.username=e2e-test"})
@@ -126,26 +128,26 @@ class ContinuityE2E {
     }
 
     @Test
-    @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="true")
+    @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO", matches="true")
     @Order(1)
-    public void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
+    void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         String now = now();
         String previousGp = randomOdsCode();
-        System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
+        log.info("Generated a random ODS code for previous GP: {}", previousGp);
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
         meshMailbox.postMessage(nemsSuspension);
         NemsResolutionMessage expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
-        assertThat(meshForwarderOQ.hasMessage(nemsSuspension.getMessage())); // TODO PRMT-3574 an 'assertThat' without a matching 'isTrue'? I think these instances need a change
-        assertThat(suspensionServiceMofUpdatedQueue.hasResolutionMessage( expectedMessageOnQueue));
+        assertTrue(meshForwarderOQ.hasMessage(nemsSuspension.getMessage()));
+        assertTrue(suspensionServiceMofUpdatedQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
     @Test
     @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="false") //The toggle status for repo_process_only_safe_listed_ods_codes is true in dev and test
-    public void shouldPutAMessageForASuspendedPatientWithSafeListedODSCodeOnRepoIncomingWhenTheToggleIsTrue() {
+    void shouldPutAMessageForASuspendedPatientWithSafeListedODSCodeOnRepoIncomingWhenTheToggleIsTrue() {
         String nemsMessageId = randomNemsMessageId();
         String safeListedOdsCode = EMIS_PTL_INT;
         String now = now();
@@ -155,13 +157,12 @@ class ContinuityE2E {
 
         meshMailbox.postMessage(nemsSuspension);
 
-        assertThat(suspensionsServiceRepoIncomingOQ.getMessageContaining(nemsMessageId));
-
+        assertThat(suspensionsServiceRepoIncomingOQ.getMessageContaining(nemsMessageId)).isNotNull();
     }
 
     @Test
     @Order(2)
-    public void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
+    void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = randomOdsCode();
         String now = now();
@@ -172,13 +173,12 @@ class ContinuityE2E {
         NoLongerSuspendedMessageNems expectedMessageOnQueue = new NoLongerSuspendedMessageNems(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
         meshMailbox.postMessage(nemsSuspension);
-        assertThat(suspensionServiceNotSuspendedOQ.hasResolutionMessage(expectedMessageOnQueue));
-
+        assertTrue(suspensionServiceNotSuspendedOQ.hasResolutionMessage(expectedMessageOnQueue));
     }
 
     @Test
     @Order(5)
-    public void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
+    void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() throws Exception {
         String nemsMessageId = randomNemsMessageId();
 
         NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate(
@@ -186,26 +186,26 @@ class ContinuityE2E {
 
         meshMailbox.postMessage(nemsNonSuspension);
 
-        assertThat(nemsEventProcessorUnhandledEventsQueue.hasMessage("{\"nemsMessageId\":\"" + nemsMessageId + "\",\"messageStatus\":\"NO_ACTION:NON_SUSPENSION\"}"));
+        assertTrue(nemsEventProcessorUnhandledEventsQueue.hasMessage("{\"nemsMessageId\":\"" + nemsMessageId + "\",\"messageStatus\":\"NO_ACTION:NON_SUSPENSION\"}"));
     }
 
     @Test
     @Order(6)
-    public void shouldSendUnprocessableMessagesToDlQ() throws Exception {
+    void shouldSendUnprocessableMessagesToDlQ() throws Exception {
         Map<String, NemsEventMessage> dlqMessages = NemsEventFactory.getDLQNemsEventMessages();
-        log("Posting DLQ messages");
+        log.info("Posting DLQ messages.");
 
         for (Map.Entry<String, NemsEventMessage> message : dlqMessages.entrySet()) {
             meshMailbox.postMessage(message.getValue());
-            log("Posted " + message.getKey() + " messages");
-            assertThat(nemsEventProcessorDeadLetterQueue.hasMessage(message.getValue().getMessage()));
+            log.info("Posted {} messages.", message.getKey());
+            assertTrue(nemsEventProcessorDeadLetterQueue.hasMessage(message.getValue().getMessage()));
         }
     }
 
     @Test
     @Order(4)
     @Disabled(" 'process_only_synthetic_or_safe_listed_patients' toggle is set to false across all the environments. ")
-    public void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
+    void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = randomOdsCode();
 
@@ -218,18 +218,18 @@ class ContinuityE2E {
 
         NemsResolutionMessage expectedMessageOnQueue = new NemsResolutionMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC_OR_SAFE_LISTED");
 
-        assertThat(suspensionServiceMofNotUpdatedQueue.hasResolutionMessage(expectedMessageOnQueue));
+        assertTrue(suspensionServiceMofNotUpdatedQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
     @Test
     @Order(3)
-    public void shouldMoveDeceasedPatientEventToDeceasedQueue() {
+    void shouldMoveDeceasedPatientEventToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = syntheticPatientProperties.getDeceasedPatient();
         String eventTime = now();
         String previousGp = randomOdsCode();
 
-        System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
+        log.info("Generated a random ODS code for previous GP: {}.", previousGp);
 
         NemsEventMessage deceasedEvent = createNemsEventFromTemplate("change-of-gp-suspension.xml",
                 patientNhsNumber, nemsMessageId, previousGp, eventTime);
@@ -238,7 +238,7 @@ class ContinuityE2E {
 
         DeceasedPatientMessageNems expectedMessageOnQueue = new DeceasedPatientMessageNems(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
 
-        assertThat(suspensionServiceDeceasedPatientQueue.hasResolutionMessage(expectedMessageOnQueue));
+        assertTrue(suspensionServiceDeceasedPatientQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
     @Test
@@ -260,16 +260,10 @@ class ContinuityE2E {
                 "\"nemsMessageId\":\"" + nemsMessageId + "\"," +
                 "\"lastUpdated\":\"" + reregistrationTime + "\"}";
 
+        assertThrows(HttpClientErrorException.class, () -> ehrRepositoryService.getEhrResponse(patientNhsNumber));
 
-
-
-        assertThrows(HttpClientErrorException.class, () -> {
-            ehrRepositoryService.getEhrResponse(patientNhsNumber);
-        });
-
-
-        assertThat(meshForwarderOQ.hasMessage(reRegistration.getMessage()));
-        assertThat(nemsEventProcessorReRegistrationsOQ.hasMessage(expectedMessageOnQueue));
+        assertTrue(meshForwarderOQ.hasMessage(reRegistration.getMessage()));
+        assertTrue(nemsEventProcessorReRegistrationsOQ.hasMessage(expectedMessageOnQueue));
     }
 
     @Test
@@ -279,7 +273,7 @@ class ContinuityE2E {
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         String now = now();
         String previousGp = randomOdsCode();
-        System.out.printf("Generated random ods code for previous gp: %s%n", previousGp);
+        log.info("Generated a random ODS code for previous GP: {}.", previousGp);
 
         NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
         meshMailbox.postMessage(nemsSuspension);
@@ -303,9 +297,5 @@ class ContinuityE2E {
         if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             pdsAdaptorService.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.getRecordETag());
         }
-    }
-
-    public void log(String message) {
-        System.out.println(message);
     }
 }
