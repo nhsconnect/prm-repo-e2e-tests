@@ -1,10 +1,7 @@
 package uk.nhs.prm.e2etests.model;
 
-import lombok.Getter;
-
 import java.util.Objects;
 
-@Getter
 public record TransferTrackerDynamoDbEntry(
         String conversationId,
         String largeEhrCoreMessageId ,
