@@ -1,26 +1,26 @@
 package uk.nhs.prm.e2etests.utility;
 
 import lombok.Getter;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.core.io.FileSystemResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public final class ResourceUtility {
+    private ResourceUtility() { }
+
     private static final ResourceLoader resourceLoader;
 
     static {
         resourceLoader = new FileSystemResourceLoader();
     }
 
-    private ResourceUtility() { }
-
-    static String readTestResourceFile(Directory directory, String filename) {
+    public static String readTestResourceFile(Directory directory, String filename) {
         try {
             return resourceLoader
-                    .getResource(String.format("classpath:%s/%s", directory.getDirectory(), filename))
+                    .getResource(String.format("classpath:%s/%s", directory.getDirectoryName(), filename))
                     .getContentAsString(StandardCharsets.UTF_8);
         } catch (IOException exception) {
             throw new ResourceAccessException(exception.getMessage());
@@ -38,12 +38,13 @@ public final class ResourceUtility {
     @Getter
     public enum Directory {
         EHR_DIRECTORY("ehr"),
-        NEMS_EVENT_TEMPLATES_DIRECTORY("nems-event-templates");
+        NEMS_EVENT_TEMPLATES_DIRECTORY("nems-event-templates"),
+        EHR_HANDLEBARS_TEMPLATES("templates/ehr");
 
-        private final String directory;
+        private final String directoryName;
 
-        Directory(String directory) {
-            this.directory = directory;
+        Directory(String directoryName) {
+            this.directoryName = directoryName;
         }
     }
 }
