@@ -13,6 +13,7 @@ import uk.nhs.prm.e2etests.property.NhsProperties;
 import org.springframework.core.io.Resource;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.Gson;
+import uk.nhs.prm.e2etests.utility.NhsIdentityUtility;
 
 import java.util.stream.Stream;
 import java.util.List;
@@ -59,14 +60,14 @@ public class ResourceConfiguration {
     }
 
     private List<String> generateRandomNhsNumbers(int count) {
-        return Stream.generate(this::generateRandomNhsNumber)
+        return Stream.generate(NhsIdentityUtility::randomNhsNumber)
                 .limit(count)
                 .toList();
     }
 
-    @Debt(comment = "Address SonarLint comments.")
-    private String generateRandomNhsNumber() {
-        final int randomSevenDigitNumber = (int) Math.floor(Math.random() * 9_000_000) + 1_000_000;
-        return SYNTHETIC_PATIENT_NUMBER_PREFIX_DEV + randomSevenDigitNumber;
-    }
+//    @Debt(comment = "Address SonarLint comments.")
+//    private String generateRandomNhsNumber() {
+//        final int randomSevenDigitNumber = (int) Math.floor(Math.random() * 9_000_000) + 1_000_000;
+//        return SYNTHETIC_PATIENT_NUMBER_PREFIX_DEV + randomSevenDigitNumber;
+//    }
 }

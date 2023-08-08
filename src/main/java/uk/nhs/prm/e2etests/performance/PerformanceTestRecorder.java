@@ -23,7 +23,7 @@ public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestR
 
     @Override
     public void onStartingTestItem(NemsTestEvent testEvent) {
-        nemsEventsById.put(testEvent.nemsMessageId(), testEvent);
+        nemsEventsById.put(testEvent.getNemsMessageId(), testEvent);
         if (nemsEventsById.size() % 20 == 0) {
             log.info("Recorded {} test events at {}.", nemsEventsById.size(), new Date());
         }
@@ -31,14 +31,14 @@ public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestR
 
     @Override
     public void onStartedTestItem(NemsTestEvent testEvent) {
-        log.info(testEvent.isSuspension() ? "Suspension Event" : "Non-Suspension Event");
+        log.info(testEvent.isSuspensionEvent() ? "Suspension Event" : "Non-Suspension Event");
     }
 
     public boolean finishMatchingMessage(SqsMessage sqsMessage)  {
         String nemsMessageIdFromBody = extractNemsMessageIdFromBody(sqsMessage);
 
         if (nemsEventsById.containsKey(nemsMessageIdFromBody)) {
-            if (nemsEventsById.get(nemsMessageIdFromBody).finished(sqsMessage)) knownEventCount++;
+            if (nemsEventsById.get(nemsMessageIdFromBody).finish(sqsMessage)) knownEventCount++;
             log.info("Known event found.");
             return true;
         } else {
@@ -60,18 +60,16 @@ public class PerformanceTestRecorder implements NemsTestEventListener, NemsTestR
 
     @Override
     public void summariseTo(PrintStream out) {
-        log.info("Total messages received: {}.", (knownEventCount + unknownEventCount));
-        log.info("Total messages received from messages sent in test: {}", knownEventCount);
-        log.info("Total messages received from messages received outside of test: {}", unknownEventCount);
+        log.info("""
+                Total messages received: {}
+                Total messages received from messages sent in test: {}
+                Total messages received from messages received outside of test: {}""",
+                (knownEventCount + unknownEventCount), knownEventCount, unknownEventCount);
 
-        for (NemsTestEvent event : testEvents()) {
-            if (event.hasWarnings()) {
-                log.warn("Event had warnings: {}.", event);
-            }
-            if (!event.isFinished()) {
-                log.info("Event was never finished: {}.", event);
-            }
-        }
+        testEvents().forEach(event -> {
+            if (event.hasWarnings()) log.warn("Event had warnings: {}.", event);
+            else if (!event.isFinished()) log.info("Event was never finished: {}.", event);
+        });
     }
 
     @Override

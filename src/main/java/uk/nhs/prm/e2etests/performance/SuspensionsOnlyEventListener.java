@@ -12,14 +12,14 @@ public class SuspensionsOnlyEventListener implements NemsTestEventListener {
 
     @Override
     public void onStartingTestItem(NemsTestEvent testEvent) {
-        if (testEvent.isSuspension()) {
+        if (testEvent.isSuspensionEvent()) {
             recorder.onStartingTestItem(testEvent);
         }
     }
 
     @Override
     public void onStartedTestItem(NemsTestEvent testEvent) {
-        if (testEvent.isSuspension()) {
+        if (testEvent.isSuspensionEvent()) {
             recorder.onStartedTestItem(testEvent);
         } else {
             log.info("Unknown Event Found");

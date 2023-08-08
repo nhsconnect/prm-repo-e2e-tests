@@ -62,10 +62,10 @@ public class PerformanceChartGenerator {
             if (!seriesPerPhase.containsKey(phase)) {
                 seriesPerPhase.put(phase, new XYSeries("Phase " + phaseCount++ + ": " + phase));
             }
-            if (event.duration() > 0) {
+            if (event.getProcessingTimeSeconds() > 0) {
                 XYSeries series = seriesPerPhase.get(phase);
-                long secondsSinceRunStart = recording.runStartTime().until(event.startedAt(), ChronoUnit.SECONDS);
-                series.add(secondsSinceRunStart, event.duration());
+                long secondsSinceRunStart = recording.runStartTime().until(event.getStartedAt(), ChronoUnit.SECONDS);
+                series.add(secondsSinceRunStart, event.getProcessingTimeSeconds());
             }
         }
         return new ArrayList<>(seriesPerPhase.values());
@@ -79,7 +79,7 @@ public class PerformanceChartGenerator {
         int bucketFinishedCount = 0;
         for (NemsTestEvent event : finishOrderedEvents) {
             if (event.isFinished()) {
-                while (bucketEndTime.isBefore(event.finishedAt())) {
+                while (bucketEndTime.isBefore(event.getFinishedAt())) {
                     addThroughputToSeries(series, throughputBucketSeconds, bucketEndTime, bucketFinishedCount, recording.runStartTime());
                     bucketStartTime = bucketEndTime;
                     bucketEndTime = bucketStartTime.plusSeconds(throughputBucketSeconds);

@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.configuration.ResourceConfiguration;
 import uk.nhs.prm.e2etests.configuration.TestConfiguration;
+import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.NhsNumberTestData;
 import uk.nhs.prm.e2etests.model.SqsMessage;
@@ -23,6 +24,7 @@ import uk.nhs.prm.e2etests.performance.load.SuspensionCreatorPool;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.queue.suspensions.SuspensionServiceMofUpdatedQueue;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
+import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
 import java.time.LocalDateTime;
@@ -39,6 +41,8 @@ import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerato
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateThroughputPlot;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNhsNumber;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
+
 
 @Log4j2
 @SpringBootTest
@@ -59,8 +63,8 @@ public class PerformanceTest {
     private final NhsNumberTestData nhsNumbers;
     private final SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
     private final NhsProperties nhsProperties;
-
     private final PdsAdaptorService pdsAdaptorService;
+    private final TemplatingService templatingService;
 
     @Autowired
     public PerformanceTest(
@@ -69,7 +73,8 @@ public class PerformanceTest {
             ResourceConfiguration resourceConfiguration,
             SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue,
             NhsProperties nhsProperties,
-            PdsAdaptorService pdsAdaptorService
+            PdsAdaptorService pdsAdaptorService,
+            TemplatingService templatingService
     ) {
         this.meshMailbox = meshMailbox;
         this.testConfiguration = testConfiguration;
@@ -77,6 +82,7 @@ public class PerformanceTest {
         this.suspensionServiceMofUpdatedQueue = suspensionServiceMofUpdatedQueue;
         this.nhsProperties = nhsProperties;
         this.pdsAdaptorService = pdsAdaptorService;
+        this.templatingService = templatingService;
     }
 
     @Disabled("only used for perf test development not wanted on actual runs")
@@ -87,13 +93,13 @@ public class PerformanceTest {
 
         NemsTestEvent nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
 
-        log.info("Attempting to find message containing: {}.", nemsEvent.nemsMessageId());
+        log.info("Attempting to find message containing: {}.", nemsEvent.getNemsMessageId());
 
-        SqsMessage successMessage = suspensionServiceMofUpdatedQueue.getMessageContaining(nemsEvent.nemsMessageId());
+        SqsMessage successMessage = suspensionServiceMofUpdatedQueue.getMessageContaining(nemsEvent.getNemsMessageId());
 
         assertThat(successMessage).isNotNull();
 
-        nemsEvent.finished(successMessage);
+        nemsEvent.finish(successMessage);
     }
 
     @Test
@@ -134,13 +140,31 @@ public class PerformanceTest {
     }
 
     private NemsTestEvent injectSingleNemsSuspension(NemsTestEventListener listener, NemsTestEvent testEvent) {
-        NemsEventMessage nemsSuspension = testEvent.createMessage();
+        final String liversedgeMedicalCentreOdsCode = "B85612";
+        final String previousGP = randomOdsCode();
+        final String timestamp = LocalDateTime.now().toString() + "Z";  // ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+
+        NemsEventMessage nemsSuspension;
+
+        if(testEvent.isSuspensionEvent()) {
+            nemsSuspension = this.templatingService.createNemsEventFromTemplate(TemplateVariant.CHANGE_OF_GP_SUSPENSION,
+                    testEvent.getNhsNumber(),
+                    testEvent.getNemsMessageId(),
+                    previousGP,
+                    timestamp);
+        } else {
+            nemsSuspension = this.templatingService.createNemsEventFromTemplate(TemplateVariant.CHANGE_OF_GP_NON_SUSPENSION,
+                randomNhsNumber(),
+                randomNemsMessageId(),
+                liversedgeMedicalCentreOdsCode,
+                timestamp);
+        }
 
         listener.onStartingTestItem(testEvent);
 
         String meshMessageId = meshMailbox.sendMessage(nemsSuspension);
 
-        testEvent.started(meshMessageId);
+        testEvent.start(meshMessageId);
 
         listener.onStartedTestItem(testEvent);
 
