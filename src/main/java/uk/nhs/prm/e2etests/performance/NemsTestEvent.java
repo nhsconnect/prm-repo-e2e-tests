@@ -25,13 +25,11 @@ public class NemsTestEvent implements Phased {
     private LocalDateTime finishedAt;
     private long processingTimeSeconds;
 
-
     private NemsTestEvent(String nemsMessageId, String nhsNumber, boolean isSuspensionEvent) {
         this.nemsMessageId = nemsMessageId;
         this.nhsNumber = nhsNumber;
         this.isSuspensionEvent = isSuspensionEvent;
         this.warnings = new ArrayList<>();
-
     }
 
     public static NemsTestEvent suspensionEvent(String nhsNumber, String nemsMessageId) {
