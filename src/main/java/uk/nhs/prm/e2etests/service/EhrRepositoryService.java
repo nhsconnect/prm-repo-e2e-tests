@@ -1,6 +1,5 @@
 package uk.nhs.prm.e2etests.service;
 
-import com.google.gson.Gson;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -51,11 +50,11 @@ public class EhrRepositoryService {
         String messageType = "ehrExtract";
         List<UUID> fragmentMessageIds = Collections.emptyList();
 
-        String jsonPayloadString = new Gson().toJson(new MessageData(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds));
-
          restTemplate.exchange(new URL(ehrRepositoryUri + "messages").toURI(), HttpMethod.POST,
-                 new HttpEntity<>(jsonPayloadString, createHeaders(ehrRepositoryApiKey)), String.class);
-
+                 new HttpEntity<>(new MessageData(
+                         conversationId, messageId,
+                         nhsNumber, messageType, fragmentMessageIds)
+                         .getJsonString(), createHeaders(ehrRepositoryApiKey)), String.class);
     }
 
     public String getEhrResponse(String nhsNumber) throws MalformedURLException, URISyntaxException {
