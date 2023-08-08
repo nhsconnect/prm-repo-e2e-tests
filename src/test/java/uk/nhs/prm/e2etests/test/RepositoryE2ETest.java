@@ -149,7 +149,7 @@ class RepositoryE2ETest {
         final String outboundConversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
         final String ehrRequestMessage = this.templatingService.getTemplatedString(TemplateVariant.EHR_REQUEST, EhrRequestTemplateContext.builder()
                 .messageId(UUID.randomUUID().toString())
-                .newGpOdsCode(randomOdsCode())
+                .newGpOdsCode("B85002")
                 .nhsNumber("9727018440")
                 .outboundConversationId(outboundConversationId)
                 .build());
