@@ -2,6 +2,7 @@ package uk.nhs.prm.e2etests.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,5 +24,24 @@ public class MessageData {
         this.nhsNumber = nhsNumber;
         this.messageType = messageType;
         this.fragmentMessageIds = fragmentMessageIds;
+    }
+
+    public String getJsonString() {
+        return StringUtils.deleteWhitespace(String.format("""
+        {
+          "data": {
+            "type": "messages",
+            "id": "%s",
+            "attributes": {
+              "conversationId": "%s",
+              "messageType": "string",
+              "nhsNumber": "string",
+              "fragmentMessageIds": [%s]
+            }
+          }
+        }""", id.toString(), conversationId.toString(), fragmentMessageIds.stream()
+                .map(messageId -> String.format("\"%s\"", messageId))
+                .toList())
+        );
     }
 }
