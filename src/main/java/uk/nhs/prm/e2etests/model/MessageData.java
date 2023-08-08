@@ -34,12 +34,12 @@ public class MessageData {
             "id": "%s",
             "attributes": {
               "conversationId": "%s",
-              "messageType": "string",
-              "nhsNumber": "string",
+              "messageType": "%s",
+              "nhsNumber": "%s",
               "fragmentMessageIds": [%s]
             }
           }
-        }""", id.toString(), conversationId.toString(), fragmentMessageIds.stream()
+        }""", id.toString(), conversationId.toString(), messageType, nhsNumber, fragmentMessageIds.stream()
                 .map(messageId -> String.format("\"%s\"", messageId))
                 .toList())
         );

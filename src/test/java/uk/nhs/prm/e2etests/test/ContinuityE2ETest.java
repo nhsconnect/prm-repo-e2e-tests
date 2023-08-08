@@ -14,7 +14,6 @@ import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
 import uk.nhs.prm.e2etests.model.nems.*;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.model.templatecontext.NemsEventTemplateContext;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorDeadLetterQueue;
@@ -31,7 +30,6 @@ import uk.nhs.prm.e2etests.service.ActiveSuspensionsService;
 import uk.nhs.prm.e2etests.service.EhrRepositoryService;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import uk.nhs.prm.e2etests.service.TemplatingService;
-import uk.nhs.prm.e2etests.utility.NemsEventGenerator;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
