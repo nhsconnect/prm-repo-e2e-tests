@@ -171,11 +171,13 @@ class RepositoryE2ETest {
         String asidCodeForTestPatient = "200000000149";
 
         SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
+                .conversationId(inboundConversationId.toUpperCase())
+                .nhsNumber(nhsNumberForTestPatient)
                 .build();
 
         EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext
                 .builder()
-                .outboundConversationId(outboundConversationId)
+                .outboundConversationId(outboundConversationId.toUpperCase())
                 .nhsNumber(nhsNumberForTestPatient)
                 .newGpOdsCode(previousGpForTestPatient)
                 .asidCode(asidCodeForTestPatient)
