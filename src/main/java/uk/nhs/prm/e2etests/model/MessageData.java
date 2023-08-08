@@ -41,7 +41,6 @@ public class MessageData {
           }
         }""", id.toString(), conversationId.toString(), messageType, nhsNumber, fragmentMessageIds.stream()
                 .map(messageId -> String.format("\"%s\"", messageId))
-                .toList())
-        );
+                .toList()));
     }
 }
