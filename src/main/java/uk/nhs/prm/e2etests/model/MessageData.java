@@ -36,7 +36,7 @@ public class MessageData {
               "conversationId": "%s",
               "messageType": "%s",
               "nhsNumber": "%s",
-              "fragmentMessageIds": [%s]
+              "fragmentMessageIds": %s
             }
           }
         }""", id.toString(), conversationId.toString(), messageType, nhsNumber, fragmentMessageIds.stream()
