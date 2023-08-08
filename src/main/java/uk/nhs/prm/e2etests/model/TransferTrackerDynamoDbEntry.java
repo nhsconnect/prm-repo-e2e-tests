@@ -1,18 +1,28 @@
 package uk.nhs.prm.e2etests.model;
 
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
 import java.util.Objects;
 
-public record TransferTrackerDynamoDbEntry(
-        String conversationId,
-        String largeEhrCoreMessageId ,
-        String nemsMessageId,
-        String nhsNumber,
-        String sourceGp,
-        String state,
-        String nemsEventLastUpdated,
-        String createdAt,
-        String lastUpdatedAt
-) {
+@Getter
+@Builder
+public class TransferTrackerDynamoDbEntry {
+    private static final String DEFAULT_TIMESTAMP = LocalDateTime.now().toString();
+    private final String conversationId;
+    private final String largeEhrCoreMessageId;
+    private final String nemsMessageId;
+    private final String nhsNumber;
+    private final String sourceGp;
+    private final String state;
+    @Builder.Default
+    private final String nemsEventLastUpdated = DEFAULT_TIMESTAMP;
+    @Builder.Default
+    private final String createdAt = DEFAULT_TIMESTAMP;
+    @Builder.Default
+    private final String lastUpdatedAt = DEFAULT_TIMESTAMP;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

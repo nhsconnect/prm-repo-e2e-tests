@@ -109,6 +109,7 @@ class RepoInPerformanceTest {
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
         int intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
+            //
             String messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
             AtomicInteger counter = new AtomicInteger(0);
             String smallEhr;

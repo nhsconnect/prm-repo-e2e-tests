@@ -5,7 +5,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
 import uk.nhs.prm.e2etests.repository.TransferTrackerDatabaseRepository;
-
+;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -26,11 +26,11 @@ public class TransferTrackerService {
         return response != null;
     }
 
-    public boolean statusForConversationIdIs(String conversationId, String status) {
-        return statusForConversationIdIs(conversationId, status, 120);
+    public boolean isStatusForConversationIdPresent(String conversationId, String status) {
+        return isStatusForConversationIdPresent(conversationId, status, 120);
     }
 
-    public boolean statusForConversationIdIs(String conversationId, String status, long timeout) {
+    public boolean isStatusForConversationIdPresent(String conversationId, String status, long timeout) {
         AttributeValue defaultState = AttributeValue.builder().s("NOPE-AKA-DEFAULT-VALUE-TO-AVOID-NULL-EXCEPTION").build();
         await().atMost(timeout, TimeUnit.SECONDS)
                 .with()
@@ -47,7 +47,7 @@ public class TransferTrackerService {
                 .until(() -> transferTrackerDatabaseRepository.queryWithConversationId(conversationId).item().get("state").s(), containsString(partialStatus));
     }
 
-    public void save(TransferTrackerDynamoDbEntry message) {
-        transferTrackerDatabaseRepository.save(message);
+    public void save(TransferTrackerDynamoDbEntry entry) {
+        transferTrackerDatabaseRepository.save(entry);
     }
 }

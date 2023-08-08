@@ -1,8 +1,7 @@
 package uk.nhs.prm.e2etests.utility;
 
-import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.RandomStringUtils;
-import uk.nhs.prm.e2etests.annotation.Debt;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.UUID;
 
@@ -11,14 +10,17 @@ public final class NhsIdentityUtility {
     private NhsIdentityUtility() { }
 
     public static String randomOdsCode() {
-        final String generatedOdsCode = RandomStringUtils.randomAlphanumeric(5, 5);
-        log.info("Generated random ODS code: {}", generatedOdsCode);
-        return generatedOdsCode;
+        final String odsCode = RandomStringUtils
+                .randomAlphanumeric(5, 5)
+                .toUpperCase();
+        log.info("Generated random ODS code: {}", odsCode);
+        return odsCode;
     }
 
-    @Debt(comment = "Misleading. The class states 'NhsIdentityGenerator' but this is a number picked at random.")
     public static String randomNhsNumber() {
-        return "9691234567" ;
+        final String generatedNhsNumber = "9" + RandomStringUtils.randomNumeric(9);
+        log.info("Generated random NHS number: {}", generatedNhsNumber);
+        return generatedNhsNumber;
     }
 
     public static String randomNemsMessageId() {

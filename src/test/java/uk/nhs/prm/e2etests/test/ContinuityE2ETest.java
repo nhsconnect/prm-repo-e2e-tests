@@ -9,10 +9,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
+import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
 import uk.nhs.prm.e2etests.model.nems.*;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
+import uk.nhs.prm.e2etests.model.templatecontext.NemsEventTemplateContext;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorDeadLetterQueue;
@@ -28,6 +30,7 @@ import uk.nhs.prm.e2etests.queue.suspensions.observability.SuspensionsServiceRep
 import uk.nhs.prm.e2etests.service.ActiveSuspensionsService;
 import uk.nhs.prm.e2etests.service.EhrRepositoryService;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
+import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.utility.NemsEventGenerator;
 
 import java.time.ZoneOffset;
@@ -37,8 +40,9 @@ import java.util.Map;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.nhs.prm.e2etests.utility.NemsEventGenerator.createNemsEventFromTemplate;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.*;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNhsNumber;
+import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
 
 @Log4j2
 @SpringBootTest
@@ -51,7 +55,9 @@ class ContinuityE2ETest {
     private static final String SUSPENDED_PATIENT_NHS_NUMBER = "9693796047";
 
     private final MeshMailbox meshMailbox;
-    private final MeshForwarderOQ meshForwarderOQ;
+    private final PdsAdaptorService pdsAdaptorService;
+    private final EhrRepositoryService ehrRepositoryService;
+    private final ActiveSuspensionsService activeSuspensionsService;
     private final NemsEventProcessorUnhandledEventsQueue nemsEventProcessorUnhandledEventsQueue;
     private final NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
     private final NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue;
@@ -61,16 +67,17 @@ class ContinuityE2ETest {
     private final SuspensionServiceMofNotUpdatedQueue suspensionServiceMofNotUpdatedQueue;
     private final SuspensionServiceDeceasedPatientQueue suspensionServiceDeceasedPatientQueue;
     private final SuspensionsServiceRepoIncomingOQ suspensionsServiceRepoIncomingOQ;
+    private final TemplatingService templatingService;
+    private final MeshForwarderOQ meshForwarderOQ;
     private final SyntheticPatientProperties syntheticPatientProperties;
-    private final ActiveSuspensionsService activeSuspensionsService;
-    private final EhrRepositoryService ehrRepositoryService;
-    private final PdsAdaptorService pdsAdaptorService;
     private final NhsProperties nhsProperties;
 
     @Autowired
     public ContinuityE2ETest(
             MeshMailbox meshMailbox,
-            MeshForwarderOQ meshForwarderOQ,
+            PdsAdaptorService pdsAdaptorService,
+            EhrRepositoryService ehrRepositoryService,
+            ActiveSuspensionsService activeSuspensionsService,
             NemsEventProcessorUnhandledEventsQueue nemsEventProcessorUnhandledEventsQueue,
             NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ,
             NemsEventProcessorDeadLetterQueue nemsEventProcessorDeadLetterQueue,
@@ -80,14 +87,15 @@ class ContinuityE2ETest {
             SuspensionServiceMofNotUpdatedQueue suspensionServiceMofNotUpdatedQueue,
             SuspensionServiceDeceasedPatientQueue suspensionServiceDeceasedPatientQueue,
             SuspensionsServiceRepoIncomingOQ suspensionsServiceRepoIncomingOQ,
+            TemplatingService templatingService,
+            MeshForwarderOQ meshForwarderOQ,
             SyntheticPatientProperties syntheticPatientProperties,
-            ActiveSuspensionsService activeSuspensionsService,
-            EhrRepositoryService ehrRepositoryService,
-            PdsAdaptorService pdsAdaptorService,
             NhsProperties nhsProperties
     ) {
         this.meshMailbox = meshMailbox;
-        this.meshForwarderOQ =  meshForwarderOQ;
+        this.pdsAdaptorService = pdsAdaptorService;
+        this.ehrRepositoryService = ehrRepositoryService;
+        this.activeSuspensionsService = activeSuspensionsService;
         this.nemsEventProcessorUnhandledEventsQueue = nemsEventProcessorUnhandledEventsQueue;
         this.nemsEventProcessorSuspensionsOQ = nemsEventProcessorSuspensionsOQ;
         this.nemsEventProcessorDeadLetterQueue = nemsEventProcessorDeadLetterQueue;
@@ -97,10 +105,9 @@ class ContinuityE2ETest {
         this.suspensionServiceMofNotUpdatedQueue = suspensionServiceMofNotUpdatedQueue;
         this.suspensionServiceDeceasedPatientQueue = suspensionServiceDeceasedPatientQueue;
         this.suspensionsServiceRepoIncomingOQ = suspensionsServiceRepoIncomingOQ;
+        this.templatingService = templatingService;
+        this.meshForwarderOQ =  meshForwarderOQ;
         this.syntheticPatientProperties = syntheticPatientProperties;
-        this.activeSuspensionsService = activeSuspensionsService;
-        this.ehrRepositoryService = ehrRepositoryService;
-        this.pdsAdaptorService = pdsAdaptorService;
         this.nhsProperties = nhsProperties;
     }
 
@@ -126,7 +133,14 @@ class ContinuityE2ETest {
         String previousGp = randomOdsCode();
         log.info("Generated a random ODS code for previous GP: {}", previousGp);
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
+        NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_NON_SUSPENSION,
+                suspendedPatientNhsNumber,
+                nemsMessageId,
+                previousGp,
+                now
+        );
+
         meshMailbox.sendMessage(nemsSuspension);
         NemsResolutionMessage expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
 
@@ -139,7 +153,12 @@ class ContinuityE2ETest {
     void shouldPutAMessageForASuspendedPatientWithSafeListedODSCodeOnRepoIncomingWhenTheToggleIsTrue() {
         String nemsMessageId = randomNemsMessageId();
         String now = now();
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", SUSPENDED_PATIENT_NHS_NUMBER, nemsMessageId, EMIS_PTL_INT, now);
+        NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,
+                SUSPENDED_PATIENT_NHS_NUMBER,
+                nemsMessageId, EMIS_PTL_INT,
+                now
+        );
 
         setManagingOrganisationToEMISOdsCode(SUSPENDED_PATIENT_NHS_NUMBER);
 
@@ -156,7 +175,10 @@ class ContinuityE2ETest {
         String now = now();
         String currentlyRegisteredPatientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp, now);
+        NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp, now
+        );
+
 
         NoLongerSuspendedMessageNems expectedMessageOnQueue = new NoLongerSuspendedMessageNems(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
@@ -169,8 +191,13 @@ class ContinuityE2ETest {
     void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() {
         String nemsMessageId = randomNemsMessageId();
 
-        NemsEventMessage nemsNonSuspension = createNemsEventFromTemplate(
-                "change-of-gp-non-suspension.xml", randomNhsNumber(), nemsMessageId, now());
+        NemsEventMessage nemsNonSuspension = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_NON_SUSPENSION,
+                randomNhsNumber(),
+                nemsMessageId,
+                "B85612", // this previous GP was hardcoded in previous implementation
+                now()
+        );
 
         meshMailbox.sendMessage(nemsNonSuspension);
 
@@ -179,8 +206,8 @@ class ContinuityE2ETest {
 
     @Test
     @Order(6)
-    void shouldSendUnprocessableMessagesToDlQ() throws Exception {
-        Map<String, NemsEventMessage> dlqMessages = NemsEventGenerator.getDLQNemsEventMessages();
+    void shouldSendUnprocessableMessagesToDlQ() {
+        Map<String, NemsEventMessage> dlqMessages = templatingService.getDLQNemsEventMessages();
         log.info("Posting DLQ messages.");
 
         for (Map.Entry<String, NemsEventMessage> message : dlqMessages.entrySet()) {
@@ -196,11 +223,15 @@ class ContinuityE2ETest {
     void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
         String nemsMessageId = randomNemsMessageId();
         String previousGp = randomOdsCode();
-
         String suspensionTime = now();
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml",
+
+        NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 syntheticPatientProperties.getNonSyntheticPatientWithoutGp(),
-                nemsMessageId, previousGp, suspensionTime);
+                nemsMessageId,
+                previousGp,
+                suspensionTime
+        );
 
         meshMailbox.sendMessage(nemsSuspension);
 
@@ -219,8 +250,10 @@ class ContinuityE2ETest {
 
         log.info("Generated a random ODS code for previous GP: {}.", previousGp);
 
-        NemsEventMessage deceasedEvent = createNemsEventFromTemplate("change-of-gp-suspension.xml",
-                patientNhsNumber, nemsMessageId, previousGp, eventTime);
+        NemsEventMessage deceasedEvent = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,
+                patientNhsNumber, nemsMessageId, previousGp, eventTime
+        );
 
         meshMailbox.sendMessage(deceasedEvent);
 
@@ -238,8 +271,13 @@ class ContinuityE2ETest {
         storeEhrInRepositoryFor(patientNhsNumber);
         activeSuspensionsService.save(new ActiveSuspensionsMessage(patientNhsNumber, randomOdsCode(), now()));
 
-        NemsEventMessage reRegistration = createNemsEventFromTemplate(
-                "change-of-gp-re-registration.xml", patientNhsNumber, nemsMessageId, reregistrationTime);
+        NemsEventMessage reRegistration = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_RE_REGISTRATION,
+                patientNhsNumber,
+                nemsMessageId,
+                "B85612", // this previous GP was hardcoded in previous implementation
+                reregistrationTime
+        );
 
         meshMailbox.sendMessage(reRegistration);
 
@@ -263,7 +301,13 @@ class ContinuityE2ETest {
         String previousGp = randomOdsCode();
         log.info("Generated a random ODS code for previous GP: {}.", previousGp);
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate("change-of-gp-suspension.xml", suspendedPatientNhsNumber, nemsMessageId, previousGp, now);
+        NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,
+                suspendedPatientNhsNumber,
+                nemsMessageId,
+                previousGp,
+                now
+        );
         meshMailbox.sendMessage(nemsSuspension);
 
         assertTrue(activeSuspensionsService.nhsNumberExists(suspendedPatientNhsNumber));
