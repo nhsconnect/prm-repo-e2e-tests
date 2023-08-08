@@ -6,16 +6,16 @@ import java.util.UUID;
 
 @Getter
 public class NemsResolutionMessage {
-    private final UUID id;
+    private final UUID nemsMessageId;
     private final String status;
 
     public boolean hasTheSameContentAs(NemsResolutionMessage nemsResolutionMessage) {
         if (nemsResolutionMessage == null) return false;
-        return id.equals(nemsResolutionMessage.id) && status.equalsIgnoreCase(nemsResolutionMessage.status);
+        return nemsMessageId.equals(nemsResolutionMessage.nemsMessageId) && status.equalsIgnoreCase(nemsResolutionMessage.status);
     }
 
-    public NemsResolutionMessage(String id, String status) {
-        this.id = UUID.fromString(id);
+    public NemsResolutionMessage(String nemsMessageId, String status) {
+        this.nemsMessageId = UUID.fromString(nemsMessageId);
         this.status = status;
     }
 }
