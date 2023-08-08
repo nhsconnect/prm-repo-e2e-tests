@@ -5,23 +5,18 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
-import uk.nhs.prm.e2etests.exception.UnknownAwsRegionException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import uk.nhs.prm.e2etests.exception.ActiveRoleArnException;
 import software.amazon.awssdk.services.sts.StsClient;
 import org.springframework.context.annotation.Bean;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
-
-import java.util.regex.Pattern;
 
 import static software.amazon.awssdk.regions.Region.EU_WEST_2;
 
 @Log4j2
 @Configuration
 public class AwsConfiguration {
-    private static final String AWS_REGION_REGEX = "(us(-gov)?|ap|ca|cn|eu|sa)-(central|(north|south)?(east|west)?)-\\d";
     private static final String DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET = "unset";
 
     @Value("${aws.configuration.requiredRoleArn}")
@@ -84,11 +79,5 @@ public class AwsConfiguration {
         else {
             return new ActiveRoleArn(this.requiredRoleArn);
         }
-    }
-
-    @PostConstruct
-    private void validateAwsRegion() {
-        final Pattern pattern = Pattern.compile(AWS_REGION_REGEX);
-        if(!pattern.matcher(this.region).find()) throw new UnknownAwsRegionException();
     }
 }

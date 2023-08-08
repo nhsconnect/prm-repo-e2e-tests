@@ -16,7 +16,8 @@ class TestDataTest {
 
         long distinctCount = perfData.stream().distinct().count();
         assertThat(distinctCount).isEqualTo(15);
-        assertThat(perfData).allMatch(s -> s.length() == 10);
-        assertThat(perfData).allMatch(s -> s.startsWith("969"));
+        assertThat(perfData)
+                .allMatch(s -> s.length() == 10)
+                .allMatch(s -> s.startsWith("969"));
     }
 }

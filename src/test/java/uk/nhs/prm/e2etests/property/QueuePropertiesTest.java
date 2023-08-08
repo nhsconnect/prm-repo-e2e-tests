@@ -16,11 +16,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class QueuePropertiesTest {
-    // TEST CONSTANTS
     private static final String AMQP_ENDPOINT = "amqp+ssl://b-09f25472-2c58-4386-ad2c-675ce15efbd6-1.mq.eu-west-2.amazonaws.com:5671";
     private static final String INVALID_ENDPOINT = "this is not a valid endpoint";
 
-    // MOCKING
     @Mock
     private SsmService ssmService;
 

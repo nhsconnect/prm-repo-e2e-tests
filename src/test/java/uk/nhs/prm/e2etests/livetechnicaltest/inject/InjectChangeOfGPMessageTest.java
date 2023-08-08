@@ -5,15 +5,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
 import uk.nhs.prm.e2etests.livetechnicaltest.TestParameters;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
 import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
 import uk.nhs.prm.e2etests.queue.nems.observability.NemsEventProcessorSuspensionsOQ;
+import uk.nhs.prm.e2etests.service.TemplatingService;
 
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
-import static uk.nhs.prm.e2etests.utility.NemsEventGenerator.createNemsEventFromTemplate;
+
 import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
 
@@ -24,16 +26,19 @@ class InjectChangeOfGPMessageTest {
     private final MeshMailbox meshMailbox;
     private final SyntheticPatientProperties syntheticPatientProperties;
     private final NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ;
+    private final TemplatingService templatingService;
 
     @Autowired
     public InjectChangeOfGPMessageTest(
             MeshMailbox meshMailbox,
             SyntheticPatientProperties syntheticPatientProperties,
-            NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ
+            NemsEventProcessorSuspensionsOQ nemsEventProcessorSuspensionsOQ,
+            TemplatingService templatingService
     ) {
         this.meshMailbox = meshMailbox;
         this.syntheticPatientProperties = syntheticPatientProperties;
         this.nemsEventProcessorSuspensionsOQ = nemsEventProcessorSuspensionsOQ;
+        this.templatingService = templatingService;
     }
 
     @Test
@@ -44,8 +49,8 @@ class InjectChangeOfGPMessageTest {
 
         nemsEventProcessorSuspensionsOQ.deleteAllMessages();
 
-        NemsEventMessage nemsSuspension = createNemsEventFromTemplate(
-                "change-of-gp-suspension.xml",
+        NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 nhsNumber,
                 nemsMessageId,
                 previousGP,
