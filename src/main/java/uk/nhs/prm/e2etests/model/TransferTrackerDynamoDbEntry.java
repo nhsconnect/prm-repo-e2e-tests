@@ -9,7 +9,7 @@ import java.util.Objects;
 @Getter
 @Builder
 public class TransferTrackerDynamoDbEntry {
-    private static final String DEFAULT_TIMESTAMP = LocalDateTime.now().toString();
+    private static final String DEFAULT_TIMESTAMP = LocalDateTime.now().toString() + "Z"; // before was ZonedDateTime.now(ZoneOffset.ofHours(0)).toString()
     private final String conversationId;
     private final String largeEhrCoreMessageId;
     private final String nemsMessageId;

@@ -3,41 +3,35 @@ package uk.nhs.prm.e2etests.performance;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import uk.nhs.prm.e2etests.performance.load.LoadPhase;
 import uk.nhs.prm.e2etests.performance.load.Phased;
-import uk.nhs.prm.e2etests.utility.NemsEventGenerator;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
-
 @Log4j2
+@Getter
 public class NemsTestEvent implements Phased {
     private final String nemsMessageId;
     private final String nhsNumber;
-    @Getter
-    private final boolean suspension;
-
+    private final boolean isSuspensionEvent;
+    private final List<String> warnings;
     private String meshMessageId;
     private LoadPhase phase;
     private LocalDateTime startedAt;
-    private boolean isFinished = false;
-    private long processingTimeMs;
-
-    private final List<String> warnings = new ArrayList<>();
     private LocalDateTime finishedAt;
+    private long processingTimeSeconds;
 
-    private NemsTestEvent(String nemsMessageId, String nhsNumber, boolean suspension) {
+
+    private NemsTestEvent(String nemsMessageId, String nhsNumber, boolean isSuspensionEvent) {
         this.nemsMessageId = nemsMessageId;
         this.nhsNumber = nhsNumber;
-        this.suspension = suspension;
+        this.isSuspensionEvent = isSuspensionEvent;
+        this.warnings = new ArrayList<>();
+
     }
 
     public static NemsTestEvent suspensionEvent(String nhsNumber, String nemsMessageId) {
@@ -48,41 +42,7 @@ public class NemsTestEvent implements Phased {
         return new NemsTestEvent(nemsMessageId, nhsNumber, false);
     }
 
-    public String nemsMessageId() {
-        return nemsMessageId;
-    }
-
-    public String nhsNumber() {
-        return nhsNumber;
-    }
-
-    @Override
-    public void setPhase(LoadPhase phase) {
-        this.phase = phase;
-    }
-
-    @Override
-    public LoadPhase phase() {
-        return phase;
-    }
-
-    public LocalDateTime startedAt() {
-        return startedAt;
-    }
-
-    public boolean isStarted() {
-        return startedAt != null;
-    }
-
-    public boolean isFinished() {
-        return isFinished;
-    }
-
-    public boolean hasWarnings() {
-        return !warnings.isEmpty();
-    }
-
-    public void started(String meshMessageId) {
+    public void start(String meshMessageId) {
         if (meshMessageId == null) {
             addWarning("No mesh message id received. Message may have not arrived in mesh mailbox.");
         }
@@ -90,18 +50,17 @@ public class NemsTestEvent implements Phased {
         this.meshMessageId = meshMessageId;
     }
 
-    public boolean finished(SqsMessage successMessage) {
-        boolean firstTimeFinisher = false;
-        if (isFinished) {
+    public boolean finish(SqsMessage successMessage) {
+        boolean hasBeenCalled = false;
+        if (isFinished()) {
             addWarning("Warning: Duplicate finisher! finished() but already isFinished");
         }
         else {
-            firstTimeFinisher = true;
-            isFinished = true;
+            hasBeenCalled = true;
             finishedAt = successMessage.getQueuedAt();
-            processingTimeMs = startedAt().until(finishedAt, ChronoUnit.MILLIS);
+            processingTimeSeconds = (getStartedAt().until(finishedAt, ChronoUnit.MILLIS) / 1000);
         }
-        return firstTimeFinisher;
+        return hasBeenCalled;
     }
 
     private void addWarning(String warning) {
@@ -109,67 +68,51 @@ public class NemsTestEvent implements Phased {
         warnings.add(warning);
     }
 
-    public LocalDateTime finishedAt() {
-        return finishedAt;
+    public static Comparator<NemsTestEvent> startedTimeOrder() {
+        return (o1, o2) -> {
+            if (o1.isStarted() && o2.isStarted()) {
+                return o1.getStartedAt().compareTo(o2.getStartedAt());
+            }
+            return 0;
+        };
     }
-
-    public long duration() {
-        return processingTimeMs / 1000;
-    }
-
-    @Override
-    public String toString() {
-        return "NemsTestEvent{" +
-                "nemsMessageId='" + nemsMessageId + '\'' +
-                ", nhsNumber='" + nhsNumber + '\'' +
-                ", meshMessageId='" + meshMessageId + '\'' +
-                ", suspension=" + suspension +
-                ", phase=" + phase +
-                ", started=" + startedAt +
-                ", isFinished=" + isFinished +
-                ", processingTimeMs=" + processingTimeMs +
-                ", warnings=" + warnings +
-                ", finishedAt=" + finishedAt +
-                '}';
-    }
-
-    public NemsEventMessage createMessage() {
-        String previousGP = randomOdsCode();
-        NemsEventMessage nemsSuspension;
-        String timestamp = ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
-
-        if (isSuspension()) {
-            nemsSuspension = NemsEventGenerator.createNemsEventFromTemplate("change-of-gp-suspension.xml",
-                    nhsNumber(),
-                    nemsMessageId(),
-                    previousGP,
-                    timestamp);
-        }
-        else {
-            nemsSuspension = NemsEventGenerator.createNemsEventFromTemplate("change-of-gp-non-suspension.xml",
-                    nhsNumber(),
-                    nemsMessageId(),
-                    timestamp);
-        }
-        return nemsSuspension;
-    }
-
 
     public static Comparator<NemsTestEvent> finishedTimeOrder() {
         return (o1, o2) -> {
             if (o1.isFinished() && o2.isFinished()) {
-                return o1.finishedAt().compareTo(o2.finishedAt());
+                return o1.getFinishedAt().compareTo(o2.getFinishedAt());
             }
             return 0;
         };
     }
 
-    public static Comparator<NemsTestEvent> startedTimeOrder() {
-        return (o1, o2) -> {
-            if (o1.isStarted() && o2.isStarted()) {
-                return o1.startedAt().compareTo(o2.startedAt());
-            }
-            return 0;
-        };
+    @Override
+    public String toString() {
+        return String.format("NemsTestEvent{nemsMessageId=%s, nhsNumber=%s, meshMessageId=%s, suspension=%s, " +
+                        "phase=%s, started=%s, isFinished=%s, processingTimeMs=%s, warnings=%s, finishedAt=%s}",
+                nemsMessageId, nhsNumber, meshMessageId, isSuspensionEvent, phase,
+                startedAt, isFinished(), processingTimeSeconds, warnings, finishedAt);
+    }
+
+    @Override
+    public LoadPhase phase() {
+        return phase;
+    }
+
+    @Override
+    public void setPhase(LoadPhase phase) {
+        this.phase = phase;
+    }
+
+    public boolean isStarted() {
+        return startedAt != null;
+    }
+
+    public boolean isFinished() {
+        return finishedAt != null;
+    }
+
+    public boolean hasWarnings() {
+        return !warnings.isEmpty();
     }
 }
