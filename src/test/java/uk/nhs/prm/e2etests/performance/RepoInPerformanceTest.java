@@ -126,11 +126,7 @@ class RepoInPerformanceTest {
             log.info("All the messages hae been sent, about to close MHS inbound queue producer.");
             inboundQueueFromMhs.close();
         } catch (OutOfMemoryError error) {
-            log.fatal(
-                    "The SwiftMQ client has run out of memory, details: {} - cause: {}.",
-                    error.getMessage(),
-                    error.getCause()
-            );
+            log.fatal("The SwiftMQ client has run out of memory, details: {} - cause: {}.", error.getMessage(), error.getCause());
             System.exit(1);
         }
     }
