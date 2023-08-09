@@ -144,7 +144,7 @@ class RepoInPerformanceTest {
         String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
         message.start();
 
-        log.info("[ITEM #{}] [CONVERSATION ID: {}]- Sending to message queue.", counter.get(), conversationId);
+        log.info("[ITEM #{}] [CONVERSATION ID: {}] - Sending to message queue.", counter.get(), conversationId);
         inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
 
         sleepFor(100);
