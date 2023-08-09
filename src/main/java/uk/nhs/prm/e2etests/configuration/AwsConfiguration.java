@@ -1,5 +1,11 @@
 package uk.nhs.prm.e2etests.configuration;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.DependsOn;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -34,6 +40,13 @@ public class AwsConfiguration {
     @Value("${aws.configuration.region}")
     private String region;
 
+    private final ApplicationContext applicationContext;
+
+    @Autowired
+    public AwsConfiguration(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
     @Bean @ConditionalOnProperty(
             prefix = "aws.configuration",
             name = { "requiredRoleArn" },
@@ -47,12 +60,13 @@ public class AwsConfiguration {
                 );
     }
 
+    @DependsOn("activeRoleArn")
     @Bean @ConditionalOnProperty(
             prefix = "aws.configuration",
             name = { "accessKey", "secretAccessKey" },
             havingValue = DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET
     )
-    public StsAssumeRoleCredentialsProvider assumeRoleAwsCredentialsProvider() {
+    public AwsCredentialsProvider assumeRoleAwsCredentialsProvider() {
         final StsClient stsClient = StsClient.builder().build();
 
         return StsAssumeRoleCredentialsProvider.builder()
@@ -79,5 +93,17 @@ public class AwsConfiguration {
         else {
             return new ActiveRoleArn(this.requiredRoleArn);
         }
+    }
+
+    @Bean
+    @ConditionalOnBean(AwsCredentialsProvider.class)
+    public DynamoDbEnhancedClient dynamoDbEnhancedClient() {
+        return DynamoDbEnhancedClient.builder()
+                .dynamoDbClient(DynamoDbClient.builder()
+                        .region(EU_WEST_2)
+                        .credentialsProvider(
+                                this.applicationContext.getBean(AwsCredentialsProvider.class)
+                        ).build())
+                .build();
     }
 }
