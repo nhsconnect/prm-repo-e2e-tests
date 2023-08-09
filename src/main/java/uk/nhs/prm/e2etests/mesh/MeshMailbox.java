@@ -1,22 +1,17 @@
 package uk.nhs.prm.e2etests.mesh;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.nhs.prm.e2etests.client.MeshClient;
-import uk.nhs.prm.e2etests.property.MeshProperties;
-import uk.nhs.prm.e2etests.exception.MeshMailboxException;
-import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
 import org.springframework.stereotype.Component;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import uk.nhs.prm.e2etests.client.MeshClient;
+import uk.nhs.prm.e2etests.model.nems.NemsEventMessage;
+import uk.nhs.prm.e2etests.property.MeshProperties;
 
-import java.net.URISyntaxException;
-import java.io.IOException;
-
+@Log4j2
 @Component
 public class MeshMailbox {
     private final MeshProperties meshProperties;
     private final MeshClient meshClient;
-    private static final Logger LOGGER = LogManager.getLogger(MeshMailbox.class);
 
     @Autowired
     public MeshMailbox(
@@ -27,16 +22,8 @@ public class MeshMailbox {
         this.meshClient = meshClient;
     }
 
-    public String postMessage(NemsEventMessage message) {
-        try {
-            LOGGER.info("Attempting to send NEMS message: {}", message.toString());
-
-            return meshClient.sendMessage(
-                this.meshProperties.getMailboxServiceOutboxUrl(),
-                message
-            );
-        } catch (IOException | InterruptedException | URISyntaxException exception) {
-            throw new MeshMailboxException(exception.getMessage());
-        }
+    public String sendMessage(NemsEventMessage message) {
+        log.info("Attempting to send NEMS message: {}", message.toString());
+        return meshClient.sendMessage(this.meshProperties.getMailboxServiceOutboxUrl(), message);
     }
 }

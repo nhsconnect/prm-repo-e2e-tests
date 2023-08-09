@@ -120,7 +120,7 @@ case "${command}" in
       dojo "./tasks _dep"
       ;;
   _test_continuity_e2e)
-     gradle test --tests "uk.nhs.prm.e2etests.tests.ContinuityE2E"
+     gradle test --tests "uk.nhs.prm.e2etests.test.ContinuityE2ETest"
       ;;
   test_continuity_e2e)
       check_env
@@ -129,7 +129,7 @@ case "${command}" in
       dojo "./tasks _test_continuity_e2e"
       ;;
   _test_repo_e2e)
-      gradle test --tests "uk.nhs.prm.e2etests.tests.RepositoryE2ETests"
+      gradle test --tests "uk.nhs.prm.e2etests.test.RepositoryE2ETest"
       ;;
   test_repo_e2e)
       check_env

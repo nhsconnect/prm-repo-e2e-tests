@@ -215,7 +215,7 @@ public class QueueProperties extends AbstractSsmRetriever {
         Pattern endpointRegex = Pattern.compile("(.+)://(.+):(.+)");
         Matcher matcher = endpointRegex.matcher(endpoint);
 
-        if(matcher.find()) {
+        if (matcher.find()) {
             return AmqpEndpoint.builder()
                     .protocol(matcher.group(1))
                     .hostname(matcher.group(2))

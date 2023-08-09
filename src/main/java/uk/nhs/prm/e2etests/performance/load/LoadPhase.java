@@ -19,7 +19,7 @@ public class LoadPhase {
     private LoadPhase(int totalCount, BigDecimal ratePerSecond) {
         this.totalCount = totalCount;
         this.ratePerSecond = ratePerSecond;
-        runningCount = 0;
+        this.runningCount = 0;
     }
 
     public String toString() {
@@ -50,7 +50,7 @@ public class LoadPhase {
         if (lastItemTimeMillis == null) {
             return now;
         }
-        var elapsed = now - lastItemTimeMillis;
+        long elapsed = now - lastItemTimeMillis;
         int requiredDelay = (int) (targetDelayMilliseconds() - elapsed);
         if (requiredDelay > 0) {
             return sleepFor(requiredDelay);

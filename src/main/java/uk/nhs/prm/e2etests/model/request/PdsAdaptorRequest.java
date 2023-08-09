@@ -1,13 +1,8 @@
 package uk.nhs.prm.e2etests.model.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PdsAdaptorRequest {
-    private String previousGp;
-    private String recordETag;
-}
+@EqualsAndHashCode(callSuper = false)
+public record PdsAdaptorRequest(String previousGp,
+                                String recordETag)
+{ }

@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.performance;
 
+import lombok.Getter;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 
 import java.time.LocalDate;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 
+@Getter
 public class RepoInPerfMessageWrapper {
 
     private LocalDateTime startedAt;
@@ -17,28 +19,16 @@ public class RepoInPerfMessageWrapper {
         this.message = message;
     }
 
-    public RepoIncomingMessage getMessage() {
-        return message;
-    }
-
     public void start() {
         if (null == startedAt) {
             startedAt = LocalTime.now().atDate(LocalDate.now());
         }
     }
 
-    public LocalDateTime getStartedAt() {
-        return startedAt;
-    }
-
     public void finish(LocalDateTime localDateTime) {
         if (null == finishedAt) {
             finishedAt = localDateTime;
         }
-    }
-
-    public LocalDateTime getFinishedAt() {
-        return finishedAt;
     }
 
     public long getProcessingTimeInSeconds() {

@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.property;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,7 @@ import uk.nhs.prm.e2etests.service.SsmService;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 @Component
 public class NhsProperties extends AbstractSsmRetriever {
     @Value("${nhs.environment}")
@@ -24,10 +26,6 @@ public class NhsProperties extends AbstractSsmRetriever {
 
     @Value("${nhs.syntheticPatient.nhsNumberPrefix.nonProd}")
     private String syntheticPatientNhsNumberPrefixNonProd;
-
-    public String getNhsEnvironment() {
-        return nhsEnvironment;
-    }
 
     @Autowired
     public NhsProperties(SsmService ssmService) {

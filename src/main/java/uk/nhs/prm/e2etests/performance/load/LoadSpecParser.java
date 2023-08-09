@@ -6,11 +6,14 @@ import java.util.List;
 import static java.lang.Integer.parseInt;
 
 public class LoadSpecParser {
+
+    private LoadSpecParser() {}
+
     public static List<LoadPhase> parsePhases(String loadSpecString) {
-        var phases = new ArrayList<LoadPhase>();
+        List<LoadPhase> phases = new ArrayList<>();
         String[] phaseSpecs = loadSpecString.split(",");
-        for (var phaseSpec : phaseSpecs) {
-            var countAndRate = phaseSpec.split("@");
+        for (String phaseSpec : phaseSpecs) {
+            String[] countAndRate = phaseSpec.split("@");
             phases.add(LoadPhase.atFlatRate(parseInt(countAndRate[0]), countAndRate[1]));
         }
         return phases;

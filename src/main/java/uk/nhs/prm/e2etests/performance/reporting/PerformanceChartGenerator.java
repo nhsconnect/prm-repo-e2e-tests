@@ -5,6 +5,7 @@ import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import uk.nhs.prm.e2etests.performance.NemsTestEvent;
 import uk.nhs.prm.e2etests.performance.NemsTestRecording;
 import uk.nhs.prm.e2etests.performance.load.LoadPhase;
 
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class PerformanceChartGenerator {
     public static void generateProcessingDurationScatterPlot(NemsTestRecording recording, String title) {
         XYSeriesCollection dataset = new XYSeriesCollection();
 
-        for (var series : createPerPhaseDurationSerieses(recording)) {
+        for (XYSeries series : createPerPhaseDurationSerieses(recording)) {
             dataset.addSeries(series);
         }
 
@@ -50,34 +52,34 @@ public class PerformanceChartGenerator {
     }
 
     private static List<XYSeries> createPerPhaseDurationSerieses(NemsTestRecording recording) {
-        var phaseCount = 1;
-        var testEvents = recording.startOrderedEvents();
+        int phaseCount = 1;
+        List<NemsTestEvent> testEvents = recording.startOrderedEvents();
 
-        var seriesPerPhase = new HashMap<LoadPhase, XYSeries>();
+        Map<LoadPhase,XYSeries> seriesPerPhase = new HashMap<>();
 
-        for (var event : testEvents) {
-            var phase = event.phase();
+        for (NemsTestEvent event : testEvents) {
+            LoadPhase phase = event.phase();
             if (!seriesPerPhase.containsKey(phase)) {
                 seriesPerPhase.put(phase, new XYSeries("Phase " + phaseCount++ + ": " + phase));
             }
-            if (event.duration() > 0) {
-                var series = seriesPerPhase.get(phase);
-                var secondsSinceRunStart = recording.runStartTime().until(event.startedAt(), ChronoUnit.SECONDS);
-                series.add(secondsSinceRunStart, event.duration());
+            if (event.getProcessingTimeSeconds() > 0) {
+                XYSeries series = seriesPerPhase.get(phase);
+                long secondsSinceRunStart = recording.runStartTime().until(event.getStartedAt(), ChronoUnit.SECONDS);
+                series.add(secondsSinceRunStart, event.getProcessingTimeSeconds());
             }
         }
         return new ArrayList<>(seriesPerPhase.values());
     }
 
     private static XYSeries createThroughputDataSeries(NemsTestRecording recording, int throughputBucketSeconds) {
-        var series = new XYSeries("Throughput in events per second");
-        var finishOrderedEvents = recording.finishOrderedEvents();
-        var bucketStartTime = recording.runStartTime();
-        var bucketEndTime = bucketStartTime;
-        var bucketFinishedCount = 0;
-        for (var event : finishOrderedEvents) {
+        XYSeries series = new XYSeries("Throughput in events per second");
+        List<NemsTestEvent> finishOrderedEvents = recording.finishOrderedEvents();
+        LocalDateTime bucketStartTime = recording.runStartTime();
+        LocalDateTime bucketEndTime = bucketStartTime;
+        int bucketFinishedCount = 0;
+        for (NemsTestEvent event : finishOrderedEvents) {
             if (event.isFinished()) {
-                while (bucketEndTime.isBefore(event.finishedAt())) {
+                while (bucketEndTime.isBefore(event.getFinishedAt())) {
                     addThroughputToSeries(series, throughputBucketSeconds, bucketEndTime, bucketFinishedCount, recording.runStartTime());
                     bucketStartTime = bucketEndTime;
                     bucketEndTime = bucketStartTime.plusSeconds(throughputBucketSeconds);

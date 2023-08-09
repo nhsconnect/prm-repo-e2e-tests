@@ -1,23 +1,17 @@
 package uk.nhs.prm.e2etests.service;
 
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
-import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.SqsClient;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.*;
+import uk.nhs.prm.e2etests.exception.ServiceException;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 
-import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SqsService {
@@ -34,7 +28,7 @@ public class SqsService {
     }
 
     public List<SqsMessage> readMessagesFrom(String queueUrl) {
-        var receiveMessageRequest = ReceiveMessageRequest.builder()
+        ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
                 .visibilityTimeout(0)
                 .queueUrl(queueUrl)
                 .waitTimeSeconds(5)
@@ -53,7 +47,7 @@ public class SqsService {
     public List<SqsMessage> readThroughMessages(String queueUrl, int visibilityTimeout) {
         int safeVisibilityTimeout = Math.min(visibilityTimeout, MAX_VISIBILITY_TIMEOUT);
 
-        var receiveMessageRequest = ReceiveMessageRequest.builder()
+        ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
             .visibilityTimeout(safeVisibilityTimeout)
             .queueUrl(queueUrl)
             .waitTimeSeconds(5)
@@ -76,10 +70,6 @@ public class SqsService {
         sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(queueUrl).build());
     }
 
-    public void postAMessage(String queueUrl, String message) {
-        sqsClient.sendMessage(SendMessageRequest.builder().queueUrl(queueUrl).messageBody(message).build());
-    }
-
     public void postAMessage(String queueUrl, String message, Map<String, String> attributes) {
         final Map<String, MessageAttributeValue> messageAttributes = attributes.entrySet()
                 .stream()
@@ -100,9 +90,8 @@ public class SqsService {
     private ReceiveMessageResponse receiveMessages(ReceiveMessageRequest receiveMessageRequest) {
         try {
             return sqsClient.receiveMessage(receiveMessageRequest);
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Failure receiving messages from: " + receiveMessageRequest.queueUrl(), e);
+        } catch (Exception exception) {
+            throw new ServiceException(getClass().getName(), exception.getMessage());
         }
     }
 
