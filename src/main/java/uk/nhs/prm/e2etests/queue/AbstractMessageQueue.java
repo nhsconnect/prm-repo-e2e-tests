@@ -151,7 +151,7 @@ public abstract class AbstractMessageQueue {
 
         return allMessages.stream()
                 .map(MappingUtility::mapToNemsResolutionMessage)
-                .anyMatch(nemsResolutionMessage -> nemsResolutionMessage.hasTheSameContentAs(messageToCheck));
+                .anyMatch(nemsResolutionMessage -> nemsResolutionMessage.equals(messageToCheck));
     }
 
     protected void postAMessageWithAttributes(String message, Map<String, String> attributes) {
