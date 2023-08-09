@@ -115,7 +115,7 @@ class RepoInPerformanceTest {
             AtomicReference<String> smallEhr = new AtomicReference<>();
 
             messagesToBeProcessed.forEach(message -> {
-                counter.updateAndGet(v -> v + 1);
+                counter.incrementAndGet();
                 String conversationId = message.getMessage().getConversationId();
                 smallEhr.set(getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId));
                 message.start();
