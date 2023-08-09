@@ -1,20 +1,24 @@
 package uk.nhs.prm.e2etests.performance.load;
 
-import lombok.EqualsAndHashCode;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.prm.e2etests.performance.RoundRobinPool;
-import uk.nhs.prm.e2etests.timing.Timer;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.prm.e2etests.utility.ThreadUtility;
+import uk.nhs.prm.e2etests.timing.Timer;
+import org.junit.jupiter.api.Test;
+import lombok.EqualsAndHashCode;
+import org.mockito.Mock;
 
 import java.util.List;
 
-import static java.util.List.of;
-import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static java.util.stream.Collectors.toList;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+import static java.util.List.of;
 
 @ExtendWith(MockitoExtension.class)
 class LoadRegulatingPoolTest {
