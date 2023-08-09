@@ -142,7 +142,7 @@ public class PerformanceTest {
     private NemsTestEvent injectSingleNemsSuspension(NemsTestEventListener listener, NemsTestEvent testEvent) {
         final String liversedgeMedicalCentreOdsCode = "B85612";
         final String previousGP = randomOdsCode();
-        final String timestamp = LocalDateTime.now().toString() + "Z";  // ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
+        final String timestamp = LocalDateTime.now().toString() + "Z";
 
         NemsEventMessage nemsSuspension;
 
