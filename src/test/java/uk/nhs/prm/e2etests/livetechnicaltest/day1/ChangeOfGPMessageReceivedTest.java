@@ -59,7 +59,7 @@ class ChangeOfGPMessageReceivedTest {
                 assertTrue(patientValidator.isIncludedInTheTest(nhsNumber));
 
                 PdsAdaptorResponse pdsResponse = getPatientStatusOnPDSForSyntheticPatient(nhsNumber);
-                log.info("The current patient's suspended status is: {}.", pdsResponse.isSuspended());
+                log.info("The current patient's suspended status is: {}.", pdsResponse.getIsSuspended());
 
                 log.info("Checking the patient's status on HL7v3 PDS lookup, reference GP2GP Messenger logs for insights.");
                 gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);

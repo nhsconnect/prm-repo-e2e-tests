@@ -547,10 +547,10 @@ class RepositoryE2ETest {
 
     private void setManagingOrganisationToRepo(String nhsNumber) {
         PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
-        assertThat(pdsResponse.isSuspended()).as("%s should be suspended so that MOF is respected", nhsNumber).isTrue();
+        assertThat(pdsResponse.getIsSuspended()).as("%s should be suspended so that MOF is respected", nhsNumber).isTrue();
         String repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
-        if (!repoOdsCode.equals(pdsResponse.managingOrganisation())) {
-            pdsAdaptorService.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.recordETag());
+        if (!repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
+            pdsAdaptorService.updateManagingOrganisation(nhsNumber, repoOdsCode, pdsResponse.getRecordETag());
         }
     }
 }

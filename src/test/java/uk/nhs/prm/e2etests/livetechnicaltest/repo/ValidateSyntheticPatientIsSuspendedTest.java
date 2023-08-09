@@ -36,6 +36,6 @@ class ValidateSyntheticPatientIsSuspendedTest {
         assertTrue(patientValidator.isIncludedInTheTest(testPatientNhsNumber));
 
         PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(testPatientNhsNumber);
-        assertThat(pdsResponse.isSuspended()).as("patient status should be suspended").isTrue();
+        assertThat(pdsResponse.getIsSuspended()).as("patient status should be suspended").isTrue();
     }
 }

@@ -1,11 +1,20 @@
 package uk.nhs.prm.e2etests.model.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.util.Objects;
 
-public record PdsAdaptorResponse(Boolean isSuspended,
-                                 String currentOdsCode,
-                                 String managingOrganisation,
-                                 String recordETag) {
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class PdsAdaptorResponse {
+    private Boolean isSuspended;
+    private String currentOdsCode;
+    private String managingOrganisation;
+    private String recordETag;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
