@@ -16,7 +16,7 @@ class RoundRobinPoolTest {
     void shouldGiveFirstItemFirst() {
         RoundRobinPool<Integer> pool = new RoundRobinPool<>(integers);
 
-        Integer first = pool.next();
+        int first = pool.next();
 
         assertThat(first).isEqualTo(1);
     }
@@ -26,7 +26,7 @@ class RoundRobinPoolTest {
         RoundRobinPool<Integer> pool = new RoundRobinPool<>(integers);
 
         pool.next();
-        Integer second = pool.next();
+        int second = pool.next();
 
         assertThat(second).isEqualTo(2);
     }
@@ -37,8 +37,8 @@ class RoundRobinPoolTest {
 
         poolOfThree.next();
         poolOfThree.next();
-        Integer third = poolOfThree.next();
-        Integer fourth = poolOfThree.next();
+        int third = poolOfThree.next();
+        int fourth = poolOfThree.next();
 
         assertThat(third).isEqualTo(3);
         assertThat(fourth).isEqualTo(1);
