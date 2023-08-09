@@ -60,7 +60,7 @@ public class PerformanceTest {
     // BEANS
     private final MeshMailbox meshMailbox;
     private final TestConfiguration testConfiguration;
-    private final NhsNumberTestData nhsNumbers;
+    private final NhsNumberTestData nhsNumbersTestData;
     private final SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
     private final NhsProperties nhsProperties;
     private final PdsAdaptorService pdsAdaptorService;
@@ -78,7 +78,7 @@ public class PerformanceTest {
     ) {
         this.meshMailbox = meshMailbox;
         this.testConfiguration = testConfiguration;
-        this.nhsNumbers = resourceConfiguration.nhsNumbers();
+        this.nhsNumbersTestData = resourceConfiguration.nhsNumbers();
         this.suspensionServiceMofUpdatedQueue = suspensionServiceMofUpdatedQueue;
         this.nhsProperties = nhsProperties;
         this.pdsAdaptorService = pdsAdaptorService;
@@ -88,7 +88,7 @@ public class PerformanceTest {
     @Disabled("only used for perf test development not wanted on actual runs")
     @Test
     void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
-        RoundRobinPool<String> nhsNumberPool = new RoundRobinPool<>(nhsNumbers.nhsNumbers());
+        RoundRobinPool<String> nhsNumberPool = new RoundRobinPool<>(nhsNumbersTestData.nhsNumbers());
         SuspensionCreatorPool suspensions = new SuspensionCreatorPool(nhsNumberPool);
 
         NemsTestEvent nemsEvent = injectSingleNemsSuspension(new DoNothingTestEventListener(), suspensions.next());
@@ -180,7 +180,7 @@ public class PerformanceTest {
     }
 
     private RoundRobinPool<String> suspendedNhsNumbers() {
-        List<String> suspendedNhsNumbers = nhsNumbers.nhsNumbers();
+        List<String> suspendedNhsNumbers = nhsNumbersTestData.nhsNumbers();
         checkSuspended(suspendedNhsNumbers);
         return new RoundRobinPool(suspendedNhsNumbers);
     }
