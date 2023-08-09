@@ -51,7 +51,7 @@ public class NemsTestEvent implements Phased {
     public boolean finish(SqsMessage successMessage) {
         boolean hasBeenCalled = false;
         if (isFinished()) {
-            addWarning("Warning: Duplicate finisher! finished() but already isFinished");
+            addWarning("Warning: Duplicate finisher! finish() call but already isFinished");
         }
         else {
             hasBeenCalled = true;
