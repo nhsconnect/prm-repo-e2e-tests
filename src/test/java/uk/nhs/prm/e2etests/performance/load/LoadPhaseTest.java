@@ -1,14 +1,18 @@
 package uk.nhs.prm.e2etests.performance.load;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.prm.e2etests.timing.Timer;
+import org.junit.jupiter.api.extension.ExtendWith;
 import uk.nhs.prm.e2etests.utility.ThreadUtility;
+import uk.nhs.prm.e2etests.timing.Timer;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LoadPhaseTest {
