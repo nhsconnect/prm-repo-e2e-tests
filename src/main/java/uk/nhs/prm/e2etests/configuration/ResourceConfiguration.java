@@ -1,7 +1,6 @@
 package uk.nhs.prm.e2etests.configuration;
 
 import lombok.SneakyThrows;
-import uk.nhs.prm.e2etests.annotation.Debt;
 import uk.nhs.prm.e2etests.exception.InvalidNhsEnvironmentException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -64,10 +63,4 @@ public class ResourceConfiguration {
                 .limit(count)
                 .toList();
     }
-
-//    @Debt(comment = "Address SonarLint comments.")
-//    private String generateRandomNhsNumber() {
-//        final int randomSevenDigitNumber = (int) Math.floor(Math.random() * 9_000_000) + 1_000_000;
-//        return SYNTHETIC_PATIENT_NUMBER_PREFIX_DEV + randomSevenDigitNumber;
-//    }
 }
