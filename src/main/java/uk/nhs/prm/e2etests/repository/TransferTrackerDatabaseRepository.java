@@ -1,73 +1,41 @@
 package uk.nhs.prm.e2etests.repository;
 
-import lombok.extern.log4j.Log4j2;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import uk.nhs.prm.e2etests.property.DatabaseProperties;
+import software.amazon.awssdk.enhanced.dynamodb.Key;
+import org.springframework.stereotype.Component;
+import lombok.extern.log4j.Log4j2;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 @Log4j2
 @Component
 public class TransferTrackerDatabaseRepository {
-    private final DatabaseProperties databaseProperties;
-    private final AwsCredentialsProvider awsCredentialsProvider;
+    private final DynamoDbTable<TransferTrackerDynamoDbEntry> transferTrackerTable;
 
     @Autowired
     public TransferTrackerDatabaseRepository(
             DatabaseProperties databaseProperties,
-            AwsCredentialsProvider awsCredentialsProvider
+            DynamoDbEnhancedClient dynamoDbEnhancedClient
     ) {
-        this.databaseProperties = databaseProperties;
-        this.awsCredentialsProvider = awsCredentialsProvider;
-    }
-
-    public GetItemResponse queryWithConversationId(String conversationId) {
-        log.info("Querying transfer tracker database with Conversation ID: {}.", conversationId);
-
-        final Map<String, AttributeValue> dynamoDbKey = Map.of(
-        "conversation_id", AttributeValue.builder().s(conversationId).build()
-        );
-
-        try(DynamoDbClient dynamoDbClient = DynamoDbClient.builder()
-                .credentialsProvider(awsCredentialsProvider)
-                .region(Region.EU_WEST_2)
-                .build()) {
-            return dynamoDbClient.getItem((GetItemRequest.builder()
-                .tableName(databaseProperties.getTransferTrackerDbName())
-                .key(dynamoDbKey)
-                .build()));
-        }
+        final TableSchema<TransferTrackerDynamoDbEntry> tableSchema =
+                TableSchema.fromBean(TransferTrackerDynamoDbEntry.class);
+        this.transferTrackerTable = dynamoDbEnhancedClient.table(
+                databaseProperties.getTransferTrackerDbName(),
+                tableSchema);
     }
 
     public void save(TransferTrackerDynamoDbEntry transferTrackerDynamoDbEntry) {
-        Map<String, AttributeValue> item = new HashMap<>();
+        transferTrackerTable.putItem(transferTrackerDynamoDbEntry);
+    }
 
-        item.put("conversation_id", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getConversationId()).build());
-        item.put("large_ehr_core_message_id", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getLargeEhrCoreMessageId()).build());
-        item.put("nems_message_id", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getNemsMessageId()).build());
-        item.put("nhs_number", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getNhsNumber()).build());
-        item.put("source_gp", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getSourceGp()).build());
-        item.put("state", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getState()).build());
-        item.put("nems_event_last_updated", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getNemsEventLastUpdated()).build());
-        item.put("created_at", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getCreatedAt()).build());
-        item.put("last_updated_at", AttributeValue.builder().s(transferTrackerDynamoDbEntry.getLastUpdatedAt()).build());
-
-        try(DynamoDbClient client = DynamoDbClient.builder()
-                .credentialsProvider(awsCredentialsProvider)
-                .region(Region.EU_WEST_2).build()) {
-            client.putItem(PutItemRequest.builder()
-                    .tableName(databaseProperties.getTransferTrackerDbName())
-                    .item(item).build());
-        }
+    public Optional<TransferTrackerDynamoDbEntry> findByConversationId(String conversationId) {
+        return Optional.ofNullable(
+                transferTrackerTable.getItem(Key.builder().partitionValue(conversationId).build())
+        );
     }
 }
