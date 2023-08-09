@@ -85,8 +85,8 @@ public class PerformanceTest {
         this.templatingService = templatingService;
     }
 
-    @Disabled("only used for perf test development not wanted on actual runs")
     @Test
+    @Disabled("only used for perf test development not wanted on actual runs")
     void shouldMoveSingleSuspensionMessageFromNemsToMofUpdatedQueue() {
         RoundRobinPool<String> nhsNumberPool = new RoundRobinPool<>(nhsNumbersTestData.nhsNumbers());
         SuspensionCreatorPool suspensions = new SuspensionCreatorPool(nhsNumberPool);
