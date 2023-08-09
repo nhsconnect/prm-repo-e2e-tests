@@ -2,6 +2,7 @@ package uk.nhs.prm.e2etests.mesh.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import uk.nhs.prm.e2etests.annotation.Debt;
 import uk.nhs.prm.e2etests.exception.AuthorizationTokenException;
 import uk.nhs.prm.e2etests.property.MeshProperties;
 
@@ -15,11 +16,15 @@ import java.util.Formatter;
 import java.util.IllegalFormatException;
 import java.util.UUID;
 
+import static uk.nhs.prm.e2etests.annotation.Debt.Priority.HIGH;
+
 @Component
 public class AuthTokenGenerator {
     private static final String HMAC_SHA216_ALGORITHM_NAME = "HmacSHA256";
-    private static final String AUTHORISATION_SCHEMA_NAME = "NHSMESH"; // TODO: AWS SSM / PARAMETER STORE??
-    private static final String SHARED_ENVIRONMENT_NAME = "BackBone"; // TODO: AWS SSM / PARAMETER STORE??
+    @Debt(comment = "Abstract this out to an AWS service such as parameter store or SSM.", priority = HIGH)
+    private static final String AUTHORISATION_SCHEMA_NAME = "NHSMESH";
+    @Debt(comment = "Abstract this out to an AWS service such as parameter store or SSM.", priority = HIGH)
+    private static final String SHARED_ENVIRONMENT_NAME = "BackBone";
     private final String mailboxId;
     private final String mailboxPassword;
 
