@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.property;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -25,13 +26,15 @@ public class SyntheticPatientProperties {
     @Value("${nhs.syntheticPatient.nhsNumber.deceasedPatient.preProd}")
     private String syntheticPatientDeceasedPreProd;
 
+    @Getter
     @Value("${nhs.syntheticPatient.nhsNumber.syntheticPatientInPreProd}")
     private String syntheticPatientInPreProd;
 
+    @Getter
     @Value("${nhs.syntheticPatient.nhsNumber.NonSyntheticPatientWithoutGp}")
-    private String NonSyntheticPatientWithoutGp;
+    private String nonSyntheticPatientWithoutGp;
 
-    private String nhsEnvironment;
+    private final String nhsEnvironment;
 
     @Autowired
     public SyntheticPatientProperties(NhsProperties nhsProperties) {
@@ -56,11 +59,4 @@ public class SyntheticPatientProperties {
                 : syntheticPatientDeceasedPreProd;
     }
 
-    public String getSyntheticPatientInPreProd() {
-        return syntheticPatientInPreProd;
-    }
-
-    public String getNonSyntheticPatientWithoutGp() {
-        return NonSyntheticPatientWithoutGp;
-    }
 }

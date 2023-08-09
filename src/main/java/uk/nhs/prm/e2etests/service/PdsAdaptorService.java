@@ -19,11 +19,9 @@ import uk.nhs.prm.e2etests.property.PdsAdaptorProperties;
 )
 @Service
 public class PdsAdaptorService {
-
-    private final String apiKey;
     private final String patientRootUrl;
     private final String username;
-
+    private final String apiKey;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
@@ -35,23 +33,23 @@ public class PdsAdaptorService {
             case "live-test" -> this.apiKey = pdsAdaptorProperties.getLiveTestApiKey();
             case "e2e-test" -> this.apiKey = pdsAdaptorProperties.getE2eTestApiKey();
             case "performance-test" -> this.apiKey = pdsAdaptorProperties.getPerformanceApiKey();
-            default ->
-                    throw new InvalidPdsAdaptorUsernameException(String.format("Received username: %s", username));
+            default -> throw new InvalidPdsAdaptorUsernameException(String.format("Received username: %s", username));
         }
 
     }
 
     public PdsAdaptorResponse getSuspendedPatientStatus(String nhsNumber) {
-        var patientUrl = buildUrl(patientRootUrl, nhsNumber);
+        String patientUrl = buildUrl(patientRootUrl, nhsNumber);
         log.info("Requesting patient status from pds adaptor: {}", patientRootUrl);
         ResponseEntity<PdsAdaptorResponse> response =
             restTemplate.exchange(patientUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(username, apiKey)), PdsAdaptorResponse.class);
         log.info("Response received from pds adaptor: {}", response.getBody());
+
         return response.getBody();
     }
 
     public PdsAdaptorResponse updateManagingOrganisation(String nhsNumber, String previousGp, String recordETag) {
-        var patientUrl = buildUrl(patientRootUrl, nhsNumber);
+        String patientUrl = buildUrl(patientRootUrl, nhsNumber);
         PdsAdaptorRequest request = new PdsAdaptorRequest(previousGp, recordETag);
         log.info("Request to update patient : url - {} , request - {}", patientUrl, request);
         ResponseEntity<PdsAdaptorResponse> response =

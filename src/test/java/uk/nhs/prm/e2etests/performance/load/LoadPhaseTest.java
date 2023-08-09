@@ -1,15 +1,18 @@
 package uk.nhs.prm.e2etests.performance.load;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import uk.nhs.prm.e2etests.utility.ThreadUtility;
 import uk.nhs.prm.e2etests.timing.Timer;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LoadPhaseTest {
@@ -21,8 +24,8 @@ class LoadPhaseTest {
     private Timer timer;
 
     @Test
-    public void applyDelayShouldNotDelayIfThereIsNoPreviousTimeThatDelayApplied_WhichCouldBeMovingToNextPhaseWhichIsWhyTheLastTimeStateIsExternalised() {
-        var loadPhase = LoadPhase.atFlatRate(5, "1");
+    void applyDelayShouldNotDelayIfThereIsNoPreviousTimeThatDelayApplied_WhichCouldBeMovingToNextPhaseWhichIsWhyTheLastTimeStateIsExternalised() {
+        LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         loadPhase.applyDelay(null);
 
@@ -30,23 +33,23 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldReturnTimeNowIfNoDelayApplied() {
-        var loadPhase = LoadPhase.atFlatRate(5, "1");
+    void applyDelayShouldReturnTimeNowIfNoDelayApplied() {
+        LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         when(timer.milliseconds()).thenReturn(123L);
 
-        var timeAfterDelay = loadPhase.applyDelay(null);
+        Long timeAfterDelay = loadPhase.applyDelay(null);
 
         assertThat(timeAfterDelay).isEqualTo(123L);
     }
 
     @Test
-    public void applyDelayShouldSleepTheFullRequiredDelayTimeIfNoTimeHasElapsedSinceLastTime() {
-        var loadPhase = LoadPhase.atFlatRate(5, "1");
+    void applyDelayShouldSleepTheFullRequiredDelayTimeIfNoTimeHasElapsedSinceLastTime() {
+        LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         when(timer.milliseconds()).thenReturn(1000L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(null);
+        Long timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(1000L);
 
@@ -56,50 +59,50 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldReturnTheTimeAfterDelayIfSleptAsReturnedByTheSleeper() {
-        var loadPhase = LoadPhase.atFlatRate(5, "1");
+    void applyDelayShouldReturnTheTimeAfterDelayIfSleptAsReturnedByTheSleeper() {
+        LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         when(timer.milliseconds()).thenReturn(1000L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(null);
+        Long timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(1000L);
         when(sleeper.sleepFor(anyInt())).thenReturn(2000L);
 
-        var timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
+        Long timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
 
         assertThat(timeAfterSecondDelay).isEqualTo(2000L);
     }
 
     @Test
-    public void applyDelayShouldMakeUpTheTimeAppropriatelyIfSomeTimeElapsedFromLastTime() {
-        var loadPhase = LoadPhase.atFlatRate(5, "1");
+    void applyDelayShouldMakeUpTheTimeAppropriatelyIfSomeTimeElapsedFromLastTime() {
+        LoadPhase loadPhase = LoadPhase.atFlatRate(5, "1");
 
         when(timer.milliseconds()).thenReturn(1000L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(null);
+        Long timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(1500L);
         when(sleeper.sleepFor(anyInt())).thenReturn(2000L);
 
-        var timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
+        Long timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
 
         verify(sleeper, times(1)).sleepFor(500);
         assertThat(timeAfterSecondDelay).isEqualTo(2000L);
     }
 
     @Test
-    public void applyDelayShouldWorkForRatesHigherThanOnePerSecond() {
-        var loadPhase = LoadPhase.atFlatRate(5, "20"); // 20 per second, every 50 ms
+    void applyDelayShouldWorkForRatesHigherThanOnePerSecond() {
+        LoadPhase loadPhase = LoadPhase.atFlatRate(5, "20"); // 20 per second, every 50 ms
 
         when(timer.milliseconds()).thenReturn(0L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(null);
+        Long timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(10L);
         when(sleeper.sleepFor(anyInt())).thenReturn(50L);
 
-        var timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
+        Long timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
 
         verify(sleeper, times(1)).sleepFor(40);
 
@@ -112,17 +115,17 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldWorkForRatesLowerThanOnePerSecond() {
-        var loadPhase = LoadPhase.atFlatRate(5, "0.02"); // one every 50 seconds
+    void applyDelayShouldWorkForRatesLowerThanOnePerSecond() {
+        LoadPhase loadPhase = LoadPhase.atFlatRate(5, "0.02"); // one every 50 seconds
 
         when(timer.milliseconds()).thenReturn(0L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(null);
+        Long timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(10 * 1000L);
         when(sleeper.sleepFor(anyInt())).thenReturn(50 * 1000L);
 
-        var timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
+        Long timeAfterSecondDelay = loadPhase.applyDelay(timeAfterFirstDelay);
 
         verify(sleeper, times(1)).sleepFor(40 * 1000);
 
@@ -135,12 +138,12 @@ class LoadPhaseTest {
     }
 
     @Test
-    public void applyDelayShouldApplyNoDelayIfAlreadyTooSlowForDesiredRate() {
-        var loadPhase = LoadPhase.atFlatRate(5, "10");
+    void applyDelayShouldApplyNoDelayIfAlreadyTooSlowForDesiredRate() {
+        LoadPhase loadPhase = LoadPhase.atFlatRate(5, "10");
 
         when(timer.milliseconds()).thenReturn(0L);
 
-        var timeAfterFirstDelay = loadPhase.applyDelay(null);
+        Long timeAfterFirstDelay = loadPhase.applyDelay(null);
 
         when(timer.milliseconds()).thenReturn(200L);
 

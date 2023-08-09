@@ -22,7 +22,7 @@ public abstract class AbstractNemsEventMessageQueue {
     }
 
     public boolean hasMessage(String messageBodyToCheck) {
-        log.info("Checking if message is present on: {}",  this.queueUri);
+        log.info("Checking if message is present on: {}.",  this.queueUri);
         await().atMost(120, TimeUnit.SECONDS).with().pollInterval(2, TimeUnit.SECONDS).until(() -> messageIsOnQueue(messageBodyToCheck), equalTo(true));
         log.info("The message is present on the queue.");
         return true;

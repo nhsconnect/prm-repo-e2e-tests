@@ -1,8 +1,14 @@
 package uk.nhs.prm.e2etests.model.response;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Data
+@Getter
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 public class PdsAdaptorResponse {
     private Boolean isSuspended;
     private String currentOdsCode;

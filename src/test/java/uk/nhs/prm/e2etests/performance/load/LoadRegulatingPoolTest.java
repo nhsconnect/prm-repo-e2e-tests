@@ -1,26 +1,29 @@
 package uk.nhs.prm.e2etests.performance.load;
 
-import lombok.EqualsAndHashCode;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.prm.e2etests.performance.RoundRobinPool;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.prm.e2etests.utility.ThreadUtility;
 import uk.nhs.prm.e2etests.timing.Timer;
+import org.junit.jupiter.api.Test;
+import lombok.EqualsAndHashCode;
+import org.mockito.Mock;
 
 import java.util.List;
 
-import static java.util.List.of;
-import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.*;
+import static java.util.stream.Collectors.toList;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+import static java.util.List.of;
 
 @ExtendWith(MockitoExtension.class)
 class LoadRegulatingPoolTest {
     private LoadRegulatingPool<PhasedInteger> pool;
-    private List<Integer> integers = of(1, 2, 3, 4, 5);
+    private final List<Integer> integers = of(1, 2, 3, 4, 5);
 
     @Mock
     private ThreadUtility sleeper;
@@ -29,18 +32,18 @@ class LoadRegulatingPoolTest {
     private Timer timer;
 
     @Test
-    public void shouldProvideFirstItemWithoutDelay() {
+    void shouldProvideFirstItemWithoutDelay() {
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(1, "1")));
 
-        var item = pool.next();
+        PhasedInteger item = pool.next();
 
         assertThat(item).isEqualTo(new PhasedInteger(1));
         verify(sleeper, never()).sleepFor(anyInt());
     }
 
     @Test
-    public void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateLoad() {
-        var ratePerSecond = "1";
+    void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateLoad() {
+        String ratePerSecond = "1";
         long startTimeMillis = 2000L;
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
@@ -57,8 +60,8 @@ class LoadRegulatingPoolTest {
     }
 
     @Test
-    public void shouldProvideSubsequentItemsAfterAppropriateSleepsToAchieveFlatRateLoad() {
-        var ratePerSecond = "1";
+    void shouldProvideSubsequentItemsAfterAppropriateSleepsToAchieveFlatRateLoad() {
+        String ratePerSecond = "1";
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
 
@@ -83,8 +86,8 @@ class LoadRegulatingPoolTest {
     }
 
     @Test
-    public void shouldBeFinishedIfSinglePhaseCompleted() {
-        var ratePerSecond = "1";
+    void shouldBeFinishedIfSinglePhaseCompleted() {
+        String ratePerSecond = "1";
 
         int phaseCount = 3;
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(phaseCount, ratePerSecond)));
@@ -100,8 +103,8 @@ class LoadRegulatingPoolTest {
     }
 
     @Test
-    public void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateAboveOnePerSecond() {
-        var ratePerSecond = "10";
+    void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateAboveOnePerSecond() {
+        String ratePerSecond = "10";
         long startTimeMillis = 3000L;
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
@@ -121,8 +124,8 @@ class LoadRegulatingPoolTest {
     }
 
     @Test
-    public void shouldUseNotSleepIfAlreadyElapsedMoreThanRequiredDelayForRate() {
-        var ratePerSecond = "10";
+    void shouldUseNotSleepIfAlreadyElapsedMoreThanRequiredDelayForRate() {
+        String ratePerSecond = "10";
         long startTimeMillis = 1000L;
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, ratePerSecond)));
@@ -141,12 +144,12 @@ class LoadRegulatingPoolTest {
     }
 
     @Test
-    public void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateSlowerThanOnePerSecond() {
-        var oneEvery100SecondsRatePerSecond = "0.01";
+    void shouldProvideSecondItemAfterAppropriateSleepToAchieveFlatRateSlowerThanOnePerSecond() {
+        String oneEvery100SecondsRatePerSecond = "0.01";
 
         pool = createPool(integers, timer, sleeper, of(LoadPhase.atFlatRate(10, oneEvery100SecondsRatePerSecond)));
 
-        when(timer.milliseconds()).thenReturn(0l);
+        when(timer.milliseconds()).thenReturn(0L);
         pool.next();
 
         verify(sleeper, never()).sleepFor(anyInt());
@@ -159,8 +162,8 @@ class LoadRegulatingPoolTest {
     }
 
     @Test
-    public void shouldMoveToSecondPhaseAndOnlyBeFinishedIfThatRunsOut() {
-        var ratePerSecond = "1";
+    void shouldMoveToSecondPhaseAndOnlyBeFinishedIfThatRunsOut() {
+        String ratePerSecond = "1";
 
         pool = createPool(integers, timer, sleeper, of(
                 LoadPhase.atFlatRate(3, ratePerSecond),
@@ -181,9 +184,9 @@ class LoadRegulatingPoolTest {
 
 
     @Test
-    public void shouldMoveToSecondPhaseAndUseItsRateAfterFirstPhaseCompletes() {
-        var initialRatePerSecond = "1";
-        var secondRatePerSecondFor200msDelay = "5";
+    void shouldMoveToSecondPhaseAndUseItsRateAfterFirstPhaseCompletes() {
+        String initialRatePerSecond = "1";
+        String secondRatePerSecondFor200msDelay = "5";
         pool = createPool(integers, timer, sleeper, of(
                 LoadPhase.atFlatRate(2, initialRatePerSecond),
                 LoadPhase.atFlatRate(2, secondRatePerSecondFor200msDelay)
@@ -209,13 +212,13 @@ class LoadRegulatingPoolTest {
     }
 
     private LoadRegulatingPool createPool(List<Integer> items, Timer timer, ThreadUtility sleeper, List<LoadPhase> phases) {
-        List<PhasedInteger> phasedItems = items.stream().map(integer -> new PhasedInteger(integer)).collect(toList());
+        List<PhasedInteger> phasedItems = items.stream().map(PhasedInteger::new).collect(toList());
         return new LoadRegulatingPool(new RoundRobinPool(phasedItems), phases);
     }
 
     @EqualsAndHashCode
-    private class PhasedInteger implements Phased {
-        private Integer integer;
+    static class PhasedInteger implements Phased {
+        private final Integer integer;
 
         public PhasedInteger(Integer integer) {
             this.integer = integer;

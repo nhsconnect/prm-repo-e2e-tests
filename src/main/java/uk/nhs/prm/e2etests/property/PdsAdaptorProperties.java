@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.property;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ public class PdsAdaptorProperties extends AbstractSsmRetriever {
     @Value("${aws.configuration.ssm.parameters.pdsAdaptor.e2eTestApiKey}")
     private String e2eTestApiKey;
 
+    @Getter
     @Value("${aws.configuration.serviceUrls.pdsAdaptor}")
     private String pdsAdaptorUrl;
 
@@ -36,7 +38,4 @@ public class PdsAdaptorProperties extends AbstractSsmRetriever {
         return super.getAwsSsmParameterValue(this.e2eTestApiKey);
     }
 
-    public String getPdsAdaptorUrl() {
-        return pdsAdaptorUrl;
-    }
 }

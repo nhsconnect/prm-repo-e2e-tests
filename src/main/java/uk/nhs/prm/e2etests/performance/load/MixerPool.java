@@ -4,8 +4,8 @@ public class MixerPool<T> implements Pool<T> {
     private final float targetRatio;
     private int count1;
     private int count2;
-    private Pool<T> sourceOne;
-    private Pool<T> sourceTwo;
+    private final Pool<T> sourceOne;
+    private final Pool<T> sourceTwo;
 
     public MixerPool(int weighting1, Pool<T> sourceOne, int weighting2, Pool<T> sourceTwo) {
         this.sourceOne = sourceOne;

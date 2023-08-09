@@ -1,23 +1,24 @@
 package uk.nhs.prm.e2etests.service;
 
-import com.google.gson.Gson;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.e2etests.exception.ServiceException;
+import uk.nhs.prm.e2etests.model.MessageData;
 import uk.nhs.prm.e2etests.property.EhrRepositoryProperties;
-import uk.nhs.prm.e2etests.model.request.StoreMessageRequestBody;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
+@Log4j2
 @Service
 public class EhrRepositoryService {
     private final String ehrRepositoryApiKey;
@@ -33,29 +34,28 @@ public class EhrRepositoryService {
     }
 
     public boolean isPatientHealthRecordStatusComplete(String nhsNumber, String conversationId) {
-        var ehrHealthRecordUrl = buildUrl(ehrRepositoryUri, nhsNumber, conversationId);
+        String ehrHealthRecordUrl = buildUrl(ehrRepositoryUri, nhsNumber, conversationId);
         try {
-            System.out.printf("Sending ehr status request to ehr repor: %s%n", ehrHealthRecordUrl);
-            var exchange = restTemplate.exchange(ehrHealthRecordUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(ehrRepositoryApiKey)), String.class);
-            System.out.println("Ehr request successfully stored in ehr repo");
+            log.info("Sending EHR status request to EHR Repository: {}.", ehrHealthRecordUrl);
+            ResponseEntity<String> exchange = restTemplate.exchange(ehrHealthRecordUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(ehrRepositoryApiKey)), String.class);
+            log.info("Ehr request successfully stored in EHR Repository.");
             return exchange.getStatusCode().is2xxSuccessful();
-        } catch (HttpStatusCodeException e) {
-            System.out.printf("Error retrieving ehr health record status from ehr repo. Status code: %s. Error: %s%n", e.getStatusCode(), e.getMessage());
-            return false;
+        } catch (HttpStatusCodeException exception) {
+            throw new ServiceException(getClass().getName(), exception.getMessage());
         }
     }
 
     public void createEhr(String nhsNumber) throws Exception {
-        var conversationId = UUID.randomUUID();
-        var messageId = UUID.randomUUID();
-        var messageType = "ehrExtract";
-        var fragmentMessageIds = Collections.EMPTY_LIST;
-
-        var jsonPayloadString = new Gson().toJson(new StoreMessageRequestBody(messageId, conversationId, nhsNumber, messageType, fragmentMessageIds));
+        UUID conversationId = UUID.randomUUID();
+        UUID messageId = UUID.randomUUID();
+        String messageType = "ehrExtract";
+        List<UUID> fragmentMessageIds = Collections.emptyList();
 
          restTemplate.exchange(new URL(ehrRepositoryUri + "messages").toURI(), HttpMethod.POST,
-                 new HttpEntity<>(jsonPayloadString, createHeaders(ehrRepositoryApiKey)), String.class);
-
+                 new HttpEntity<>(new MessageData(
+                         conversationId, messageId,
+                         nhsNumber, messageType, fragmentMessageIds)
+                         .getJsonString(), createHeaders(ehrRepositoryApiKey)), String.class);
     }
 
     public String getEhrResponse(String nhsNumber) throws MalformedURLException, URISyntaxException {

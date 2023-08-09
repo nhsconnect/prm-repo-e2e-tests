@@ -1,10 +1,13 @@
 package uk.nhs.prm.e2etests.model;
 
 import com.google.gson.GsonBuilder;
+import lombok.Getter;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
+@Getter
 public class RepoIncomingMessage {
     private final String nhsNumber;
     private final UUID nemsMessageId;
@@ -22,22 +25,26 @@ public class RepoIncomingMessage {
         this.nemsEventLastUpdated = nemsEventLastUpdated.toString();
     }
 
-    public String getConversationIdAsString() {
+    public String getConversationId() {
         return conversationId.toString();
     }
 
-    public String getNemsMessageIdAsString() {
-        return nemsMessageId.toString();
-    }
-
     public String toJsonString() {
-        return new GsonBuilder()
-                .disableHtmlEscaping()
+        return new GsonBuilder().disableHtmlEscaping()
                 .create()
                 .toJson(this);
     }
 
-    public String conversationId() {
-        return getConversationIdAsString();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RepoIncomingMessage that = (RepoIncomingMessage) o;
+        return Objects.equals(nemsMessageId, that.nemsMessageId) && Objects.equals(conversationId, that.conversationId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nemsMessageId, conversationId);
     }
 }

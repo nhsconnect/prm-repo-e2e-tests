@@ -1,19 +1,21 @@
 package uk.nhs.prm.e2etests.performance;
 
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.configuration.TestData;
+import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
+import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
+import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
+import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
+import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
-import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
-import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
-import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
-import uk.nhs.prm.e2etests.tests.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
-import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
-import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 import uk.nhs.prm.e2etests.utility.ResourceUtility;
 
 import java.time.LocalDateTime;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
@@ -30,6 +33,7 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
+@Log4j2
 @SpringBootTest
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -51,45 +55,47 @@ class RepoInPerformanceTest {
     }
 
     @Test
-    public void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
-        System.out.println("BEGINNING PROBLEMATIC TEST");
-        var numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
-        var messagesToBeProcessed = setupMessagesToBeProcessed(numberOfMessagesToBeProcessed);
+    void trackBehaviourOfHighNumberOfMessagesSentToEhrTransferService() {
+        log.info("Starting problematic test.");
+        int numberOfMessagesToBeProcessed = getNumberOfMessagesToBeProcessed();
+        List<RepoInPerfMessageWrapper> messagesToBeProcessed = setupMessagesToBeProcessed(numberOfMessagesToBeProcessed);
 
-        System.out.println("Setup completed. About to send messages to mq...");
+        log.info("The messages have been pre-processed successfully, about to send to message queue.");
         sendMessagesToMq(messagesToBeProcessed);
 
-        System.out.println("All messages sent. Ensuring they reached transfer complete queue...");
+        log.info("All of the messages have been sent, total: {}. Ensuring they exist on the transfer complete queue.", numberOfMessagesToBeProcessed);
         assertMessagesAreInTransferCompleteQueue(numberOfMessagesToBeProcessed, messagesToBeProcessed);
     }
 
     private void assertMessagesAreInTransferCompleteQueue(int numberOfMessagesToBeProcessed, List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
-        var messagesReadFromQueueEveryMinute = 100;
-        var additionalMinutesBuffer = 5;
-        var timeoutInMinutes = Math.round(numberOfMessagesToBeProcessed / messagesReadFromQueueEveryMinute) + additionalMinutesBuffer;
-        System.out.println("Polling messages from transfer complete queue, timeout for this operation set to " + timeoutInMinutes + " minutes.");
+        int messagesReadFromQueueEveryMinute = 100;
+        int additionalMinutesBuffer = 5;
+        int timeoutInMinutes = Math.round(numberOfMessagesToBeProcessed / messagesReadFromQueueEveryMinute) + additionalMinutesBuffer;
 
-        var messagesProcessed = new ArrayList<RepoInPerfMessageWrapper>();
-        var timeout = now().plusMinutes(timeoutInMinutes);
-        while (now().isBefore(timeout) && messagesToBeProcessed.size() > 0) {
+        log.info("Polling messages from transfer complete queue, the timeout for this operation has been set to {} minutes.", timeoutInMinutes);
+
+        List<RepoInPerfMessageWrapper> messagesProcessed = new ArrayList<>();
+        LocalDateTime timeout = now().plusMinutes(timeoutInMinutes);
+
+        while (now().isBefore(timeout) && !messagesToBeProcessed.isEmpty()) {
+
             for (SqsMessage sqsMessage : ehrTransferServiceTransferCompleteOQ.getNextMessages(timeout)) {
-                var conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
+                String conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
-                    if (message.getMessage().conversationId().equals(conversationId)) {
+                    if (message.getMessage().getConversationId().equals(conversationId)) {
                         message.finish(sqsMessage.getQueuedAt());
                         ehrTransferServiceTransferCompleteOQ.deleteMessage(sqsMessage);
-                        System.out.println("Found in transfer complete queue message with conversationId "
-                                + conversationId
-                                + " which took "
-                                + message.getProcessingTimeInSeconds()
-                                + " seconds to be processed");
+                        log.info("Message found on transfer complete queue with Conversation ID: {}, which took {} seconds to be processed.",
+                                conversationId,
+                                message.getProcessingTimeInSeconds());
                         messagesProcessed.add(message);
                         return true;
                     }
                     return false;
                 });
-                var numberOfMessagesProcessed = numberOfMessagesToBeProcessed - messagesToBeProcessed.size();
-                System.out.println("Processed " + numberOfMessagesProcessed + " messages out of " + numberOfMessagesToBeProcessed);
+
+                int numberOfMessagesProcessed = numberOfMessagesToBeProcessed - messagesToBeProcessed.size();
+                log.info("Processed {} of {} messages.", numberOfMessagesProcessed, numberOfMessagesToBeProcessed);
             }
         }
 
@@ -102,33 +108,29 @@ class RepoInPerformanceTest {
     }
 
     private void sendMessagesToMq(List<RepoInPerfMessageWrapper> messagesToBeProcessed) {
-        var intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
+        int intervalBetweenMessagesSentToMq = getIntervalBetweenMessagesSentToMq();
         try {
-            var messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
-            var counter = new AtomicInteger(0);
-            String smallEhr;
+            String messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
+            AtomicInteger counter = new AtomicInteger(0);
+            AtomicReference<String> smallEhr = new AtomicReference<>();
 
-            // TODO PRMT-3574 traditional for loop here that could be refactored
-            for (int i = 0; i < messagesToBeProcessed.size(); i++) {
-                counter.updateAndGet(v -> v + 1);
-                String conversationId = messagesToBeProcessed.get(i).getMessage().conversationId();
-
-                smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
-                messagesToBeProcessed.get(i).start();
-
-                System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
-                inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-
+            messagesToBeProcessed.forEach(message -> {
+                counter.incrementAndGet();
+                String conversationId = message.getMessage().getConversationId();
+                smallEhr.set(getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId));
+                message.start();
+                inboundQueueFromMhs.sendMessage(smallEhr.get(), conversationId);
                 sleepFor(intervalBetweenMessagesSentToMq);
-            }
+            });
 
-            System.out.println("All messages sent, about to close mhs producer...");
+            log.info("All the messages have been sent, about to close MHS inbound queue producer.");
             inboundQueueFromMhs.close();
-        } catch (OutOfMemoryError outOfMemoryError) {
-            System.out.println("Whoops, mq client went out of memory again!");
+        } catch (OutOfMemoryError error) {
+            log.fatal("The SwiftMQ client has run out of memory, details: {} - cause: {}.", error.getMessage(), error.getCause());
             System.exit(1);
         }
     }
+
 
     private synchronized void processMessage(
             RepoInPerfMessageWrapper message,
@@ -137,24 +139,23 @@ class RepoInPerformanceTest {
             SimpleAmqpQueue inboundQueueFromMhs
     ) {
         counter.incrementAndGet();
-        var conversationId = message.getMessage().conversationId();
+        String conversationId = message.getMessage().getConversationId();
 
-        var smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
+        String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
         message.start();
 
-        System.out.println("Item " + counter.get() + " - sending to mq conversationId " + conversationId);
+        log.info("[ITEM #{}] [CONVERSATION ID: {}] - Sending to message queue.", counter.get(), conversationId);
         inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-
 
         sleepFor(100);
         message.finish(LocalDateTime.now());
     }
 
     private List<RepoInPerfMessageWrapper> setupMessagesToBeProcessed(int numberOfMessagesToBeProcessed) {
-        var messagesToBeProcessed = new ArrayList<RepoInPerfMessageWrapper>();
+        List<RepoInPerfMessageWrapper> messagesToBeProcessed = new ArrayList<>();
 
-        for (int i = 0; i < numberOfMessagesToBeProcessed ; i++) {
-            var message = new RepoIncomingMessageBuilder()
+        for (int i = 0; i < numberOfMessagesToBeProcessed; i++) {
+            RepoIncomingMessage message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
                     .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
                     .build();
@@ -166,17 +167,17 @@ class RepoInPerformanceTest {
     }
 
     private int getNumberOfMessagesToBeProcessed() {
-        var result = getenv("NUMBER_OF_MESSAGES_TO_BE_PROCESSED");
+        String result = getenv("NUMBER_OF_MESSAGES_TO_BE_PROCESSED");
         return result == null ? 500 : parseInt(result);
     }
 
     private int getIntervalBetweenMessagesSentToMq() {
-        var result = getenv("INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ");
+        String result = getenv("INTERVAL_BETWEEN_MESSAGES_SENT_TO_MQ");
         return result == null ? 100 : parseInt(result);
     }
 
     private String getSmallMessageWithUniqueConversationIdAndMessageId(String message, String conversationId) {
-        var messageId = randomUUID().toString();
+        String messageId = randomUUID().toString();
         message = message.replaceAll("__CONVERSATION_ID__", conversationId);
         message = message.replaceAll("__MESSAGE_ID__", messageId);
         return message;

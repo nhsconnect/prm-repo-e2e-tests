@@ -1,10 +1,10 @@
 package uk.nhs.prm.e2etests.queue.ehrtransfer;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import uk.nhs.prm.e2etests.queue.AbstractMessageQueue;
-import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.service.SqsService;
 
 import java.util.Map;
@@ -25,7 +25,7 @@ public class EhrTransferServiceRepoIncomingQueue extends AbstractMessageQueue {
 
     public void send(RepoIncomingMessage message) {
         super.postAMessageWithAttributes(message.toJsonString(),
-                Map.of("conversationId", message.conversationId(),
-                        "traceId", message.conversationId()));
+                Map.of("conversationId", message.getConversationId(),
+                        "traceId", message.getConversationId()));
     }
 }
