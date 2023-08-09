@@ -190,7 +190,7 @@ public class PerformanceTest {
             for (String nhsNumber: suspendedNhsNumbers) {
                 PdsAdaptorResponse patientStatus = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
                 log.info("{}:{}", nhsNumber, patientStatus);
-                assertTrue(patientStatus.isSuspended());
+                assertTrue(patientStatus.getIsSuspended());
             }
         }
     }

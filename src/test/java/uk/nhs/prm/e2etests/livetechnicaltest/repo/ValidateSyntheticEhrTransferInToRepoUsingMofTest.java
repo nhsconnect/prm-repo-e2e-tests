@@ -76,19 +76,19 @@ class ValidateSyntheticEhrTransferInToRepoUsingMofTest {
 
     private void updateMofToRepoOdsCode(String testPatientNhsNumber) {
         PdsAdaptorResponse pdsResponse = getPdsAdaptorResponse(testPatientNhsNumber);
-        if (repoOdsCode.equals(pdsResponse.managingOrganisation())) {
+        if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
             log.info("Not sending update request because MOF already set to EHR Repository ODS code.");
         } else {
-            PdsAdaptorResponse updatedMofResponse = pdsAdaptorService.updateManagingOrganisation(testPatientNhsNumber, repoOdsCode, pdsResponse.recordETag());
+            PdsAdaptorResponse updatedMofResponse = pdsAdaptorService.updateManagingOrganisation(testPatientNhsNumber, repoOdsCode, pdsResponse.getRecordETag());
             log.info("Confirming that the patient MOD is set to EHR Repository ODS code.");
-            assertThat(updatedMofResponse.managingOrganisation()).isEqualTo(repoOdsCode);
+            assertThat(updatedMofResponse.getManagingOrganisation()).isEqualTo(repoOdsCode);
         }
     }
 
     private PdsAdaptorResponse getPdsAdaptorResponse(String testPatientNhsNumber) {
         PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(testPatientNhsNumber);
         log.info("Confirming that the patient's status is suspended.");
-        assertTrue(pdsResponse.isSuspended());
+        assertTrue(pdsResponse.getIsSuspended());
         return pdsResponse;
     }
 }

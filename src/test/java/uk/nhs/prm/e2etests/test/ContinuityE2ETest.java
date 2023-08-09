@@ -132,7 +132,7 @@ class ContinuityE2ETest {
         log.info("Generated a random ODS code for previous GP: {}", previousGp);
 
         NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
-                TemplateVariant.CHANGE_OF_GP_NON_SUSPENSION,
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 suspendedPatientNhsNumber,
                 nemsMessageId,
                 previousGp,
@@ -324,8 +324,8 @@ class ContinuityE2ETest {
     private void setManagingOrganisationToEMISOdsCode(String nhsNumber) {
         PdsAdaptorResponse pdsResponse = pdsAdaptorService.getSuspendedPatientStatus(nhsNumber);
         String repoOdsCode = Gp2GpSystem.repoInEnv(nhsProperties.getNhsEnvironment()).odsCode();
-        if (repoOdsCode.equals(pdsResponse.managingOrganisation())) {
-            pdsAdaptorService.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.recordETag());
+        if (repoOdsCode.equals(pdsResponse.getManagingOrganisation())) {
+            pdsAdaptorService.updateManagingOrganisation(nhsNumber, EMIS_PTL_INT, pdsResponse.getRecordETag());
         }
     }
 }

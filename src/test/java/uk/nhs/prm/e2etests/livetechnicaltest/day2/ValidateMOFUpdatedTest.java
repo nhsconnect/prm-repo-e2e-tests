@@ -41,7 +41,7 @@ class ValidateMOFUpdatedTest {
 
             safeListedPatientList.forEach(nhsNumber -> {
                 PdsAdaptorResponse pdsResponse = fetchPdsPatientStatus(nhsNumber);
-                log.info("The patient's suspended status is: {}.", pdsResponse.isSuspended());
+                log.info("The patient's suspended status is: {}.", pdsResponse.getIsSuspended());
 
                 log.info("Checking patient status with HL7v3 PDS request - reference logs for more details.");
                 gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
