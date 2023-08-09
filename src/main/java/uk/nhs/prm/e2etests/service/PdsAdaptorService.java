@@ -42,7 +42,7 @@ public class PdsAdaptorService {
         String patientUrl = buildUrl(patientRootUrl, nhsNumber);
         log.info("Requesting patient status from pds adaptor: {}", patientRootUrl);
         ResponseEntity<PdsAdaptorResponse> response =
-                restTemplate.exchange(patientUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(username, apiKey)), PdsAdaptorResponse.class);
+            restTemplate.exchange(patientUrl, HttpMethod.GET, new HttpEntity<>(createHeaders(username, apiKey)), PdsAdaptorResponse.class);
         log.info("Response received from pds adaptor: {}", response.getBody());
 
         return response.getBody();
