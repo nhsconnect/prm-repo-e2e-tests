@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static java.lang.Integer.parseInt;
@@ -111,16 +112,16 @@ class RepoInPerformanceTest {
         try {
             String messageTemplate = ResourceUtility.readTestResourceFileFromEhrDirectory("small-ehr-4MB");
             AtomicInteger counter = new AtomicInteger(0);
-            String smallEhr;
+            AtomicReference<String> smallEhr = new AtomicReference<>();
 
-            for (int i = 0; i < messagesToBeProcessed.size(); i++) {
+            messagesToBeProcessed.forEach(message -> {
                 counter.updateAndGet(v -> v + 1);
-                String conversationId = messagesToBeProcessed.get(i).getMessage().getConversationId();
-                smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
-                messagesToBeProcessed.get(i).start();
-                inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
+                String conversationId = message.getMessage().getConversationId();
+                smallEhr.set(getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId));
+                message.start();
+                inboundQueueFromMhs.sendMessage(smallEhr.get(), conversationId);
                 sleepFor(intervalBetweenMessagesSentToMq);
-            }
+            });
 
             log.info("All the messages have been sent, about to close MHS inbound queue producer.");
             inboundQueueFromMhs.close();
