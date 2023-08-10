@@ -19,6 +19,7 @@ import uk.nhs.prm.e2etests.enumeration.*;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.model.database.Acknowledgement;
 import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
@@ -40,6 +41,7 @@ import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceSma
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceUnhandledOQ;
 import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
+import uk.nhs.prm.e2etests.repository.EhrOutDatabaseAcknowledgeRepository;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
@@ -75,6 +77,7 @@ class RepositoryE2ETest {
     private final PdsAdaptorService pdsAdaptorService;
     private final TemplatingService templatingService;
 
+    private final EhrOutDatabaseAcknowledgeRepository ehrOutDatabaseAcknowledgeRepository;
     private final SimpleAmqpQueue mhsInboundQueue;
     private final Gp2GpMessengerOQ gp2gpMessengerOQ;
     private final EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
@@ -95,6 +98,7 @@ class RepositoryE2ETest {
             TransferTrackerService transferTrackerService,
             PdsAdaptorService pdsAdaptorService,
             TemplatingService templatingService,
+            EhrOutDatabaseAcknowledgeRepository ehrOutDatabaseAcknowledgeRepository,
             SimpleAmqpQueue mhsInboundQueue,
             Gp2GpMessengerOQ gp2gpMessengerOQ,
             EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ,
@@ -112,6 +116,7 @@ class RepositoryE2ETest {
         this.transferTrackerService = transferTrackerService;
         this.pdsAdaptorService = pdsAdaptorService;
         this.templatingService = templatingService;
+        this.ehrOutDatabaseAcknowledgeRepository = ehrOutDatabaseAcknowledgeRepository;
         this.mhsInboundQueue = mhsInboundQueue;
         this.gp2gpMessengerOQ = gp2gpMessengerOQ;
         this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceTransferCompleteOQ;
@@ -137,6 +142,13 @@ class RepositoryE2ETest {
         ehrTransferServiceUnhandledOQ.deleteAllMessages();
         ehrTransferServiceNegativeAcknowledgementOQ.deleteAllMessages();
         gp2gpMessengerOQ.deleteAllMessages();
+    }
+
+    @Test
+    void shouldConnectToEhrOutDatabase() {
+        // a temporary test just to confirm the connection to database
+        Acknowledgement record = ehrOutDatabaseAcknowledgeRepository.findAcknowledgementById(UUID.fromString("b9ef46f4-d311-47fb-ab93-a7d48133ec3a"));
+        assertThat(record.getAcknowledgementTypeCode()).isEqualTo("AA");
     }
 
     // The following test should eventually test that we can send a small EHR - until we have an EHR in repo/test patient ready to send,

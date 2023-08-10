@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import uk.nhs.prm.e2etests.property.DatabaseProperties;
+import uk.nhs.prm.e2etests.property.DynamoDbProperties;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import org.springframework.stereotype.Component;
 import lombok.extern.log4j.Log4j2;
@@ -19,7 +19,7 @@ public class TransferTrackerDatabaseRepository {
 
     @Autowired
     public TransferTrackerDatabaseRepository(
-            DatabaseProperties databaseProperties,
+            DynamoDbProperties databaseProperties,
             DynamoDbEnhancedClient dynamoDbEnhancedClient
     ) {
         final TableSchema<TransferTrackerRecord> tableSchema =

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Getter
 @Component
-public class DatabaseProperties {
+public class DynamoDbProperties {
     @Value("${aws.configuration.databaseNames.transferTrackerDb}")
     private String transferTrackerDbName;
 

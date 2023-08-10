@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.service.SsmService;
 
 @Component
-public class MeshProperties extends AbstractSsmRetriever {
+public class MeshProperties {
     @Value("${aws.configuration.ssm.parameters.mesh.mailboxId}")
     private String mailboxId;
 
@@ -21,25 +21,27 @@ public class MeshProperties extends AbstractSsmRetriever {
 
     private static final String MAILBOX_SERVICE_OUTBOX_URL = "https://msg.intspineservices.nhs.uk/messageexchange/%s/outbox";
 
+    private final SsmService ssmService;
+
     @Autowired
     public MeshProperties(SsmService ssmService) {
-        super(ssmService);
+        this.ssmService = ssmService;
     }
 
     public String getMailboxId() {
-        return super.getAwsSsmParameterValue(this.mailboxId);
+        return ssmService.getSsmParameterValue(this.mailboxId);
     }
 
     public String getClientCert() {
-        return super.getAwsSsmParameterValue(this.clientCert);
+        return ssmService.getSsmParameterValue(this.clientCert);
     }
 
     public String getClientKey() {
-        return super.getAwsSsmParameterValue(this.clientKey);
+        return ssmService.getSsmParameterValue(this.clientKey);
     }
 
     public String getMailboxPassword() {
-        return super.getAwsSsmParameterValue(this.mailboxPassword);
+        return ssmService.getSsmParameterValue(this.mailboxPassword);
     }
 
     public String getMailboxServiceOutboxUrl() {

@@ -9,7 +9,7 @@ import uk.nhs.prm.e2etests.service.SsmService;
 
 @Getter
 @Component
-public class Gp2gpMessengerProperties extends AbstractSsmRetriever {
+public class Gp2gpMessengerProperties {
     @Value("${nhs.services.gp2gp.odsCodes.tppPtlInt}")
     private String tppPtlIntOdsCode;
 
@@ -23,12 +23,14 @@ public class Gp2gpMessengerProperties extends AbstractSsmRetriever {
     @Value("${aws.configuration.serviceUrls.gp2GpMessenger}")
     private String gp2gpMessengerUrl;
 
+    private final SsmService ssmService;
+
     @Autowired
     public Gp2gpMessengerProperties(SsmService ssmService) {
-        super(ssmService);
+        this.ssmService = ssmService;
     }
 
     public String getLiveTestApiKey() {
-        return super.getAwsSsmParameterValue(this.liveTestApiKey);
+        return this.ssmService.getSsmParameterValue(this.liveTestApiKey);
     }
 }
