@@ -1,8 +1,8 @@
 package uk.nhs.prm.e2etests.service;
 
-import org.springframework.stereotype.Service;
-import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
 import uk.nhs.prm.e2etests.repository.ActiveSuspensionsDatabaseRepository;
+import uk.nhs.prm.e2etests.model.database.ActiveSuspensionsRecord;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ActiveSuspensionsService {
@@ -14,11 +14,11 @@ public class ActiveSuspensionsService {
         this.activeSuspensionsDatabaseRepository = activeSuspensionsDatabaseRepository;
     }
 
-    public boolean nhsNumberExists(String conversationId) {
-        return this.activeSuspensionsDatabaseRepository.queryWithNhsNumber(conversationId) != null;
+    public boolean nhsNumberExists(String nhsNumber) {
+        return this.activeSuspensionsDatabaseRepository.findByNhsNumber(nhsNumber).isPresent();
     }
 
-    public void save(ActiveSuspensionsMessage message) {
+    public void save(ActiveSuspensionsRecord message) {
         this.activeSuspensionsDatabaseRepository.save(message);
     }
 }

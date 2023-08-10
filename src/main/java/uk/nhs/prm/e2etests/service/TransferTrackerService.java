@@ -1,7 +1,7 @@
 package uk.nhs.prm.e2etests.service;
 
 import org.springframework.stereotype.Service;
-import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
+import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import uk.nhs.prm.e2etests.repository.TransferTrackerDatabaseRepository;
 
 import java.util.concurrent.TimeUnit;
@@ -20,10 +20,7 @@ public class TransferTrackerService {
     }
 
     public boolean conversationIdExists(String conversationId) {
-//        GetItemResponse response = transferTrackerDatabaseRepository.queryWithConversationId(conversationId);
-//        return response != null;
         return transferTrackerDatabaseRepository.findByConversationId(conversationId).isPresent();
-
     }
 
     public boolean isStatusForConversationIdPresent(String conversationId, String status) {
@@ -31,13 +28,12 @@ public class TransferTrackerService {
     }
 
     public boolean isStatusForConversationIdPresent(String conversationId, String status, long timeout) {
-//        AttributeValue defaultState = AttributeValue.builder().s("NOPE-AKA-DEFAULT-VALUE-TO-AVOID-NULL-EXCEPTION").build();
         await().atMost(timeout, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
                 .until(() -> transferTrackerDatabaseRepository
                         .findByConversationId(conversationId)
-                        .map(TransferTrackerDynamoDbEntry::getState)
+                        .map(TransferTrackerRecord::getState)
                         .orElse("entry not found"), equalTo(status));
         return true;
     }
@@ -48,11 +44,11 @@ public class TransferTrackerService {
                 .pollInterval(2, TimeUnit.SECONDS)
                 .until(() -> transferTrackerDatabaseRepository
                         .findByConversationId(conversationId)
-                        .map(TransferTrackerDynamoDbEntry::getState)
+                        .map(TransferTrackerRecord::getState)
                         .orElse("entry not found"), containsString(partialStatus));
     }
 
-    public void save(TransferTrackerDynamoDbEntry entry) {
+    public void save(TransferTrackerRecord entry) {
         transferTrackerDatabaseRepository.save(entry);
     }
 }

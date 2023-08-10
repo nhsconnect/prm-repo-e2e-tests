@@ -1,4 +1,4 @@
-package uk.nhs.prm.e2etests.model;
+package uk.nhs.prm.e2etests.model.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-public class MessageData {
+public class EhrRepositoryRequest {
     @JsonProperty("type")
     private static final String TYPE = "messages";
 
@@ -18,7 +18,7 @@ public class MessageData {
     private final String messageType;
     private final List<UUID> fragmentMessageIds;
 
-    public MessageData(UUID messageId, UUID conversationId, String nhsNumber, String messageType, List<UUID> fragmentMessageIds) {
+    public EhrRepositoryRequest(UUID messageId, UUID conversationId, String nhsNumber, String messageType, List<UUID> fragmentMessageIds) {
         this.id = messageId;
         this.conversationId = conversationId;
         this.nhsNumber = nhsNumber;
