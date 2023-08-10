@@ -9,7 +9,7 @@ import uk.nhs.prm.e2etests.service.SsmService;
 
 @Getter
 @Component
-public class EhrRepositoryProperties extends AbstractSsmRetriever {
+public class EhrRepositoryProperties {
 
     @Value("${nhs.services.gp2gp.odsCodes.repoDev}")
     private String repoDevOdsCode;
@@ -28,16 +28,16 @@ public class EhrRepositoryProperties extends AbstractSsmRetriever {
     @Value("${aws.configuration.serviceUrls.ehrRepository}")
     private String ehrRepositoryUrl;
 
+    private final SsmService ssmService;
+
     @Autowired
-    public EhrRepositoryProperties(SsmService ssmService) {
-        super(ssmService);
-    }
+    public EhrRepositoryProperties(SsmService ssmService) { this.ssmService = ssmService; }
 
     public String getLiveTestApiKey() {
-        return super.getAwsSsmParameterValue(this.liveTestApiKey);
+        return this.ssmService.getSsmParameterValue(this.liveTestApiKey);
     }
 
     public String getE2eTestApiKey() {
-        return super.getAwsSsmParameterValue(this.e2eTestApiKey);
+        return this.ssmService.getSsmParameterValue(this.e2eTestApiKey);
     }
 }

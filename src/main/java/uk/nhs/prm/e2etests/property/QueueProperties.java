@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
-public class QueueProperties extends AbstractSsmRetriever {
+public class QueueProperties {
     private static final String TEMPLATE_QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/%s/%s-%s";
 
     @Value("${aws.configuration.queueNames.meshForwarder.nemsEventsObservability}")
@@ -94,23 +94,25 @@ public class QueueProperties extends AbstractSsmRetriever {
 
     private final String awsAccountNumber;
 
+    private final SsmService ssmService;
+
     @Autowired
     public QueueProperties(
             SsmService ssmService,
             NhsProperties nhsProperties,
             ActiveRoleArn activeRoleArn
     ) {
-        super(ssmService);
+        this.ssmService = ssmService;
         this.nhsEnvironment = nhsProperties.getNhsEnvironment();
         this.awsAccountNumber = activeRoleArn.getAccountNo();
     }
 
     public String getMqAppUsername() {
-        return super.getAwsSsmParameterValue(this.mqAppUsername);
+        return this.ssmService.getSsmParameterValue(this.mqAppUsername);
     }
 
     public String getMqAppPassword() {
-        return super.getAwsSsmParameterValue(this.mqAppPassword);
+        return this.ssmService.getSsmParameterValue(this.mqAppPassword);
     }
 
     public String getMeshForwarderNemsEventsObservabilityQueueUri() {
@@ -203,7 +205,7 @@ public class QueueProperties extends AbstractSsmRetriever {
 
     public AmqpEndpoint getAmqpEndpoint() {
         // In the event this fails, there is also an 'amqp-endpoint-1' in SSM
-        return formatAmqpEndpoint(super.getAwsSsmParameterValue(this.amqpEndpoint));
+        return formatAmqpEndpoint(this.ssmService.getSsmParameterValue(this.amqpEndpoint));
     }
 
     private String getQueueUrl(String queueName) {
