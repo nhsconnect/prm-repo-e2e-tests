@@ -3,7 +3,7 @@ package uk.nhs.prm.e2etests.repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
+import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import uk.nhs.prm.e2etests.property.DatabaseProperties;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
@@ -15,25 +15,25 @@ import java.util.Optional;
 @Log4j2
 @Component
 public class TransferTrackerDatabaseRepository {
-    private final DynamoDbTable<TransferTrackerDynamoDbEntry> transferTrackerTable;
+    private final DynamoDbTable<TransferTrackerRecord> transferTrackerTable;
 
     @Autowired
     public TransferTrackerDatabaseRepository(
             DatabaseProperties databaseProperties,
             DynamoDbEnhancedClient dynamoDbEnhancedClient
     ) {
-        final TableSchema<TransferTrackerDynamoDbEntry> tableSchema =
-                TableSchema.fromBean(TransferTrackerDynamoDbEntry.class);
+        final TableSchema<TransferTrackerRecord> tableSchema =
+                TableSchema.fromBean(TransferTrackerRecord.class);
         this.transferTrackerTable = dynamoDbEnhancedClient.table(
                 databaseProperties.getTransferTrackerDbName(),
                 tableSchema);
     }
 
-    public void save(TransferTrackerDynamoDbEntry transferTrackerDynamoDbEntry) {
+    public void save(TransferTrackerRecord transferTrackerDynamoDbEntry) {
         transferTrackerTable.putItem(transferTrackerDynamoDbEntry);
     }
 
-    public Optional<TransferTrackerDynamoDbEntry> findByConversationId(String conversationId) {
+    public Optional<TransferTrackerRecord> findByConversationId(String conversationId) {
         return Optional.ofNullable(
                 transferTrackerTable.getItem(Key.builder().partitionValue(conversationId).build())
         );
