@@ -147,7 +147,7 @@ class RepositoryE2ETest {
     @Test
     void shouldConnectToEhrOutDatabase() {
         // a temporary test just to confirm the connection to database
-        Acknowledgement record = ehrOutDatabaseAcknowledgeRepository.findAcknowledgementById(UUID.fromString("b9ef46f4-d311-47fb-ab93-a7d48133ec3a"));
+        Acknowledgement record = ehrOutDatabaseAcknowledgeRepository.findById(UUID.fromString("b9ef46f4-d311-47fb-ab93-a7d48133ec3a"));
         assertThat(record.getAcknowledgementTypeCode()).isEqualTo("AA");
     }
 

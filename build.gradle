@@ -3,7 +3,6 @@ plugins {
     id 'org.owasp.dependencycheck' version '7.4.4'
     id 'org.springframework.boot' version '3.1.1'
     id 'io.spring.dependency-management' version '1.1.0'
-    id 'io.ebean' version '13.6.5'
 }
 
 group 'uk.nhs.prm'
@@ -55,7 +54,7 @@ dependencies {
     // Data Access
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.20.121'
     implementation 'org.postgresql:postgresql:42.6.0'
-    implementation 'io.ebean:ebean:13.6.5'
+    implementation 'org.springframework:spring-jdbc:6.0.11'
 
     annotationProcessor 'io.ebean:querybean-generator:13.6.5'
 
@@ -67,7 +66,6 @@ dependencies {
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
-    annotationProcessor 'io.ebean:querybean-generator:13.6.5'
 
     testAnnotationProcessor 'org.projectlombok:lombok'
 
@@ -77,7 +75,6 @@ dependencies {
     testImplementation 'org.xmlunit:xmlunit-core:2.9.1'
     testImplementation 'org.xmlunit:xmlunit-matchers:2.9.1'
     testImplementation 'com.swiftmq:swiftmq-client:12.5.4'
-    testImplementation 'io.ebean:ebean-test:13.6.5'
 }
 
 tasks.withType(Test).configureEach {
@@ -94,14 +91,6 @@ configurations {
 }
 
 dependencies {
-
-
-    implementation 'io.ebean:ebean-gradle-plugin:11.39.1'
-    implementation 'io.ebean:ebean-gradle-plugin:11.39.1'
-    implementation 'io.ebean:ebean-gradle-plugin:11.39.1'
-    implementation 'io.ebean:ebean-api:13.20.1-jakarta'
-    implementation 'io.ebean:ebean-postgres:13.20.1-jakarta'
-    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
     groovyScript localGroovy()
 }
 

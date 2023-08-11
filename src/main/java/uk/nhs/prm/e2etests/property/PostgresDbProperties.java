@@ -41,4 +41,10 @@ public class PostgresDbProperties {
     public String getEhrOutDatabasePassword() {
         return this.ssmService.getSsmParameterValue(this.ehrOutDatabasePassword);
     }
+
+    public String getJdbcUrl() {
+        return String.format("jdbc:postgresql://%s:5432/%s",
+                this.ehrOutDatabaseHost,
+                this.ehrOutDatabaseName);
+    }
 }
