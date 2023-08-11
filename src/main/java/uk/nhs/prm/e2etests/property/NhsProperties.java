@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.property;
 
+import com.amazonaws.services.dynamodbv2.xspec.SS;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +12,7 @@ import java.util.List;
 
 @Getter
 @Component
-public class NhsProperties extends AbstractSsmRetriever {
+public class NhsProperties {
     @Value("${nhs.environment}")
     private String nhsEnvironment;
 
@@ -27,17 +28,19 @@ public class NhsProperties extends AbstractSsmRetriever {
     @Value("${nhs.syntheticPatient.nhsNumberPrefix.nonProd}")
     private String syntheticPatientNhsNumberPrefixNonProd;
 
+    private final SsmService ssmService;
+
     @Autowired
     public NhsProperties(SsmService ssmService) {
-        super(ssmService);
+        this.ssmService = ssmService;
     }
 
     public String getRepoOdsCode() {
-        return super.getAwsSsmParameterValue(repoOdsCode);
+        return ssmService.getSsmParameterValue(repoOdsCode);
     }
 
     public List<String> getSafeListedPatientList() {
-        String rawSafeListedPatientListStringFromSsm = super.getAwsSsmParameterValue(safeListedPatients);
+        String rawSafeListedPatientListStringFromSsm = ssmService.getSsmParameterValue(safeListedPatients);
         return Arrays.asList(rawSafeListedPatientListStringFromSsm.split(","));
     }
 

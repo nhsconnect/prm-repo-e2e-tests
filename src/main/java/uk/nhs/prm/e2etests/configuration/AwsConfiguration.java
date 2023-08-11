@@ -5,9 +5,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import uk.nhs.prm.e2etests.exception.ActiveRoleArnException;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.ApplicationContext;
 import software.amazon.awssdk.services.sts.StsClient;
 import org.springframework.context.annotation.Bean;
 import lombok.extern.log4j.Log4j2;
@@ -34,6 +37,13 @@ public class AwsConfiguration {
     @Value("${aws.configuration.region}")
     private String region;
 
+    private final ApplicationContext applicationContext;
+
+    @Autowired
+    public AwsConfiguration(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
     @Bean @ConditionalOnProperty(
             prefix = "aws.configuration",
             name = { "requiredRoleArn" },
@@ -47,12 +57,13 @@ public class AwsConfiguration {
                 );
     }
 
+    @DependsOn("activeRoleArn")
     @Bean @ConditionalOnProperty(
             prefix = "aws.configuration",
             name = { "accessKey", "secretAccessKey" },
             havingValue = DEFAULT_VALUE_NO_ENVIRONMENT_VARIABLE_SET
     )
-    public StsAssumeRoleCredentialsProvider assumeRoleAwsCredentialsProvider() {
+    public AwsCredentialsProvider assumeRoleAwsCredentialsProvider() {
         final StsClient stsClient = StsClient.builder().build();
 
         return StsAssumeRoleCredentialsProvider.builder()

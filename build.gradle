@@ -34,6 +34,7 @@ dependencies {
     implementation 'software.amazon.awssdk:cloudwatch'
     implementation 'software.amazon.awssdk:cloudwatchlogs'
     implementation 'software.amazon.awssdk:dynamodb'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.12.523'
     implementation 'org.apache.httpcomponents:httpclient:4.5.13'
     implementation 'org.apache.activemq:activemq-broker:5.16.4'
     implementation 'org.apache.activemq:activemq-client:5.16.4'
@@ -49,6 +50,11 @@ dependencies {
     implementation 'org.xmlunit:xmlunit-core:2.9.1'
     implementation 'org.xmlunit:xmlunit-matchers:2.9.1'
     implementation 'com.github.jknack:handlebars:4.3.1'
+
+    // Data Access
+    implementation 'software.amazon.awssdk:dynamodb-enhanced:2.20.121'
+    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.springframework:spring-jdbc:6.0.11'
 
     compileOnly 'org.projectlombok:lombok'
 
@@ -83,7 +89,6 @@ configurations {
 }
 
 dependencies {
-    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
     groovyScript localGroovy()
 }
 

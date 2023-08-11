@@ -7,13 +7,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.e2etests.exception.ServiceException;
-import uk.nhs.prm.e2etests.model.MessageData;
+import uk.nhs.prm.e2etests.model.request.EhrRepositoryRequest;
 import uk.nhs.prm.e2etests.property.EhrRepositoryProperties;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +51,7 @@ public class EhrRepositoryService {
         List<UUID> fragmentMessageIds = Collections.emptyList();
 
          restTemplate.exchange(new URL(ehrRepositoryUri + "messages").toURI(), HttpMethod.POST,
-                 new HttpEntity<>(new MessageData(
+                 new HttpEntity<>(new EhrRepositoryRequest(
                          conversationId, messageId,
                          nhsNumber, messageType, fragmentMessageIds)
                          .getJsonString(), createHeaders(ehrRepositoryApiKey)), String.class);

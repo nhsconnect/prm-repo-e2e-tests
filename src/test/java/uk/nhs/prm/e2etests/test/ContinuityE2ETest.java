@@ -11,7 +11,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
 import uk.nhs.prm.e2etests.mesh.MeshMailbox;
-import uk.nhs.prm.e2etests.model.ActiveSuspensionsMessage;
+import uk.nhs.prm.e2etests.model.database.ActiveSuspensionsRecord;
 import uk.nhs.prm.e2etests.model.nems.*;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.property.NhsProperties;
@@ -204,7 +204,7 @@ class ContinuityE2ETest {
 
     @Test
     @Order(6)
-    void shouldSendUnprocessableMessagesToDlQ() {
+    void shouldSendUnprocessableMessagesToDLQ() {
         Map<String, NemsEventMessage> dlqMessages = templatingService.getDLQNemsEventMessages();
         log.info("Posting DLQ messages.");
 
@@ -267,7 +267,7 @@ class ContinuityE2ETest {
         String patientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
         String reregistrationTime = now();
         storeEhrInRepositoryFor(patientNhsNumber);
-        activeSuspensionsService.save(new ActiveSuspensionsMessage(patientNhsNumber, randomOdsCode(), now()));
+        activeSuspensionsService.save(new ActiveSuspensionsRecord(patientNhsNumber, randomOdsCode(), now()));
 
         NemsEventMessage reRegistration = templatingService.createNemsEventFromTemplate(
                 TemplateVariant.CHANGE_OF_GP_RE_REGISTRATION,
