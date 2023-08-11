@@ -1,11 +1,11 @@
-package uk.nhs.prm.e2etests.repository;
+package uk.nhs.prm.e2etests.repository.mapper;
 
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.model.database.Acknowledgement;
+import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.RowMapper;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.ResultSet;
 import java.util.UUID;
 
 @Component

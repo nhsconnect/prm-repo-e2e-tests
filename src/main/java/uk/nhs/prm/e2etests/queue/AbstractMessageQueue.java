@@ -111,7 +111,7 @@ public abstract class AbstractMessageQueue {
     }
 
     private Optional<SqsMessage> findMessageWithCondition(Predicate<SqsMessage> condition) {
-        log.info(CHECKING_QUEUE_LOG_MESSAGE, String.format("%s, with a provided condition", this.queueUri));
+        log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
 
         List<SqsMessage> allMessages = sqsService.readThroughMessages(this.queueUri, 180);
         return allMessages.stream().filter(condition).findFirst();
