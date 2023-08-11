@@ -1,13 +1,11 @@
 package uk.nhs.prm.e2etests.configuration;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import software.amazon.awssdk.auth.credentials.AwsCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import uk.nhs.prm.e2etests.property.PostgresDbProperties;
 import org.springframework.context.annotation.Bean;
 import lombok.AllArgsConstructor;
@@ -36,7 +34,6 @@ public class DatabaseConfiguration {
 
     // Registers the enhanced Dynamo DB client for AWS.
     @Bean
-    @ConditionalOnBean(AwsCredentialsProvider.class)
     public DynamoDbEnhancedClient dynamoDbEnhancedClient() {
         return DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(DynamoDbClient.builder()
