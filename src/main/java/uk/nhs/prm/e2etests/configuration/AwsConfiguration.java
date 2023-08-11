@@ -1,19 +1,16 @@
 package uk.nhs.prm.e2etests.configuration;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.DependsOn;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import uk.nhs.prm.e2etests.exception.ActiveRoleArnException;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.ApplicationContext;
 import software.amazon.awssdk.services.sts.StsClient;
 import org.springframework.context.annotation.Bean;
 import lombok.extern.log4j.Log4j2;
@@ -93,17 +90,5 @@ public class AwsConfiguration {
         else {
             return new ActiveRoleArn(this.requiredRoleArn);
         }
-    }
-
-    @Bean
-    @ConditionalOnBean(AwsCredentialsProvider.class)
-    public DynamoDbEnhancedClient dynamoDbEnhancedClient() {
-        return DynamoDbEnhancedClient.builder()
-                .dynamoDbClient(DynamoDbClient.builder()
-                        .region(EU_WEST_2)
-                        .credentialsProvider(
-                                this.applicationContext.getBean(AwsCredentialsProvider.class)
-                        ).build())
-                .build();
     }
 }
