@@ -204,7 +204,7 @@ class ContinuityE2ETest {
 
     @Test
     @Order(6)
-    void shouldSendUnprocessableMessagesToDlQ() {
+    void shouldSendUnprocessableMessagesToDLQ() {
         Map<String, NemsEventMessage> dlqMessages = templatingService.getDLQNemsEventMessages();
         log.info("Posting DLQ messages.");
 
