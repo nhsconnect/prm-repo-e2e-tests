@@ -3,7 +3,7 @@ plugins {
     id 'org.owasp.dependencycheck' version '7.4.4'
     id 'org.springframework.boot' version '3.1.1'
     id 'io.spring.dependency-management' version '1.1.0'
-    id 'io.ebean' version '13.6.5'
+    id 'io.ebean' version '13.20.1'
 }
 
 group 'uk.nhs.prm'
@@ -54,10 +54,9 @@ dependencies {
 
     // Data Access
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.20.121'
+    implementation 'org.hibernate.orm:hibernate-core:6.2.7.Final'
     implementation 'org.postgresql:postgresql:42.6.0'
-    implementation 'io.ebean:ebean:13.6.5'
-
-    annotationProcessor 'io.ebean:querybean-generator:13.6.5'
+    implementation 'io.ebean:ebean:13.20.1-jakarta'
 
     compileOnly 'org.projectlombok:lombok'
 
@@ -67,7 +66,7 @@ dependencies {
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
-    annotationProcessor 'io.ebean:querybean-generator:13.6.5'
+    annotationProcessor 'io.ebean:querybean-generator:13.20.1-jakarta'
 
     testAnnotationProcessor 'org.projectlombok:lombok'
 
@@ -77,7 +76,7 @@ dependencies {
     testImplementation 'org.xmlunit:xmlunit-core:2.9.1'
     testImplementation 'org.xmlunit:xmlunit-matchers:2.9.1'
     testImplementation 'com.swiftmq:swiftmq-client:12.5.4'
-    testImplementation 'io.ebean:ebean-test:13.6.5'
+    testImplementation 'io.ebean:ebean-test:13.20.1-jakarta'
 }
 
 tasks.withType(Test).configureEach {

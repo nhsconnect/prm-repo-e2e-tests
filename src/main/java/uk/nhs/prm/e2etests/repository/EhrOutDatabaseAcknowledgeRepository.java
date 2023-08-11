@@ -22,8 +22,12 @@ public class EhrOutDatabaseAcknowledgeRepository {
     }
 
     public Acknowledgement findAcknowledgementById(UUID id) {
-        return Optional
-                .ofNullable(this.database.find(Acknowledgement.class, id))
-                .orElseThrow(() -> new NotFoundException(id.toString()));
+//        var haha = this.database.find(Acknowledgement.class).where().idEq(id).findOne();
+
+        var var = this.database.find(Acknowledgement.class, id);
+
+        return var;
+
+//        return new Acknowledgement();
     }
 }
