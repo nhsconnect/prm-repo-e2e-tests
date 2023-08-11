@@ -17,9 +17,7 @@ public class EhrOutDatabaseAcknowledgementRepository implements ReadOnlyReposito
 
     @Override
     public Acknowledgement findById(UUID uuid) {
-        return jdbcTemplate.queryForObject(
-                "SELECT * FROM Acknowledgements WHERE message_id = ?",
-                acknowledgementRowMapper,
-                uuid);
+        return jdbcTemplate.queryForObject("SELECT * FROM Acknowledgements WHERE message_id = ?",
+                acknowledgementRowMapper, uuid);
     }
 }
