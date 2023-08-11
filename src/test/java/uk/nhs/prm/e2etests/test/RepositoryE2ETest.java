@@ -19,7 +19,8 @@ import uk.nhs.prm.e2etests.enumeration.*;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import uk.nhs.prm.e2etests.model.TransferTrackerDynamoDbEntry;
+import uk.nhs.prm.e2etests.model.database.Acknowledgement;
+import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
@@ -40,6 +41,7 @@ import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceSma
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceUnhandledOQ;
 import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
+import uk.nhs.prm.e2etests.repository.EhrOutDatabaseAcknowledgementRepository;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
@@ -61,7 +63,6 @@ import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_CORE;
 import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_FRAGMENT;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_REQUEST_SENT;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
 import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
@@ -75,8 +76,8 @@ class RepositoryE2ETest {
     private final TransferTrackerService transferTrackerService;
     private final PdsAdaptorService pdsAdaptorService;
     private final TemplatingService templatingService;
-
     private final SimpleAmqpQueue mhsInboundQueue;
+
     private final Gp2GpMessengerOQ gp2gpMessengerOQ;
     private final EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
     private final EhrTransferServiceUnhandledOQ ehrTransferServiceUnhandledOQ;
@@ -189,7 +190,7 @@ class RepositoryE2ETest {
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
         // Put the patient into inboundQueueFromMhs as a UK05 message
-        this.transferTrackerService.save(TransferTrackerDynamoDbEntry.builder()
+        this.transferTrackerService.save(TransferTrackerRecord.builder()
                 .conversationId(inboundConversationId)
                 .largeEhrCoreMessageId("")
                 .nemsMessageId(randomNemsMessageId())
@@ -201,6 +202,7 @@ class RepositoryE2ETest {
         mhsInboundQueue.sendMessage(smallEhrMessage, inboundConversationId);
 
 
+        log.info("inbound conversationId: {}", inboundConversationId);
         log.info("conversationIdExists: {}", transferTrackerService.conversationIdExists(inboundConversationId));
         String status = transferTrackerService.waitForStatusMatching(inboundConversationId, TransferTrackerStatus.EHR_TRANSFER_TO_REPO_COMPLETE.status);
         log.info("tracker db status: {}", status);
@@ -262,7 +264,7 @@ class RepositoryE2ETest {
                 TemplateVariant.LARGE_EHR_FRAGMENT_TWO, LargeEhrFragmentTwoContext.builder().build()
         ));
 
-        this.transferTrackerService.save(TransferTrackerDynamoDbEntry.builder()
+        this.transferTrackerService.save(TransferTrackerRecord.builder()
                 .conversationId(inboundConversationId)
                 .largeEhrCoreMessageId(largeEhrCoreMessageId)
                 .nemsMessageId(randomNemsMessageId())

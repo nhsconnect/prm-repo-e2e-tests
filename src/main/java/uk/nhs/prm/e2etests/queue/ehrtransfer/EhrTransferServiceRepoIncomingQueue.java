@@ -19,10 +19,6 @@ public class EhrTransferServiceRepoIncomingQueue extends AbstractMessageQueue {
         super(sqsService, queueProperties.getEhrTransferServiceRepoIncomingQueueUrl());
     }
 
-//    public void send(RepoIncomingMessage message) {
-//        super.postAMessageWithAttribute(message.toJsonString(), "conversationId", message.conversationId());
-//    }
-
     public void send(RepoIncomingMessage message) {
         super.postAMessageWithAttributes(message.toJsonString(),
                 Map.of("conversationId", message.getConversationId(),

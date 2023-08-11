@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.service.SsmService;
 
 @Component
-public class PdsAdaptorProperties extends AbstractSsmRetriever {
+public class PdsAdaptorProperties {
     @Value("${aws.configuration.ssm.parameters.pdsAdaptor.performanceApiKey}")
     private String performanceApiKey;
 
@@ -21,21 +21,22 @@ public class PdsAdaptorProperties extends AbstractSsmRetriever {
     @Value("${aws.configuration.serviceUrls.pdsAdaptor}")
     private String pdsAdaptorUrl;
 
+    private final SsmService ssmService;
     @Autowired
     public PdsAdaptorProperties(SsmService ssmService) {
-        super(ssmService);
+        this.ssmService = ssmService;
     }
 
     public String getPerformanceApiKey() {
-        return super.getAwsSsmParameterValue(this.performanceApiKey);
+        return ssmService.getSsmParameterValue(this.performanceApiKey);
     }
 
     public String getLiveTestApiKey() {
-        return super.getAwsSsmParameterValue(this.liveTestApiKey);
+        return ssmService.getSsmParameterValue(this.liveTestApiKey);
     }
 
     public String getE2eTestApiKey() {
-        return super.getAwsSsmParameterValue(this.e2eTestApiKey);
+        return ssmService.getSsmParameterValue(this.e2eTestApiKey);
     }
 
 }

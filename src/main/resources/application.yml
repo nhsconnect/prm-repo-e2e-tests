@@ -24,6 +24,12 @@ aws:
           odsCode: /repo/${NHS_ENVIRONMENT}/user-input/external/repository-ods-code
           liveTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/ehr-repo/live-test
           e2eTestApiKey: /repo/${NHS_ENVIRONMENT}/user-input/api-keys/ehr-repo/e2e-test
+        ehrOut:
+          database:
+            host: /repo/${NHS_ENVIRONMENT}/output/prm-repo-ehr-out-service/db-host
+            name: /repo/${NHS_ENVIRONMENT}/output/prm-repo-ehr-out-service/db-name
+            username: /repo/${NHS_ENVIRONMENT}/user-input/ehr-out-service-db-username
+            password: /repo/${NHS_ENVIRONMENT}/user-input/ehr-out-service-db-password
         queue:
           mqAppUsername: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-username
           mqAppPassword: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-password
