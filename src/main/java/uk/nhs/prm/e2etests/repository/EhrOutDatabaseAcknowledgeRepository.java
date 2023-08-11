@@ -1,29 +1,24 @@
 package uk.nhs.prm.e2etests.repository;
 
-import io.ebean.DB;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
-import io.ebean.Database;
-import uk.nhs.prm.e2etests.exception.NotFoundException;
 import uk.nhs.prm.e2etests.model.database.Acknowledgement;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import lombok.AllArgsConstructor;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public class EhrOutDatabaseAcknowledgeRepository {
-    private final Database database;
+@AllArgsConstructor(onConstructor = @__(@Autowired))
+public class EhrOutDatabaseAcknowledgeRepository implements ReadOnlyRepository<Acknowledgement, UUID> {
+    private final JdbcTemplate jdbcTemplate;
+    private final AcknowledgementRowMapper acknowledgementRowMapper;
 
-    @Autowired
-    public EhrOutDatabaseAcknowledgeRepository(
-            Database ehrOutDatabase
-    ) {
-        this.database = ehrOutDatabase;
-    }
-
-    public Acknowledgement findAcknowledgementById(UUID id) {
-        return Optional
-                .ofNullable(this.database.find(Acknowledgement.class, id))
-                .orElseThrow(() -> new NotFoundException(id.toString()));
+    @Override
+    public Acknowledgement findById(UUID uuid) {
+        return jdbcTemplate.queryForObject(
+                "SELECT * FROM Acknowledgements WHERE message_id = ?",
+                acknowledgementRowMapper,
+                10);
     }
 }

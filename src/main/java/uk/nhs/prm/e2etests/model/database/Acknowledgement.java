@@ -1,22 +1,19 @@
 package uk.nhs.prm.e2etests.model.database;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import java.time.LocalDateTime;
-import java.util.UUID;
-import lombok.Getter;
+import lombok.Data;
 
-@Entity
-@Getter
+import java.sql.Timestamp;
+import java.util.UUID;
+
+@Data
 public class Acknowledgement {
-    @Id
     private UUID messageId;
     private String acknowledgementTypeCode;
     private String acknowledgementDetail;
     private String service;
     private String referencedMessageId;
     private String messageRef;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
+    private Timestamp deletedAt;
 }
