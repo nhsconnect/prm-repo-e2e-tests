@@ -27,5 +27,4 @@ public class EhrRequestTemplateContext implements TemplateContext {
 
     @Pattern(regexp = ASID_REGEX, message = "An invalid ASID Code (new GP) was provided.")
     private String asidCode;
-
 }
