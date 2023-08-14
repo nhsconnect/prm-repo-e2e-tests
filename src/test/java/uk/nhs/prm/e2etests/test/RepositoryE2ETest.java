@@ -336,7 +336,7 @@ class RepositoryE2ETest {
     // Test Cases for Erroneous Inbound messages
     private Arguments erroneousInboundMessage_UnrecognisedInteractionID() {
         String invalidInteractionId = "TEST_XX123456XX01";
-        String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_AT_REPO_WITH_MOF_SET_TO_TPP.nhsNumber();
+        String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         String newGpOdsCode = Gp2GpSystem.TPP_PTL_INT.odsCode();
 
         EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
