@@ -1,6 +1,7 @@
 package uk.nhs.prm.e2etests.queue;
 
 import lombok.extern.log4j.Log4j2;
+import org.awaitility.core.ConditionTimeoutException;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueInProgressException;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
@@ -22,6 +23,8 @@ import static org.hamcrest.Matchers.equalTo;
 @Log4j2
 public abstract class AbstractMessageQueue {
     private static final String CHECKING_QUEUE_LOG_MESSAGE = "Checking if message is present on: {}";
+
+    private static final String CHECKING_QUEUE_LOG_MESSAGE_WITH_SUBSTRING = CHECKING_QUEUE_LOG_MESSAGE + ", with substring {}";
     private static final String DELETE_ALL_MESSAGES_LOG_MESSAGE = "Attempting to delete all messages on: {}";
     private static final String MESSAGE_FOUND_LOG_MESSAGE = "The message has been found on: {}";
 
@@ -49,7 +52,7 @@ public abstract class AbstractMessageQueue {
     }
 
     public SqsMessage getMessageContaining(String substring) {
-        log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
+        log.info(CHECKING_QUEUE_LOG_MESSAGE_WITH_SUBSTRING, this.queueUri, substring);
         final SqsMessage foundMessage = await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(100, TimeUnit.MILLISECONDS)
@@ -72,6 +75,31 @@ public abstract class AbstractMessageQueue {
 
         log.info(MESSAGE_FOUND_LOG_MESSAGE, this.queueUri);
         return allMessages;
+    }
+
+
+
+
+    public boolean verifyNoMessageContaining(String substring, int numberOfSeconds) {
+        // Queue the queue repeatedly for {numberOfSeconds}, and return true only if a message with given substring NEVER appeared throughout the period.
+        // The reason of using awaitility is to allow for the time taken for communication between micro-services (ehr-out, ehr-repo, gp2gp messenger)
+        log.info("Verifying that no message on queue {} contains the substring {}", this.queueUri, substring);
+        try {
+            await().atMost(numberOfSeconds, TimeUnit.SECONDS)
+                    .with()
+                    .pollInterval(100, TimeUnit.MILLISECONDS)
+                    .until(() -> findMessageContaining(substring), Optional::isPresent);
+            log.info("A message on {} match the given substring {}. Returning false", this.queueUri, substring);
+            return false;
+        } catch (ConditionTimeoutException error) {
+            log.info("Confirmed no message on {} match the given substring {}. Returning true", this.queueUri, substring);
+            return true;
+        }
+    }
+
+    public boolean verifyNoMessageContaining(String substring) {
+        // calls the method with the same name, with numberOfSeconds preset to 10 seconds.
+        return verifyNoMessageContaining(substring, 10);
     }
 
     public SqsMessage getMessageContainingAttribute(String attribute, String expectedValue) {

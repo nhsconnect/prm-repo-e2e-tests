@@ -1,10 +1,7 @@
 package uk.nhs.prm.e2etests.test;
 
 import lombok.extern.log4j.Log4j2;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,7 +16,6 @@ import uk.nhs.prm.e2etests.enumeration.*;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import uk.nhs.prm.e2etests.model.database.Acknowledgement;
 import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
@@ -41,7 +37,7 @@ import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceSma
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceUnhandledOQ;
 import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
-import uk.nhs.prm.e2etests.repository.EhrOutDatabaseAcknowledgementRepository;
+import uk.nhs.prm.e2etests.service.HealthCheckService;
 import uk.nhs.prm.e2etests.service.PdsAdaptorService;
 import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
@@ -76,6 +72,7 @@ class RepositoryE2ETest {
     private final TransferTrackerService transferTrackerService;
     private final PdsAdaptorService pdsAdaptorService;
     private final TemplatingService templatingService;
+    private final HealthCheckService healthCheckService;
     private final SimpleAmqpQueue mhsInboundQueue;
 
     private final Gp2GpMessengerOQ gp2gpMessengerOQ;
@@ -97,6 +94,7 @@ class RepositoryE2ETest {
             TransferTrackerService transferTrackerService,
             PdsAdaptorService pdsAdaptorService,
             TemplatingService templatingService,
+            HealthCheckService healthCheckService,
             SimpleAmqpQueue mhsInboundQueue,
             Gp2GpMessengerOQ gp2gpMessengerOQ,
             EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ,
@@ -114,6 +112,7 @@ class RepositoryE2ETest {
         this.transferTrackerService = transferTrackerService;
         this.pdsAdaptorService = pdsAdaptorService;
         this.templatingService = templatingService;
+        this.healthCheckService = healthCheckService;
         this.mhsInboundQueue = mhsInboundQueue;
         this.gp2gpMessengerOQ = gp2gpMessengerOQ;
         this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceTransferCompleteOQ;
@@ -333,6 +332,87 @@ class RepositoryE2ETest {
             assertTrue(identicalWithFragment1 || identicalWithFragment2);
         });
     }
+
+    // Test Cases for Erroneous Inbound messages
+    private Arguments erroneousInboundMessage_UnrecognisedInteractionID() {
+        String invalidInteractionId = "TEST_XX123456XX01";
+        String nhsNumberForTestPatient = "9727018440";
+        String newGpOdsCode = "M85019";
+
+        EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
+                .nhsNumber(nhsNumberForTestPatient)
+                .newGpOdsCode(newGpOdsCode)
+                .build();
+
+        String inboundMessage = this.templatingService.getTemplatedString(TemplateVariant.EHR_REQUEST, ehrRequestContext);
+
+        String erroneousInboundMessage = inboundMessage
+                .replaceAll(MessageType.EHR_REQUEST.interactionId, invalidInteractionId);
+
+        return Arguments.of(
+                Named.of("Message with unrecognised Interaction ID", erroneousInboundMessage),
+                ehrRequestContext.getOutboundConversationId()
+        );
+    }
+
+    private Arguments erroneousInboundMessage_EhrRequestWithUnrecognisedNhsNumber() {
+        String nonExistentNhsNumber = "9729999999";
+        String newGpOdsCode = "M85019";
+
+        EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
+                .nhsNumber(nonExistentNhsNumber)
+                .newGpOdsCode(newGpOdsCode)
+                .build();
+
+        String erroneousInboundMessage = this.templatingService.getTemplatedString(TemplateVariant.EHR_REQUEST, ehrRequestContext);
+
+        return Arguments.of(
+                Named.of("EHR Request with unrecognised NHS Number", erroneousInboundMessage),
+                ehrRequestContext.getOutboundConversationId()
+        );
+    }
+
+    private Arguments erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId() {
+        // The builder by default already generates a random conversation ID, which fulfills the test condition
+        ContinueRequestTemplateContext continueRequestContext = ContinueRequestTemplateContext.builder().build();
+
+        String continueRequestMessage = this.templatingService
+                .getTemplatedString(TemplateVariant.CONTINUE_REQUEST, continueRequestContext);
+
+        return Arguments.of(
+                Named.of("Continue Request with unrecognised Conversation ID", continueRequestMessage),
+                continueRequestContext.getOutboundConversationId()
+        );
+    }
+
+    private Stream<Arguments> erroneousInboundMessages() {
+        return Stream.of(
+                erroneousInboundMessage_UnrecognisedInteractionID(),
+                erroneousInboundMessage_EhrRequestWithUnrecognisedNhsNumber(),
+                erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId()
+        );
+    }
+
+    @ParameterizedTest(name = "[{index}] Case of {0}")
+    @MethodSource("erroneousInboundMessages")
+    @DisplayName("Test how ORC handles Erroneous inbound messages")
+    void testsWithErroneousInboundMessages(String inboundMessage, String conversationId) {
+        // when
+        mhsInboundQueue.sendMessage(inboundMessage, conversationId.toLowerCase());
+
+        // then
+        log.info("Verify that EHR Transfer Service put the erroneous inbound message to unhandled queue");
+        SqsMessage unhandledMessage = ehrTransferServiceUnhandledOQ.getMessageContaining(conversationId);
+        assertThat(unhandledMessage.getBody()).isEqualTo(inboundMessage);
+
+        log.info("Verify that no response message with given conversation id is on the gp2gp observability queue");
+        // later this could be changed to asserting an NACK message on the queue if we do send back NACKs
+        assertTrue(gp2gpMessengerOQ.verifyNoMessageContaining(conversationId));
+
+        assertTrue(healthCheckService.healthCheckAllPassing());
+    }
+
+    // End of tests for Erroneous Inbound messages
 
     @Test
     @Disabled("This test was failing before refactoring. The cause seems to be related to EMIS instance not working")
