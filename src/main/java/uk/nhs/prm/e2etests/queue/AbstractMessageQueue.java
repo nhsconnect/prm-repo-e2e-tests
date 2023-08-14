@@ -1,23 +1,27 @@
 package uk.nhs.prm.e2etests.queue;
 
-import lombok.extern.log4j.Log4j2;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueInProgressException;
-import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
-import uk.nhs.prm.e2etests.service.SqsService;
+import org.awaitility.core.ConditionTimeoutException;
 import uk.nhs.prm.e2etests.utility.MappingUtility;
+import uk.nhs.prm.e2etests.service.SqsService;
+import uk.nhs.prm.e2etests.model.SqsMessage;
+import lombok.extern.log4j.Log4j2;
 
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Log4j2
 public abstract class AbstractMessageQueue {
@@ -58,7 +62,7 @@ public abstract class AbstractMessageQueue {
         return foundMessage;
     }
 
-    public List<SqsMessage> getAllMessageContaining(String substring, int expectedNumberOfMessages) {
+    public List<SqsMessage> getAllMessagesContaining(String substring, int expectedNumberOfMessages) {
         // This method for now only try to get at least 2 messages from the queue. May need renaming or amending
         log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
         List<SqsMessage> allMessages = new ArrayList<>();
@@ -156,5 +160,33 @@ public abstract class AbstractMessageQueue {
 
     protected void postAMessageWithAttributes(String message, Map<String, String> attributes) {
         this.sqsService.postAMessage(queueUri, message, attributes);
+    }
+
+    public List<SqsMessage> attemptToGetAllMessagesContaining(String substring, int expectedNumberOfMessages, long secondsToPoll) {
+        if(expectedNumberOfMessages <= 0 || secondsToPoll <= 0)
+            throw new IllegalArgumentException("Expected number of messages or seconds to poll must be greater than 0.");
+
+        log.info("Attempting to get at least {} message(s) with substring {} on queue {}.", expectedNumberOfMessages, substring, this.queueUri);
+
+        List<SqsMessage> allMessages = new ArrayList<>();
+
+        try {
+            await().atMost(secondsToPoll, TimeUnit.SECONDS).with().pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(
+                    () -> {
+                        Optional<SqsMessage> found = findMessageContaining(substring);
+
+                        if (found.isPresent()) {
+                            boolean isNewMessage = allMessages.stream()
+                                    .noneMatch(sqsMessage -> sqsMessage.getId().equals(found.get().getId()));
+                            if (isNewMessage) allMessages.add(found.get());
+                        }
+
+                        assertThat("", allMessages.size() >= expectedNumberOfMessages);
+                    });
+        } catch (ConditionTimeoutException exception) {
+            log.error("Failed to get at least {} message(s) with substring {} on queue {}, returning all found.", expectedNumberOfMessages, substring, this.queueUri);
+        }
+
+        return allMessages;
     }
 }
