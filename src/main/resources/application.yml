@@ -42,6 +42,7 @@ aws:
       pdsAdaptor: https://pds-adaptor.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
       gp2GpMessenger: https://gp2gp-messenger.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
       ehrRepository: https://ehr-repo.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
+      ehrOutService: https://ehr-out-service.${NHS_ENVIRONMENT}.non-prod.patient-deductions.nhs.uk/
 
     queueNames:
       meshForwarder:
