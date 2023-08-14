@@ -80,12 +80,12 @@ public abstract class AbstractMessageQueue {
 
 
 
-    public boolean verifyNoMessageContaining(String substring, int numberOfSeconds) {
-        // Queue the queue repeatedly for {numberOfSeconds}, and return true only if a message with given substring NEVER appeared throughout the period.
+    public boolean verifyNoMessageContaining(String substring, int secondsToPoll) {
+        // Queue the queue repeatedly for {secondsToPoll}, and return true only if a message with given substring NEVER appeared throughout the period.
         // The reason of using awaitility is to allow for the time taken for communication between micro-services (ehr-out, ehr-repo, gp2gp messenger)
         log.info("Verifying that no message on queue {} contains the substring {}", this.queueUri, substring);
         try {
-            await().atMost(numberOfSeconds, TimeUnit.SECONDS)
+            await().atMost(secondsToPoll, TimeUnit.SECONDS)
                     .with()
                     .pollInterval(100, TimeUnit.MILLISECONDS)
                     .until(() -> findMessageContaining(substring), Optional::isPresent);
@@ -98,7 +98,7 @@ public abstract class AbstractMessageQueue {
     }
 
     public boolean verifyNoMessageContaining(String substring) {
-        // calls the method with the same name, with numberOfSeconds preset to 10 seconds.
+        // calls the method with the same name, with secondsToPoll preset to 10 seconds.
         return verifyNoMessageContaining(substring, 10);
     }
 
