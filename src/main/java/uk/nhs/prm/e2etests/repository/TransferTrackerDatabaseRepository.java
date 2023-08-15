@@ -30,12 +30,16 @@ public class TransferTrackerDatabaseRepository {
     }
 
     public void save(TransferTrackerRecord transferTrackerDynamoDbEntry) {
+        // Update the conversation ID so that it can be saved into th Transfer Tracker DynamoDB.
+        final String conversationId = transferTrackerDynamoDbEntry.getConversationId();
+        transferTrackerDynamoDbEntry.setConversationId(conversationId.toLowerCase());
+
         transferTrackerTable.putItem(transferTrackerDynamoDbEntry);
     }
 
     public Optional<TransferTrackerRecord> findByConversationId(String conversationId) {
         return Optional.ofNullable(
-                transferTrackerTable.getItem(Key.builder().partitionValue(conversationId).build())
+                transferTrackerTable.getItem(Key.builder().partitionValue(conversationId.toLowerCase()).build())
         );
     }
 }
