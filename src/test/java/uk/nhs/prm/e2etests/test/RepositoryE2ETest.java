@@ -556,17 +556,18 @@ class RepositoryE2ETest {
 
     @Test
     void shouldSendUnexpectedMessageFormatsThroughToEhrTransferServiceDeadLetterQueue() {
-        String text = "Hello World!";
-        String sql = "SELECT * FROM Fragment";
-        String html = "<html><body><h1>This is html!</body></html>";
-        String binaryStream = "100110 111010 001011 101001";
-        String emptyJson = "{}";
-        String randomUUID = UUID.randomUUID().toString();
-        String[] messages = {text, sql, html, binaryStream, randomUUID, emptyJson};
+        final List<String> unexpectedMessages = List.of(
+                "Hello World!",
+                "SELECT * FROM Fragment",
+                "<html><body><h1>This is html!</body></html>",
+                "100110 111010 001011 101001",
+                "{}",
+                UUID.randomUUID().toString()
+        );
 
-        for (String message: messages) {
+        unexpectedMessages.forEach(message -> {
             mhsInboundQueue.sendUnexpectedMessage(message);
             assertThat(ehrTransferServiceParsingDeadLetterQueue.getMessageContaining(message)).isNotNull();
-        }
+        });
     }
 }

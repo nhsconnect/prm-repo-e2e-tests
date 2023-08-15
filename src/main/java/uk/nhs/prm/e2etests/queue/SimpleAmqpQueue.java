@@ -41,11 +41,11 @@ public class SimpleAmqpQueue {
             map.put(new AMQPString("correlation-id"), new AMQPString(correlationId));
             ApplicationProperties properties = new ApplicationProperties(map);
 
-            AMQPMessage msg = new AMQPMessage();
-            msg.setApplicationProperties(properties);
-            msg.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
+            AMQPMessage message = new AMQPMessage();
+            message.setApplicationProperties(properties);
+            message.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
 
-            messageQueueProducer.send(msg);
+            messageQueueProducer.send(message);
         } catch (AMQPException | IOException exception) {
             log.error(exception.getMessage());
             throw new GenericException(this.getClass().getName(), exception.getMessage());
@@ -54,9 +54,9 @@ public class SimpleAmqpQueue {
 
     public void sendUnexpectedMessage(String messageBody) {
         try {
-            AMQPMessage msg = new AMQPMessage();
-            msg.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
-            messageQueueProducer.send(msg);
+            AMQPMessage message = new AMQPMessage();
+            message.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
+            messageQueueProducer.send(message);
         } catch (AMQPException exception) {
             log.error(exception.getMessage());
             throw new GenericException(this.getClass().getName(), exception.getMessage());
