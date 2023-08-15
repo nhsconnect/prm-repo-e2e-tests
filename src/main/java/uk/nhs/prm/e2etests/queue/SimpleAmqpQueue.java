@@ -52,6 +52,17 @@ public class SimpleAmqpQueue {
         }
     }
 
+    public void sendUnexpectedMessage(String messageBody) {
+        try {
+            AMQPMessage msg = new AMQPMessage();
+            msg.setAmqpValue(new AmqpValue(new AMQPString(messageBody)));
+            messageQueueProducer.send(msg);
+        } catch (AMQPException exception) {
+            log.error(exception.getMessage());
+            throw new GenericException(this.getClass().getName(), exception.getMessage());
+        }
+    }
+
     public void close() {
         try {
             messageQueueProducer.close();
