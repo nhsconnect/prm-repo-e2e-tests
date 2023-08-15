@@ -589,13 +589,10 @@ class RepositoryE2ETest {
 
     // ============ HELPER METHODS ============
     private void addSmallEhrToEhrRepo(String nhsNumber) {
-        final String inboundConversationId = UUID.randomUUID().toString();
-        final String messageId = UUID.randomUUID().toString();
         final SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
-                .inboundConversationId(inboundConversationId.toUpperCase())
-                .messageId(messageId.toUpperCase())
                 .nhsNumber(nhsNumber)
                 .build();
+        final String inboundConversationId = smallEhrTemplateContext.getInboundConversationId();
         final String smallEhrMessage = this.templatingService.getTemplatedString(SMALL_EHR_WITHOUT_LINEBREAKS, smallEhrTemplateContext);
 
         this.transferTrackerService.save(TransferTrackerRecord.builder()
