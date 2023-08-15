@@ -1,6 +1,5 @@
 package uk.nhs.prm.e2etests.property;
 
-import com.amazonaws.services.dynamodbv2.xspec.SS;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

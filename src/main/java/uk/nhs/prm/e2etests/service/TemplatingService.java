@@ -2,7 +2,6 @@ package uk.nhs.prm.e2etests.service;
 
 import uk.nhs.prm.e2etests.model.templatecontext.NemsEventTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.TemplateContext;
-import uk.nhs.prm.e2etests.utility.NhsIdentityUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
