@@ -555,21 +555,18 @@ class RepositoryE2ETest {
     }
 
     @Test
-    void shouldLogErrorWhenUnexpectedFileFormatReceived() {
-        // given
-        String randomConversationId = UUID.randomUUID().toString();
-        String helloWorld = "Hello World!";
+    void shouldSendUnexpectedMessageFormatsThroughToEhrTransferServiceDeadLetterQueue() {
+        String text = "Hello World!";
         String sql = "SELECT * FROM Fragment";
         String html = "<html><body><h1>This is html!</body></html>";
-        String base64;
+        String binaryStream = "100110 111010 001011 101001";
+        String emptyJson = "{}";
+        String randomUUID = UUID.randomUUID().toString();
+        String[] messages = {text, sql, html, binaryStream, randomUUID, emptyJson};
 
-
-        mhsInboundQueue.sendMessage(helloWorld, randomConversationId);
-
-
-        log.info("Random Conversation Id: {}", randomConversationId);
-
-        // Then
-
+        for (String message: messages) {
+            mhsInboundQueue.sendUnexpectedMessage(message);
+            assertThat(ehrTransferServiceParsingDeadLetterQueue.getMessageContaining(message)).isNotNull();
+        }
     }
 }
