@@ -171,18 +171,17 @@ public abstract class AbstractMessageQueue {
         List<SqsMessage> allMessages = new ArrayList<>();
 
         try {
-            await().atMost(secondsToPoll, TimeUnit.SECONDS).with().pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(
-                    () -> {
-                        Optional<SqsMessage> found = findMessageContaining(substring);
+            await().atMost(secondsToPoll, TimeUnit.SECONDS).with().pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+                Optional<SqsMessage> found = findMessageContaining(substring);
 
-                        if (found.isPresent()) {
-                            boolean isNewMessage = allMessages.stream()
-                                    .noneMatch(sqsMessage -> sqsMessage.getId().equals(found.get().getId()));
-                            if (isNewMessage) allMessages.add(found.get());
-                        }
+                if (found.isPresent()) {
+                    boolean isNewMessage = allMessages.stream()
+                            .noneMatch(sqsMessage -> sqsMessage.getId().equals(found.get().getId()));
+                    if (isNewMessage) allMessages.add(found.get());
+                }
 
-                        assertThat("", allMessages.size() >= expectedNumberOfMessages);
-                    });
+                assertThat("", allMessages.size() >= expectedNumberOfMessages);
+            });
         } catch (ConditionTimeoutException exception) {
             log.error("Failed to get at least {} message(s) with substring {} on queue {}, returning all found.", expectedNumberOfMessages, substring, this.queueUri);
         }
