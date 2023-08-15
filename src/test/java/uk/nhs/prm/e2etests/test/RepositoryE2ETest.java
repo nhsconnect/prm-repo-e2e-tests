@@ -375,10 +375,6 @@ class RepositoryE2ETest {
                 .isNotNull();
 
         assertTrue(transferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
-
-        // option: assert in ehr-repo - check all messages complete - evaluate need based on:
-        //  - ehr out round trip testing
-        //  - implementation of PRMT-2972
     }
 
     @ParameterizedTest
