@@ -30,7 +30,7 @@ public class TransferTrackerDatabaseRepository {
     }
 
     public void save(TransferTrackerRecord transferTrackerDynamoDbEntry) {
-        // Update the conversation ID so that it can be saved into th Transfer Tracker DynamoDB.
+        // Update the conversation ID so that it can be saved into the Transfer Tracker DynamoDB.
         final String conversationId = transferTrackerDynamoDbEntry.getConversationId();
         transferTrackerDynamoDbEntry.setConversationId(conversationId.toLowerCase());
 
