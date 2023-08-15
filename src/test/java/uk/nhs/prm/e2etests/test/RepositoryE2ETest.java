@@ -583,6 +583,23 @@ class RepositoryE2ETest {
         }
     }
 
+    @Test
+    void shouldSendUnexpectedMessageFormatsThroughToEhrTransferServiceDeadLetterQueue() {
+        final List<String> unexpectedMessages = List.of(
+                "Hello World!",
+                "SELECT * FROM Fragment",
+                "<html><body><h1>This is html!</body></html>",
+                "100110 111010 001011 101001",
+                "{}",
+                UUID.randomUUID().toString()
+        );
+
+        unexpectedMessages.forEach(message -> {
+            mhsInboundQueue.sendUnexpectedMessage(message);
+            assertThat(ehrTransferServiceParsingDeadLetterQueue.getMessageContaining(message)).isNotNull();
+        });
+    }
+  
     // ============ HELPER METHODS ============
     private void addSmallEhrToEhrRepo(String nhsNumber) {
         final SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
