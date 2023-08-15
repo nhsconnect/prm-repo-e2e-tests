@@ -9,19 +9,25 @@ import static uk.nhs.prm.e2etests.annotation.Debt.Priority.MEDIUM;
         "into properties files. There are several cases in the codebase where the environments (dev, preprod, perf) etc" +
         "are being referred to as strings. This enum would be an ideal candidate to expand out.", priority = MEDIUM)
 public enum Gp2GpSystem {
-    REPO_DEV("B85002"),
-    REPO_TEST("B86041"),
-    EMIS_PTL_INT("N82668"),
-    TPP_PTL_INT("M85019");
+    REPO_DEV("B85002", "200000001613"),
+    REPO_TEST("B86041", "200000001694"),
+    EMIS_PTL_INT("N82668", "200000000631"),
+    TPP_PTL_INT("M85019", "200000000149");
 
     private final String odsCode;
+    private final String asidCode;
 
-    Gp2GpSystem(String odsCode) {
+    Gp2GpSystem(String odsCode, String asidCode) {
         this.odsCode = odsCode;
+        this.asidCode = asidCode;
     }
 
     public String odsCode() {
         return odsCode;
+    }
+
+    public String asidCode() {
+        return asidCode;
     }
 
     public static Gp2GpSystem repoInEnv(String nhsEnvironment) {
