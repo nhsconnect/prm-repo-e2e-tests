@@ -19,7 +19,8 @@ import java.util.Objects;
 public class TransferTrackerRecord {
     private static final String DEFAULT_TIMESTAMP = LocalDateTime.now() + "Z";
     private String conversationId;
-    private String largeEhrCoreMessageId;
+    @Builder.Default
+    private String largeEhrCoreMessageId = "";
     private String nemsMessageId;
     private String nhsNumber;
     private String sourceGp;
