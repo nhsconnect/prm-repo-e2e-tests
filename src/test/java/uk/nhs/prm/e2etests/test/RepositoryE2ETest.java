@@ -43,10 +43,7 @@ import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceSma
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceUnhandledOQ;
 import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
-import uk.nhs.prm.e2etests.service.HealthCheckService;
-import uk.nhs.prm.e2etests.service.PdsAdaptorService;
-import uk.nhs.prm.e2etests.service.TemplatingService;
-import uk.nhs.prm.e2etests.service.TransferTrackerService;
+import uk.nhs.prm.e2etests.service.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -78,6 +75,7 @@ import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId
 @TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RepositoryE2ETest {
+    private final RepoService repoService;
     private final TransferTrackerService transferTrackerService;
     private final PdsAdaptorService pdsAdaptorService;
     private final TemplatingService templatingService;
@@ -99,6 +97,7 @@ class RepositoryE2ETest {
 
     @Autowired
     public RepositoryE2ETest(
+            RepoService repoService,
             TransferTrackerService transferTrackerService,
             PdsAdaptorService pdsAdaptorService,
             TemplatingService templatingService,
@@ -117,6 +116,7 @@ class RepositoryE2ETest {
             Gp2gpMessengerProperties gp2GpMessengerProperties,
             NhsProperties nhsProperties
     ) {
+        this.repoService = repoService;
         this.transferTrackerService = transferTrackerService;
         this.pdsAdaptorService = pdsAdaptorService;
         this.templatingService = templatingService;
@@ -477,7 +477,7 @@ class RepositoryE2ETest {
         String conversationId = templateContext.getOutboundConversationId();
 
         // when
-        addSmallEhrToEhrRepo(patientNhsNumber);
+        this.repoService.addSmallEhrToEhrRepo(patientNhsNumber, SMALL_EHR_WITHOUT_LINEBREAKS);
 
         for(int i = 0; i < numberOfEhrRequests; i++) {
             mhsInboundQueue.sendMessage(ehrRequestMessage, conversationId);
@@ -486,6 +486,32 @@ class RepositoryE2ETest {
 
         final List<SqsMessage> foundOutboundMessages = this.gp2gpMessengerOQ
                 .attemptToGetAllMessagesContaining(conversationId, numberOfEhrRequests, 30);
+        final String outboundEhrCore = foundOutboundMessages.get(0).getBody();
+
+        // then
+        assertThat(foundOutboundMessages.size()).isEqualTo(1);
+        assertThat(outboundEhrCore).contains(patientNhsNumber);
+        assertThat(outboundEhrCore).contains(EHR_CORE.interactionId);
+    }
+
+    @Test
+    void shouldSuccessfullyParseASmallEhrWith99Attachments() {
+        // given
+        String patientNhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+        EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
+                .nhsNumber(patientNhsNumber)
+                .newGpOdsCode(TPP_PTL_INT.odsCode())
+                .asidCode(TPP_PTL_INT.asidCode()).build();
+        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
+        String conversationId = templateContext.getOutboundConversationId();
+
+        // when
+        this.repoService.addSmallEhrToEhrRepo(patientNhsNumber, SMALL_EHR_WITH_99_ATTACHMENTS);
+
+        mhsInboundQueue.sendMessage(ehrRequestMessage, conversationId);
+
+        final List<SqsMessage> foundOutboundMessages = this.gp2gpMessengerOQ
+                .attemptToGetAllMessagesContaining(conversationId, 1, 30);
         final String outboundEhrCore = foundOutboundMessages.get(0).getBody();
 
         // then
@@ -685,24 +711,5 @@ class RepositoryE2ETest {
             mhsInboundQueue.sendUnexpectedMessage(message);
             assertThat(ehrTransferServiceParsingDeadLetterQueue.getMessageContaining(message)).isNotNull();
         });
-    }
-  
-    // ============ HELPER METHODS ============
-    private void addSmallEhrToEhrRepo(String nhsNumber) {
-        final SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
-                .nhsNumber(nhsNumber)
-                .build();
-        final String inboundConversationId = smallEhrTemplateContext.getInboundConversationId();
-        final String smallEhrMessage = this.templatingService.getTemplatedString(SMALL_EHR_WITHOUT_LINEBREAKS, smallEhrTemplateContext);
-
-        this.transferTrackerService.save(TransferTrackerRecord.builder()
-                        .conversationId(inboundConversationId)
-                        .nhsNumber(nhsNumber)
-                        .sourceGp(Gp2GpSystem.TPP_PTL_INT.odsCode())
-                        .nemsMessageId(randomNemsMessageId())
-                        .state(EHR_REQUEST_SENT.status).build());
-
-        this.mhsInboundQueue.sendMessage(smallEhrMessage, inboundConversationId);
-        this.transferTrackerService.waitForStatusMatching(inboundConversationId, EHR_TRANSFER_TO_REPO_COMPLETE.status);
     }
 }
