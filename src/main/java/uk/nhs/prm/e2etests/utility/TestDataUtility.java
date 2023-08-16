@@ -6,8 +6,8 @@ import lombok.extern.log4j.Log4j2;
 import java.util.UUID;
 
 @Log4j2
-public final class NhsIdentityUtility {
-    private NhsIdentityUtility() { }
+public final class TestDataUtility {
+    private TestDataUtility() { }
 
     public static String randomOdsCode() {
         final String odsCode = RandomStringUtils
@@ -27,5 +27,11 @@ public final class NhsIdentityUtility {
         final String nemsEventMessageId = UUID.randomUUID().toString();
         log.info("Generated random NEMS Event Message ID: {}", nemsEventMessageId);
         return nemsEventMessageId;
+    }
+
+    public static String randomUuidAsString() {
+        final String uuid = UUID.randomUUID().toString().toUpperCase();
+        log.info("Generated random UUID: {}", uuid);
+        return uuid;
     }
 }

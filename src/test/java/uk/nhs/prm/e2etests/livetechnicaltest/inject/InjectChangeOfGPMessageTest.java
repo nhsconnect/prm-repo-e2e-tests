@@ -16,8 +16,8 @@ import uk.nhs.prm.e2etests.service.TemplatingService;
 import static java.time.ZoneOffset.ofHours;
 import static java.time.ZonedDateTime.now;
 
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomOdsCode;
 
 @Log4j2
 @SpringBootTest
