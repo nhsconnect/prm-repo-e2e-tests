@@ -50,7 +50,6 @@ import uk.nhs.prm.e2etests.service.TransferTrackerService;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +71,8 @@ import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_REQUEST_
 import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_TRANSFER_TO_REPO_COMPLETE;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUuidAsString;
 
 @Log4j2
 @SpringBootTest
@@ -159,7 +159,7 @@ class RepositoryE2ETest {
         final String outboundConversationId = "17a757f2-f4d2-444e-a246-9cb77bef7f22";
         final String ehrRequestMessage = this.templatingService.getTemplatedString(TemplateVariant.EHR_REQUEST, EhrRequestTemplateContext.builder()
                 .messageId(UUID.randomUUID().toString())
-                .newGpOdsCode("B85002")
+                .recipientOdsCode("B85002")
                 .nhsNumber("9727018440")
                 .outboundConversationId(outboundConversationId)
                 .build());
@@ -189,7 +189,7 @@ class RepositoryE2ETest {
                 .builder()
                 .outboundConversationId(outboundConversationId.toUpperCase())
                 .nhsNumber(nhsNumberForTestPatient)
-                .newGpOdsCode(previousGpForTestPatient)
+                .recipientOdsCode(previousGpForTestPatient)
                 .asidCode(asidCodeForTestPatient)
                 .build();
 
@@ -255,7 +255,7 @@ class RepositoryE2ETest {
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
                 .nhsNumber(nhsNumberForTestPatient)
-                .newGpOdsCode(newGpForTestPatient)
+                .recipientOdsCode(newGpForTestPatient)
                 .build());
 
         String continueRequestMessage = this.templatingService.getTemplatedString(
@@ -351,7 +351,7 @@ class RepositoryE2ETest {
 
         EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
                 .nhsNumber(nhsNumber)
-                .newGpOdsCode(newGpOdsCode)
+                .recipientOdsCode(newGpOdsCode)
                 .build();
 
         String inboundMessage = this.templatingService.getTemplatedString(TemplateVariant.EHR_REQUEST, ehrRequestContext);
@@ -371,7 +371,7 @@ class RepositoryE2ETest {
 
         EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
                 .nhsNumber(nonExistentNhsNumber)
-                .newGpOdsCode(newGpOdsCode)
+                .recipientOdsCode(newGpOdsCode)
                 .build();
 
         String erroneousInboundMessage = this.templatingService.getTemplatedString(TemplateVariant.EHR_REQUEST, ehrRequestContext);
@@ -473,7 +473,7 @@ class RepositoryE2ETest {
         String patientNhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
                 .nhsNumber(patientNhsNumber)
-                .newGpOdsCode(TPP_PTL_INT.odsCode())
+                .recipientOdsCode(TPP_PTL_INT.odsCode())
                 .asidCode(TPP_PTL_INT.asidCode()).build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
         String conversationId = templateContext.getOutboundConversationId();
@@ -670,8 +670,8 @@ class RepositoryE2ETest {
         String smallEhrMessageId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumberForTestPatient = "9727018440";
-        String sourceGpForTestPatient = "A91720";
-        String newGpForTestPatient = "M85019";
+        String senderOdsCode = "A91720";
+        String recipientOdsCode = "M85019";
         String asidCodeForTestPatient = "200000000149";
 
         log.info(" ===============  outboundConversationId: {}", outboundConversationId);
@@ -683,7 +683,7 @@ class RepositoryE2ETest {
 
         String ehrRequest = templatingService.getTemplatedString(EHR_REQUEST, EhrRequestTemplateContext.builder()
                 .nhsNumber(nhsNumberForTestPatient)
-                .newGpOdsCode(newGpForTestPatient)
+                .recipientOdsCode(recipientOdsCode)
                 .asidCode(asidCodeForTestPatient)
                 .outboundConversationId(outboundConversationId)
                 .build());
@@ -695,7 +695,7 @@ class RepositoryE2ETest {
                         .conversationId(inboundConversationId)
                         .nemsMessageId(randomNemsMessageId())
                         .nhsNumber(nhsNumberForTestPatient)
-                        .sourceGp(sourceGpForTestPatient)
+                        .sourceGp(senderOdsCode)
                         .state(EHR_REQUEST_SENT.status)
                         .build());
 
@@ -733,107 +733,99 @@ class RepositoryE2ETest {
     void shouldPutALargeEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
         // given
         // TODO 3411 All UUIDs are going to have to be converted to uppercase for a realistic test
-        String inboundConversationId = UUID.randomUUID().toString();
-        String outboundConversationId = UUID.randomUUID().toString();
+        String inboundConversationId = randomUuidAsString();
+        String outboundConversationId = randomUuidAsString();
         log.info(" ===============  outboundConversationId: {}", outboundConversationId);
 
-        String largeEhrCoreMessageId = UUID.randomUUID().toString();
-        String fragment1MessageId = UUID.randomUUID().toString();
-        String fragment2MessageId = UUID.randomUUID().toString();
+        String largeEhrCoreMessageId = randomUuidAsString();
+        String fragment1MessageId = randomUuidAsString();
+        String fragment2MessageId = randomUuidAsString();
 
-        String nhsNumberForTestPatient = "9727018157";
-        String previousGpForTestPatient = "N82668";
-        String newGpForTestPatient = "M85019";
+        String nhsNumber = "9727018157";
+        String senderOdsCode = "N82668";
+        String recipientOdsCode = "M85019";
 
-        String largeEhrCore = this.templatingService.getTemplatedString(TemplateVariant.LARGE_EHR_CORE,
+        String largeEhrCore = this.templatingService.getTemplatedString(LARGE_EHR_CORE,
                 LargeEhrCoreTemplateContext.builder()
                     .inboundConversationId(inboundConversationId)
                     .largeEhrCoreMessageId(largeEhrCoreMessageId)
                     .fragmentMessageId(fragment1MessageId)
                     .build());
 
-        String largeEhrFragment1 = this.templatingService.getTemplatedString(TemplateVariant.LARGE_EHR_FRAGMENT_ONE,
+        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_ONE,
                 LargeEhrFragmentOneContext.builder()
                         .inboundConversationId(inboundConversationId)
                         .fragmentMessageId(fragment1MessageId)
                         .fragmentTwoMessageId(fragment2MessageId)
-                        // TODO 3411 fix the <recipient> and <from>
-                        //  https://github.com/nhsconnect/prm-repo-e2e-tests/pull/25/files#diff-00cf703f35e63836a1a8458f25bf3b413e0c30863cb6b87f84defd3679ccd99f
-                        .
+                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(nhsProperties.getRepoOdsCode())
                         .build());
 
-        String largeEhrFragment2 = this.templatingService.getTemplatedString(TemplateVariant.LARGE_EHR_FRAGMENT_TWO,
+        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_TWO,
                 LargeEhrFragmentTwoContext.builder()
                         .inboundConversationId(inboundConversationId)
                         .fragmentMessageId(fragment1MessageId)
-                        .
+                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(nhsProperties.getRepoOdsCode())
                         .build());
 
+        String ehrRequest = this.templatingService.getTemplatedString(EHR_REQUEST,
+                EhrRequestTemplateContext.builder()
+                        .nhsNumber(nhsNumber)
+                        .recipientOdsCode(recipientOdsCode)
+                        .outboundConversationId(outboundConversationId)
+                        .build());
 
-        List<String> largeEhrFragments = this.templatingService.getMultipleTemplatedStrings(Map.of(
-                TemplateVariant.LARGE_EHR_FRAGMENT_ONE, LargeEhrFragmentOneContext.builder().build(),
-                TemplateVariant.LARGE_EHR_FRAGMENT_TWO, LargeEhrFragmentTwoContext.builder().build()
-        ));
+        String continueRequest = this.templatingService.getTemplatedString(CONTINUE_REQUEST,
+                ContinueRequestTemplateContext.builder()
+                        .outboundConversationId(outboundConversationId)
+                        .build());
 
-        LargeEhrTestFiles largeEhrTestFiles = TestUtils.prepareTestFilesForLargeEhr(
-                inboundConversationId,
-                outboundConversationId,
-                largeEhrCoreMessageId,
-                fragment1MessageId,
-                fragment2MessageId,
-                newGpForTestPatient,
-                nhsNumberForTestPatient
-        );
-
-        String largeEhrCore = largeEhrTestFiles.largeEhrCore;
-        String largeEhrFragment1 = templatingService.getTemplatedString(
-                TemplateVariant.LARGE_EHR_FRAGMENT_ONE,
-                LargeEhrFragmentOneContext.builder().build());
-
-        String largeEhrFragment2 = largeEhrTestFiles.largeEhrFragment2;
-        String ehrRequest = largeEhrTestFiles.ehrRequest;
-        String continueRequest = largeEhrTestFiles.continueRequest;
-
-        addRecordToTrackerDb(trackerDb, inboundConversationId, largeEhrCoreMessageId, nhsNumberForTestPatient, previousGpForTestPatient, "ACTION:EHR_REQUEST_SENT");
-
+        transferTrackerService.save(TransferTrackerRecord.builder()
+                .conversationId(inboundConversationId)
+                .largeEhrCoreMessageId(largeEhrCoreMessageId)
+                .nhsNumber(nhsNumber)
+                .sourceGp(senderOdsCode)
+                .state(EHR_REQUEST_SENT.status)
+                .build());
+        
         // when
-            inboundQueueFromMhs.sendMessage(largeEhrCore, inboundConversationId);
-            LOGGER.info("conversationIdExists: {}",trackerDb.conversationIdExists(inboundConversationId));
-        String status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT");
-            LOGGER.info("tracker db status: {}", status);
+        mhsInboundQueue.sendMessage(largeEhrCore, inboundConversationId);
+        log.info("conversationIdExists: {}",transferTrackerService.conversationIdExists(inboundConversationId));
+        String status = transferTrackerService.waitForStatusMatching(inboundConversationId, "ACTION:LARGE_EHR_CONTINUE_REQUEST_SENT");
+        log.info("tracker db status: {}", status);
+        log.info("fragment 1 message id: {}", fragment1MessageId);
+        log.info("fragment 2 message id: {}", fragment2MessageId);
 
-            LOGGER.info("fragment 1 message id: {}", fragment1MessageId);
-            LOGGER.info("fragment 2 message id: {}", fragment2MessageId);
+        mhsInboundQueue.sendMessage(largeEhrFragment1, inboundConversationId);
+        mhsInboundQueue.sendMessage(largeEhrFragment2, inboundConversationId);
 
-            inboundQueueFromMhs.sendMessage(largeEhrFragment1, inboundConversationId);
-            inboundQueueFromMhs.sendMessage(largeEhrFragment2, inboundConversationId);
-
-        status = trackerDb.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
-            LOGGER.info("tracker db status: {}", status);
+        status = transferTrackerService.waitForStatusMatching(inboundConversationId, "ACTION:EHR_TRANSFER_TO_REPO_COMPLETE");
+            log.info("tracker db status: {}", status);
 
         // Put a EHR request to inboundQueueFromMhs
-            inboundQueueFromMhs.sendMessage(ehrRequest, outboundConversationId);
+            mhsInboundQueue.sendMessage(ehrRequest, outboundConversationId);
 
         // Then
         // assert gp2gpMessenger queue got a message of UK06
-        SqsMessage gp2gpMessageUK06 = gp2gpMessengerQueue.getMessageContaining(outboundConversationId);
+        SqsMessage gp2gpMessageUK06 = gp2gpMessengerOQ.getMessageContaining(outboundConversationId);
 
         assertThat(gp2gpMessageUK06).isNotNull();
-        assertThat(gp2gpMessageUK06.contains("RCMR_IN030000UK06")).isTrue();
+        assertThat(gp2gpMessageUK06.contains(EHR_CORE.interactionId)).isTrue();
 
         // Put a continue request to inboundQueueFromMhs
-            inboundQueueFromMhs.sendMessage(continueRequest, outboundConversationId);
+            mhsInboundQueue.sendMessage(continueRequest, outboundConversationId);
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        List<SqsMessage> allFragments = gp2gpMessengerQueue.getAllMessageContaining("COPC_IN000001UK01");
+        List<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
 
         assertThat(allFragments.size()).isEqualTo(2);
 
-            allFragments.forEach(fragment -> assertThat(fragment.contains(outboundConversationId)).isTrue());
+        allFragments.forEach(fragment -> assertThat(fragment.contains(outboundConversationId)).isTrue());
 
         // clear up the queue after test in order not to interfere with other tests
-            gp2gpMessengerQueue.deleteMessage(gp2gpMessageUK06);
-            allFragments.forEach(gp2gpMessengerQueue::deleteMessage);
+            gp2gpMessengerOQ.deleteMessage(gp2gpMessageUK06);
+            allFragments.forEach(gp2gpMessengerOQ::deleteMessage);
     }
 
 //    @ParameterizedTest
