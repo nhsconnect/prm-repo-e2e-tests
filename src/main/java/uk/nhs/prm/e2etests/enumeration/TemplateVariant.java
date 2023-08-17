@@ -10,6 +10,8 @@ public enum TemplateVariant {
     LARGE_EHR_CORE("large-ehr-core.hbs"),
     LARGE_EHR_FRAGMENT_ONE("large-ehr-fragment-1.hbs"),
     LARGE_EHR_FRAGMENT_TWO("large-ehr-fragment-2.hbs"),
+    POSITIVE_ACKNOWLEDGEMENT("positive-acknowledgement.hbs"),
+    NEGATIVE_ACKNOWLEDGEMENT("negative-acknowledgement.hbs"),
 
     // NEMS event xml
     CHANGE_OF_GP_NON_SUSPENSION("change-of-gp-non-suspension.hbs"),
