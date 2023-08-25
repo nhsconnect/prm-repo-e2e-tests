@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.model.templatecontext;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;

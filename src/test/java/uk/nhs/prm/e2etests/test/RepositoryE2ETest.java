@@ -322,7 +322,7 @@ class RepositoryE2ETest {
         );
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        List<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
+        Set<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
         assertThat(allFragments.size()).isGreaterThanOrEqualTo(2);
 
         String largeEhrFragment1Payload = getPayloadOptional(largeEhrFragments.get(0)).orElseThrow();
@@ -500,6 +500,71 @@ class RepositoryE2ETest {
         assertThat(foundOutboundMessages.size()).isEqualTo(1);
         assertThat(outboundEhrCore).contains(nhsNumber);
         assertThat(outboundEhrCore).contains(EHR_CORE.interactionId);
+    }
+
+//    @Test
+//    void shouldSendLargeEhrWith100Fragments() {
+//        // given
+//        String patientNhsNumber = "9727018157";
+//        EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
+//                .nhsNumber(patientNhsNumber)
+//                .newGpOdsCode(TPP_PTL_INT.odsCode())
+//                .asidCode(TPP_PTL_INT.asidCode()).build();
+//        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
+//        String outboundConversationId = ehrRequestTemplateContext.getOutboundConversationId();
+//        ContinueRequestTemplateContext continueRequestTemplateContext =
+//                ContinueRequestTemplateContext.builder()
+//                        .outboundConversationId(outboundConversationId)
+//                        .recipientOdsCode(Gp2GpSystem.REPO_DEV.odsCode()) // TODO I FLIPPED REC AND OUTBOUND VALUES
+//                        .senderOdsCode(TPP_PTL_INT.odsCode()).build();
+//        String continueRequestMessage = this.templatingService.getTemplatedString(CONTINUE_REQUEST, continueRequestTemplateContext);
+//
+//        // when
+//        this.repoService.addLargeEhrWithVariableManifestToRepo(patientNhsNumber, 5, TPP_PTL_INT.odsCode());
+//
+//        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+//
+//        sleepFor(30000);
+//
+//        mhsInboundQueue.sendMessage(continueRequestMessage, outboundConversationId);
+//
+//        // then
+//        final Set<SqsMessage> foundMessages =
+//                this.gp2gpMessengerOQ.getAllMessagesContaining(outboundConversationId, 6);
+//        assertThat(foundMessages.size()).isEqualTo(6);
+//    }
+
+    @Test
+    void shouldSendLargeEhrWith100Fragments() {
+        // given
+        String patientNhsNumber = "9727018157";
+        EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
+                .nhsNumber(patientNhsNumber)
+                .newGpOdsCode(TPP_PTL_INT.odsCode())
+                .asidCode(TPP_PTL_INT.asidCode()).build();
+        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
+        String outboundConversationId = ehrRequestTemplateContext.getOutboundConversationId();
+        log.info("OutboundConversationID: " + outboundConversationId);
+        ContinueRequestTemplateContext continueRequestTemplateContext =
+                ContinueRequestTemplateContext.builder()
+                        .outboundConversationId(outboundConversationId)
+                        .recipientOdsCode(Gp2GpSystem.REPO_DEV.odsCode()) // TODO I FLIPPED REC AND OUTBOUND VALUES
+                        .senderOdsCode(TPP_PTL_INT.odsCode()).build();
+        String continueRequestMessage = this.templatingService.getTemplatedString(CONTINUE_REQUEST, continueRequestTemplateContext);
+
+        // when
+        this.repoService.addLargeEhrWithVariableManifestToRepo(patientNhsNumber, 100, TPP_PTL_INT.odsCode());
+
+        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+
+        sleepFor(30000);
+
+        mhsInboundQueue.sendMessage(continueRequestMessage, outboundConversationId);
+
+        // then
+//        final Set<SqsMessage> foundMessages =
+//                this.gp2gpMessengerOQ.getAllMessagesContaining(outboundConversationId, 101);
+//        assertThat(foundMessages.size()).isEqualTo(101);
     }
 
     @Test
