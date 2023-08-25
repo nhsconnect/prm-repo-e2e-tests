@@ -50,7 +50,7 @@ public class SqsService {
         ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
             .visibilityTimeout(safeVisibilityTimeout)
             .queueUrl(queueUrl)
-            .waitTimeSeconds(5)
+            .waitTimeSeconds(10)
             .maxNumberOfMessages(10)
             .messageAttributeNames("All")
             .attributeNames(QueueAttributeName.ALL)

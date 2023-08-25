@@ -1,29 +1,25 @@
 package uk.nhs.prm.e2etests.queue;
 
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.awaitility.core.ConditionTimeoutException;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueInProgressException;
 import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
-import org.awaitility.core.ConditionTimeoutException;
 import uk.nhs.prm.e2etests.utility.MappingUtility;
 import uk.nhs.prm.e2etests.service.SqsService;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import lombok.extern.log4j.Log4j2;
 
 import java.time.temporal.ChronoUnit;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 
 @Log4j2
 public abstract class AbstractMessageQueue {
@@ -66,15 +62,30 @@ public abstract class AbstractMessageQueue {
         return foundMessage;
     }
 
-    public List<SqsMessage> getAllMessagesContaining(String substring, int expectedNumberOfMessages) {
+    public Set<SqsMessage> getAllMessagesContaining(String substring, int expectedNumberOfMessages) {
         // This method for now only try to get at least 2 messages from the queue. May need renaming or amending
         log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
-        List<SqsMessage> allMessages = new ArrayList<>();
-        await().atMost(2, TimeUnit.MINUTES)
+
+        // we want to ensure every message is unique as we'll be polling several times
+        Set<SqsMessage> allMessages = new HashSet<>();
+
+        await().atMost(5, TimeUnit.MINUTES)
                 .with()
-                .pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-                    Optional<SqsMessage> found = findMessageContaining(substring);
-                    found.ifPresent(allMessages::add);
+                .pollInterval(5, TimeUnit.SECONDS)
+                .until(() -> {
+                    Set<SqsMessage> messagesFoundThisLoop = findAllMessagesContaining(substring);
+
+                    messagesFoundThisLoop.forEach(message -> {
+                        log.info("Found a message, details: {}", message);
+
+                        log.info("Message ID is: " + message.getBody().substring(
+                                message.getBody().indexOf("\"Message-Id\":\""))
+                        );
+                    });
+
+                    allMessages.addAll(messagesFoundThisLoop);
+                    log.info(allMessages.size());
+
                     return (allMessages.size() >= expectedNumberOfMessages);
                 }, equalTo(true));
 
@@ -128,16 +139,13 @@ public abstract class AbstractMessageQueue {
     public List<SqsMessage> getNextMessages(LocalDateTime timeoutAt) {
         log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
         int pollInterval = 5;
-        long timeoutSeconds = Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval + 1);
+        int timeoutSeconds = (int) Math.max(LocalDateTime.now().until(timeoutAt, ChronoUnit.SECONDS), pollInterval + 1);
 
         return await().atMost(timeoutSeconds, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(pollInterval, TimeUnit.SECONDS)
-                .until(() -> findMessagesOnQueue((int) timeoutSeconds), messages -> !messages.isEmpty());
-    }
-
-    private List<SqsMessage> findMessagesOnQueue(int visibilityTimeout) {
-        return sqsService.readThroughMessages(this.queueUri, visibilityTimeout);
+                .until(() -> sqsService.readThroughMessages(this.queueUri, timeoutSeconds),
+                        messages -> !messages.isEmpty());
     }
 
     private Optional<SqsMessage> findMessageWithCondition(Predicate<SqsMessage> condition) {
@@ -146,9 +154,17 @@ public abstract class AbstractMessageQueue {
         List<SqsMessage> allMessages = sqsService.readThroughMessages(this.queueUri, 180);
         return allMessages.stream().filter(condition).findFirst();
     }
-    
+
     private Optional<SqsMessage> findMessageContaining(String substring) {
         return findMessageWithCondition(message -> message.contains(substring));
+    }
+
+    private Set<SqsMessage> findAllMessagesContaining(String substring) {
+        log.info(CHECKING_QUEUE_LOG_MESSAGE, this.queueUri);
+
+        return sqsService.readThroughMessages(this.queueUri, 180).stream()
+                .filter(message -> message.contains(substring))
+                .collect(Collectors.toSet());
     }
 
     public Optional<SqsMessage> findMessageWithAttribute(String attribute, String expectedValue) {
@@ -197,7 +213,7 @@ public abstract class AbstractMessageQueue {
         List<SqsMessage> allMessages = new ArrayList<>();
 
         try {
-            await().atMost(secondsToPoll, TimeUnit.SECONDS).with().pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            await().atMost(secondsToPoll, TimeUnit.SECONDS).with().pollInterval(10, TimeUnit.SECONDS).untilAsserted(() -> {
                 Optional<SqsMessage> found = findMessageContaining(substring);
 
                 if (found.isPresent()) {
@@ -205,6 +221,7 @@ public abstract class AbstractMessageQueue {
                             .noneMatch(sqsMessage -> sqsMessage.getId().equals(found.get().getId()));
                     if (isNewMessage) allMessages.add(found.get());
                 }
+                log.info("Messages found" + allMessages.size());
 
                 assertThat("", allMessages.size() >= expectedNumberOfMessages);
             });

@@ -9,6 +9,8 @@ public enum TemplateVariant {
     SMALL_EHR_WITH_LINEBREAKS("small-ehr-with-linebreaks.hbs"),
     SMALL_EHR_WITHOUT_LINEBREAKS("small-ehr-without-linebreaks.hbs"),
     LARGE_EHR_CORE("large-ehr-core.hbs"),
+    LARGE_EHR_CORE_VARIABLE_MANIFEST("large-ehr-core-variable-manifest.hbs"),
+    LARGE_EHR_FRAGMENT_NO_REF_4MB("large-ehr-fragment-no-ref-4mb.hbs"),
     LARGE_EHR_FRAGMENT_ONE("large-ehr-fragment-1.hbs"),
     LARGE_EHR_FRAGMENT_TWO("large-ehr-fragment-2.hbs"),
     POSITIVE_ACKNOWLEDGEMENT("positive-acknowledgement.hbs"),
