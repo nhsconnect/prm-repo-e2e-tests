@@ -4,8 +4,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 
-import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
-import static uk.nhs.prm.e2etests.utility.ValidationUtility.UUID_REGEX;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.*;
 
 @Getter
 @Builder
@@ -21,4 +20,7 @@ public class LargeEhrCoreTemplateContext implements TemplateContext {
 
     @Pattern(regexp = NHS_NUMBER_REGEX, message = "An invalid NHS Number was provided.")
     private String nhsNumber;
+
+    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid ODS Code was provided.")
+    private String recipientOdsCode;
 }

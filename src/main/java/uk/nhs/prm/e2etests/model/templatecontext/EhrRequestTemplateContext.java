@@ -21,8 +21,11 @@ public class EhrRequestTemplateContext implements TemplateContext {
     @Pattern(regexp = UUID_REGEX, message = "An invalid Message ID was provided.")
     private String messageId = randomUuidAsString();
 
-    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid ODS Code (recipient) was provided.")
-    private String recipientOdsCode;
+    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid ODS Code (sending) was provided.")
+    private String sendingOdsCode;
+
+    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid ODS Code (receiving) was provided.")
+    private String receivingOdsCode;
 
     @Pattern(regexp = ASID_REGEX, message = "An invalid ASID Code (recipient) was provided.")
     private String asidCode;
