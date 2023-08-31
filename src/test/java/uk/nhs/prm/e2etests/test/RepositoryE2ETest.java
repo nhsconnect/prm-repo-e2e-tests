@@ -751,8 +751,8 @@ class RepositoryE2ETest {
         String fragment2MessageId = UUID.randomUUID().toString();
 
         String nhsNumber = "9727018157";
-        String senderOdsCode = "N82668";
-        String recipientOdsCode = "M85019"; // Really Needed ?
+        String senderOdsCode = "M85019";
+        /*String recipientOdsCode = "N82668"; // Really Needed ?*/
         String asidCode = "200000000149";
 
         String largeEhrCore = this.templatingService.getTemplatedString(LARGE_EHR_CORE,
@@ -761,46 +761,46 @@ class RepositoryE2ETest {
                         .largeEhrCoreMessageId(largeEhrCoreMessageId.toUpperCase())
                         .fragmentMessageId(fragment1MessageId.toUpperCase())
                         .nhsNumber(nhsNumber)
-                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(senderOdsCode)
                         .build());
 
-        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_ONE,
-                LargeEhrFragmentOneContext.builder()
-                        .inboundConversationId(inboundConversationId.toUpperCase())
-                        .fragmentMessageId(fragment1MessageId.toUpperCase())
-                        .fragmentTwoMessageId(fragment2MessageId.toUpperCase())
-                        .recipientOdsCode(recipientOdsCode)
-                        .senderOdsCode(nhsProperties.getRepoOdsCode())
-                        .build());
-
-        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_TWO,
-                LargeEhrFragmentTwoContext.builder()
-                        .inboundConversationId(inboundConversationId.toUpperCase())
-                        .fragmentMessageId(fragment1MessageId.toUpperCase())
-                        .recipientOdsCode(recipientOdsCode)
-                        .senderOdsCode(nhsProperties.getRepoOdsCode())
-                        .build());
+//        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_ONE,
+//                LargeEhrFragmentOneContext.builder()
+//                        .inboundConversationId(inboundConversationId.toUpperCase())
+//                        .fragmentMessageId(fragment1MessageId.toUpperCase())
+//                        .fragmentTwoMessageId(fragment2MessageId.toUpperCase())
+//                        .recipientOdsCode(recipientOdsCode)
+//                        .senderOdsCode(nhsProperties.getRepoOdsCode())
+//                        .build());
+//
+//        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_TWO,
+//                LargeEhrFragmentTwoContext.builder()
+//                        .inboundConversationId(inboundConversationId.toUpperCase())
+//                        .fragmentMessageId(fragment1MessageId.toUpperCase())
+//                        .recipientOdsCode(recipientOdsCode)
+//                        .senderOdsCode(nhsProperties.getRepoOdsCode())
+//                        .build());
 
         String ehrRequest = this.templatingService.getTemplatedString(EHR_REQUEST,
                 EhrRequestTemplateContext.builder()
                         .nhsNumber(nhsNumber)
-                        .sendingOdsCode(recipientOdsCode)
+                        .sendingOdsCode(senderOdsCode)
                         .asidCode(asidCode)
                         .outboundConversationId(outboundConversationId.toUpperCase()) // TODO: Not sure if we really need to uppercase
                         .build());
 
-        String continueRequest = this.templatingService.getTemplatedString(CONTINUE_REQUEST,
-                ContinueRequestTemplateContext.builder()
-                        .outboundConversationId(outboundConversationId.toUpperCase()) // TODO: Not sure if we really need to uppercase
-                        .recipientOdsCode(recipientOdsCode)
-                        .senderOdsCode(nhsProperties.getRepoOdsCode())
-                        .build());
+//        String continueRequest = this.templatingService.getTemplatedString(CONTINUE_REQUEST,
+//                ContinueRequestTemplateContext.builder()
+//                        .outboundConversationId(outboundConversationId.toUpperCase()) // TODO: Not sure if we really need to uppercase
+//                        .recipientOdsCode(recipientOdsCode)
+//                        .senderOdsCode(nhsProperties.getRepoOdsCode())
+//                        .build());
 
         transferTrackerService.save(TransferTrackerRecord.builder()
                 .conversationId(inboundConversationId)
                 .largeEhrCoreMessageId(largeEhrCoreMessageId)
                 .nhsNumber(nhsNumber)
-                .sourceGp(recipientOdsCode)
+                .sourceGp(senderOdsCode)
                 .state(EHR_REQUEST_SENT.status)
                 .build());
         
