@@ -680,8 +680,8 @@ class RepositoryE2ETest {
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumber = "9727018440";
-        String sendingOdsCode = "M85019";
-        String asidCode = "200000000149";
+        String sendingOdsCode = TPP_PTL_INT.odsCode();
+        String asidCode = TPP_PTL_INT.asidCode();
 
         log.info(" ===============  outboundConversationId: {}", outboundConversationId);
 
@@ -740,7 +740,6 @@ class RepositoryE2ETest {
     @Test
     void shouldPutALargeEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
         // given
-        // TODO 3411 All UUIDs are going to have to be converted to uppercase for a realistic test
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
         log.info(" ===============  inboundConversationId: {}", inboundConversationId);
@@ -749,11 +748,10 @@ class RepositoryE2ETest {
         String largeEhrCoreMessageId = UUID.randomUUID().toString();
         String fragment1MessageId = UUID.randomUUID().toString();
         String fragment2MessageId = UUID.randomUUID().toString();
-
         String nhsNumber = "9727018157";
-        String senderOdsCode = "M85019";
-        /*String recipientOdsCode = "N82668"; // Really Needed ?*/
-        String asidCode = "200000000149";
+        String senderOdsCode = TPP_PTL_INT.odsCode();
+        String recipientOdsCode = EMIS_PTL_INT.odsCode();
+        String asidCode = TPP_PTL_INT.asidCode();
 
         String largeEhrCore = this.templatingService.getTemplatedString(LARGE_EHR_CORE,
                 LargeEhrCoreTemplateContext.builder()
@@ -764,41 +762,42 @@ class RepositoryE2ETest {
                         .senderOdsCode(senderOdsCode)
                         .build());
 
-//        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_ONE,
-//                LargeEhrFragmentOneContext.builder()
-//                        .inboundConversationId(inboundConversationId.toUpperCase())
-//                        .fragmentMessageId(fragment1MessageId.toUpperCase())
-//                        .fragmentTwoMessageId(fragment2MessageId.toUpperCase())
-//                        .recipientOdsCode(recipientOdsCode)
-//                        .senderOdsCode(nhsProperties.getRepoOdsCode())
-//                        .build());
-//
-//        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_TWO,
-//                LargeEhrFragmentTwoContext.builder()
-//                        .inboundConversationId(inboundConversationId.toUpperCase())
-//                        .fragmentMessageId(fragment1MessageId.toUpperCase())
-//                        .recipientOdsCode(recipientOdsCode)
-//                        .senderOdsCode(nhsProperties.getRepoOdsCode())
-//                        .build());
+        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_ONE,
+                LargeEhrFragmentOneContext.builder()
+                        .inboundConversationId(inboundConversationId.toUpperCase())
+                        .fragmentMessageId(fragment1MessageId.toUpperCase())
+                        .fragmentTwoMessageId(fragment2MessageId.toUpperCase())
+                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(nhsProperties.getRepoOdsCode())
+                        .build());
+
+        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_TWO,
+                LargeEhrFragmentTwoContext.builder()
+                        .inboundConversationId(inboundConversationId.toUpperCase())
+                        .fragmentMessageId(fragment2MessageId.toUpperCase())
+                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(nhsProperties.getRepoOdsCode())
+                        .build());
 
         String ehrRequest = this.templatingService.getTemplatedString(EHR_REQUEST,
                 EhrRequestTemplateContext.builder()
+                        .outboundConversationId(outboundConversationId.toUpperCase())
                         .nhsNumber(nhsNumber)
                         .sendingOdsCode(senderOdsCode)
                         .asidCode(asidCode)
-                        .outboundConversationId(outboundConversationId.toUpperCase()) // TODO: Not sure if we really need to uppercase
                         .build());
 
-//        String continueRequest = this.templatingService.getTemplatedString(CONTINUE_REQUEST,
-//                ContinueRequestTemplateContext.builder()
-//                        .outboundConversationId(outboundConversationId.toUpperCase()) // TODO: Not sure if we really need to uppercase
-//                        .recipientOdsCode(recipientOdsCode)
-//                        .senderOdsCode(nhsProperties.getRepoOdsCode())
-//                        .build());
+        String continueRequest = this.templatingService.getTemplatedString(CONTINUE_REQUEST,
+                ContinueRequestTemplateContext.builder()
+                        .outboundConversationId(outboundConversationId.toUpperCase())
+                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(senderOdsCode)
+                        .build());
 
         transferTrackerService.save(TransferTrackerRecord.builder()
                 .conversationId(inboundConversationId)
                 .largeEhrCoreMessageId(largeEhrCoreMessageId)
+                .nemsMessageId(randomNemsMessageId())
                 .nhsNumber(nhsNumber)
                 .sourceGp(senderOdsCode)
                 .state(EHR_REQUEST_SENT.status)
@@ -806,7 +805,8 @@ class RepositoryE2ETest {
         
         // when
         mhsInboundQueue.sendMessage(largeEhrCore, inboundConversationId);
-        log.info("conversationIdExists: {}",transferTrackerService.conversationIdExists(inboundConversationId));
+
+        log.info("conversationIdExists: {}", transferTrackerService.conversationIdExists(inboundConversationId));
         String status = transferTrackerService.waitForStatusMatching(inboundConversationId, LARGE_EHR_CONTINUE_REQUEST_SENT.status);
         log.info("tracker db status: {}", status);
         log.info("fragment 1 message id: {}", fragment1MessageId);
@@ -839,8 +839,8 @@ class RepositoryE2ETest {
         allFragments.forEach(fragment -> assertThat(fragment.contains(outboundConversationId)).isTrue());
 
         // clear up the queue after test in order not to interfere with other tests
-            gp2gpMessengerOQ.deleteMessage(gp2gpMessageUK06);
-            allFragments.forEach(gp2gpMessengerOQ::deleteMessage);
+        gp2gpMessengerOQ.deleteMessage(gp2gpMessageUK06);
+        allFragments.forEach(gp2gpMessengerOQ::deleteMessage);
     }
 
     @ParameterizedTest
@@ -866,7 +866,6 @@ class RepositoryE2ETest {
         // then
         String actualTypeCode = acknowledgement.getAcknowledgementTypeCode();
         assertThat(actualTypeCode).isEqualTo(expectedTypeCode);
-
         log.info("The acknowledgement typeCode of {} is {}.", ackMessageId, actualTypeCode);
     }
 
