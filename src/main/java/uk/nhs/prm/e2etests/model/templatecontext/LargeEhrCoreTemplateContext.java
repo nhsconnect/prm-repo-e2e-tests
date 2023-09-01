@@ -22,5 +22,5 @@ public class LargeEhrCoreTemplateContext implements TemplateContext {
     private String nhsNumber;
 
     @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid ODS Code was provided.")
-    private String recipientOdsCode;
+    private String senderOdsCode;
 }
