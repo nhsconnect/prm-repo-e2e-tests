@@ -1,6 +1,8 @@
 package uk.nhs.prm.e2etests.model.database;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Builder;
+import lombok.AllArgsConstructor;
 
 import java.sql.Timestamp;
 import java.util.UUID;
