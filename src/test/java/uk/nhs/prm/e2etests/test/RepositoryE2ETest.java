@@ -712,4 +712,32 @@ class RepositoryE2ETest {
             assertThat(ehrTransferServiceParsingDeadLetterQueue.getMessageContaining(message)).isNotNull();
         });
     }
+
+    @Test
+    void shouldTransferOut20EHRsWithin1Minute() {
+        String inboundConversationId = "00843004-f368-4ea0-9ba8-6909872d67de"; // Needs to be already existent
+        String outboundConversationId = UUID.randomUUID().toString();
+        String nhsNumberForTestPatient = "9727018076"; // This should match existent patient health record
+        String previousGpForTestPatient = "M85019";
+        String asidCodeForTestPatient = "200000000149";
+        List<EhrRequestTemplateContext> ehrRequestTemplateContexts = null; // TODO: What do i set it as here?
+
+        for (int i = 0; i < 20; i++) {
+            EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext
+                    .builder()
+                    .outboundConversationId(outboundConversationId.toUpperCase())
+                    .nhsNumber(nhsNumberForTestPatient)
+                    .newGpOdsCode(previousGpForTestPatient)
+                    .asidCode(asidCodeForTestPatient)
+                    .build();
+
+            ehrRequestTemplateContexts.add(ehrRequestTemplateContext);
+        }
+
+        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext); // TODO: This needs to become a list?
+
+        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+
+        assertThat(gp2gpMessengerOQ.getMessageContaining(outboundConversationId)).isNotNull();
+    }
 }
