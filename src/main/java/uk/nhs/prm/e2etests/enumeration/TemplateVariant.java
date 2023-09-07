@@ -5,6 +5,7 @@ public enum TemplateVariant {
     CONTINUE_REQUEST("continue-request.hbs"),
     EHR_REQUEST("ehr-request.hbs"),
     SMALL_EHR("small-ehr.hbs"),
+    SMALL_EHR_WITH_99_ATTACHMENTS("small-ehr-with-99-attachments.hbs"),
     SMALL_EHR_WITH_LINEBREAKS("small-ehr-with-linebreaks.hbs"),
     SMALL_EHR_WITHOUT_LINEBREAKS("small-ehr-without-linebreaks.hbs"),
     LARGE_EHR_CORE("large-ehr-core.hbs"),
