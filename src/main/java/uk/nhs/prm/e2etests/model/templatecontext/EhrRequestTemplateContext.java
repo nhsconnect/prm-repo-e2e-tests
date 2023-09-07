@@ -5,7 +5,10 @@ import lombok.Builder;
 import lombok.Getter;
 
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUuidAsString;
-import static uk.nhs.prm.e2etests.utility.ValidationUtility.*;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.UUID_REGEX;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.ODS_CODE_REGEX;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.ASID_REGEX;
 
 @Getter
 @Builder
