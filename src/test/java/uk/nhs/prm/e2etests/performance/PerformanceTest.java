@@ -39,9 +39,9 @@ import static uk.nhs.prm.e2etests.performance.NemsTestEvent.nonSuspensionEvent;
 import static uk.nhs.prm.e2etests.performance.load.LoadPhase.atFlatRate;
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateProcessingDurationScatterPlot;
 import static uk.nhs.prm.e2etests.performance.reporting.PerformanceChartGenerator.generateThroughputPlot;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNhsNumber;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNhsNumber;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomOdsCode;
 
 
 @Log4j2

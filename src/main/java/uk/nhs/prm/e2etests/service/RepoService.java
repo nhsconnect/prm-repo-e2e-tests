@@ -14,9 +14,9 @@ import lombok.AllArgsConstructor;
 import jakarta.validation.Valid;
 
 import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_TRANSFER_TO_REPO_COMPLETE;
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR_WITHOUT_LINEBREAKS;
 import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_REQUEST_SENT;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR_WITHOUT_LINEBREAKS;
 import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
 
 @Log4j2
