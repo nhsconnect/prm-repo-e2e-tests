@@ -12,7 +12,7 @@ import uk.nhs.prm.e2etests.property.NhsProperties;
 import org.springframework.core.io.Resource;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.Gson;
-import uk.nhs.prm.e2etests.utility.NhsIdentityUtility;
+import uk.nhs.prm.e2etests.utility.TestDataUtility;
 
 import java.util.stream.Stream;
 import java.util.List;
@@ -59,7 +59,7 @@ public class ResourceConfiguration {
     }
 
     private List<String> generateRandomNhsNumbers(int count) {
-        return Stream.generate(NhsIdentityUtility::randomNhsNumber)
+        return Stream.generate(TestDataUtility::randomNhsNumber)
                 .limit(count)
                 .toList();
     }

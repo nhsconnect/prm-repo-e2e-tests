@@ -82,9 +82,6 @@ public abstract class AbstractMessageQueue {
         return allMessages;
     }
 
-
-
-
     public boolean verifyNoMessageContaining(String substring, int secondsToPoll) {
         // Queue the queue repeatedly for {secondsToPoll}, and return true only if a message with given substring NEVER appeared throughout the period.
         // The reason of using awaitility is to allow for the time taken for communication between micro-services (ehr-out, ehr-repo, gp2gp messenger)

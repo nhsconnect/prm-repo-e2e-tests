@@ -4,9 +4,11 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.UUID;
-
-import static uk.nhs.prm.e2etests.utility.ValidationUtility.*;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUuidAsString;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.UUID_REGEX;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.ODS_CODE_REGEX;
+import static uk.nhs.prm.e2etests.utility.ValidationUtility.ASID_REGEX;
 
 @Getter
 @Builder
@@ -16,15 +18,18 @@ public class EhrRequestTemplateContext implements TemplateContext {
 
     @Builder.Default
     @Pattern(regexp = UUID_REGEX, message = "An invalid Outbound Conversation ID was provided.")
-    private String outboundConversationId = UUID.randomUUID().toString();
+    private String outboundConversationId = randomUuidAsString();
 
     @Builder.Default
     @Pattern(regexp = UUID_REGEX, message = "An invalid Message ID was provided.")
-    private String messageId = UUID.randomUUID().toString();
+    private String messageId = randomUuidAsString();
 
-    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid ODS Code (new GP) was provided.")
-    private String newGpOdsCode;
+    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid ODS Code (sending) was provided.")
+    private String sendingOdsCode;
 
-    @Pattern(regexp = ASID_REGEX, message = "An invalid ASID Code (new GP) was provided.")
+    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid ODS Code (receiving) was provided.")
+    private String receivingOdsCode;
+
+    @Pattern(regexp = ASID_REGEX, message = "An invalid ASID Code (recipient) was provided.")
     private String asidCode;
 }
