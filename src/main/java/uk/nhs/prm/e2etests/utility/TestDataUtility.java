@@ -30,8 +30,6 @@ public final class TestDataUtility {
     }
 
     public static String randomUuidAsString() {
-        final String uuid = UUID.randomUUID().toString().toUpperCase();
-        log.info("Generated random UUID: {}", uuid);
-        return uuid;
+        return UUID.randomUUID().toString().toUpperCase();
     }
 }
