@@ -716,13 +716,15 @@ class RepositoryE2ETest {
     @Test
     void shouldTransferOut20EHRsWithin1Minute() {
         String inboundConversationId = "00843004-f368-4ea0-9ba8-6909872d67de"; // Needs to be already existent
-        String outboundConversationId = UUID.randomUUID().toString();
+//        String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumberForTestPatient = "9727018076"; // This should match existent patient health record
         String previousGpForTestPatient = "M85019";
         String asidCodeForTestPatient = "200000000149";
-        List<EhrRequestTemplateContext> ehrRequestTemplateContexts = null; // TODO: What do i set it as here?
+        List<String> outboundConversationIds = new ArrayList<>();
 
         for (int i = 0; i < 20; i++) {
+            String outboundConversationId = UUID.randomUUID().toString();
+
             EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext
                     .builder()
                     .outboundConversationId(outboundConversationId.toUpperCase())
@@ -731,13 +733,24 @@ class RepositoryE2ETest {
                     .asidCode(asidCodeForTestPatient)
                     .build();
 
-            ehrRequestTemplateContexts.add(ehrRequestTemplateContext);
+            outboundConversationIds.add(outboundConversationId);
+
+            String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
+
+//            ehrRequestMessages.add(ehrRequestMessage);
+
+            mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
         }
 
-        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext); // TODO: This needs to become a list?
+        for (int i = 0; i < 20; i++) {
+            log.info(outboundConversationIds.get(i));
+            assertThat(gp2gpMessengerOQ.getMessageContaining(outboundConversationIds.get(i))).isNotNull();
+//            assertThat(gp2gpMessengerOQ.getMessageContaining("9727018076")).isNotNull();
+//            assertThat(gp2gpMessengerOQ.getMessageContaining(ehrRequestMessages.get(i))).isNotNull();
+            // TODO: DO NOT ASSERT FOR EHR REQUESTS / ASSERT FOR EHR CORES!!!
 
-        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+            log.info(i + " loop of assertions complete!");
+        }
 
-        assertThat(gp2gpMessengerOQ.getMessageContaining(outboundConversationId)).isNotNull();
     }
 }
