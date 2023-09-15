@@ -1,7 +1,6 @@
 package uk.nhs.prm.e2etests.queue;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.awaitility.core.ConditionTimeoutException;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueInProgressException;
 import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
@@ -35,6 +34,12 @@ public abstract class AbstractMessageQueue {
     protected AbstractMessageQueue(SqsService sqsService, String queueUri) {
         this.sqsService = sqsService;
         this.queueUri = queueUri;
+    }
+
+    public boolean getAllMessagesFromQueueWithConversationId(int expectedNumberOfEhrCores,
+                                                             int expectedNumberOfEhrFragments,
+                                                             String outboundConversationId) {
+        return this.sqsService.getAllMessagesFromQueue(expectedNumberOfEhrCores, expectedNumberOfEhrFragments, outboundConversationId, this.queueUri);
     }
 
     public void deleteAllMessages() {
