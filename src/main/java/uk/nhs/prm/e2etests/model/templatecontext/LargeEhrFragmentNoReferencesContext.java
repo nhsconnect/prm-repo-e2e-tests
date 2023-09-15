@@ -10,7 +10,7 @@ import static uk.nhs.prm.e2etests.utility.ValidationUtility.UUID_REGEX;
 
 @Getter
 @Builder
-public class LargeEhrFragmentTwoContext implements TemplateContext {
+public class LargeEhrFragmentNoReferencesContext implements TemplateContext {
     @Pattern(regexp = UUID_REGEX, message = "An invalid Inbound Conversation ID was provided.")
     private String inboundConversationId;
 
