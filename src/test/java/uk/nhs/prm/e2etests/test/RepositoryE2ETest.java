@@ -26,7 +26,12 @@ import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.Acknowledgement;
 import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.model.templatecontext.*;
+import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrCoreTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentWithReferencesContext;
+import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentNoReferencesContext;
+import uk.nhs.prm.e2etests.model.templatecontext.SmallEhrTemplateContext;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
@@ -57,6 +62,9 @@ import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.EMIS_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.MessageType.*;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.*;
+import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_REQUEST_SENT;
+import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_TRANSFER_TO_REPO_COMPLETE;
+import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR;
@@ -89,9 +97,12 @@ class RepositoryE2ETest {
     private final EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ;
     private final EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ;
     private final EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue;
-
     private final Gp2gpMessengerProperties gp2GpMessengerProperties;
     private final NhsProperties nhsProperties;
+
+    // Constants
+    private static final int EHR_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS = 500;
+    private static final int CONTINUE_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS = 3000;
 
     @Autowired
     public RepositoryE2ETest(
@@ -270,8 +281,8 @@ class RepositoryE2ETest {
                 .build());
 
         List<String> largeEhrFragments = this.templatingService.getMultipleTemplatedStrings(Map.of(
-                TemplateVariant.LARGE_EHR_FRAGMENT_ONE, LargeEhrFragmentOneContext.builder().build(),
-                TemplateVariant.LARGE_EHR_FRAGMENT_TWO, LargeEhrFragmentTwoContext.builder().build()
+                TemplateVariant.LARGE_EHR_FRAGMENT_ONE, LargeEhrFragmentWithReferencesContext.builder().build(),
+                TemplateVariant.LARGE_EHR_FRAGMENT_TWO, LargeEhrFragmentNoReferencesContext.builder().build()
         ));
 
         this.transferTrackerService.save(TransferTrackerRecord.builder()
@@ -502,70 +513,6 @@ class RepositoryE2ETest {
         assertThat(outboundEhrCore).contains(EHR_CORE.interactionId);
     }
 
-//    @Test
-//    void shouldSendLargeEhrWith100Fragments() {
-//        // given
-//        String patientNhsNumber = "9727018157";
-//        EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
-//                .nhsNumber(patientNhsNumber)
-//                .newGpOdsCode(TPP_PTL_INT.odsCode())
-//                .asidCode(TPP_PTL_INT.asidCode()).build();
-//        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
-//        String outboundConversationId = ehrRequestTemplateContext.getOutboundConversationId();
-//        ContinueRequestTemplateContext continueRequestTemplateContext =
-//                ContinueRequestTemplateContext.builder()
-//                        .outboundConversationId(outboundConversationId)
-//                        .recipientOdsCode(Gp2GpSystem.REPO_DEV.odsCode()) // TODO I FLIPPED REC AND OUTBOUND VALUES
-//                        .senderOdsCode(TPP_PTL_INT.odsCode()).build();
-//        String continueRequestMessage = this.templatingService.getTemplatedString(CONTINUE_REQUEST, continueRequestTemplateContext);
-//
-//        // when
-//        this.repoService.addLargeEhrWithVariableManifestToRepo(patientNhsNumber, 5, TPP_PTL_INT.odsCode());
-//
-//        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
-//
-//        sleepFor(30000);
-//
-//        mhsInboundQueue.sendMessage(continueRequestMessage, outboundConversationId);
-//
-//        // then
-//        final Set<SqsMessage> foundMessages =
-//                this.gp2gpMessengerOQ.getAllMessagesContaining(outboundConversationId, 6);
-//        assertThat(foundMessages.size()).isEqualTo(6);
-//    }
-
-    @Test
-    void shouldSendLargeEhrWith100Fragments() {
-        // given
-        String patientNhsNumber = "9727018157";
-        EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
-                .nhsNumber(patientNhsNumber)
-                .newGpOdsCode(TPP_PTL_INT.odsCode())
-                .asidCode(TPP_PTL_INT.asidCode()).build();
-        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
-        String outboundConversationId = ehrRequestTemplateContext.getOutboundConversationId();
-        log.info("OutboundConversationID: " + outboundConversationId);
-        ContinueRequestTemplateContext continueRequestTemplateContext =
-                ContinueRequestTemplateContext.builder()
-                        .outboundConversationId(outboundConversationId)
-                        .recipientOdsCode(Gp2GpSystem.REPO_DEV.odsCode()) // TODO I FLIPPED REC AND OUTBOUND VALUES
-                        .senderOdsCode(TPP_PTL_INT.odsCode()).build();
-        String continueRequestMessage = this.templatingService.getTemplatedString(CONTINUE_REQUEST, continueRequestTemplateContext);
-
-        // when
-        this.repoService.addLargeEhrWithVariableManifestToRepo(patientNhsNumber, 100, TPP_PTL_INT.odsCode());
-
-        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
-
-        sleepFor(30000);
-
-        mhsInboundQueue.sendMessage(continueRequestMessage, outboundConversationId);
-
-        // then
-//        final Set<SqsMessage> foundMessages =
-//                this.gp2gpMessengerOQ.getAllMessagesContaining(outboundConversationId, 101);
-//        assertThat(foundMessages.size()).isEqualTo(101);
-    }
 
     @Test
     void shouldSuccessfullyParseASmallEhrWith99Attachments() {
@@ -984,5 +931,25 @@ class RepositoryE2ETest {
             mhsInboundQueue.sendUnexpectedMessage(message);
             assertThat(ehrTransferServiceParsingDeadLetterQueue.getMessageContaining(message)).isNotNull();
         });
+    }
+
+    /**
+     * Sends the EHR Request to the MHS Inbound queue and waits for 3 seconds.
+     * @param message The EHR Request Message.
+     * @param outboundConversationId The Outbound Conversation ID.
+     */
+    private void sendToMhs(String message, String outboundConversationId, MessageType messageType) {
+        if(!messageType.toString().equals("EHR_REQUEST") || !messageType.toString().equals("CONTINUE_REQUEST"))
+            throw new IllegalArgumentException("Message Type must be EHR_REQUEST or CONTINUE_REQUEST.");
+
+        this.mhsInboundQueue.sendMessage(message, outboundConversationId);
+
+        log.info("A {} was sent to the MHS Inbound Queue, Outbound Conversation ID: {}.",
+                messageType.toString(), outboundConversationId);
+
+        switch (messageType) {
+            case EHR_REQUEST -> sleepFor(EHR_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS);
+            case CONTINUE_REQUEST -> sleepFor(CONTINUE_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS);
+        }
     }
 }

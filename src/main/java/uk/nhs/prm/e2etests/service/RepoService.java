@@ -2,7 +2,7 @@ package uk.nhs.prm.e2etests.service;
 
 import org.apache.commons.lang3.time.StopWatch;
 import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrCoreVariableManifestTemplateContext;
-import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentTwoContext;
+import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentNoReferencesContext;
 import uk.nhs.prm.e2etests.model.templatecontext.SmallEhrTemplateContext;
 import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,12 +109,11 @@ public class RepoService {
             String inboundConversationId,
             List<String> fragmentMessageIds
     ) {
-        // Check if the Conversation ID is uppercase, if it is not - make it uppercase.
         if (!inboundConversationId.equals(inboundConversationId.toUpperCase()))
             inboundConversationId = inboundConversationId.toUpperCase();
 
         for (int i = 0; i < fragmentMessageIds.size(); i++) {
-            final LargeEhrFragmentTwoContext context = LargeEhrFragmentTwoContext.builder() // TODO: CREATE A CONTEXT FOR 4MB
+            final LargeEhrFragmentNoReferencesContext context = LargeEhrFragmentNoReferencesContext.builder() // TODO: CREATE A CONTEXT FOR 4MB
                     .inboundConversationId(inboundConversationId)
                     .fragmentMessageId(fragmentMessageIds.get(i))
                     .senderOdsCode(senderOdsCode)
