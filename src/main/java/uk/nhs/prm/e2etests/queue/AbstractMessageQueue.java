@@ -4,11 +4,9 @@ import lombok.extern.log4j.Log4j2;
 import org.awaitility.core.ConditionTimeoutException;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueInProgressException;
 import uk.nhs.prm.e2etests.model.nems.NemsResolutionMessage;
-import org.awaitility.core.ConditionTimeoutException;
 import uk.nhs.prm.e2etests.utility.MappingUtility;
 import uk.nhs.prm.e2etests.service.SqsService;
 import uk.nhs.prm.e2etests.model.SqsMessage;
-import lombok.extern.log4j.Log4j2;
 
 import java.time.temporal.ChronoUnit;
 import java.time.LocalDateTime;
@@ -23,12 +21,10 @@ import java.util.function.Predicate;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 
 @Log4j2
 public abstract class AbstractMessageQueue {
     private static final String CHECKING_QUEUE_LOG_MESSAGE = "Checking if message is present on: {}";
-
     private static final String CHECKING_QUEUE_LOG_MESSAGE_WITH_SUBSTRING = CHECKING_QUEUE_LOG_MESSAGE + ", with substring {}";
     private static final String DELETE_ALL_MESSAGES_LOG_MESSAGE = "Attempting to delete all messages on: {}";
     private static final String MESSAGE_FOUND_LOG_MESSAGE = "The message has been found on: {}";
