@@ -111,7 +111,7 @@ public class RepositoryPerformanceTest {
         this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100, TPP_PTL_INT.odsCode());
         this.mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
 
-        sleepFor( 10000);
+        sleepFor(10000);
 
         this.mhsInboundQueue.sendMessage(continueRequestMessage, outboundConversationId);
 
