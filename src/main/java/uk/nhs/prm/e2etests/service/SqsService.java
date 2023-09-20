@@ -68,8 +68,8 @@ public class SqsService {
         boolean allMessagesFound = false;
 
         int emptyResponseCount = 0;
-        int ehrCoreCount = 0;
-        int ehrFragmentCount = 0;
+        int ehrCoresFound = 0;
+        int ehrFragmentsFound = 0;
 
         log.info("Waiting for {} seconds for message(s) to hit queue {}.", (INITIAL_DELAY_MILLISECONDS / 1000), queueUri);
 
@@ -101,12 +101,12 @@ public class SqsService {
             throw new ServiceException(this.getClass().getName(), exception.getMessage());
         }
 
-        ehrCoreCount += allMessages.stream().filter(message -> message.body().contains(MessageType.EHR_CORE.interactionId)).count();
-        ehrFragmentCount += allMessages.stream().filter(message -> message.body().contains(MessageType.EHR_FRAGMENT.interactionId)).count();
+        ehrCoresFound += allMessages.stream().filter(message -> message.body().contains(MessageType.EHR_CORE.interactionId)).count();
+        ehrFragmentsFound += allMessages.stream().filter(message -> message.body().contains(MessageType.EHR_FRAGMENT.interactionId)).count();
 
-        log.info("Operation summary: {} EHR core(s), {} fragment(s) found.", ehrCoreCount, ehrFragmentCount);
+        log.info("Operation summary: {} EHR core(s), {} fragment(s) found.", ehrCoresFound, ehrFragmentsFound);
 
-        return (ehrCoreCount + ehrFragmentCount) == totalNumberOfMessages;
+        return (ehrCoresFound + ehrFragmentsFound) == totalNumberOfMessages;
     }
 
     /**
