@@ -1,31 +1,32 @@
 package uk.nhs.prm.e2etests.service;
 
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
+import uk.nhs.prm.e2etests.exception.MaxQueueEmptyResponseException;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 import uk.nhs.prm.e2etests.enumeration.MessageType;
-import uk.nhs.prm.e2etests.exception.MaxQueueEmptyResponseException;
 import uk.nhs.prm.e2etests.exception.ServiceException;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
@@ -54,13 +55,14 @@ public class SqsService {
      * @param queueUri The URI of the Amazon SQS Queue.
      * @param expectedNumberOfEhrCores The number of cores we are expecting.
      * @param expectedNumberOfEhrFragments The number of fragments we are expecting.
-     * @param outboundConversationId The outboundConversationId.
+     * @param outboundConversationIds The outboundConversationIds.
      * @return If all the messages were found successfully.
      */
     public boolean getAllMessagesFromQueue(int expectedNumberOfEhrCores,
                                            int expectedNumberOfEhrFragments,
-                                           String outboundConversationId,
+                                           List<String> outboundConversationIds,
                                            String queueUri) {
+        final CharSequence[] filterCriteria = outboundConversationIds.toArray(new CharSequence[0]);
         int totalNumberOfMessages = expectedNumberOfEhrCores + expectedNumberOfEhrFragments;
         final List<Message> allMessages = new ArrayList<>();
         boolean allMessagesFound = false;
@@ -76,7 +78,7 @@ public class SqsService {
         try {
             while(!allMessagesFound) {
                 final List<Message> foundMessages = this.sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUri).maxNumberOfMessages(10).build()).messages().stream()
-                        .filter(message -> message.body().contains(outboundConversationId))
+                        .filter(message -> StringUtils.containsAnyIgnoreCase(message.body(), filterCriteria))
                         .toList();
 
                 if(!foundMessages.isEmpty()) {
@@ -84,8 +86,8 @@ public class SqsService {
                     deleteMessages(foundMessages, queueUri);
                     emptyResponseCount = 0;
 
-                    log.info("{} of {} message(s) found with Outbound Conversation ID {}, and deleted them.",
-                            allMessages.size(), totalNumberOfMessages, outboundConversationId);
+                    log.info("{} of {} message(s) found with Outbound Conversation IDs {}, and deleted them.",
+                            allMessages.size(), totalNumberOfMessages, outboundConversationIds.toString());
 
                     if(allMessages.size() == totalNumberOfMessages) allMessagesFound = true;
                 } else {

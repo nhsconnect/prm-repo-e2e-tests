@@ -36,10 +36,10 @@ public abstract class AbstractMessageQueue {
         this.queueUri = queueUri;
     }
 
-    public boolean getAllMessagesFromQueueWithConversationId(int expectedNumberOfEhrCores,
-                                                             int expectedNumberOfEhrFragments,
-                                                             String outboundConversationId) {
-        return this.sqsService.getAllMessagesFromQueue(expectedNumberOfEhrCores, expectedNumberOfEhrFragments, outboundConversationId, this.queueUri);
+    public boolean getAllMessagesFromQueueWithConversationIds(int expectedNumberOfEhrCores,
+                                                              int expectedNumberOfEhrFragments,
+                                                              List<String> outboundConversationIds) {
+        return this.sqsService.getAllMessagesFromQueue(expectedNumberOfEhrCores, expectedNumberOfEhrFragments, outboundConversationIds, this.queueUri);
     }
 
     public void deleteAllMessages() {

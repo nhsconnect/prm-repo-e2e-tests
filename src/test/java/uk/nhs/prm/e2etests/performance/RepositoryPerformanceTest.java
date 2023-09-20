@@ -23,6 +23,8 @@ import uk.nhs.prm.e2etests.service.RepoService;
 import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
@@ -113,9 +115,8 @@ public class RepositoryPerformanceTest {
 
         this.mhsInboundQueue.sendMessage(continueRequestMessage, outboundConversationId);
 
-        boolean messagesExist = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationId(1,
-                100,
-                outboundConversationId);
+        boolean messagesExist = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(1, 100,
+                List.of(outboundConversationId));
 
         // then
         assertTrue(messagesExist);
