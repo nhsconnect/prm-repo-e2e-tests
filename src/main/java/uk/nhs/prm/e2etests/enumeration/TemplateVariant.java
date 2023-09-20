@@ -11,8 +11,8 @@ public enum TemplateVariant {
     LARGE_EHR_CORE("large-ehr-core.hbs"),
     LARGE_EHR_CORE_VARIABLE_MANIFEST("large-ehr-core-variable-manifest.hbs"),
     LARGE_EHR_FRAGMENT_NO_REF_4MB("large-ehr-fragment-no-ref-4mb.hbs"),
-    LARGE_EHR_FRAGMENT_ONE("large-ehr-fragment-1.hbs"),
-    LARGE_EHR_FRAGMENT_TWO("large-ehr-fragment-2.hbs"),
+    LARGE_EHR_FRAGMENT_WITH_REF("large-ehr-fragment-with-ref.hbs"),
+    LARGE_EHR_FRAGMENT_NO_REF("large-ehr-fragment-no-ref.hbs"),
     POSITIVE_ACKNOWLEDGEMENT("positive-acknowledgement.hbs"),
     NEGATIVE_ACKNOWLEDGEMENT("negative-acknowledgement.hbs"),
 

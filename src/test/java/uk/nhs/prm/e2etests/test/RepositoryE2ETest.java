@@ -67,7 +67,6 @@ import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.*;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUuidAsString;
 
 @Log4j2
 @SpringBootTest
@@ -276,8 +275,8 @@ class RepositoryE2ETest {
                 .build());
 
         List<String> largeEhrFragments = this.templatingService.getMultipleTemplatedStrings(Map.of(
-                TemplateVariant.LARGE_EHR_FRAGMENT_ONE, LargeEhrFragmentWithReferencesContext.builder().build(),
-                TemplateVariant.LARGE_EHR_FRAGMENT_TWO, LargeEhrFragmentNoReferencesContext.builder().build()
+                TemplateVariant.LARGE_EHR_FRAGMENT_WITH_REF, LargeEhrFragmentWithReferencesContext.builder().build(),
+                TemplateVariant.LARGE_EHR_FRAGMENT_NO_REF, LargeEhrFragmentNoReferencesContext.builder().build()
         ));
 
         this.transferTrackerService.save(TransferTrackerRecord.builder()
@@ -794,7 +793,7 @@ class RepositoryE2ETest {
                         .senderOdsCode(senderOdsCode)
                         .build());
 
-        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_ONE,
+        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_WITH_REF,
                 LargeEhrFragmentWithReferencesContext.builder()
                         .inboundConversationId(inboundConversationId.toUpperCase())
                         .fragmentMessageId(fragment1MessageId.toUpperCase())
@@ -803,7 +802,7 @@ class RepositoryE2ETest {
                         .senderOdsCode(nhsProperties.getRepoOdsCode())
                         .build());
 
-        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_TWO,
+        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_NO_REF,
                 LargeEhrFragmentNoReferencesContext.builder()
                         .inboundConversationId(inboundConversationId.toUpperCase())
                         .fragmentMessageId(fragment2MessageId.toUpperCase())
