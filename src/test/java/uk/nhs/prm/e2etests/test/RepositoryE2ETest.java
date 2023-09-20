@@ -715,7 +715,9 @@ class RepositoryE2ETest {
         String nhsNumberForTestPatient = "9727018076";
         String previousGpForTestPatient = "M85019";
         String asidCodeForTestPatient = "200000000149";
-        List<String> outboundConversationIds = Stream.generate(() -> (UUID.randomUUID().toString())).limit(20).toList();
+        List<String> outboundConversationIds = Stream.generate(() -> (UUID.randomUUID().toString()))
+                .limit(20)
+                .toList();
 
         outboundConversationIds.forEach(conversationId -> {
             EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext
@@ -728,12 +730,11 @@ class RepositoryE2ETest {
 
             String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
 
-            mhsInboundQueue.sendMessage(ehrRequestMessage, conversationId);
+            this.mhsInboundQueue.sendMessage(ehrRequestMessage, conversationId);
         });
 
         boolean messagesExist = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(
-                20,
-                0,
+                20, 0,
                 outboundConversationIds
         );
 
