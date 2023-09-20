@@ -115,10 +115,10 @@ public class RepositoryPerformanceTest {
 
         this.mhsInboundQueue.sendMessage(continueRequestMessage, outboundConversationId);
 
-        boolean messagesExist = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(1, 100,
+        boolean messagesFound = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(1, 100,
                 List.of(outboundConversationId));
 
         // then
-        assertTrue(messagesExist);
+        assertTrue(messagesFound);
     }
 }
