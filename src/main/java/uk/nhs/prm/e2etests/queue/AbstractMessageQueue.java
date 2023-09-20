@@ -36,6 +36,12 @@ public abstract class AbstractMessageQueue {
     protected final SqsService sqsService;
     protected final String queueUri;
 
+    public boolean getAllMessagesFromQueueWithConversationIds(int expectedNumberOfEhrCores,
+                                                             int expectedNumberOfEhrFragments,
+                                                             List<String> outboundConversationIds) {
+        return this.sqsService.getAllMessagesFromQueue(expectedNumberOfEhrCores, expectedNumberOfEhrFragments, outboundConversationIds, this.queueUri);
+    }
+
     protected AbstractMessageQueue(SqsService sqsService, String queueUri) {
         this.sqsService = sqsService;
         this.queueUri = queueUri;
