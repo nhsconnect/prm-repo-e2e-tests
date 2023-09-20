@@ -1,12 +1,7 @@
 package uk.nhs.prm.e2etests.test;
 
 import lombok.extern.log4j.Log4j2;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Named;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,6 +49,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
@@ -714,6 +710,7 @@ class RepositoryE2ETest {
     }
 
     @Test
+    @Timeout(value = 60, unit = SECONDS)
     void shouldTransferOut20EHRsWithin1Minute() {
         String nhsNumberForTestPatient = "9727018076";
         String previousGpForTestPatient = "M85019";
