@@ -90,12 +90,12 @@ public class RepositoryPerformanceTest {
     }
 
     @Test
-    void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_SuccessfullyVisibleOnGp2gpMessengerOQ() {
+    void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ() {
         // given
         String patientNhsNumber = "9727018157";
         EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
                 .nhsNumber(patientNhsNumber)
-                .newGpOdsCode(TPP_PTL_INT.odsCode())
+                .sendingOdsCode(TPP_PTL_INT.odsCode())
                 .asidCode(TPP_PTL_INT.asidCode()).build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
         String outboundConversationId = ehrRequestTemplateContext.getOutboundConversationId();
