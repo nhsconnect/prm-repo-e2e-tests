@@ -113,7 +113,7 @@ public class RepoService {
             inboundConversationId = inboundConversationId.toUpperCase();
 
         for (int i = 0; i < fragmentMessageIds.size(); i++) {
-            final LargeEhrFragmentNoReferencesContext context = LargeEhrFragmentNoReferencesContext.builder() // TODO: CREATE A CONTEXT FOR 4MB
+            final LargeEhrFragmentNoReferencesContext context = LargeEhrFragmentNoReferencesContext.builder()
                     .inboundConversationId(inboundConversationId)
                     .fragmentMessageId(fragmentMessageIds.get(i))
                     .senderOdsCode(senderOdsCode)
