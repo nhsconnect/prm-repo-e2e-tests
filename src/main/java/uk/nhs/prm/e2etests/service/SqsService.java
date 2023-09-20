@@ -77,7 +77,9 @@ public class SqsService {
 
         try {
             while(!allMessagesFound) {
-                final List<Message> foundMessages = this.sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUri).maxNumberOfMessages(10).build()).messages().stream()
+                final List<Message> foundMessages = this.sqsClient.receiveMessage(ReceiveMessageRequest.builder()
+                                .queueUrl(queueUri)
+                                .maxNumberOfMessages(10).build()).messages().stream()
                         .filter(message -> StringUtils.containsAnyIgnoreCase(message.body(), filterCriteria))
                         .toList();
 
