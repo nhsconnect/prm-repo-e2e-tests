@@ -26,12 +26,7 @@ import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.Acknowledgement;
 import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
-import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
-import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrCoreTemplateContext;
-import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentWithReferencesContext;
-import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentNoReferencesContext;
-import uk.nhs.prm.e2etests.model.templatecontext.SmallEhrTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.*;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
@@ -520,7 +515,7 @@ class RepositoryE2ETest {
         String patientNhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
                 .nhsNumber(patientNhsNumber)
-                .newGpOdsCode(TPP_PTL_INT.odsCode())
+                .sendingOdsCode(TPP_PTL_INT.odsCode())
                 .asidCode(TPP_PTL_INT.asidCode()).build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
         String conversationId = templateContext.getOutboundConversationId();
@@ -800,7 +795,7 @@ class RepositoryE2ETest {
                         .build());
 
         String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_ONE,
-                LargeEhrFragmentOneContext.builder()
+                LargeEhrFragmentWithReferencesContext.builder()
                         .inboundConversationId(inboundConversationId.toUpperCase())
                         .fragmentMessageId(fragment1MessageId.toUpperCase())
                         .fragmentTwoMessageId(fragment2MessageId.toUpperCase())
@@ -809,7 +804,7 @@ class RepositoryE2ETest {
                         .build());
 
         String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_TWO,
-                LargeEhrFragmentTwoContext.builder()
+                LargeEhrFragmentNoReferencesContext.builder()
                         .inboundConversationId(inboundConversationId.toUpperCase())
                         .fragmentMessageId(fragment2MessageId.toUpperCase())
                         .recipientOdsCode(recipientOdsCode)
@@ -869,7 +864,7 @@ class RepositoryE2ETest {
         mhsInboundQueue.sendMessage(continueRequest, outboundConversationId);
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        List<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
+        Set<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
 
         assertThat(allFragments.size()).isEqualTo(2);
 
