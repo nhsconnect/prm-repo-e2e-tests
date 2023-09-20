@@ -92,9 +92,9 @@ public class RepositoryPerformanceTest {
     @Test
     void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ() {
         // given
-        String patientNhsNumber = "9727018157";
+        String nhsNumber = "9727018157";
         EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
-                .nhsNumber(patientNhsNumber)
+                .nhsNumber(nhsNumber)
                 .sendingOdsCode(TPP_PTL_INT.odsCode())
                 .asidCode(TPP_PTL_INT.asidCode()).build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
@@ -108,7 +108,7 @@ public class RepositoryPerformanceTest {
         String continueRequestMessage = this.templatingService.getTemplatedString(CONTINUE_REQUEST, continueRequestTemplateContext);
 
         // when
-        this.repoService.addLargeEhrWithVariableManifestToRepo(patientNhsNumber, 100, TPP_PTL_INT.odsCode());
+        this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100, TPP_PTL_INT.odsCode());
         this.mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
 
         sleepFor( 10000);
