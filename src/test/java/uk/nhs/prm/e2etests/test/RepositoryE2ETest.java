@@ -57,6 +57,9 @@ import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.EMIS_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.MessageType.*;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.*;
+import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_REQUEST_SENT;
+import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_TRANSFER_TO_REPO_COMPLETE;
+import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR;
@@ -64,7 +67,6 @@ import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.*;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUuidAsString;
 
 @Log4j2
 @SpringBootTest
@@ -89,9 +91,12 @@ class RepositoryE2ETest {
     private final EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ;
     private final EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ;
     private final EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue;
-
     private final Gp2gpMessengerProperties gp2GpMessengerProperties;
     private final NhsProperties nhsProperties;
+
+    // Constants
+    private static final int EHR_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS = 500;
+    private static final int CONTINUE_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS = 3000;
 
     @Autowired
     public RepositoryE2ETest(
@@ -270,8 +275,8 @@ class RepositoryE2ETest {
                 .build());
 
         List<String> largeEhrFragments = this.templatingService.getMultipleTemplatedStrings(Map.of(
-                TemplateVariant.LARGE_EHR_FRAGMENT_ONE, LargeEhrFragmentOneContext.builder().build(),
-                TemplateVariant.LARGE_EHR_FRAGMENT_TWO, LargeEhrFragmentTwoContext.builder().build()
+                TemplateVariant.LARGE_EHR_FRAGMENT_WITH_REF, LargeEhrFragmentWithReferencesContext.builder().build(),
+                TemplateVariant.LARGE_EHR_FRAGMENT_NO_REF, LargeEhrFragmentNoReferencesContext.builder().build()
         ));
 
         this.transferTrackerService.save(TransferTrackerRecord.builder()
@@ -322,7 +327,7 @@ class RepositoryE2ETest {
         );
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        List<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
+        Set<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
         assertThat(allFragments.size()).isGreaterThanOrEqualTo(2);
 
         String largeEhrFragment1Payload = getPayloadOptional(largeEhrFragments.get(0)).orElseThrow();
@@ -502,13 +507,14 @@ class RepositoryE2ETest {
         assertThat(outboundEhrCore).contains(EHR_CORE.interactionId);
     }
 
+
     @Test
     void shouldSuccessfullyParseASmallEhrWith99Attachments() {
         // given
         String patientNhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
                 .nhsNumber(patientNhsNumber)
-                .newGpOdsCode(TPP_PTL_INT.odsCode())
+                .sendingOdsCode(TPP_PTL_INT.odsCode())
                 .asidCode(TPP_PTL_INT.asidCode()).build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
         String conversationId = templateContext.getOutboundConversationId();
@@ -787,8 +793,8 @@ class RepositoryE2ETest {
                         .senderOdsCode(senderOdsCode)
                         .build());
 
-        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_ONE,
-                LargeEhrFragmentOneContext.builder()
+        String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_WITH_REF,
+                LargeEhrFragmentWithReferencesContext.builder()
                         .inboundConversationId(inboundConversationId.toUpperCase())
                         .fragmentMessageId(fragment1MessageId.toUpperCase())
                         .fragmentTwoMessageId(fragment2MessageId.toUpperCase())
@@ -796,8 +802,8 @@ class RepositoryE2ETest {
                         .senderOdsCode(nhsProperties.getRepoOdsCode())
                         .build());
 
-        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_TWO,
-                LargeEhrFragmentTwoContext.builder()
+        String largeEhrFragment2 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_NO_REF,
+                LargeEhrFragmentNoReferencesContext.builder()
                         .inboundConversationId(inboundConversationId.toUpperCase())
                         .fragmentMessageId(fragment2MessageId.toUpperCase())
                         .recipientOdsCode(recipientOdsCode)
@@ -857,7 +863,7 @@ class RepositoryE2ETest {
         mhsInboundQueue.sendMessage(continueRequest, outboundConversationId);
 
         // get all message fragments from gp2gp-messenger observability queue and compare with inbound fragments
-        List<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
+        Set<SqsMessage> allFragments = gp2gpMessengerOQ.getAllMessagesContaining(EHR_FRAGMENT.interactionId, 2);
 
         assertThat(allFragments.size()).isEqualTo(2);
 
@@ -919,5 +925,25 @@ class RepositoryE2ETest {
             mhsInboundQueue.sendUnexpectedMessage(message);
             assertThat(ehrTransferServiceParsingDeadLetterQueue.getMessageContaining(message)).isNotNull();
         });
+    }
+
+    /**
+     * Sends the EHR Request to the MHS Inbound queue and waits for 3 seconds.
+     * @param message The EHR Request Message.
+     * @param outboundConversationId The Outbound Conversation ID.
+     */
+    private void sendToMhs(String message, String outboundConversationId, MessageType messageType) {
+        if(!messageType.toString().equals("EHR_REQUEST") || !messageType.toString().equals("CONTINUE_REQUEST"))
+            throw new IllegalArgumentException("Message Type must be EHR_REQUEST or CONTINUE_REQUEST.");
+
+        this.mhsInboundQueue.sendMessage(message, outboundConversationId);
+
+        log.info("A {} was sent to the MHS Inbound Queue, Outbound Conversation ID: {}.",
+                messageType.toString(), outboundConversationId);
+
+        switch (messageType) {
+            case EHR_REQUEST -> sleepFor(EHR_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS);
+            case CONTINUE_REQUEST -> sleepFor(CONTINUE_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS);
+        }
     }
 }

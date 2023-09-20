@@ -48,6 +48,16 @@ public class TransferTrackerService {
                         .orElse("entry not found"), containsString(partialStatus));
     }
 
+    public String waitForStatusMatching(String conversationId, String partialStatus, int timeoutMinutes) {
+        return await().atMost(timeoutMinutes, TimeUnit.MINUTES)
+                .with()
+                .pollInterval(2, TimeUnit.SECONDS)
+                .until(() -> transferTrackerDatabaseRepository
+                        .findByConversationId(conversationId)
+                        .map(TransferTrackerRecord::getState)
+                        .orElse("entry not found"), containsString(partialStatus));
+    }
+
     public void save(TransferTrackerRecord entry) {
         transferTrackerDatabaseRepository.save(entry);
     }
