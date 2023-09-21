@@ -23,13 +23,18 @@ import static org.hamcrest.Matchers.equalTo;
 @Log4j2
 public abstract class AbstractMessageQueue {
     private static final String CHECKING_QUEUE_LOG_MESSAGE = "Checking if message is present on: {}";
-
     private static final String CHECKING_QUEUE_LOG_MESSAGE_WITH_SUBSTRING = CHECKING_QUEUE_LOG_MESSAGE + ", with substring {}";
     private static final String DELETE_ALL_MESSAGES_LOG_MESSAGE = "Attempting to delete all messages on: {}";
     private static final String MESSAGE_FOUND_LOG_MESSAGE = "The message has been found on: {}";
 
     protected final SqsService sqsService;
     protected final String queueUri;
+
+    public boolean getAllMessagesFromQueueWithConversationIds(int expectedNumberOfEhrCores,
+                                                             int expectedNumberOfEhrFragments,
+                                                             List<String> outboundConversationIds) {
+        return this.sqsService.getAllMessagesFromQueue(expectedNumberOfEhrCores, expectedNumberOfEhrFragments, outboundConversationIds, this.queueUri);
+    }
 
     protected AbstractMessageQueue(SqsService sqsService, String queueUri) {
         this.sqsService = sqsService;
