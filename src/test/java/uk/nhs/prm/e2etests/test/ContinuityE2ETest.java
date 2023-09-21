@@ -38,9 +38,9 @@ import java.util.Map;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNhsNumber;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomOdsCode;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNhsNumber;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomOdsCode;
 
 @Log4j2
 @SpringBootTest

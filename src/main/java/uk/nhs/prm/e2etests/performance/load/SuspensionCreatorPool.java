@@ -1,7 +1,7 @@
 package uk.nhs.prm.e2etests.performance.load;
 
 import uk.nhs.prm.e2etests.performance.NemsTestEvent;
-import uk.nhs.prm.e2etests.utility.NhsIdentityUtility;
+import uk.nhs.prm.e2etests.utility.TestDataUtility;
 
 public class SuspensionCreatorPool implements Pool<NemsTestEvent> {
     private final Pool<String> nhsNumberPool;
@@ -12,7 +12,7 @@ public class SuspensionCreatorPool implements Pool<NemsTestEvent> {
 
     public NemsTestEvent next() {
         String nhsNumber = nhsNumberPool.next();
-        String nemsMessageId = NhsIdentityUtility.randomNemsMessageId();
+        String nemsMessageId = TestDataUtility.randomNemsMessageId();
         return NemsTestEvent.suspensionEvent(nhsNumber, nemsMessageId);
     }
 }
