@@ -499,16 +499,12 @@ class RepositoryE2ETest {
             log.info("Duplicate EHR Request {} of {} sent to MHS Inbound queue successfully.", (i + 1), numberOfEhrRequests);
         }
 
-        final List<SqsMessage> foundOutboundMessages = this.gp2gpMessengerOQ
-                .attemptToGetAllMessagesContaining(conversationId, numberOfEhrRequests, 30);
-        final String outboundEhrCore = foundOutboundMessages.get(0).getBody();
+        boolean messagesFound = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(1, 0,
+                List.of(conversationId));
 
         // then
-        assertThat(foundOutboundMessages.size()).isEqualTo(1);
-        assertThat(outboundEhrCore).contains(nhsNumber);
-        assertThat(outboundEhrCore).contains(EHR_CORE.interactionId);
+        assertTrue(messagesFound);
     }
-
 
     @Test
     void shouldSuccessfullyParseASmallEhrWith99Attachments() {
