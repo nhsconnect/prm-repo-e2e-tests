@@ -924,9 +924,8 @@ class RepositoryE2ETest {
     @Test
     @Timeout(value = 60, unit = SECONDS)
     void shouldTransferOut20EHRsWithin1Minute() {
-        String nhsNumberForTestPatient = "9727018076";
-        String previousGpForTestPatient = "M85019";
-        String asidCodeForTestPatient = "200000000149";
+        String nhsNumber = "9727018076";
+        String asidCode = "200000000149";
         List<String> outboundConversationIds = Stream.generate(() -> (UUID.randomUUID().toString()))
                 .limit(20)
                 .toList();
@@ -935,9 +934,9 @@ class RepositoryE2ETest {
             EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext
                     .builder()
                     .outboundConversationId(conversationId.toUpperCase())
-                    .nhsNumber(nhsNumberForTestPatient)
-                    .newGpOdsCode(previousGpForTestPatient)
-                    .asidCode(asidCodeForTestPatient)
+                    .nhsNumber(nhsNumber)
+                    .sendingOdsCode(TPP_PTL_INT.odsCode())
+                    .asidCode(asidCode)
                     .build();
 
             String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
