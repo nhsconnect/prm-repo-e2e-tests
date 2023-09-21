@@ -89,8 +89,8 @@ public class SqsService {
                     deleteMessages(foundMessages, queueUri);
                     emptyResponseCount = 0;
 
-                    log.info("{} of {} message(s) found with Outbound Conversation IDs provided, and deleted them.",
-                            allMessages.size(), totalNumberOfMessages);
+                    log.info("{} of {} message(s) found with Outbound Conversation IDs {}, and deleted them.",
+                            allMessages.size(), totalNumberOfMessages, outboundConversationIds.toString());
 
                     if(allMessages.size() == totalNumberOfMessages) allMessagesFound = true;
                 } else {
@@ -108,86 +108,6 @@ public class SqsService {
         log.info("Operation summary: {} EHR core(s), {} fragment(s) found.", ehrCoresFound, ehrFragmentsFound);
 
         return (ehrCoresFound + ehrFragmentsFound) == totalNumberOfMessages;
-    }
-
-    /**
-     * This method deletes n given messages.
-     * @param messages A List of messages to delete.
-     * @param queueUri The URI of the queue to delete the messages from.
-     */
-    private void deleteMessages(List<Message> messages, String queueUri) {
-        final List<DeleteMessageBatchRequestEntry> deleteMessageBatchRequestEntries = messages
-                .stream()
-                .map(message -> DeleteMessageBatchRequestEntry.builder()
-                        .id(message.messageId())
-                        .receiptHandle(message.receiptHandle())
-                        .build())
-                .toList();
-
-        final DeleteMessageBatchRequest deleteMessageBatchRequest = DeleteMessageBatchRequest.builder()
-                .entries(deleteMessageBatchRequestEntries)
-                .queueUrl(queueUri).build();
-
-        this.sqsClient.deleteMessageBatch(deleteMessageBatchRequest);
-    }
-
-    /**
-     * This method has a complexity of O(N), where N is
-     * expectedNumberOfEhrCores + expectedNumberOfFragments,
-     * the total number of messages to be received and filtered.
-     * @param queueUri The URI of the Amazon SQS Queue.
-     * @param expectedNumberOfEhrCores The number of cores we are expecting.
-     * @param expectedNumberOfEhrFragments The number of fragments we are expecting.
-     * @param outboundConversationIds The outboundConversationId.
-     * @return If all the messages were found successfully.
-     */
-    public boolean getAllMessagesFromQueue(int expectedNumberOfEhrCores,
-                                           int expectedNumberOfEhrFragments,
-                                           List<String> outboundConversationIds,
-                                           String queueUri) {
-        final CharSequence[] filterCriteria = outboundConversationIds.toArray(new CharSequence[0]);
-        int totalNumberOfMessages = expectedNumberOfEhrCores + expectedNumberOfEhrFragments;
-        final List<Message> allMessages = new ArrayList<>();
-        boolean allMessagesFound = false;
-
-        int emptyResponseCount = 0;
-        int ehrCoreCount = 0;
-        int ehrFragmentCount = 0;
-
-        log.info("Waiting for {} seconds for message(s) to hit queue {}.", (INITIAL_DELAY_MILLISECONDS / 1000), queueUri);
-
-        sleepFor(INITIAL_DELAY_MILLISECONDS);
-
-        try {
-            while(!allMessagesFound) {
-                final List<Message> foundMessages = this.sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUri).maxNumberOfMessages(10).build()).messages().stream()
-                        .filter(message -> StringUtils.containsAnyIgnoreCase(message.body(), filterCriteria))
-                        .toList();
-
-                if(!foundMessages.isEmpty()) {
-                    allMessages.addAll(foundMessages);
-                    deleteMessages(foundMessages, queueUri);
-                    emptyResponseCount = 0;
-
-                    log.info("{} of {} message(s) found with Outbound Conversation IDs {}, and deleted them.",
-                            allMessages.size(), totalNumberOfMessages, outboundConversationIds.toString());
-
-                    if(allMessages.size() == totalNumberOfMessages) allMessagesFound = true;
-                } else {
-                    ++emptyResponseCount;
-                    if(emptyResponseCount >= SQS_EMPTY_RESPONSE_LIMIT) throw new MaxQueueEmptyResponseException();
-                }
-            }
-        } catch (SqsException exception) {
-            throw new ServiceException(this.getClass().getName(), exception.getMessage());
-        }
-
-        ehrCoreCount += allMessages.stream().filter(message -> message.body().contains(MessageType.EHR_CORE.interactionId)).count();
-        ehrFragmentCount += allMessages.stream().filter(message -> message.body().contains(MessageType.EHR_FRAGMENT.interactionId)).count();
-
-        log.info("Operation summary: {} EHR core(s), {} fragment(s) found.", ehrCoreCount, ehrFragmentCount);
-
-        return (ehrCoreCount + ehrFragmentCount) == totalNumberOfMessages;
     }
 
     /**
