@@ -392,7 +392,9 @@ class RepositoryE2ETest {
     // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
     private Arguments erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId() {
         // The builder by default already generates a random conversation ID, which fulfills the test condition
-        ContinueRequestTemplateContext continueRequestContext = ContinueRequestTemplateContext.builder().build();
+        ContinueRequestTemplateContext continueRequestContext = ContinueRequestTemplateContext.builder()
+                .recipientOdsCode(TPP_PTL_INT.odsCode())
+                .senderOdsCode(EMIS_PTL_INT.odsCode()).build();
 
         String continueRequestMessage = this.templatingService
                 .getTemplatedString(CONTINUE_REQUEST, continueRequestContext);
