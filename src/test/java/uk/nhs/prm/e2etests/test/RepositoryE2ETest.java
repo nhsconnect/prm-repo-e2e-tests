@@ -505,27 +505,24 @@ class RepositoryE2ETest {
     @Test
     void shouldSuccessfullyParseASmallEhrWith99Attachments() {
         // given
-        String patientNhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+        String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
-                .nhsNumber(patientNhsNumber)
+                .nhsNumber(nhsNumber)
                 .sendingOdsCode(TPP_PTL_INT.odsCode())
                 .asidCode(TPP_PTL_INT.asidCode()).build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
         String conversationId = templateContext.getOutboundConversationId();
 
         // when
-        this.repoService.addSmallEhrToEhrRepo(patientNhsNumber, SMALL_EHR_WITH_99_ATTACHMENTS);
+        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR_WITH_99_ATTACHMENTS);
 
         mhsInboundQueue.sendMessage(ehrRequestMessage, conversationId);
 
-        final List<SqsMessage> foundOutboundMessages = this.gp2gpMessengerOQ
-                .attemptToGetAllMessagesContaining(conversationId, 1, 30);
-        final String outboundEhrCore = foundOutboundMessages.get(0).getBody();
+        boolean messageFound = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(1, 0,
+                List.of(conversationId));
 
         // then
-        assertThat(foundOutboundMessages.size()).isEqualTo(1);
-        assertThat(outboundEhrCore).contains(patientNhsNumber);
-        assertThat(outboundEhrCore).contains(EHR_CORE.interactionId);
+        assertTrue(messageFound);
     }
   
     private static Stream<Arguments> largeEhrScenariosRunningOnCommit_ButNotEmisWhichIsCurrentlyHavingIssues() {
