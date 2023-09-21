@@ -25,6 +25,6 @@ public class NemsEventTemplateContext implements TemplateContext {
     @Pattern(regexp = NHS_NUMBER_REGEX, message = "An invalid NHS Number was provided.")
     private String nhsNumber;
 
-    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid previous GP Ods Code was provided.")
-    private String previousGpOdsCode;
+    @Pattern(regexp = ODS_CODE_REGEX, message = "An invalid Recipient Ods Code was provided.")
+    private String recipientOdsCode;
 }

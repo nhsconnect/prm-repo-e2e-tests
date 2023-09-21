@@ -12,18 +12,15 @@ import java.util.UUID;
 public class AcknowledgementRowMapper implements RowMapper<Acknowledgement> {
     @Override
     public Acknowledgement mapRow(ResultSet rs, int rowNum) throws SQLException {
-        Acknowledgement acknowledgement = new Acknowledgement();
-
-        acknowledgement.setMessageId(UUID.fromString(rs.getString("message_id")));
-        acknowledgement.setAcknowledgementTypeCode(rs.getString("acknowledgement_type_code"));
-        acknowledgement.setAcknowledgementDetail(rs.getString("acknowledgement_detail"));
-        acknowledgement.setService(rs.getString("service"));
-        acknowledgement.setReferencedMessageId(rs.getString("referenced_message_id"));
-        acknowledgement.setMessageRef(rs.getString("message_ref"));
-        acknowledgement.setCreatedAt(rs.getTimestamp("created_at"));
-        acknowledgement.setUpdatedAt(rs.getTimestamp("updated_at"));
-        acknowledgement.setDeletedAt(rs.getTimestamp("deleted_at"));
-
-        return acknowledgement;
+        return Acknowledgement.builder()
+                .messageId(UUID.fromString(rs.getString("message_id")))
+                .acknowledgementTypeCode(rs.getString("acknowledgement_type_code"))
+                .acknowledgementDetail(rs.getString("acknowledgement_detail"))
+                .service(rs.getString("service"))
+                .referencedMessageId(rs.getString("message_ref"))
+                .createdAt(rs.getTimestamp("created_at"))
+                .updatedAt(rs.getTimestamp("updated_at"))
+                .deletedAt(rs.getTimestamp("deleted_at"))
+                .build();
     }
 }

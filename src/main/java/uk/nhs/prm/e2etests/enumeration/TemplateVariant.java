@@ -9,8 +9,12 @@ public enum TemplateVariant {
     SMALL_EHR_WITH_LINEBREAKS("small-ehr-with-linebreaks.hbs"),
     SMALL_EHR_WITHOUT_LINEBREAKS("small-ehr-without-linebreaks.hbs"),
     LARGE_EHR_CORE("large-ehr-core.hbs"),
-    LARGE_EHR_FRAGMENT_ONE("large-ehr-fragment-1.hbs"),
-    LARGE_EHR_FRAGMENT_TWO("large-ehr-fragment-2.hbs"),
+    LARGE_EHR_CORE_VARIABLE_MANIFEST("large-ehr-core-variable-manifest.hbs"),
+    LARGE_EHR_FRAGMENT_NO_REF_4MB("large-ehr-fragment-no-ref-4mb.hbs"),
+    LARGE_EHR_FRAGMENT_WITH_REF("large-ehr-fragment-with-ref.hbs"),
+    LARGE_EHR_FRAGMENT_NO_REF("large-ehr-fragment-no-ref.hbs"),
+    POSITIVE_ACKNOWLEDGEMENT("positive-acknowledgement.hbs"),
+    NEGATIVE_ACKNOWLEDGEMENT("negative-acknowledgement.hbs"),
 
     // NEMS event xml
     CHANGE_OF_GP_NON_SUSPENSION("change-of-gp-non-suspension.hbs"),

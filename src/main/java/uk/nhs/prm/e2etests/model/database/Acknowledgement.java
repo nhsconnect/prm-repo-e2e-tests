@@ -1,11 +1,15 @@
 package uk.nhs.prm.e2etests.model.database;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Builder;
+import lombok.AllArgsConstructor;
 
 import java.sql.Timestamp;
 import java.util.UUID;
 
-@Data
+@Getter
+@Builder
+@AllArgsConstructor
 public class Acknowledgement {
     private UUID messageId;
     private String acknowledgementTypeCode;

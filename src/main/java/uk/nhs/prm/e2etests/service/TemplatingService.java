@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 import static uk.nhs.prm.e2etests.enumeration.TemplateDirectory.HANDLEBARS_TEMPLATES;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.NhsIdentityUtility.randomNhsNumber;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNhsNumber;
 import static uk.nhs.prm.e2etests.utility.ResourceUtility.readTestResourceFile;
 
 @Service
@@ -53,7 +53,7 @@ public class TemplatingService {
         final NemsEventTemplateContext nemsEventTemplateContext = NemsEventTemplateContext.builder()
             .nhsNumber(suspendedPatientNhsNumber)
             .nemsMessageId(nemsMessageId)
-            .previousGpOdsCode(previousGp)
+            .recipientOdsCode(previousGp)
             .lastUpdated(timestamp)
             .build();
 
