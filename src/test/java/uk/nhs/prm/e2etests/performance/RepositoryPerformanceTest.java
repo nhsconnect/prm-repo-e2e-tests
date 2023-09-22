@@ -95,34 +95,26 @@ public class RepositoryPerformanceTest {
 
     @Test
     void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ() {
-        // given
-        String nhsNumber = "9727018157";
-        EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
-                .nhsNumber(nhsNumber)
-                .sendingOdsCode(TPP_PTL_INT.odsCode())
-                .asidCode(TPP_PTL_INT.asidCode()).build();
-        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
-        String outboundConversationId = ehrRequestTemplateContext.getOutboundConversationId();
-        log.info("The Outbound Conversation ID is: " + outboundConversationId);
-        ContinueRequestTemplateContext continueRequestTemplateContext =
-                ContinueRequestTemplateContext.builder()
-                        .outboundConversationId(outboundConversationId)
-                        .recipientOdsCode(Gp2GpSystem.REPO_DEV.odsCode())
-                        .senderOdsCode(TPP_PTL_INT.odsCode()).build();
-        String continueRequestMessage = this.templatingService.getTemplatedString(CONTINUE_REQUEST, continueRequestTemplateContext);
+        // Constants
+        final String nhsNumber = "9727018157";
 
-        // when
+        // Given
+        String outboundConversationId = randomUuidAsString();
+        EhrRequest ehrRequest = this.buildEhrRequest(nhsNumber, outboundConversationId, TPP_PTL_INT.odsCode(), TPP_PTL_INT.asidCode());
+        ContinueRequest continueRequest = this.buildContinueRequest(outboundConversationId, Gp2GpSystem.REPO_DEV.odsCode(), TPP_PTL_INT.odsCode());
+
+        // When
         this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100, TPP_PTL_INT.odsCode());
-        this.mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+        this.mhsInboundQueue.sendMessage(ehrRequest.getMessage(), outboundConversationId);
 
         sleepFor(10000);
 
-        this.mhsInboundQueue.sendMessage(continueRequestMessage, outboundConversationId);
+        this.mhsInboundQueue.sendMessage(continueRequest.getMessage(), outboundConversationId);
 
         boolean messagesFound = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(1, 100,
                 List.of(outboundConversationId));
 
-        // then
+        // Then
         assertTrue(messagesFound);
     }
 
@@ -135,31 +127,30 @@ public class RepositoryPerformanceTest {
 
         // Given
         String outboundConversationId = randomUuidAsString();
-        final EhrRequest ehrRequest = this.buildEhrRequest(nhsNumber, outboundConversationId, TPP_PTL_INT.odsCode(), TPP_PTL_INT.asidCode());
-        final ContinueRequest continueRequest = buildContinueRequest(outboundConversationId, Gp2GpSystem.REPO_DEV.odsCode(), TPP_PTL_INT.odsCode());
+        EhrRequest ehrRequest = this.buildEhrRequest(nhsNumber, outboundConversationId, TPP_PTL_INT.odsCode(), TPP_PTL_INT.asidCode());
+        ContinueRequest continueRequest = this.buildContinueRequest(outboundConversationId, Gp2GpSystem.REPO_DEV.odsCode(), TPP_PTL_INT.odsCode());
         final List<Boolean> assertions = new ArrayList<>();
 
         // when
-        for(int i = 0; i < numberOfEhrs; i++) {
+        for (int i = 0; i < numberOfEhrs; i++) {
             this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, numberOfFragments, TPP_PTL_INT.odsCode());
             log.info("\n\nLarge EHR {} of {} with {} fragments added to the repository successfully.\n", (i + 1), numberOfEhrs, numberOfFragments);
         }
 
-        for(int i = 0; i < numberOfEhrs; i++) {
+        for (int i = 0; i < numberOfEhrs; i++) {
+            sleepFor(10000); // Wait for the initial minute as per ticket requirements.
+
             this.mhsInboundQueue.sendMessage(ehrRequest.getMessage(), outboundConversationId);
-            sleepFor(10000);
+            sleepFor(10000); // Give it time to get through the system.
             this.mhsInboundQueue.sendMessage(continueRequest.getMessage(), outboundConversationId);
 
             assertions.add(this.gp2gpMessengerOQ
                     .getAllMessagesFromQueueWithConversationIds(1, 5, List.of()));
-
-            sleepFor(10000);
         }
 
         // then
         assertFalse(assertions.contains(false));
     }
-
 
     // Helper Methods
 
