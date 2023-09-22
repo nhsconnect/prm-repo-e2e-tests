@@ -89,8 +89,8 @@ public class SqsService {
                     deleteMessages(foundMessages, queueUri);
                     emptyResponseCount = 0;
 
-                    log.info("{} of {} message(s) found with Outbound Conversation IDs {}, and deleted them.",
-                            allMessages.size(), totalNumberOfMessages, outboundConversationIds.toString());
+                    log.info("{} of {} message(s) found with the provided Outbound Conversation ID(s), and deleted them.",
+                            allMessages.size(), totalNumberOfMessages);
 
                     if(allMessages.size() == totalNumberOfMessages) allMessagesFound = true;
                 } else {
