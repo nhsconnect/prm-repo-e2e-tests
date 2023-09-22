@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
+import uk.nhs.prm.e2etests.model.ContinueRequest;
+import uk.nhs.prm.e2etests.model.EhrRequest;
 import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
@@ -23,12 +25,15 @@ import uk.nhs.prm.e2etests.service.RepoService;
 import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUuidAsString;
 import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
 @Log4j2
@@ -36,8 +41,7 @@ import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 public class RepositoryPerformanceTest {
-    // TODO: Migrate all necessary tests from RepoInPerformanceTest here.
-
+    // Beans
     private final RepoService repoService;
     private final TemplatingService templatingService;
     private final SimpleAmqpQueue mhsInboundQueue;
@@ -99,7 +103,7 @@ public class RepositoryPerformanceTest {
                 .asidCode(TPP_PTL_INT.asidCode()).build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
         String outboundConversationId = ehrRequestTemplateContext.getOutboundConversationId();
-        log.info("OutboundConversationID: " + outboundConversationId);
+        log.info("The Outbound Conversation ID is: " + outboundConversationId);
         ContinueRequestTemplateContext continueRequestTemplateContext =
                 ContinueRequestTemplateContext.builder()
                         .outboundConversationId(outboundConversationId)
@@ -120,5 +124,90 @@ public class RepositoryPerformanceTest {
 
         // then
         assertTrue(messagesFound);
+    }
+
+    @Test
+    void Given_30LargeEhrsWith5FragmentsEach_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ() {
+        // Constants
+        final int numberOfEhrs = 30;
+        final int numberOfFragments = 5;
+        final String nhsNumber = "9727018157";
+
+        // Given
+        String outboundConversationId = randomUuidAsString();
+        final EhrRequest ehrRequest = this.buildEhrRequest(nhsNumber, outboundConversationId, TPP_PTL_INT.odsCode(), TPP_PTL_INT.asidCode());
+        final ContinueRequest continueRequest = buildContinueRequest(outboundConversationId, Gp2GpSystem.REPO_DEV.odsCode(), TPP_PTL_INT.odsCode());
+        final List<Boolean> assertions = new ArrayList<>();
+
+        // when
+        for(int i = 0; i < numberOfEhrs; i++) {
+            this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, numberOfFragments, TPP_PTL_INT.odsCode());
+            log.info("\n\nLarge EHR {} of {} with {} fragments added to the repository successfully.\n", (i + 1), numberOfEhrs, numberOfFragments);
+        }
+
+        for(int i = 0; i < numberOfEhrs; i++) {
+            this.mhsInboundQueue.sendMessage(ehrRequest.getMessage(), outboundConversationId);
+            sleepFor(10000);
+            this.mhsInboundQueue.sendMessage(continueRequest.getMessage(), outboundConversationId);
+
+            assertions.add(this.gp2gpMessengerOQ
+                    .getAllMessagesFromQueueWithConversationIds(1, 5, List.of()));
+
+            sleepFor(10000);
+        }
+
+        // then
+        assertFalse(assertions.contains(false));
+    }
+
+
+    // Helper Methods
+
+    /**
+     * Generates an `EhrRequest` object, which contains the Outbound Conversation ID
+     * and the generated message.
+     * @param nhsNumber The patient NHS Number.
+     * @param sendingOdsCode The sending ODS Code.
+     * @param asidCode The ASID Code.
+     * @return The created `EhrRequest` instance.
+     */
+    private EhrRequest buildEhrRequest(String nhsNumber,
+                                       String outboundConversationId,
+                                       String sendingOdsCode,
+                                       String asidCode) {
+        final EhrRequestTemplateContext context =
+                EhrRequestTemplateContext.builder()
+                        .nhsNumber(nhsNumber)
+                        .outboundConversationId(outboundConversationId)
+                        .sendingOdsCode(sendingOdsCode)
+                        .asidCode(asidCode).build();
+
+        log.info("The Outbound Conversation ID is: {}.", context.getOutboundConversationId());
+
+        return EhrRequest.builder()
+                .outboundConversationId(context.getOutboundConversationId())
+                .message(this.templatingService.getTemplatedString(EHR_REQUEST, context))
+                .build();
+    }
+
+    /**
+     * Generates a `ContinueRequest` object, which contains the generated message.
+     * @param outboundConversationId The Outbound Conversation ID.
+     * @param recipientOdsCode The Recipient ODS Code.
+     * @param senderOdsCode The Sender ODS Code.
+     * @return The created `ContinueRequest` instance.
+     */
+    private ContinueRequest buildContinueRequest(String outboundConversationId,
+                                                 String recipientOdsCode,
+                                                 String senderOdsCode) {
+        final ContinueRequestTemplateContext context =
+                ContinueRequestTemplateContext.builder()
+                .outboundConversationId(outboundConversationId)
+                .recipientOdsCode(recipientOdsCode)
+                .senderOdsCode(senderOdsCode).build();
+
+        return ContinueRequest.builder()
+                .message(this.templatingService.getTemplatedString(CONTINUE_REQUEST, context))
+                .build();
     }
 }
