@@ -80,6 +80,7 @@ public class SqsService {
             while(!allMessagesFound) {
                 final List<Message> foundMessages = this.sqsClient.receiveMessage(ReceiveMessageRequest.builder()
                                 .queueUrl(queueUri)
+                                .waitTimeSeconds(5)
                                 .maxNumberOfMessages(10).build()).messages().stream()
                         .filter(message -> StringUtils.containsAnyIgnoreCase(message.body(), filterCriteria))
                         .toList();

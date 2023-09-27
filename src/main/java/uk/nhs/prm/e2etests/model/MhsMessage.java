@@ -5,6 +5,8 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ContinueRequest {
+public class MhsMessage {
+    private String conversationId;
+    private String messageId;
     private String message;
 }
