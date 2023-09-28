@@ -1,6 +1,6 @@
 package uk.nhs.prm.e2etests.service;
 
-import org.apache.commons.lang3.time.StopWatch;
+import org.springframework.util.StopWatch;
 import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrCoreVariableManifestTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentNoReferencesContext;
 import uk.nhs.prm.e2etests.model.templatecontext.SmallEhrTemplateContext;
@@ -25,7 +25,6 @@ import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.LARGE_EHR_CO
 import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_TRANSFER_TO_REPO_COMPLETE;
 import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.EHR_REQUEST_SENT;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR_WITHOUT_LINEBREAKS;
 import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
 
 @Log4j2
@@ -71,7 +70,7 @@ public class RepoService {
 
         stopWatch.stop();
 
-        log.info("Large EHR with {} fragments added to the repository in {} seconds.", numberOfFragments, (stopWatch.getTime() / 1000));
+        log.info("Large EHR with {} fragments added to the repository in {} seconds.", numberOfFragments, stopWatch.getTotalTimeSeconds());
     }
 
     // =================== HELPER METHODS ===================
