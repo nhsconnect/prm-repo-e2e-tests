@@ -30,6 +30,6 @@ pipelines:
   repo_out_perf_evening:
     <<: *pipeline-template
     timer:
-      spec: "0 20 14 ? * *"
+      spec: "0 35 14 ? * *"
     environment_variables:
       NHS_ENVIRONMENT: dev
