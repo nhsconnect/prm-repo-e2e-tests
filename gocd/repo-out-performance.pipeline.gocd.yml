@@ -2,7 +2,7 @@ format_version: 4
 
 common:
   pipeline-template: &pipeline-template
-    group: Scheduled Performance Tests
+    group: Scheduled ORC Out Performance Tests
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
