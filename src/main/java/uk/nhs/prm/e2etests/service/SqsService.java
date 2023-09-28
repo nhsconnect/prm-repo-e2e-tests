@@ -80,6 +80,7 @@ public class SqsService {
             while(!allMessagesFound) {
                 final List<Message> foundMessages = this.sqsClient.receiveMessage(ReceiveMessageRequest.builder()
                                 .queueUrl(queueUri)
+                                .waitTimeSeconds(5)
                                 .maxNumberOfMessages(10).build()).messages().stream()
                         .filter(message -> StringUtils.containsAnyIgnoreCase(message.body(), filterCriteria))
                         .toList();
@@ -89,8 +90,8 @@ public class SqsService {
                     deleteMessages(foundMessages, queueUri);
                     emptyResponseCount = 0;
 
-                    log.info("{} of {} message(s) found with Outbound Conversation IDs {}, and deleted them.",
-                            allMessages.size(), totalNumberOfMessages, outboundConversationIds.toString());
+                    log.info("{} of {} message(s) found with the provided Outbound Conversation ID(s), and deleted them.",
+                            allMessages.size(), totalNumberOfMessages);
 
                     if(allMessages.size() == totalNumberOfMessages) allMessagesFound = true;
                 } else {
