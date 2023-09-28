@@ -2,7 +2,7 @@ format_version: 4
 
 common:
   pipeline-template: &pipeline-template
-    group: Scheduled ORC Out Performance Tests
+    group: scheduled-orc-out-performance
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
@@ -30,6 +30,6 @@ pipelines:
   repo_out_perf_evening:
     <<: *pipeline-template
     timer:
-      spec: "0 35 14 ? * *"
+      spec: "0 20 15 ? * *"
     environment_variables:
       NHS_ENVIRONMENT: dev
