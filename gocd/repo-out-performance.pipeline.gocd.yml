@@ -1,0 +1,35 @@
+format_version: 4
+
+common:
+  pipeline-template: &pipeline-template
+    group: Scheduled Performance Tests
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    stages:
+      - performance:
+          clean_workspace: true
+          jobs:
+            performance_test:
+              artifacts:
+                - build:
+                    source: build/reports/tests/
+              tabs:
+                TestReport: test/index.html
+              resources:
+                - docker
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_repo_out_performance
+
+pipelines:
+  repo_out_perf_evening:
+    <<: *pipeline-template
+    timer:
+      spec: "0 20 14 ? * *"
+    environment_variables:
+      NHS_ENVIRONMENT: dev
