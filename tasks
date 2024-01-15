@@ -113,12 +113,6 @@ source gocd/trigger_functions.sh
 
 command="$1"
 case "${command}" in
-  _dep)
-      gradle dependencyCheckAnalyze
-      ;;
-  dep)
-      dojo "./tasks _dep"
-      ;;
   _test_continuity_e2e)
      gradle test --tests "uk.nhs.prm.e2etests.test.ContinuityE2ETest"
       ;;

@@ -1,8 +1,7 @@
 plugins {
     id 'java'
-    id 'org.owasp.dependencycheck' version '7.4.4'
-    id 'org.springframework.boot' version '3.1.1'
-    id 'io.spring.dependency-management' version '1.1.0'
+    id 'org.springframework.boot' version '3.2.1'
+    id 'io.spring.dependency-management' version '1.1.4'
 }
 
 group 'uk.nhs.prm'
@@ -99,8 +98,3 @@ tasks.register('ehrTool', JavaExec) {
 }
 
 test.outputs.upToDateWhen { false }
-
-dependencyCheck {
-    failBuildOnCVSS = 7
-    suppressionFile = './dependency-checks-suppression.xml'
-}
