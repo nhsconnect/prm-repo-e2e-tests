@@ -25,7 +25,7 @@ pipelines:
         stage: deploy
       end-of-transfer-service:
         pipeline: end-of-transfer-service.dev
-        stage: deploy
+        stage: destroy
       ehr-out-service:
         pipeline: ehr-out-service.dev
         stage: deploy
@@ -76,7 +76,7 @@ pipelines:
         stage: deploy
       end-of-transfer-service:
         pipeline: end-of-transfer-service.test
-        stage: deploy
+        stage: destroy
       ehr-out-service:
         pipeline: ehr-out-service.test
         stage: deploy
