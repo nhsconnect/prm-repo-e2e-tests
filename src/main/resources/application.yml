@@ -46,7 +46,7 @@ aws:
 
     queueNames:
       meshForwarder:
-        nemsEventsObservability: mesh-forwarder-nems-events-observability
+        nemsEventsObservability: mesh-forwarder-nems-events-observability-temp
       nemsEventProcessor:
         unhandledEvents: nems-event-processor-unhandled-events
         suspensionsObservability: nems-event-processor-suspensions-observability
@@ -73,6 +73,10 @@ aws:
         transferCompleteObservability: end-of-transfer-service-transfer-complete-observability
       gp2gpMessenger:
         messageSentObservability: hl7-message-sent-observability
+
+    topicNames:
+      meshForwarder:
+          nemsEvents: mesh-forwarder-nems-events-sns-topic
 
     databaseNames:
       transferTrackerDb: ${NHS_ENVIRONMENT}-ehr-transfer-service-transfer-tracker
