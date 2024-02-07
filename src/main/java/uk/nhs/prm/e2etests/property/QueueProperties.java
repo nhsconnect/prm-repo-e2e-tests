@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 @Component
 public class QueueProperties {
     private static final String TEMPLATE_QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/%s/%s-%s";
+    private static final String TEMPLATE_QUEUE_NAME = "%s-%s";
 
     @Value("${aws.configuration.queueNames.meshForwarder.nemsEventsObservability}")
     private String meshForwarderNemsEventsObservabilityQueueName;
@@ -119,6 +120,10 @@ public class QueueProperties {
         return getQueueUrl(meshForwarderNemsEventsObservabilityQueueName);
     }
 
+    public String getMeshForwarderNemsEventsObservabilityQueueName() {
+        return getQueueName(meshForwarderNemsEventsObservabilityQueueName);
+    }
+
     public String getNemsEventProcessorUnhandledEventsQueueUrl() {
         return getQueueUrl(nemsEventProcessorUnhandledEventsQueueName);
     }
@@ -210,6 +215,10 @@ public class QueueProperties {
 
     private String getQueueUrl(String queueName) {
         return String.format(TEMPLATE_QUEUE_URL, this.awsAccountNumber, this.nhsEnvironment, queueName);
+    }
+
+    private String getQueueName(String queueName) {
+        return String.format(TEMPLATE_QUEUE_NAME, this.nhsEnvironment, queueName);
     }
 
     private AmqpEndpoint formatAmqpEndpoint(String endpoint) {
