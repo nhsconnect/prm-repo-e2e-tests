@@ -34,7 +34,7 @@ public class MeshForwarderOQ extends AbstractNemsEventMessageQueue {
     public void init() {
         this.sqsService.createQueue(this.queueProperties.getMeshForwarderNemsEventsObservabilityQueueName());
         this.snsService.subscribeQueueToTopic(
-                this.queueProperties.getMeshForwarderNemsEventsObservabilityQueueUri(),
+                this.queueProperties.getMeshForwarderNemsEventsObservabilityQueueArn(),
                 this.topicProperties.getMeshForwarderNemsEventsTopicArn());
     }
 
