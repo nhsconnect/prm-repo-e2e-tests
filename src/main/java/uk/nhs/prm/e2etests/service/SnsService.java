@@ -20,11 +20,11 @@ public class SnsService {
                 .build();
     }
 
-    public String subscribeQueueToTopic(String queueUrl, String topicArn) {
+    public String subscribeQueueToTopic(String queueArn, String topicArn) {
         SubscribeRequest subscribeRequest = SubscribeRequest.builder()
                 .topicArn(topicArn)
                 .protocol("sqs")
-                .endpoint(queueUrl)
+                .endpoint(queueArn)
                 .returnSubscriptionArn(true)
                 .build();
         SubscribeResponse subscribeResponse = snsCLient.subscribe(subscribeRequest);
