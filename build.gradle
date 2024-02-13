@@ -76,7 +76,14 @@ dependencies {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
+
+    // prevents tests running during build
+    onlyIf {
+        !project.gradle.startParameter.taskNames.contains('build')
+    }
 }
+
+
 
 test {
     testLogging.showStandardStreams = true

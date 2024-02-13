@@ -141,6 +141,14 @@ public class QueueProperties {
         return getQueueUrl(nemsEventProcessorReregistrationObservabilityQueueName);
     }
 
+    public String getNemsEventProcessorReregistrationObservabilityQueueName() {
+        return getQueueName(nemsEventProcessorReregistrationObservabilityQueueName);
+    }
+
+    public String getNemsEventProcessorReregistrationObservabilityQueueArn() {
+        return getQueueArn(nemsEventProcessorReregistrationObservabilityQueueName);
+    }
+
     public String getNemsEventProcessorDlqQueueUrl() {
         return getQueueUrl(nemsEventProcessorDlqQueueName);
     }

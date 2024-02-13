@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
-import uk.nhs.prm.e2etests.service.SsmService;
 
 
 @Component
@@ -14,13 +13,15 @@ public class TopicProperties {
     @Value("${aws.configuration.topicNames.meshForwarder.nemsEvents}")
     private String meshForwarderNemsEventsTopicName;
 
+    @Value("${aws.configuration.topicNames.nemsEventProcessor.reregistration}")
+    private String nemsEventProcessorRegistrationTopicName;
+
     private final String nhsEnvironment;
 
     private final String awsAccountNumber;
 
     @Autowired
     public TopicProperties(
-            SsmService ssmService,
             NhsProperties nhsProperties,
             ActiveRoleArn activeRoleArn
     ) {
@@ -31,6 +32,7 @@ public class TopicProperties {
     public String getMeshForwarderNemsEventsTopicArn() {
         return getTopicArn(meshForwarderNemsEventsTopicName);
     }
+    public String getNemsEventProcessorRegistrationTopicArn() { return getTopicArn(nemsEventProcessorRegistrationTopicName); }
 
     private String getTopicArn(String topicName) {
         return String.format(TEMPLATE_TOPIC_ARN, this.awsAccountNumber, this.nhsEnvironment, topicName);
