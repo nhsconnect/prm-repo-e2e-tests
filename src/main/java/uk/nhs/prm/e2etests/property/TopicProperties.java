@@ -8,7 +8,7 @@ import uk.nhs.prm.e2etests.configuration.ActiveRoleArn;
 
 @Component
 public class TopicProperties {
-    private static final String TEMPLATE_TOPIC_ARN = "arn:aws:sns:eu-west-2:%s:%s-%s";
+    private static final String TEMPLATE_TOPIC_ARN = "arn:aws:sns:eu-west-2:%s:%s";
 
     @Value("${aws.configuration.topicNames.meshForwarder.nemsEvents}")
     private String meshForwarderNemsEventsTopicName;
@@ -16,26 +16,21 @@ public class TopicProperties {
     @Value("${aws.configuration.topicNames.nemsEventProcessor.reregistration}")
     private String nemsEventProcessorRegistrationTopicName;
 
-    private final String nhsEnvironment;
-
     private final String awsAccountNumber;
 
     @Autowired
     public TopicProperties(
-            NhsProperties nhsProperties,
             ActiveRoleArn activeRoleArn
     ) {
-        this.nhsEnvironment = nhsProperties.getNhsEnvironment();
         this.awsAccountNumber = activeRoleArn.getAccountNo();
     }
 
     public String getMeshForwarderNemsEventsTopicArn() {
-        return getTopicArn(meshForwarderNemsEventsTopicName);
+        return formatTopicArn(meshForwarderNemsEventsTopicName);
     }
-    public String getNemsEventProcessorRegistrationTopicArn() { return getTopicArn(nemsEventProcessorRegistrationTopicName); }
+    public String getNemsEventProcessorRegistrationTopicArn() { return formatTopicArn(nemsEventProcessorRegistrationTopicName); }
 
-    private String getTopicArn(String topicName) {
-        return String.format(TEMPLATE_TOPIC_ARN, this.awsAccountNumber, this.nhsEnvironment, topicName);
+    private String formatTopicArn(String topicName) {
+        return String.format(TEMPLATE_TOPIC_ARN, this.awsAccountNumber, topicName);
     }
-
 }
