@@ -33,7 +33,7 @@ aws:
         queue:
           mqAppUsername: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-username
           mqAppPassword: /repo/${NHS_ENVIRONMENT}/user-input/mq-app-password
-          amqpEndpoint: /repo/${NHS_ENVIRONMENT}/output/prm-deductions-infra/amqp-endpoint-0
+          amqpEndpoint: /repo/${NHS_ENVIRONMENT}/output/prm-deductions-infra/amqp-endpoint-1
         safeListedPatients: /repo/${NHS_ENVIRONMENT}/user-input/external/safe-listed-patients-nhs-numbers
 
     # TODO: PRMT-3468 - MAKE USE OF GETENVSUFFIX, NHS_ENV HAS ONLY PROD AND NON PROD
@@ -46,37 +46,50 @@ aws:
 
     queueNames:
       meshForwarder:
-        nemsEventsObservability: mesh-forwarder-nems-events-observability
+        nemsEventsObservability: ${NHS_ENVIRONMENT}-mesh-forwarder-nems-events-observability-temp
       nemsEventProcessor:
-        unhandledEvents: nems-event-processor-unhandled-events
-        suspensionsObservability: nems-event-processor-suspensions-observability
-        reregistrationObservability: nems-event-processor-re-registration-observability
-        dlq: nems-event-processor-dlq
+        unhandledEvents: ${NHS_ENVIRONMENT}-nems-event-processor-unhandled-events
+        suspensionsObservability: ${NHS_ENVIRONMENT}-nems-event-processor-suspensions-observability
+        reregistrationObservability: ${NHS_ENVIRONMENT}-nems-event-processor-re-registration-observability-temp
+        dlq: ${NHS_ENVIRONMENT}-nems-event-processor-dlq
       suspensionsService:
-        suspensions: suspension-service-suspensions
-        repoIncomingObservability: suspension-service-repo-incoming-observability
-        notSuspendedObservability: suspension-service-not-suspended-observability
-        mofUpdated: suspension-service-mof-updated
-        mofNotUpdated: suspension-service-mof-not-updated
-        deceasedPatient: suspension-service-deceased-patient
+        suspensions: ${NHS_ENVIRONMENT}-suspension-service-suspensions
+        repoIncomingObservability: ${NHS_ENVIRONMENT}-suspension-service-repo-incoming-observability
+        notSuspendedObservability: ${NHS_ENVIRONMENT}-suspension-service-not-suspended-observability
+        mofUpdated: ${NHS_ENVIRONMENT}-suspension-service-mof-updated
+        mofNotUpdated: ${NHS_ENVIRONMENT}-suspension-service-mof-not-updated
+        deceasedPatient: ${NHS_ENVIRONMENT}-suspension-service-deceased-patient
       ehrTransferService:
-        repoIncoming: ehr-transfer-service-repo-incoming
-        smallEhrObservability: ehr-transfer-service-small-ehr-observability
-        largeEhrObservability: ehr-transfer-service-large-ehr-observability
-        largeMessageFragmentsObservability: ehr-transfer-service-large-message-fragments-observability
-        unhandledObservability: ehr-transfer-service-unhandled-observability
-        negativeAcknowledgementsObservability: ehr-transfer-service-negative-acknowledgments-observability
-        ehrCompleteObservability: ehr-transfer-service-ehr-complete-observability
-        parsingDlq: ehr-transfer-service-parsing-dlq
+        repoIncoming: ${NHS_ENVIRONMENT}-ehr-transfer-service-repo-incoming
+        smallEhrObservability: ${NHS_ENVIRONMENT}-ehr-transfer-service-small-ehr-observability
+        largeEhrObservability: ${NHS_ENVIRONMENT}-ehr-transfer-service-large-ehr-observability
+        largeMessageFragmentsObservability: ${NHS_ENVIRONMENT}-ehr-transfer-service-large-message-fragments-observability
+        unhandledObservability: ${NHS_ENVIRONMENT}-ehr-transfer-service-unhandled-observability
+        negativeAcknowledgementsObservability: ${NHS_ENVIRONMENT}-ehr-transfer-service-negative-acknowledgments-observability
+        ehrCompleteObservability: ${NHS_ENVIRONMENT}-ehr-transfer-service-ehr-complete-observability
+        parsingDlq: ${NHS_ENVIRONMENT}-ehr-transfer-service-parsing-dlq
       endOfTransferService:
-        mofUpdated: end-of-transfer-service-mof-updated
-        transferCompleteObservability: end-of-transfer-service-transfer-complete-observability
+        mofUpdated: ${NHS_ENVIRONMENT}-end-of-transfer-service-mof-updated
+        transferCompleteObservability: ${NHS_ENVIRONMENT}-end-of-transfer-service-transfer-complete-observability
       gp2gpMessenger:
-        messageSentObservability: hl7-message-sent-observability
+        messageSentObservability: ${NHS_ENVIRONMENT}-hl7-message-sent-observability
+
+    topicNames:
+      meshForwarder:
+          nemsEvents: ${NHS_ENVIRONMENT}-mesh-forwarder-nems-events-sns-topic
+      nemsEventProcessor:
+        reregistration: ${NHS_ENVIRONMENT}-ehr-transfer-service-unhandled-sns-topic
 
     databaseNames:
       transferTrackerDb: ${NHS_ENVIRONMENT}-ehr-transfer-service-transfer-tracker
       activeSuspensionsDb: ${NHS_ENVIRONMENT}-re-registration-service-active-suspensions
+
+    stringTemplates:
+      queue:
+        url: https://sqs.${AWS_REGION:eu-west-2}.amazonaws.com/%s/%s
+        arn: arn:aws:sqs:${AWS_REGION:eu-west-2}:%s:%s
+      topic:
+        arn: arn:aws:sns:${AWS_REGION:eu-west-2}:%s:%s
 
 # NHS Properties
 nhs:

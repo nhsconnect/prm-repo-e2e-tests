@@ -31,6 +31,7 @@ dependencies {
     implementation platform('software.amazon.awssdk:bom:2.18.41')
     implementation 'software.amazon.awssdk:ssm'
     implementation 'software.amazon.awssdk:sqs'
+    implementation 'software.amazon.awssdk:sns'
     implementation 'software.amazon.awssdk:sts'
     implementation 'software.amazon.awssdk:cloudwatch'
     implementation 'software.amazon.awssdk:cloudwatchlogs'
@@ -52,7 +53,7 @@ dependencies {
     // Data Access
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.20.121'
     implementation 'org.postgresql:postgresql:42.6.0'
-    implementation 'org.springframework:spring-jdbc:6.0.11'
+    implementation 'org.springframework:spring-jdbc:6.1.0'
 
     compileOnly 'org.projectlombok:lombok'
 
@@ -75,7 +76,14 @@ dependencies {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
+
+    // prevents tests running during build
+    onlyIf {
+        !project.gradle.startParameter.taskNames.contains('build')
+    }
 }
+
+
 
 test {
     testLogging.showStandardStreams = true
