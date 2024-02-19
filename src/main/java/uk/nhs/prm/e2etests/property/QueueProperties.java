@@ -14,8 +14,12 @@ import java.util.regex.Pattern;
 
 @Component
 public class QueueProperties {
-    private static final String TEMPLATE_QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/%s/%s";
-    private static final String TEMPLATE_QUEUE_ARN = "arn:aws:sqs:eu-west-2:%s:%s";
+
+    @Value("${aws.configuration.stringTemplates.queue.url}")
+    private String TEMPLATE_QUEUE_URL;
+
+    @Value("${aws.configuration.stringTemplates.queue.arn}")
+    private String TEMPLATE_QUEUE_ARN;
 
     @Getter
     @Value("${aws.configuration.queueNames.meshForwarder.nemsEventsObservability}")
@@ -214,15 +218,15 @@ public class QueueProperties {
 
     public AmqpEndpoint getAmqpEndpoint() {
         // In the event this fails, there is also an 'amqp-endpoint-1' in SSM
-        return formatAmqpEndpoint(this.ssmService.getSsmParameterValue(this.amqpEndpoint));
+        return formatAmqpEndpoint(ssmService.getSsmParameterValue(amqpEndpoint));
     }
 
     private String formatQueueUrl(String queueName) {
-        return String.format(TEMPLATE_QUEUE_URL, this.awsAccountNumber, queueName);
+        return String.format(TEMPLATE_QUEUE_URL, awsAccountNumber, queueName);
     }
 
     private String formatQueueArn(String queueName) {
-        return String.format(TEMPLATE_QUEUE_ARN, this.awsAccountNumber, queueName);
+        return String.format(TEMPLATE_QUEUE_ARN, awsAccountNumber, queueName);
     }
     
     private AmqpEndpoint formatAmqpEndpoint(String endpoint) {

@@ -84,6 +84,13 @@ aws:
       transferTrackerDb: ${NHS_ENVIRONMENT}-ehr-transfer-service-transfer-tracker
       activeSuspensionsDb: ${NHS_ENVIRONMENT}-re-registration-service-active-suspensions
 
+    stringTemplates:
+      queue:
+        url: https://sqs.${AWS_REGION:eu-west-2}.amazonaws.com/%s/%s
+        arn: arn:aws:sqs:${AWS_REGION:eu-west-2}:%s:%s
+      topic:
+        arn: arn:aws:sns:${AWS_REGION:eu-west-2}:%s:%s
+
 # NHS Properties
 nhs:
   environment: ${NHS_ENVIRONMENT:dev}
