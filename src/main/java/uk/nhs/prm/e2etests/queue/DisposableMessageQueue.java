@@ -9,12 +9,14 @@ import uk.nhs.prm.e2etests.service.SqsService;
 
 @Component
 public abstract class DisposableMessageQueue extends AbstractMessageQueue {
+
     protected final SqsService sqsService;
     protected final SnsService snsService;
     protected final String queueName;
     protected final String queueArn;
     protected final String queueUrl;
     protected final String topicArn;
+
     @Autowired
     public DisposableMessageQueue(
             SqsService sqsService,
@@ -22,7 +24,8 @@ public abstract class DisposableMessageQueue extends AbstractMessageQueue {
             String queueName,
             String queueArn,
             String queueUrl,
-            String topicArn) {
+            String topicArn
+        ) {
         super(sqsService, queueUrl);
         this.sqsService = sqsService;
         this.snsService = snsService;
@@ -34,14 +37,14 @@ public abstract class DisposableMessageQueue extends AbstractMessageQueue {
 
     @PostConstruct
     public void init() {
-        this.sqsService.createQueue(this.queueName);
-        this.snsService.subscribeQueueToTopic(
-                this.queueArn,
-                this.topicArn);
+        sqsService.createQueue(queueName);
+        snsService.subscribeQueueToTopic(
+                queueArn,
+                topicArn);
     }
 
     @PreDestroy
     public void cleanUp() {
-        this.sqsService.deleteQueue(this.queueUrl);
+        sqsService.deleteQueue(queueUrl);
     }
 }

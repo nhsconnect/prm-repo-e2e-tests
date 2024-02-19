@@ -15,6 +15,7 @@ public abstract class DisposableNemsEventMessageQueue extends AbstractNemsEventM
     protected final String queueArn;
     protected final String queueUrl;
     protected final String topicArn;
+
     @Autowired
     public DisposableNemsEventMessageQueue(
             SqsService sqsService,
@@ -22,7 +23,8 @@ public abstract class DisposableNemsEventMessageQueue extends AbstractNemsEventM
             String queueName,
             String queueArn,
             String queueUrl,
-            String topicArn) {
+            String topicArn
+        ) {
         super(sqsService, queueUrl);
         this.sqsService = sqsService;
         this.snsService = snsService;
@@ -34,14 +36,14 @@ public abstract class DisposableNemsEventMessageQueue extends AbstractNemsEventM
 
     @PostConstruct
     public void init() {
-        this.sqsService.createQueue(this.queueName);
-        this.snsService.subscribeQueueToTopic(
-                this.queueArn,
-                this.topicArn);
+        sqsService.createQueue(queueName);
+        snsService.subscribeQueueToTopic(
+                queueArn,
+                topicArn);
     }
 
     @PreDestroy
     public void cleanUp() {
-        this.sqsService.deleteQueue(this.queueUrl);
+        sqsService.deleteQueue(queueUrl);
     }
 }
