@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.property;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -13,8 +14,14 @@ import java.util.regex.Pattern;
 
 @Component
 public class QueueProperties {
-    private static final String TEMPLATE_QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/%s/%s-%s";
 
+    @Value("${aws.configuration.stringTemplates.queue.url}")
+    private String TEMPLATE_QUEUE_URL;
+
+    @Value("${aws.configuration.stringTemplates.queue.arn}")
+    private String TEMPLATE_QUEUE_ARN;
+
+    @Getter
     @Value("${aws.configuration.queueNames.meshForwarder.nemsEventsObservability}")
     private String meshForwarderNemsEventsObservabilityQueueName;
 
@@ -24,6 +31,7 @@ public class QueueProperties {
     @Value("${aws.configuration.queueNames.nemsEventProcessor.suspensionsObservability}")
     private String nemsEventProcessorSuspensionsObservabilityQueueName;
 
+    @Getter
     @Value("${aws.configuration.queueNames.nemsEventProcessor.reregistrationObservability}")
     private String nemsEventProcessorReregistrationObservabilityQueueName;
 
@@ -90,8 +98,6 @@ public class QueueProperties {
     @Value("${aws.configuration.ssm.parameters.queue.mqAppPassword}")
     private String mqAppPassword;
 
-    private final String nhsEnvironment;
-
     private final String awsAccountNumber;
 
     private final SsmService ssmService;
@@ -103,7 +109,6 @@ public class QueueProperties {
             ActiveRoleArn activeRoleArn
     ) {
         this.ssmService = ssmService;
-        this.nhsEnvironment = nhsProperties.getNhsEnvironment();
         this.awsAccountNumber = activeRoleArn.getAccountNo();
     }
 
@@ -116,102 +121,114 @@ public class QueueProperties {
     }
 
     public String getMeshForwarderNemsEventsObservabilityQueueUri() {
-        return getQueueUrl(meshForwarderNemsEventsObservabilityQueueName);
+        return formatQueueUrl(meshForwarderNemsEventsObservabilityQueueName);
+    }
+
+    public String getMeshForwarderNemsEventsObservabilityQueueArn() {
+        return formatQueueArn(meshForwarderNemsEventsObservabilityQueueName);
     }
 
     public String getNemsEventProcessorUnhandledEventsQueueUrl() {
-        return getQueueUrl(nemsEventProcessorUnhandledEventsQueueName);
+        return formatQueueUrl(nemsEventProcessorUnhandledEventsQueueName);
     }
 
     public String getNemsEventProcessorSuspensionsObservabilityQueueUrl() {
-        return getQueueUrl(nemsEventProcessorSuspensionsObservabilityQueueName);
+        return formatQueueUrl(nemsEventProcessorSuspensionsObservabilityQueueName);
     }
 
     public String getNemsEventProcessorReregistrationObservabilityQueueUrl() {
-        return getQueueUrl(nemsEventProcessorReregistrationObservabilityQueueName);
+        return formatQueueUrl(nemsEventProcessorReregistrationObservabilityQueueName);
+    }
+
+    public String getNemsEventProcessorReregistrationObservabilityQueueArn() {
+        return formatQueueArn(nemsEventProcessorReregistrationObservabilityQueueName);
     }
 
     public String getNemsEventProcessorDlqQueueUrl() {
-        return getQueueUrl(nemsEventProcessorDlqQueueName);
+        return formatQueueUrl(nemsEventProcessorDlqQueueName);
     }
 
     public String getEhrTransferServiceRepoIncomingQueueUrl() {
-        return getQueueUrl(ehrTransferServiceRepoIncomingQueueName);
+        return formatQueueUrl(ehrTransferServiceRepoIncomingQueueName);
     }
 
     public String getSuspensionsServiceSuspensionsQueueUrl() {
-        return getQueueUrl(suspensionsServiceSuspensionsQueueName);
+        return formatQueueUrl(suspensionsServiceSuspensionsQueueName);
     }
 
     public String getSuspensionsServiceRepoIncomingObservabilityQueueUrl() {
-        return getQueueUrl(suspensionsServiceRepoIncomingObservabilityQueueName);
+        return formatQueueUrl(suspensionsServiceRepoIncomingObservabilityQueueName);
     }
 
     public String getSuspensionsServiceNotSuspendedObservabilityQueueUrl() {
-        return getQueueUrl(suspensionsServiceNotSuspendedObservabilityQueueName);
+        return formatQueueUrl(suspensionsServiceNotSuspendedObservabilityQueueName);
     }
 
     public String getSuspensionsServiceMofUpdatedQueueUrl() {
-        return getQueueUrl(suspensionsServiceMofUpdatedQueueName);
+        return formatQueueUrl(suspensionsServiceMofUpdatedQueueName);
     }
 
     public String getSuspensionsServiceMofNotUpdatedQueueUrl() {
-        return getQueueUrl(suspensionsServiceMofNotUpdatedQueueName);
+        return formatQueueUrl(suspensionsServiceMofNotUpdatedQueueName);
     }
 
     public String getSuspensionServiceDeceasedPatientQueueUrl() {
-        return getQueueUrl(suspensionServiceDeceasedPatientQueueName);
+        return formatQueueUrl(suspensionServiceDeceasedPatientQueueName);
     }
 
     public String getEhrTransferServiceSmallEhrObservabilityQueueUrl() {
-        return getQueueUrl(ehrTransferServiceSmallEhrObservabilityQueueName);
+        return formatQueueUrl(ehrTransferServiceSmallEhrObservabilityQueueName);
     }
 
     public String getEhrTransferServiceLargeEhrObservabilityQueueUrl() {
-        return getQueueUrl(ehrTransferServiceLargeEhrObservabilityQueueName);
+        return formatQueueUrl(ehrTransferServiceLargeEhrObservabilityQueueName);
     }
 
     public String getEhrTransferServiceLargeMessageFragmentsObservabilityQueueUrl() {
-        return getQueueUrl(ehrTransferServiceLargeMessageFragmentsObservabilityQueueName);
+        return formatQueueUrl(ehrTransferServiceLargeMessageFragmentsObservabilityQueueName);
     }
 
     public String getEhrTransferServiceUnhandledObservabilityQueueUrl() {
-        return getQueueUrl(ehrTransferServiceUnhandledObservabilityQueueName);
+        return formatQueueUrl(ehrTransferServiceUnhandledObservabilityQueueName);
     }
 
     public String getEhrTransferServiceNegativeAcknowledgementObservabilityQueueUrl() {
-        return getQueueUrl(ehrTransferServiceNegativeAcknowledgementObservabilityQueueName);
+        return formatQueueUrl(ehrTransferServiceNegativeAcknowledgementObservabilityQueueName);
     }
 
     public String getEhrTransferServiceEhrCompleteObservabilityQueueUrl() {
-        return getQueueUrl(ehrTransferServiceEhrCompleteObservabilityQueueName);
+        return formatQueueUrl(ehrTransferServiceEhrCompleteObservabilityQueueName);
     }
 
     public String getEhrTransferServiceParsingDlqQueueUrl() {
-        return getQueueUrl(ehrTransferServiceParsingDlqQueueName);
+        return formatQueueUrl(ehrTransferServiceParsingDlqQueueName);
     }
 
     public String getEndOfTransferServiceMofUpdatedQueueUrl() {
-        return getQueueUrl(endOfTransferServiceMofUpdatedQueueName);
+        return formatQueueUrl(endOfTransferServiceMofUpdatedQueueName);
     }
 
     public String getEndOfTransferServiceTransferCompleteObservabilityQueueUrl() {
-        return getQueueUrl(endOfTransferServiceTransferCompleteObservabilityQueueName);
+        return formatQueueUrl(endOfTransferServiceTransferCompleteObservabilityQueueName);
     }
 
     public String getGp2gpMessengerObservabilityQueueUrl() {
-        return getQueueUrl(gp2gpMessengerObservabilityQueueName);
+        return formatQueueUrl(gp2gpMessengerObservabilityQueueName);
     }
 
     public AmqpEndpoint getAmqpEndpoint() {
         // In the event this fails, there is also an 'amqp-endpoint-1' in SSM
-        return formatAmqpEndpoint(this.ssmService.getSsmParameterValue(this.amqpEndpoint));
+        return formatAmqpEndpoint(ssmService.getSsmParameterValue(amqpEndpoint));
     }
 
-    private String getQueueUrl(String queueName) {
-        return String.format(TEMPLATE_QUEUE_URL, this.awsAccountNumber, this.nhsEnvironment, queueName);
+    private String formatQueueUrl(String queueName) {
+        return String.format(TEMPLATE_QUEUE_URL, awsAccountNumber, queueName);
     }
 
+    private String formatQueueArn(String queueName) {
+        return String.format(TEMPLATE_QUEUE_ARN, awsAccountNumber, queueName);
+    }
+    
     private AmqpEndpoint formatAmqpEndpoint(String endpoint) {
         // Regex is splitting amqp endpoint into protocol://hostname:port
         Pattern endpointRegex = Pattern.compile("(.+)://(.+):(.+)");

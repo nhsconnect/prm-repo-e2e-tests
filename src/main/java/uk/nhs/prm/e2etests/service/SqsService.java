@@ -7,17 +7,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
-import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
-import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
-import software.amazon.awssdk.services.sqs.model.SqsException;
+import software.amazon.awssdk.services.sqs.model.*;
 
 import uk.nhs.prm.e2etests.exception.MaxQueueEmptyResponseException;
 import uk.nhs.prm.e2etests.exception.ServiceException;
@@ -205,5 +195,18 @@ public class SqsService {
                 .dataType("String")
                 .stringValue(attributeValue)
                 .build();
+    }
+
+    public String createQueue(String queueName) {
+        CreateQueueRequest createQueueRequest = CreateQueueRequest.builder().queueName(queueName).build();
+        CreateQueueResponse createQueueResponse = sqsClient.createQueue(createQueueRequest);
+        return createQueueResponse.queueUrl();
+    }
+
+    public void deleteQueue(String queueUrl) {
+        DeleteQueueRequest deleteQueueRequest = DeleteQueueRequest.builder()
+                .queueUrl(queueUrl)
+                .build();
+        sqsClient.deleteQueue(deleteQueueRequest);
     }
 }
