@@ -89,8 +89,11 @@ public class QueueProperties {
     @Value("${aws.configuration.queueNames.gp2gpMessenger.messageSentObservability}")
     private String gp2gpMessengerObservabilityQueueName;
 
-    @Value("${aws.configuration.ssm.parameters.queue.amqpEndpoint}")
-    private String amqpEndpoint;
+    @Value("${aws.configuration.ssm.parameters.queue.amqpEndpoint0}")
+    private String amqpEndpoint0;
+
+    @Value("${aws.configuration.ssm.parameters.queue.amqpEndpoint1}")
+    private String amqpEndpoint1;
 
     @Value("${aws.configuration.ssm.parameters.queue.mqAppUsername}")
     private String mqAppUsername;
@@ -216,9 +219,12 @@ public class QueueProperties {
         return formatQueueUrl(gp2gpMessengerObservabilityQueueName);
     }
 
-    public AmqpEndpoint getAmqpEndpoint() {
-        // In the event this fails, there is also an 'amqp-endpoint-1' in SSM
-        return formatAmqpEndpoint(ssmService.getSsmParameterValue(amqpEndpoint));
+    public AmqpEndpoint getAmqpEndpoint0() {
+        return formatAmqpEndpoint(ssmService.getSsmParameterValue(amqpEndpoint0));
+    }
+
+    public AmqpEndpoint getAmqpEndpoint1() {
+        return formatAmqpEndpoint(ssmService.getSsmParameterValue(amqpEndpoint1));
     }
 
     private String formatQueueUrl(String queueName) {
