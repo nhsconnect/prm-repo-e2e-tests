@@ -31,7 +31,7 @@ class QueuePropertiesTest {
         when(ssmService.getSsmParameterValue(any()))
                 .thenReturn(AMQP_ENDPOINT);
 
-        AmqpEndpoint result = queueProperties.getAmqpEndpoint();
+        AmqpEndpoint result = queueProperties.getAmqpEndpoint0();
 
         // then
         assertEquals(AMQP_ENDPOINT, result.toString());
@@ -44,6 +44,6 @@ class QueuePropertiesTest {
                 .thenReturn(INVALID_ENDPOINT);
 
         // then
-        assertThrows(InvalidAmqpEndpointException.class, () -> queueProperties.getAmqpEndpoint());
+        assertThrows(InvalidAmqpEndpointException.class, () -> queueProperties.getAmqpEndpoint0());
     }
 }
