@@ -6,6 +6,7 @@ import com.swiftmq.amqp.v100.generated.messaging.message_format.AmqpValue;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.nhs.prm.e2etests.exception.GenericException;
+import uk.nhs.prm.e2etests.model.AmqpEndpoint;
 import uk.nhs.prm.e2etests.property.QueueProperties;
 import com.swiftmq.amqp.v100.messaging.AMQPMessage;
 import org.springframework.stereotype.Component;
@@ -71,20 +72,39 @@ public class SimpleAmqpQueue {
         }
     }
 
+    /**
+     * Attempt to connect to the amqpEndpoint0. If this fails, attempt to connect to amqpEndpoint1.
+     * @return The connected message producer if successful.
+     * @throws GenericException if connection to either endpoint fails.
+     */
     private Producer createProducer() {
-        String activeMqHostname = queueProperties.getAmqpEndpoint().getHostname();
-        int activeMqPort = queueProperties.getAmqpEndpoint().getPort();
+        AmqpEndpoint[] amqpEndpoints = {
+                queueProperties.getAmqpEndpoint0(),
+                queueProperties.getAmqpEndpoint1()
+        };
+
+        for (AmqpEndpoint endpoint : amqpEndpoints) {
+            try {
+                Producer producer = connectToEndpoint(endpoint);
+                if (producer != null) {
+                    log.info("Connected to amqp endpoint: {}", endpoint.toString());
+                    return producer;
+                }
+            } catch (Exception e) {
+                log.error("Failed to connect to {}: {}", endpoint.toString(), e.getMessage());
+            }
+        }
+
+        throw new GenericException(this.getClass().getName(), "Failed to connect to any endpoint");
+    }
+
+    private Producer connectToEndpoint(AmqpEndpoint endpoint) throws IOException, AMQPException, AuthenticationException, UnsupportedProtocolVersionException {
         AMQPContext context = new AMQPContext(AMQPContext.CLIENT);
-        Connection connection = new Connection(context, activeMqHostname, activeMqPort, messageQueueUsername, messageQueuePassword);
+        Connection connection = new Connection(context, endpoint.getHostname(), endpoint.getPort(), messageQueueUsername, messageQueuePassword);
         connection.setSocketFactory(new JSSESocketFactory());
 
-        try {
-            connection.connect();
-            Session session = connection.createSession(100, 100);
-            return session.createProducer("inbound", QoS.AT_MOST_ONCE);
-        } catch (IOException | AMQPException | AuthenticationException | UnsupportedProtocolVersionException exception) {
-            log.error(exception.getMessage());
-            throw new GenericException(this.getClass().getName(), exception.getMessage());
-        }
+        connection.connect();
+        Session session = connection.createSession(100, 100);
+        return session.createProducer("inbound", QoS.AT_MOST_ONCE);
     }
 }
