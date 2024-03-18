@@ -52,7 +52,7 @@ dependencies {
 
     // Data Access
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.20.121'
-    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.postgresql:postgresql:42.7.3'
     implementation 'org.springframework:spring-jdbc:6.1.0'
 
     compileOnly 'org.projectlombok:lombok'
