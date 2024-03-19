@@ -5,6 +5,7 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,9 +28,11 @@ import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsing
 import uk.nhs.prm.e2etests.utility.TestDataUtility;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.REPO_DEV;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
@@ -159,6 +162,38 @@ public class RepositoryPerformanceTest {
                 outboundConversationIds);
 
         assertTrue(messagesFound);
+    }
+
+    @Test
+    @Timeout(value = 60, unit = SECONDS)
+    void shouldTransferOut20EHRsWithin1Minute() {
+        String nhsNumber = "9727018076";
+        String asidCode = "200000000149";
+        List<String> outboundConversationIds = Stream.generate(() -> (UUID.randomUUID().toString()))
+                .limit(20)
+                .toList();
+
+        outboundConversationIds.forEach(conversationId -> {
+            EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext
+                    .builder()
+                    .outboundConversationId(conversationId.toUpperCase())
+                    .nhsNumber(nhsNumber)
+                    .sendingOdsCode(TPP_PTL_INT.odsCode())
+                    .asidCode(asidCode)
+                    .build();
+
+            String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
+
+            this.mhsInboundQueue.sendMessage(ehrRequestMessage, conversationId);
+        });
+
+        boolean messagesExist = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(
+                20, 0,
+                outboundConversationIds
+        );
+
+        // then
+        assertTrue(messagesExist);
     }
 
     /**
