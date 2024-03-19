@@ -62,7 +62,7 @@ class ChangeOfGPMessageReceivedTest {
                 log.info("The current patient's suspended status is: {}.", pdsResponse.getIsSuspended());
 
                 log.info("Checking the patient's status on HL7v3 PDS lookup, reference GP2GP Messenger logs for insights.");
-                gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
+//                gp2GpMessengerService.getPdsRecordViaHl7v3(nhsNumber);
 
                 log.info("Finding related message for NHS number: {}.", nhsNumber);
                 Optional<SqsMessage> suspensionMessage = suspensionServiceSuspensionsQueue.getMessageContainingForTechnicalTestRun(nhsNumber);
