@@ -148,7 +148,6 @@ class RepositoryE2ETest {
 
     /**
      * <p>Ensure that a received EHR-out request is identified and forwarded to the ehr-out-service.</p>
-     * <p><i>ORC-OUT.</i></p>
      * <ul>
      *     <li>Simulate the receipt of a GP2GP EHR request message via the mhsInboundQueue to be processed at
      *     the ehr-transfer-service.
@@ -180,7 +179,6 @@ class RepositoryE2ETest {
 
     /**
      * <p>Ensure that a small EHR is successfully transferred in and out of the repository.</p>
-     * <p><i>ORC-IN | ORC-OUT.</i></p>
      * <ul>
      *     <li>Add an entry to the transfer tracker db, bypassing the repo-incoming-queue and sending of an EHR
      *     request by the ehr-transfer-service.</li>
@@ -273,7 +271,6 @@ class RepositoryE2ETest {
 
     /**
      * <p>Ensure that a large EHR is successfully transferred in and out of the repository.</p>
-     * <p><i>ORC-IN | ORC-OUT.</i></p>
      * <ul>
      *     <li>Add an entry to the transfer tracker db, bypassing the repo-incoming-queue and sending of an EHR
      *     request by the ehr-transfer-service.</li>
@@ -501,7 +498,6 @@ class RepositoryE2ETest {
 
     /**
      * <p>Ensure that received erroneous EHR requests are rejected via the ehr-transfer-service-unhandled-queue.</p>
-     * <p><i>ORC-IN | ORC-OUT.</i></p>
      * <ul>
      *     <li>Simulate the receipt of an erroneous GP2GP EHR request message via the mhsInboundQueue to be processed at
      *     the ehr-transfer-service.
@@ -618,7 +614,6 @@ class RepositoryE2ETest {
 
     /**
      * Ensure that a small EHR with 99 attachments is transferred in and out of the repository successfully.
-     * <p><i>ORC-IN | ORC-OUT.</i></p>
      * <ul>
      *     <li>Add an entry to the transfer tracker db, bypassing the repo-incoming-queue and sending of an EHR
      *     request by the ehr-transfer-service.</li>
@@ -649,6 +644,47 @@ class RepositoryE2ETest {
 
         // then
         assertTrue(messageFound);
+    }
+
+    /**
+     * Ensure that an EHR out request is rejected when the ODS code of the requesting GP is different to the ODS code
+     * of the patient as is returned by PDS.
+     * <ul>
+     *     <li>Add an entry to the transfer tracker db, bypassing the repo-incoming-queue and sending of an EHR
+     *     request by the ehr-transfer-service.</li>
+     *     <li>Simulate the receipt of a small EHR from an FSS/GP via the mhsInboundQueue and ensure this is
+     *     transferred into the repository.</li>
+     *     <li>Simulate the receipt of a EHR out request from an FSS/GP via the mhsInboundQueue for which the ODS code differs
+     *     to that of the patient.</li>
+     *     <li>Assert that the EHR is not sent out to the FSS/GP.</li>
+     * </ul>
+     */
+    @Test
+    void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered() {
+        String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+        String gpOdsCode = EMIS_PTL_INT.odsCode();
+
+        // Given a small EHR exists in the repository
+        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR);
+
+        // When an EHR out request is received from a GP where the patient is not registered (different ODS code)
+        EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
+                .nhsNumber(nhsNumber)
+                .sendingOdsCode(gpOdsCode)
+                .asidCode(TPP_PTL_INT.asidCode())
+                .build();
+        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
+        String conversationId = templateContext.getOutboundConversationId();
+
+        mhsInboundQueue.sendMessage(ehrRequestMessage, conversationId);
+        log.info("EHR out request sent successfully. ConversationId: {}", conversationId);
+
+        // Then the EHR request is rejected
+
+        // Assert that the EHR has not been sent
+        assertTrue(gp2gpMessengerOQ.verifyNoMessageContaining(conversationId, 20));
+
+        // TODO: assert that ehr-transfer-tracker.FailureReason = 'OUTBOUND:incorrect_ods_code' (awaiting db refactor)
     }
 
     /**
