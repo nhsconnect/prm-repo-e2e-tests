@@ -11,12 +11,17 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+
+/**
+ * @deprecated PRMT-4670 old Transfer Tracker DB logic - to be removed
+ */
+@Deprecated(since="2.0.0", forRemoval = true)
 @Setter
 @Builder
 @DynamoDbBean
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
-public class TransferTrackerRecord {
+public class OldTransferTrackerRecord {
     private static final String DEFAULT_TIMESTAMP = LocalDateTime.now() + "Z";
     private String conversationId;
     @Builder.Default
@@ -84,7 +89,7 @@ public class TransferTrackerRecord {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TransferTrackerRecord that = (TransferTrackerRecord) o;
+        OldTransferTrackerRecord that = (OldTransferTrackerRecord) o;
         return Objects.equals(conversationId, that.conversationId);
     }
 
