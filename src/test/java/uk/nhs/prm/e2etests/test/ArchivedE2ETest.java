@@ -7,17 +7,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.xmlunit.diff.Diff;
 import uk.nhs.prm.e2etests.enumeration.*;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
-import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.Acknowledgement;
-import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.model.templatecontext.*;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
@@ -36,17 +32,8 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.util.AssertionErrors.assertFalse;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.EMIS_PTL_INT;
-import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
-import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_CORE;
-import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_FRAGMENT;
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.*;
-import static uk.nhs.prm.e2etests.enumeration.TransferTrackerStatus.*;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
-import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
-import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
-import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
+import static uk.nhs.prm.e2etests.enumeration.OldTransferTrackerStatus.*;
 
 @Log4j2
 @SpringBootTest
@@ -56,7 +43,7 @@ import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptiona
 class ArchivedE2ETest {
     private final RepoService repoService;
     private final EhrOutService ehrOutService;
-    private final TransferTrackerService transferTrackerService;
+    private final OldTransferTrackerService oldTransferTrackerService;
     private final PdsAdaptorService pdsAdaptorService;
     private final TemplatingService templatingService;
     private final HealthCheckService healthCheckService;
@@ -82,7 +69,7 @@ class ArchivedE2ETest {
     public ArchivedE2ETest(
             RepoService repoService,
             EhrOutService ehrOutService,
-            TransferTrackerService transferTrackerService,
+            OldTransferTrackerService oldTransferTrackerService,
             PdsAdaptorService pdsAdaptorService,
             TemplatingService templatingService,
             HealthCheckService healthCheckService,
@@ -102,7 +89,7 @@ class ArchivedE2ETest {
     ) {
         this.repoService = repoService;
         this.ehrOutService = ehrOutService;
-        this.transferTrackerService = transferTrackerService;
+        this.oldTransferTrackerService = oldTransferTrackerService;
         this.pdsAdaptorService = pdsAdaptorService;
         this.templatingService = templatingService;
         this.healthCheckService = healthCheckService;
@@ -148,7 +135,7 @@ class ArchivedE2ETest {
 
         ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
         assertThat(ehrTransferServiceEhrCompleteOQ.getMessageContaining(triggerMessage.getConversationId())).isNotNull();
-        assertTrue(transferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
+        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
     }
 
     @Disabled
@@ -201,7 +188,7 @@ class ArchivedE2ETest {
                 TimeUnit.MINUTES))
                 .isNotNull();
 
-        assertTrue(transferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
+        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
     }
 
     @ParameterizedTest
@@ -225,7 +212,7 @@ class ArchivedE2ETest {
                 TimeUnit.MINUTES))
                 .isNotNull();
 
-        assertTrue(transferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
+        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
     }
 
     // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
