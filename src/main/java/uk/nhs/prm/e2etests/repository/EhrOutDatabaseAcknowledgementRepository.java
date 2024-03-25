@@ -9,6 +9,10 @@ import lombok.AllArgsConstructor;
 
 import java.util.UUID;
 
+/**
+ * @deprecated PRMT-4670 old Transfer Tracker DB logic - to be removed
+ */
+@Deprecated(since="2.0.0", forRemoval = true)
 @Repository
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class EhrOutDatabaseAcknowledgementRepository implements ReadOnlyRepository<Acknowledgement, UUID> {
