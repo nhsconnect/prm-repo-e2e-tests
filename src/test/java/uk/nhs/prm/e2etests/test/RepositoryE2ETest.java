@@ -930,11 +930,4 @@ class RepositoryE2ETest {
         gp2gpMessengerOQ.deleteMessage(gp2gpMessageUK06);
         allFragments.forEach(gp2gpMessengerOQ::deleteMessage);
     }
-
-    @Test
-    void TestyTest() {
-        Optional<ConversationRecord> record = conversationRepository.findByInboundConversationId("aee29b7a-3a27-4636-86b9-13274a523553");
-        var x = 1;
-    }
-
 }
