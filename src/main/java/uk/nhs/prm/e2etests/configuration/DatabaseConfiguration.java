@@ -32,7 +32,6 @@ public class DatabaseConfiguration {
         return dataSource;
     }
 
-    // Registers the enhanced Dynamo DB client for AWS.
     @Bean
     public DynamoDbEnhancedClient dynamoDbEnhancedClient() {
         return DynamoDbEnhancedClient.builder()
