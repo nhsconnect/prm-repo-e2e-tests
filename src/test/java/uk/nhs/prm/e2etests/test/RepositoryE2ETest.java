@@ -13,6 +13,7 @@ import org.xmlunit.diff.Diff;
 
 import uk.nhs.prm.e2etests.enumeration.*;
 import uk.nhs.prm.e2etests.model.SqsMessage;
+import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 import uk.nhs.prm.e2etests.model.database.OldTransferTrackerRecord;
 import uk.nhs.prm.e2etests.model.templatecontext.*;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
@@ -28,6 +29,7 @@ import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceSma
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceUnhandledOQ;
 import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
+import uk.nhs.prm.e2etests.repository.ConversationRepository;
 import uk.nhs.prm.e2etests.service.*;
 
 import java.util.*;
@@ -55,6 +57,7 @@ import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
 @TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RepositoryE2ETest {
+    private final ConversationRepository conversationRepository;
     private final RepoService repoService;
     private final EhrOutService ehrOutService;
     private final OldTransferTrackerService oldTransferTrackerService;
@@ -81,6 +84,7 @@ class RepositoryE2ETest {
 
     @Autowired
     public RepositoryE2ETest(
+            ConversationRepository conversationRepository,
             RepoService repoService,
             EhrOutService ehrOutService,
             OldTransferTrackerService oldTransferTrackerService,
@@ -101,6 +105,7 @@ class RepositoryE2ETest {
             Gp2gpMessengerProperties gp2GpMessengerProperties,
             NhsProperties nhsProperties
     ) {
+        this.conversationRepository = conversationRepository;
         this.repoService = repoService;
         this.ehrOutService = ehrOutService;
         this.oldTransferTrackerService = oldTransferTrackerService;
@@ -925,5 +930,4 @@ class RepositoryE2ETest {
         gp2gpMessengerOQ.deleteMessage(gp2gpMessageUK06);
         allFragments.forEach(gp2gpMessengerOQ::deleteMessage);
     }
-
 }
