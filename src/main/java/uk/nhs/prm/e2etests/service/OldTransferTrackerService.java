@@ -13,7 +13,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 /**
  * @deprecated PRMT-4670 old Transfer Tracker DB logic - to be removed
  */
-@Deprecated(since="2.0.0", forRemoval = true)
+@Deprecated(since="2.0.0")
 @Service
 public class OldTransferTrackerService {
 

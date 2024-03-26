@@ -26,6 +26,7 @@ public class ConversationRepository {
     }
 
     public void save(ConversationRecord conversationRecord) {
+        conversationRecord.setLayer(CONVERSATION_LAYER);
         transferTrackerTable.putItem(conversationRecord);
     }
 
