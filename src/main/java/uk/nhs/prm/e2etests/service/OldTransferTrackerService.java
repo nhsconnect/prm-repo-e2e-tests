@@ -1,8 +1,8 @@
 package uk.nhs.prm.e2etests.service;
 
 import org.springframework.stereotype.Service;
-import uk.nhs.prm.e2etests.model.database.TransferTrackerRecord;
-import uk.nhs.prm.e2etests.repository.TransferTrackerDatabaseRepository;
+import uk.nhs.prm.e2etests.model.database.OldTransferTrackerRecord;
+import uk.nhs.prm.e2etests.repository.OldTransferTrackerDatabaseRepository;
 
 import java.util.concurrent.TimeUnit;
 
@@ -10,17 +10,21 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsEqual.equalTo;
 
+/**
+ * @deprecated PRMT-4670 old Transfer Tracker DB logic - to be removed
+ */
+@Deprecated(since="2.0.0", forRemoval = true)
 @Service
-public class TransferTrackerService {
+public class OldTransferTrackerService {
 
-    private final TransferTrackerDatabaseRepository transferTrackerDatabaseRepository;
+    private final OldTransferTrackerDatabaseRepository oldTransferTrackerDatabaseRepository;
 
-    public TransferTrackerService(TransferTrackerDatabaseRepository transferTrackerDatabaseRepository) {
-        this.transferTrackerDatabaseRepository = transferTrackerDatabaseRepository;
+    public OldTransferTrackerService(OldTransferTrackerDatabaseRepository oldTransferTrackerDatabaseRepository) {
+        this.oldTransferTrackerDatabaseRepository = oldTransferTrackerDatabaseRepository;
     }
 
     public boolean conversationIdExists(String conversationId) {
-        return transferTrackerDatabaseRepository.findByConversationId(conversationId).isPresent();
+        return oldTransferTrackerDatabaseRepository.findByConversationId(conversationId).isPresent();
     }
 
     public boolean isStatusForConversationIdPresent(String conversationId, String status) {
@@ -31,9 +35,9 @@ public class TransferTrackerService {
         await().atMost(timeout, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> transferTrackerDatabaseRepository
+                .until(() -> oldTransferTrackerDatabaseRepository
                         .findByConversationId(conversationId)
-                        .map(TransferTrackerRecord::getState)
+                        .map(OldTransferTrackerRecord::getState)
                         .orElse("entry not found"), equalTo(status));
         return true;
     }
@@ -42,9 +46,9 @@ public class TransferTrackerService {
         return await().atMost(120, TimeUnit.SECONDS)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> transferTrackerDatabaseRepository
+                .until(() -> oldTransferTrackerDatabaseRepository
                         .findByConversationId(conversationId)
-                        .map(TransferTrackerRecord::getState)
+                        .map(OldTransferTrackerRecord::getState)
                         .orElse("entry not found"), containsString(partialStatus));
     }
 
@@ -52,13 +56,13 @@ public class TransferTrackerService {
         return await().atMost(timeoutMinutes, TimeUnit.MINUTES)
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> transferTrackerDatabaseRepository
+                .until(() -> oldTransferTrackerDatabaseRepository
                         .findByConversationId(conversationId)
-                        .map(TransferTrackerRecord::getState)
+                        .map(OldTransferTrackerRecord::getState)
                         .orElse("entry not found"), containsString(partialStatus));
     }
 
-    public void save(TransferTrackerRecord entry) {
-        transferTrackerDatabaseRepository.save(entry);
+    public void save(OldTransferTrackerRecord entry) {
+        oldTransferTrackerDatabaseRepository.save(entry);
     }
 }
