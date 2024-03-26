@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.model.database;
 
+import lombok.Builder;
 import lombok.Getter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
@@ -8,6 +9,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecon
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 @Getter
+@Builder
 @DynamoDbBean
 public class ConversationRecord {
     private String inboundConversationId; // Partition Key

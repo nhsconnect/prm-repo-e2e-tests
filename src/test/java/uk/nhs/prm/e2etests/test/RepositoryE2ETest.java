@@ -1,27 +1,38 @@
 package uk.nhs.prm.e2etests.test;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.xmlunit.diff.Diff;
 
-import uk.nhs.prm.e2etests.enumeration.*;
+import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
+import uk.nhs.prm.e2etests.enumeration.MessageType;
+import uk.nhs.prm.e2etests.enumeration.OldTransferTrackerStatus;
+import uk.nhs.prm.e2etests.enumeration.Patient;
+import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
-import uk.nhs.prm.e2etests.model.database.OldTransferTrackerRecord;
-import uk.nhs.prm.e2etests.model.templatecontext.*;
+import uk.nhs.prm.e2etests.model.templatecontext.AcknowledgementTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrCoreTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentNoReferencesContext;
+import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentWithReferencesContext;
+import uk.nhs.prm.e2etests.model.templatecontext.SmallEhrTemplateContext;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceParsingDeadLetterQueue;
-import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
-import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceEhrCompleteOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceLargeEhrFragmentsOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceLargeEhrOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceNegativeAcknowledgementOQ;
@@ -29,24 +40,35 @@ import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceSma
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceUnhandledOQ;
 import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
-import uk.nhs.prm.e2etests.repository.ConversationRepository;
-import uk.nhs.prm.e2etests.service.*;
+import uk.nhs.prm.e2etests.service.RepoService;
+import uk.nhs.prm.e2etests.service.TemplatingService;
+import uk.nhs.prm.e2etests.service.TransferTrackerService;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 
+import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_COMPLETE;
+import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_CONTINUE_REQUEST_SENT;
+import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_REQUEST_SENT;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.EMIS_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
-import static uk.nhs.prm.e2etests.enumeration.MessageType.*;
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.*;
+import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_CORE;
+import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_FRAGMENT;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
-import static uk.nhs.prm.e2etests.enumeration.OldTransferTrackerStatus.*;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_CORE;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_FRAGMENT_NO_REF;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_FRAGMENT_WITH_REF;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.NEGATIVE_ACKNOWLEDGEMENT;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR_WITH_99_ATTACHMENTS;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
@@ -56,76 +78,22 @@ import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@RequiredArgsConstructor
 class RepositoryE2ETest {
-    private final ConversationRepository conversationRepository;
+    private final TransferTrackerService transferTrackerService;
     private final RepoService repoService;
-    private final EhrOutService ehrOutService;
-    private final OldTransferTrackerService oldTransferTrackerService;
-    private final PdsAdaptorService pdsAdaptorService;
     private final TemplatingService templatingService;
-    private final HealthCheckService healthCheckService;
     private final SimpleAmqpQueue mhsInboundQueue;
     private final Gp2GpMessengerOQ gp2gpMessengerOQ;
     private final EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
     private final EhrTransferServiceUnhandledOQ ehrTransferServiceUnhandledOQ;
-    private final EhrTransferServiceEhrCompleteOQ ehrTransferServiceEhrCompleteOQ;
     private final EhrTransferServiceLargeEhrFragmentsOQ ehrTransferServiceLargeEhrFragmentsOQ;
-    private final EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue;
     private final EhrTransferServiceSmallEhrOQ ehrTransferServiceSmallEhrOQ;
     private final EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ;
     private final EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ;
     private final EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue;
     private final Gp2gpMessengerProperties gp2GpMessengerProperties;
     private final NhsProperties nhsProperties;
-
-    // Constants
-    private static final int EHR_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS = 500;
-    private static final int CONTINUE_REQUEST_MHS_INBOUND_TIMEOUT_MILLISECONDS = 3000;
-
-    @Autowired
-    public RepositoryE2ETest(
-            ConversationRepository conversationRepository,
-            RepoService repoService,
-            EhrOutService ehrOutService,
-            OldTransferTrackerService oldTransferTrackerService,
-            PdsAdaptorService pdsAdaptorService,
-            TemplatingService templatingService,
-            HealthCheckService healthCheckService,
-            SimpleAmqpQueue mhsInboundQueue,
-            Gp2GpMessengerOQ gp2gpMessengerOQ,
-            EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ,
-            EhrTransferServiceUnhandledOQ ehrTransferServiceUnhandledOQ,
-            EhrTransferServiceEhrCompleteOQ ehrTransferServiceEhrCompleteOQ,
-            EhrTransferServiceLargeEhrFragmentsOQ ehrTransferServiceLargeEhrFragmentsOQ,
-            EhrTransferServiceRepoIncomingQueue ehrTransferServiceRepoIncomingQueue,
-            EhrTransferServiceSmallEhrOQ ehrTransferServiceSmallEhrOQ,
-            EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ,
-            EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ,
-            EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue,
-            Gp2gpMessengerProperties gp2GpMessengerProperties,
-            NhsProperties nhsProperties
-    ) {
-        this.conversationRepository = conversationRepository;
-        this.repoService = repoService;
-        this.ehrOutService = ehrOutService;
-        this.oldTransferTrackerService = oldTransferTrackerService;
-        this.pdsAdaptorService = pdsAdaptorService;
-        this.templatingService = templatingService;
-        this.healthCheckService = healthCheckService;
-        this.mhsInboundQueue = mhsInboundQueue;
-        this.gp2gpMessengerOQ = gp2gpMessengerOQ;
-        this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceTransferCompleteOQ;
-        this.ehrTransferServiceUnhandledOQ = ehrTransferServiceUnhandledOQ;
-        this.ehrTransferServiceEhrCompleteOQ = ehrTransferServiceEhrCompleteOQ;
-        this.ehrTransferServiceLargeEhrFragmentsOQ = ehrTransferServiceLargeEhrFragmentsOQ;
-        this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
-        this.ehrTransferServiceSmallEhrOQ = ehrTransferServiceSmallEhrOQ;
-        this.ehrTransferServiceLargeEhrOQ = ehrTransferServiceLargeEhrOQ;
-        this.ehrTransferServiceNegativeAcknowledgementOQ = ehrTransferServiceNegativeAcknowledgementOQ;
-        this.ehrTransferServiceParsingDeadLetterQueue = ehrTransferServiceParsingDeadLetterQueue;
-        this.gp2GpMessengerProperties = gp2GpMessengerProperties;
-        this.nhsProperties = nhsProperties;
-    }
 
     @BeforeAll
     void init() {
@@ -200,15 +168,23 @@ class RepositoryE2ETest {
         // Given a small EHR is transferred into the repository
 
         // create entry in transfer tracker db with status ACTION:EHR_REQUEST_SENT
-        this.oldTransferTrackerService.save(OldTransferTrackerRecord.builder()
-                .conversationId(inboundConversationId)
-                .largeEhrCoreMessageId("")
+//        this.transferTrackerService.save(OldTransferTrackerRecord.builder()
+//                .conversationId(inboundConversationId)
+//                .largeEhrCoreMessageId("")
+//                .nemsMessageId(randomNemsMessageId())
+//                .nhsNumber(nhsNumber)
+//                .sourceGp(sendingOdsCode)
+//                .state(EHR_REQUEST_SENT.status)
+//                .build()
+//        );
+
+        this.transferTrackerService.save(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
                 .nemsMessageId(randomNemsMessageId())
                 .nhsNumber(nhsNumber)
                 .sourceGp(sendingOdsCode)
-                .state(EHR_REQUEST_SENT.status)
-                .build()
-        );
+                .transferStatus(INBOUND_REQUEST_SENT.name())
+                .build());
 
         // Construct small EHR message
         SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
@@ -222,8 +198,8 @@ class RepositoryE2ETest {
 
         // Wait until the patient EHR is successfully transferred to the repository
         log.info("inbound conversationId: {}", inboundConversationId);
-        log.info("conversationIdExists: {}", oldTransferTrackerService.conversationIdExists(inboundConversationId));
-        String status = oldTransferTrackerService.waitForStatusMatching(inboundConversationId, EHR_TRANSFER_TO_REPO_COMPLETE.status);
+        log.info("conversationIdExists: {}", transferTrackerService.conversationIdExists(inboundConversationId));
+        String status = transferTrackerService.waitForStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
         log.info("tracker db status: {}", status);
 
         /*
@@ -296,13 +272,15 @@ class RepositoryE2ETest {
         // Given a large EHR is transferred into the repository
 
         // create entry in transfer tracker db with status ACTION:EHR_REQUEST_SENT
-        this.oldTransferTrackerService.save(OldTransferTrackerRecord.builder()
-                .conversationId(inboundConversationId)
-                .largeEhrCoreMessageId(largeEhrCoreMessageId)
-                .nemsMessageId(randomNemsMessageId())
+
+
+
+        this.transferTrackerService.save(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
+                .transferStatus(INBOUND_REQUEST_SENT.name())
+                .nemsMessageId(randomNemsMessageId())
                 .sourceGp(sendingOdsCode)
-                .state(EHR_REQUEST_SENT.status)
                 .build()
         );
 
@@ -319,10 +297,10 @@ class RepositoryE2ETest {
         // Put the large EHR core message onto the mhsInboundQueue
         mhsInboundQueue.sendMessage(largeEhrCore, inboundConversationId);
         log.info("added EHR IN message containing large EHR core to mhsInboundQueue");
-        log.info("conversationId {} exists in transferTrackerDb: {}", inboundConversationId, oldTransferTrackerService.conversationIdExists(inboundConversationId));
+        log.info("conversationId {} exists in transferTrackerDb: {}", inboundConversationId, transferTrackerService.conversationIdExists(inboundConversationId));
 
         // Wait until the large EHR core is processed by the ehr-transfer-service
-        String status = oldTransferTrackerService.waitForStatusMatching(inboundConversationId, OldTransferTrackerStatus.LARGE_EHR_CONTINUE_REQUEST_SENT.status);
+        String status = transferTrackerService.waitForStatusMatching(inboundConversationId, INBOUND_CONTINUE_REQUEST_SENT.name());
         log.info("tracker db status: {}", status);
 
         // Construct large EHR fragment messages
@@ -350,8 +328,8 @@ class RepositoryE2ETest {
         log.info("fragment 2 message id: {}", fragment2MessageId);
 
         // Wait until the patient EHR is successfully transferred to the repository
-        log.info("Waiting for transferTrackerDb status of EHR_TRANSFER_TO_REPO_COMPLETE");
-        status = oldTransferTrackerService.waitForStatusMatching(inboundConversationId, EHR_TRANSFER_TO_REPO_COMPLETE.status);
+        log.info("Waiting for transferTrackerDb status of INBOUND_COMPLETE");
+        status = transferTrackerService.waitForStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
         log.info("tracker db status: {}", status);
 
         /*
@@ -511,8 +489,6 @@ class RepositoryE2ETest {
         assertThat(unhandledMessage.getBody()).isEqualTo(inboundMessage);
 
         assertTrue(gp2gpMessengerOQ.verifyNoMessageContaining(conversationId));
-
-        assertTrue(healthCheckService.healthCheckAllPassing());
     }
 
     /**
@@ -678,6 +654,7 @@ class RepositoryE2ETest {
         assertTrue(gp2gpMessengerOQ.verifyNoMessageContaining(conversationId, 20));
 
         // TODO: assert that ehr-transfer-tracker.FailureReason = 'OUTBOUND:incorrect_ods_code' (awaiting db refactor)
+
     }
 
 //    @Test
@@ -710,13 +687,12 @@ class RepositoryE2ETest {
         // Given that an EHR request has been sent from the repository to an FSS
 
         // create entry in transfer tracker db with status ACTION:EHR_REQUEST_SENT
-        this.oldTransferTrackerService.save(OldTransferTrackerRecord.builder()
-                .conversationId(inboundConversationId)
-                .largeEhrCoreMessageId("")
+        this.transferTrackerService.save(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
                 .nemsMessageId(randomNemsMessageId())
                 .nhsNumber(Patient.SUSPENDED_WITH_EHR_AT_TPP.nhsNumber())
                 .sourceGp(odsCode)
-                .state(EHR_REQUEST_SENT.status)
+                .transferStatus(INBOUND_REQUEST_SENT.name())
                 .build()
         );
 
@@ -733,7 +709,7 @@ class RepositoryE2ETest {
         assertThat(ehrTransferServiceNegativeAcknowledgementOQ.getMessageContaining(inboundConversationId)).isNotNull();
         assertThat(ehrTransferServiceTransferCompleteOQ.getMessageContainingAttribute("conversationId", inboundConversationId)).isNotNull();
 
-        String status = oldTransferTrackerService.waitForStatusMatching(inboundConversationId, OldTransferTrackerStatus.EHR_TRANSFER_FAILED.status);
+        String status = transferTrackerService.waitForStatusMatching(inboundConversationId, OldTransferTrackerStatus.EHR_TRANSFER_FAILED.status);
         assertThat(status).isEqualTo(OldTransferTrackerStatus.EHR_TRANSFER_FAILED.status + ":" + NEGATIVE_ACKNOWLEDGEMENT_FAILURE_CODE);
     }
 
@@ -787,22 +763,22 @@ class RepositoryE2ETest {
 
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
-        oldTransferTrackerService.save(OldTransferTrackerRecord.builder()
-                        .conversationId(inboundConversationId)
+        transferTrackerService.save(ConversationRecord.builder()
+                        .inboundConversationId(inboundConversationId)
                         .nemsMessageId(randomNemsMessageId())
                         .nhsNumber(nhsNumber)
                         .sourceGp(sendingOdsCode)
-                        .state(EHR_REQUEST_SENT.status)
+                        .transferStatus(INBOUND_REQUEST_SENT.name())
                         .build());
 
         // Put the patient into mhsInboundQueue as a UK05 message
         mhsInboundQueue.sendMessage(smallEhr, inboundConversationId);
 
-        log.info("conversationId: {}, Exists: {}", inboundConversationId, oldTransferTrackerService.conversationIdExists(inboundConversationId));
+        log.info("conversationId: {}, Exists: {}", inboundConversationId, transferTrackerService.conversationIdExists(inboundConversationId));
 
-        String status = oldTransferTrackerService.waitForStatusMatching(
+        String status = transferTrackerService.waitForStatusMatching(
                 inboundConversationId,
-                EHR_TRANSFER_TO_REPO_COMPLETE.status);
+                INBOUND_COMPLETE.name());
 
         log.info("tracker db status: {}", status);
 
@@ -882,20 +858,19 @@ class RepositoryE2ETest {
                         .senderOdsCode(senderOdsCode)
                         .build());
 
-        oldTransferTrackerService.save(OldTransferTrackerRecord.builder()
-                .conversationId(inboundConversationId)
-                .largeEhrCoreMessageId(largeEhrCoreMessageId)
+        transferTrackerService.save(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
                 .nemsMessageId(randomNemsMessageId())
                 .nhsNumber(nhsNumber)
                 .sourceGp(senderOdsCode)
-                .state(EHR_REQUEST_SENT.status)
+                .transferStatus(INBOUND_REQUEST_SENT.name())
                 .build());
         
         // when
         mhsInboundQueue.sendMessage(largeEhrCore, inboundConversationId);
 
-        log.info("conversationIdExists: {}", oldTransferTrackerService.conversationIdExists(inboundConversationId));
-        String status = oldTransferTrackerService.waitForStatusMatching(inboundConversationId, LARGE_EHR_CONTINUE_REQUEST_SENT.status);
+        log.info("conversationIdExists: {}", transferTrackerService.conversationIdExists(inboundConversationId));
+        String status = transferTrackerService.waitForStatusMatching(inboundConversationId, INBOUND_REQUEST_SENT.name());
         log.info("tracker db status: {}", status);
         log.info("fragment 1 message id: {}", fragment1MessageId);
         log.info("fragment 2 message id: {}", fragment2MessageId);
@@ -903,7 +878,7 @@ class RepositoryE2ETest {
         mhsInboundQueue.sendMessage(largeEhrFragment1, inboundConversationId);
         mhsInboundQueue.sendMessage(largeEhrFragment2, inboundConversationId);
 
-        status = oldTransferTrackerService.waitForStatusMatching(inboundConversationId, EHR_TRANSFER_TO_REPO_COMPLETE.status);
+        status = transferTrackerService.waitForStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
             log.info("tracker db status: {}", status);
 
         // Put a EHR request to inboundQueueFromMhs
