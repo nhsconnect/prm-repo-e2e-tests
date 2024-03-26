@@ -7,6 +7,10 @@ import lombok.AllArgsConstructor;
 import java.sql.Timestamp;
 import java.util.UUID;
 
+/**
+ * @deprecated PRMT-4670 old Transfer Tracker DB logic - to be removed
+ */
+@Deprecated(since="2.0.0", forRemoval = true)
 @Getter
 @Builder
 @AllArgsConstructor

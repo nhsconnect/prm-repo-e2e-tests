@@ -14,6 +14,9 @@ public class DynamoDbProperties {
     @Value("${aws.configuration.databaseNames.oldTransferTrackerDb}")
     private String oldTransferTrackerDbName;
 
+    @Value("${aws.configuration.databaseNames.transferTrackerDb}")
+    private String transferTrackerDbName;
+
     @Value("${aws.configuration.databaseNames.activeSuspensionsDb}")
     private String activeSuspensionsDbName;
 }
