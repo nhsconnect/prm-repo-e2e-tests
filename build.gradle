@@ -28,7 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
 
-    implementation platform('software.amazon.awssdk:bom:2.18.41')
+    implementation platform('software.amazon.awssdk:bom:2.25.21')
     implementation 'software.amazon.awssdk:ssm'
     implementation 'software.amazon.awssdk:sqs'
     implementation 'software.amazon.awssdk:sns'
