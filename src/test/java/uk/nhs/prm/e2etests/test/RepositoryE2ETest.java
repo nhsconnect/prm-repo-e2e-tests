@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.xmlunit.diff.Diff;
@@ -78,7 +79,7 @@ import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 @TestPropertySource(properties = {"test.pds.username=e2e-test"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 class RepositoryE2ETest {
     private final TransferTrackerService transferTrackerService;
     private final RepoService repoService;
@@ -94,6 +95,24 @@ class RepositoryE2ETest {
     private final EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue;
     private final Gp2gpMessengerProperties gp2GpMessengerProperties;
     private final NhsProperties nhsProperties;
+
+    @Autowired
+    public RepositoryE2ETest(TransferTrackerService transferTrackerService, RepoService repoService, TemplatingService templatingService, SimpleAmqpQueue mhsInboundQueue, Gp2GpMessengerOQ gp2gpMessengerOQ, EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ, EhrTransferServiceUnhandledOQ ehrTransferServiceUnhandledOQ, EhrTransferServiceLargeEhrFragmentsOQ ehrTransferServiceLargeEhrFragmentsOQ, EhrTransferServiceSmallEhrOQ ehrTransferServiceSmallEhrOQ, EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ, EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ, EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue, Gp2gpMessengerProperties gp2GpMessengerProperties, NhsProperties nhsProperties) {
+        this.transferTrackerService = transferTrackerService;
+        this.repoService = repoService;
+        this.templatingService = templatingService;
+        this.mhsInboundQueue = mhsInboundQueue;
+        this.gp2gpMessengerOQ = gp2gpMessengerOQ;
+        this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceTransferCompleteOQ;
+        this.ehrTransferServiceUnhandledOQ = ehrTransferServiceUnhandledOQ;
+        this.ehrTransferServiceLargeEhrFragmentsOQ = ehrTransferServiceLargeEhrFragmentsOQ;
+        this.ehrTransferServiceSmallEhrOQ = ehrTransferServiceSmallEhrOQ;
+        this.ehrTransferServiceLargeEhrOQ = ehrTransferServiceLargeEhrOQ;
+        this.ehrTransferServiceNegativeAcknowledgementOQ = ehrTransferServiceNegativeAcknowledgementOQ;
+        this.ehrTransferServiceParsingDeadLetterQueue = ehrTransferServiceParsingDeadLetterQueue;
+        this.gp2GpMessengerProperties = gp2GpMessengerProperties;
+        this.nhsProperties = nhsProperties;
+    }
 
     @BeforeAll
     void init() {
@@ -168,16 +187,6 @@ class RepositoryE2ETest {
         // Given a small EHR is transferred into the repository
 
         // create entry in transfer tracker db with status ACTION:EHR_REQUEST_SENT
-//        this.transferTrackerService.save(OldTransferTrackerRecord.builder()
-//                .conversationId(inboundConversationId)
-//                .largeEhrCoreMessageId("")
-//                .nemsMessageId(randomNemsMessageId())
-//                .nhsNumber(nhsNumber)
-//                .sourceGp(sendingOdsCode)
-//                .state(EHR_REQUEST_SENT.status)
-//                .build()
-//        );
-
         this.transferTrackerService.save(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(randomNemsMessageId())
@@ -198,6 +207,7 @@ class RepositoryE2ETest {
 
         // Wait until the patient EHR is successfully transferred to the repository
         log.info("inbound conversationId: {}", inboundConversationId);
+        log.info("outbound conversationId: {}", outboundConversationId);
         log.info("conversationIdExists: {}", transferTrackerService.conversationIdExists(inboundConversationId));
         String status = transferTrackerService.waitForStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
         log.info("tracker db status: {}", status);
