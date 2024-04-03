@@ -1,5 +1,6 @@
 package uk.nhs.prm.e2etests.utility;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -17,8 +18,8 @@ public class DateTimeUtility {
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
-    public static String getIsoTimestampForString(String timestamp) {
-        return ZonedDateTime.of(LocalDateTime.parse(timestamp), ZoneId.of(ZONE_ID))
+    public static String getIsoTimestampForString(Instant instant) {
+        return ZonedDateTime.ofInstant(instant, ZoneId.of(ZONE_ID))
                 .truncatedTo(ChronoUnit.MINUTES)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
