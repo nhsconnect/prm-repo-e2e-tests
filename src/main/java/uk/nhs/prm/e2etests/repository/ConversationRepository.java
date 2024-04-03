@@ -9,8 +9,9 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 
-import java.util.Optional;
+import static uk.nhs.prm.e2etests.utility.DateTimeUtility.getIsoTimestampForString;
 
+import java.util.Optional;
 
 @Component
 public class ConversationRepository {
