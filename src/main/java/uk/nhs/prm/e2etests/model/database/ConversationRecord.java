@@ -38,7 +38,7 @@ public class ConversationRecord {
     private String createdAt;
     private String updatedAt;
     private Integer deletedAt;
-    private String AssociatedTest;
+    private String associatedTest;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("InboundConversationId")
@@ -116,6 +116,6 @@ public class ConversationRecord {
 
     @DynamoDbAttribute("AssociatedTest")
     public void setAssociatedTest(String associatedTest) {
-        this.AssociatedTest = associatedTest;
+        this.associatedTest = associatedTest;
     }
 }
