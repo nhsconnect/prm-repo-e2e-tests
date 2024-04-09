@@ -1,12 +1,7 @@
 package uk.nhs.prm.e2etests.test;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Named;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -173,7 +168,7 @@ class RepositoryE2ETest {
     // TODO: conversationId being used in place of correlationId and TraceId. Should remove this for clarity.
     // TODO: Use different ODS codes for receiving and sending practices.
     @Test
-    void shouldTransferASmallEhrInAndOut() {
+    void shouldTransferASmallEhrInAndOut(TestInfo testInfo) {
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumber = "9727018440";
@@ -193,6 +188,7 @@ class RepositoryE2ETest {
                 .nhsNumber(nhsNumber)
                 .sourceGp(sendingOdsCode)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
+                .associatedTest(testInfo.getDisplayName())
                 .build());
 
         // Construct small EHR message
@@ -264,7 +260,7 @@ class RepositoryE2ETest {
     // TODO: conversationId being used in place of correlationId and TraceId. Should remove this for clarity.
     // TODO: Use different ODS codes for receiving and sending practices.
     @Test
-    void shouldTransferALargeEHRInAndOut() {
+    void shouldTransferALargeEHRInAndOut(TestInfo testInfo) {
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
         String largeEhrCoreMessageId = UUID.randomUUID().toString();
@@ -291,6 +287,7 @@ class RepositoryE2ETest {
                 .transferStatus(INBOUND_REQUEST_SENT.name())
                 .nemsMessageId(randomNemsMessageId())
                 .sourceGp(sendingOdsCode)
+                .associatedTest(testInfo.getDisplayName())
                 .build()
         );
 
@@ -512,11 +509,11 @@ class RepositoryE2ETest {
      *
      */
     @Test
-    void shouldRejectADuplicateEhrRequestFromTheSameGPWithSameConversationId() {
+    void shouldRejectADuplicateEhrRequestFromTheSameGPWithSameConversationId(TestInfo testInfo) {
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         // Given a small EHR exists in the repository
-        repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR);
+        repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR, testInfo.getDisplayName());
 
         // When 2 identical EHR out requests are received (from same GP, using same ConversationId)
 
@@ -552,11 +549,11 @@ class RepositoryE2ETest {
      *
      */
     @Test
-    void shouldRejectADuplicateEhrRequestFromTheSameGPWithDifferentConversationId() {
+    void shouldRejectADuplicateEhrRequestFromTheSameGPWithDifferentConversationId(TestInfo testInfo) {
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         // Given a small EHR exists in the repository
-        repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR);
+        repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR, testInfo.getDisplayName());
 
         // When 2 identical EHR out requests are received (from same GP, using same ConversationId)
 
@@ -602,10 +599,10 @@ class RepositoryE2ETest {
      *     <li>Assert that the EHR is sent out to the FSS/GP.</li>
      */
     @Test
-    void shouldTransferASmallEhrWith99AttachmentsInAndOut() {
+    void shouldTransferASmallEhrWith99AttachmentsInAndOut(TestInfo testInfo) {
         // Given a small EHR with 99 attachments exists in the repository
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR_WITH_99_ATTACHMENTS);
+        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR_WITH_99_ATTACHMENTS, testInfo.getDisplayName());
 
         // When an EHR out request is received
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
@@ -639,12 +636,12 @@ class RepositoryE2ETest {
      * </ul>
      */
     @Test
-    void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered() {
+    void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered(TestInfo testInfo) {
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         String gpOdsCode = EMIS_PTL_INT.odsCode();
 
         // Given a small EHR exists in the repository
-        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR);
+        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR, testInfo.getDisplayName());
 
         // When an EHR out request is received from a GP where the patient is not registered (different ODS code)
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
@@ -688,7 +685,7 @@ class RepositoryE2ETest {
      * </ul>
      */
     @Test
-    void shouldUpdateTransferTrackerDbStatusAndPublishToTransferCompleteQueueWhenNackReceived() {
+    void shouldUpdateTransferTrackerDbStatusAndPublishToTransferCompleteQueueWhenNackReceived(TestInfo testInfo) {
         String NEGATIVE_ACKNOWLEDGEMENT_FAILURE_CODE = "30";
         UUID ackMessageId = UUID.randomUUID();
         String inboundConversationId = UUID.randomUUID().toString();
@@ -703,6 +700,7 @@ class RepositoryE2ETest {
                 .nhsNumber(Patient.SUSPENDED_WITH_EHR_AT_TPP.nhsNumber())
                 .sourceGp(odsCode)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
+                .associatedTest(testInfo.getDisplayName())
                 .build()
         );
 
@@ -749,7 +747,7 @@ class RepositoryE2ETest {
     }
 
     @Test
-    void shouldPutASmallEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
+    void shouldPutASmallEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP(TestInfo testInfo) {
         // Given
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
@@ -774,12 +772,13 @@ class RepositoryE2ETest {
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
         transferTrackerService.save(ConversationRecord.builder()
-                        .inboundConversationId(inboundConversationId)
-                        .nemsMessageId(randomNemsMessageId())
-                        .nhsNumber(nhsNumber)
-                        .sourceGp(sendingOdsCode)
-                        .transferStatus(INBOUND_REQUEST_SENT.name())
-                        .build());
+            .inboundConversationId(inboundConversationId)
+            .nemsMessageId(randomNemsMessageId())
+            .nhsNumber(nhsNumber)
+            .sourceGp(sendingOdsCode)
+            .transferStatus(INBOUND_REQUEST_SENT.name())
+            .associatedTest(testInfo.getDisplayName())
+            .build());
 
         // Put the patient into mhsInboundQueue as a UK05 message
         mhsInboundQueue.sendMessage(smallEhr, inboundConversationId);
@@ -812,7 +811,7 @@ class RepositoryE2ETest {
     }
 
     @Test
-    void shouldPutALargeEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
+    void shouldPutALargeEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP(TestInfo testInfo) {
         // given
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
@@ -874,6 +873,7 @@ class RepositoryE2ETest {
                 .nhsNumber(nhsNumber)
                 .sourceGp(senderOdsCode)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
+                .associatedTest(testInfo.getDisplayName())
                 .build());
         
         // when

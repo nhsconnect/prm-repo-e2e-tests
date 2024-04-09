@@ -2,10 +2,7 @@ package uk.nhs.prm.e2etests.performance;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.time.StopWatch;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -98,7 +95,7 @@ public class RepositoryPerformanceTest {
     }
 
     @Test
-    void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ() {
+    void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ(TestInfo testInfo) {
         // Constants
         final String nhsNumber = "9727018157";
 
@@ -108,7 +105,7 @@ public class RepositoryPerformanceTest {
         MhsMessage continueRequest = this.buildContinueRequest(outboundConversationId, REPO_DEV.odsCode(), TPP_PTL_INT.odsCode());
 
         // When
-        this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100, TPP_PTL_INT.odsCode());
+        this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100, TPP_PTL_INT.odsCode(), testInfo.getDisplayName());
         this.mhsInboundQueue.sendMessage(ehrRequest.getMessage(), outboundConversationId);
 
         sleepFor(10000);
@@ -123,7 +120,7 @@ public class RepositoryPerformanceTest {
     }
 
     @Test
-    void Given_30LargeEhrsWith5FragmentsEach_When_PutIntoRepoAndPulledOutIndividuallyEveryMinute_Then_VisibleOnGp2gpMessengerOQ() {
+    void Given_30LargeEhrsWith5FragmentsEach_When_PutIntoRepoAndPulledOutIndividuallyEveryMinute_Then_VisibleOnGp2gpMessengerOQ(TestInfo testInfo) {
         // Constants
         final int numberOfEhrs = 30;
         final int numberOfFragmentsPerEhr = 5;
@@ -138,7 +135,7 @@ public class RepositoryPerformanceTest {
 
         outboundConversationIds.forEach(conversationId -> {
             stopWatch.start();
-            this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, numberOfFragmentsPerEhr, TPP_PTL_INT.odsCode());
+            this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, numberOfFragmentsPerEhr, TPP_PTL_INT.odsCode(), testInfo.getDisplayName());
             stopWatch.stop();
 
             MhsMessage ehrRequest = this.buildEhrRequest(nhsNumber, conversationId, TPP_PTL_INT.odsCode(), TPP_PTL_INT.asidCode());
