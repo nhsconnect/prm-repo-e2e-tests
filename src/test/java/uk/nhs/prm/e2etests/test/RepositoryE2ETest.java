@@ -1,7 +1,13 @@
 package uk.nhs.prm.e2etests.test;
 
 import lombok.extern.log4j.Log4j2;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -76,6 +82,7 @@ import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 //@RequiredArgsConstructor
 class RepositoryE2ETest {
+    private TestInfo testInfo;
     private final TransferTrackerService transferTrackerService;
     private final RepoService repoService;
     private final TemplatingService templatingService;
@@ -119,6 +126,11 @@ class RepositoryE2ETest {
         ehrTransferServiceUnhandledOQ.deleteAllMessages();
         ehrTransferServiceNegativeAcknowledgementOQ.deleteAllMessages();
         gp2gpMessengerOQ.deleteAllMessages();
+    }
+
+    @BeforeEach
+    void beforeEach(TestInfo testInfo) {
+        this.testInfo = testInfo;
     }
 
     /**
@@ -168,7 +180,7 @@ class RepositoryE2ETest {
     // TODO: conversationId being used in place of correlationId and TraceId. Should remove this for clarity.
     // TODO: Use different ODS codes for receiving and sending practices.
     @Test
-    void shouldTransferASmallEhrInAndOut(TestInfo testInfo) {
+    void shouldTransferASmallEhrInAndOut() {
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
         String nhsNumber = "9727018440";
@@ -260,7 +272,7 @@ class RepositoryE2ETest {
     // TODO: conversationId being used in place of correlationId and TraceId. Should remove this for clarity.
     // TODO: Use different ODS codes for receiving and sending practices.
     @Test
-    void shouldTransferALargeEHRInAndOut(TestInfo testInfo) {
+    void shouldTransferALargeEHRInAndOut() {
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
         String largeEhrCoreMessageId = UUID.randomUUID().toString();
@@ -509,7 +521,7 @@ class RepositoryE2ETest {
      *
      */
     @Test
-    void shouldRejectADuplicateEhrRequestFromTheSameGPWithSameConversationId(TestInfo testInfo) {
+    void shouldRejectADuplicateEhrRequestFromTheSameGPWithSameConversationId() {
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         // Given a small EHR exists in the repository
@@ -549,7 +561,7 @@ class RepositoryE2ETest {
      *
      */
     @Test
-    void shouldRejectADuplicateEhrRequestFromTheSameGPWithDifferentConversationId(TestInfo testInfo) {
+    void shouldRejectADuplicateEhrRequestFromTheSameGPWithDifferentConversationId() {
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         // Given a small EHR exists in the repository
@@ -599,7 +611,7 @@ class RepositoryE2ETest {
      *     <li>Assert that the EHR is sent out to the FSS/GP.</li>
      */
     @Test
-    void shouldTransferASmallEhrWith99AttachmentsInAndOut(TestInfo testInfo) {
+    void shouldTransferASmallEhrWith99AttachmentsInAndOut() {
         // Given a small EHR with 99 attachments exists in the repository
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR_WITH_99_ATTACHMENTS, testInfo.getDisplayName());
@@ -636,7 +648,7 @@ class RepositoryE2ETest {
      * </ul>
      */
     @Test
-    void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered(TestInfo testInfo) {
+    void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered() {
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         String gpOdsCode = EMIS_PTL_INT.odsCode();
 
@@ -685,7 +697,7 @@ class RepositoryE2ETest {
      * </ul>
      */
     @Test
-    void shouldUpdateTransferTrackerDbStatusAndPublishToTransferCompleteQueueWhenNackReceived(TestInfo testInfo) {
+    void shouldUpdateTransferTrackerDbStatusAndPublishToTransferCompleteQueueWhenNackReceived() {
         String NEGATIVE_ACKNOWLEDGEMENT_FAILURE_CODE = "30";
         UUID ackMessageId = UUID.randomUUID();
         String inboundConversationId = UUID.randomUUID().toString();
@@ -747,7 +759,7 @@ class RepositoryE2ETest {
     }
 
     @Test
-    void shouldPutASmallEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP(TestInfo testInfo) {
+    void shouldPutASmallEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
         // Given
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
@@ -811,7 +823,7 @@ class RepositoryE2ETest {
     }
 
     @Test
-    void shouldPutALargeEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP(TestInfo testInfo) {
+    void shouldPutALargeEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
         // given
         String inboundConversationId = UUID.randomUUID().toString();
         String outboundConversationId = UUID.randomUUID().toString();
