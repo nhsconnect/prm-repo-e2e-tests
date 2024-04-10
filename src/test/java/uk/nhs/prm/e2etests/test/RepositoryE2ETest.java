@@ -1,11 +1,12 @@
 package uk.nhs.prm.e2etests.test;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -81,6 +82,7 @@ import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 //@RequiredArgsConstructor
 class RepositoryE2ETest {
+    private TestInfo testInfo;
     private final TransferTrackerService transferTrackerService;
     private final RepoService repoService;
     private final TemplatingService templatingService;
@@ -124,6 +126,11 @@ class RepositoryE2ETest {
         ehrTransferServiceUnhandledOQ.deleteAllMessages();
         ehrTransferServiceNegativeAcknowledgementOQ.deleteAllMessages();
         gp2gpMessengerOQ.deleteAllMessages();
+    }
+
+    @BeforeEach
+    void beforeEach(TestInfo testInfo) {
+        this.testInfo = testInfo;
     }
 
     /**
@@ -193,6 +200,7 @@ class RepositoryE2ETest {
                 .nhsNumber(nhsNumber)
                 .sourceGp(sendingOdsCode)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
+                .associatedTest(testInfo.getDisplayName())
                 .build());
 
         // Construct small EHR message
@@ -291,6 +299,7 @@ class RepositoryE2ETest {
                 .transferStatus(INBOUND_REQUEST_SENT.name())
                 .nemsMessageId(randomNemsMessageId())
                 .sourceGp(sendingOdsCode)
+                .associatedTest(testInfo.getDisplayName())
                 .build()
         );
 
@@ -516,7 +525,7 @@ class RepositoryE2ETest {
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         // Given a small EHR exists in the repository
-        repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR);
+        repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR, testInfo.getDisplayName());
 
         // When 2 identical EHR out requests are received (from same GP, using same ConversationId)
 
@@ -556,7 +565,7 @@ class RepositoryE2ETest {
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         // Given a small EHR exists in the repository
-        repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR);
+        repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR, testInfo.getDisplayName());
 
         // When 2 identical EHR out requests are received (from same GP, using same ConversationId)
 
@@ -605,7 +614,7 @@ class RepositoryE2ETest {
     void shouldTransferASmallEhrWith99AttachmentsInAndOut() {
         // Given a small EHR with 99 attachments exists in the repository
         String nhsNumber = Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR_WITH_99_ATTACHMENTS);
+        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR_WITH_99_ATTACHMENTS, testInfo.getDisplayName());
 
         // When an EHR out request is received
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
@@ -644,7 +653,7 @@ class RepositoryE2ETest {
         String gpOdsCode = EMIS_PTL_INT.odsCode();
 
         // Given a small EHR exists in the repository
-        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR);
+        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR, testInfo.getDisplayName());
 
         // When an EHR out request is received from a GP where the patient is not registered (different ODS code)
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
@@ -703,6 +712,7 @@ class RepositoryE2ETest {
                 .nhsNumber(Patient.SUSPENDED_WITH_EHR_AT_TPP.nhsNumber())
                 .sourceGp(odsCode)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
+                .associatedTest(testInfo.getDisplayName())
                 .build()
         );
 
@@ -774,12 +784,13 @@ class RepositoryE2ETest {
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
         transferTrackerService.save(ConversationRecord.builder()
-                        .inboundConversationId(inboundConversationId)
-                        .nemsMessageId(randomNemsMessageId())
-                        .nhsNumber(nhsNumber)
-                        .sourceGp(sendingOdsCode)
-                        .transferStatus(INBOUND_REQUEST_SENT.name())
-                        .build());
+            .inboundConversationId(inboundConversationId)
+            .nemsMessageId(randomNemsMessageId())
+            .nhsNumber(nhsNumber)
+            .sourceGp(sendingOdsCode)
+            .transferStatus(INBOUND_REQUEST_SENT.name())
+            .associatedTest(testInfo.getDisplayName())
+            .build());
 
         // Put the patient into mhsInboundQueue as a UK05 message
         mhsInboundQueue.sendMessage(smallEhr, inboundConversationId);
@@ -874,6 +885,7 @@ class RepositoryE2ETest {
                 .nhsNumber(nhsNumber)
                 .sourceGp(senderOdsCode)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
+                .associatedTest(testInfo.getDisplayName())
                 .build());
         
         // when
