@@ -35,7 +35,7 @@ public class RepoService {
     private final TemplatingService templatingService;
     private final TransferTrackerService transferTrackerService;
 
-    public void addSmallEhrToEhrRepo(@Valid @Pattern(regexp = NHS_NUMBER_REGEX) String nhsNumber, TemplateVariant templateVariant) {
+    public void addSmallEhrToEhrRepo(@Valid @Pattern(regexp = NHS_NUMBER_REGEX) String nhsNumber, TemplateVariant templateVariant, String associatedTestName) {
         final SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
                 .nhsNumber(nhsNumber)
                 .build();
@@ -47,6 +47,7 @@ public class RepoService {
                 .nhsNumber(nhsNumber)
                 .sourceGp(Gp2GpSystem.TPP_PTL_INT.odsCode())
                 .nemsMessageId(randomNemsMessageId())
+                .associatedTest(associatedTestName)
                 .transferStatus(INBOUND_REQUEST_SENT.name()).build());
 
         this.mhsInboundQueue.sendMessage(smallEhrMessage, inboundConversationId);
@@ -54,7 +55,7 @@ public class RepoService {
         log.info("Small EHR with Conversation ID {} added to the repository successfully.", inboundConversationId);
     }
 
-    public void addLargeEhrWithVariableManifestToRepo(@Valid @Pattern(regexp = NHS_NUMBER_REGEX) String nhsNumber, int numberOfFragments, String senderOdsCode) {
+    public void addLargeEhrWithVariableManifestToRepo(@Valid @Pattern(regexp = NHS_NUMBER_REGEX) String nhsNumber, int numberOfFragments, String senderOdsCode, String associatedTestName) {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
@@ -64,7 +65,7 @@ public class RepoService {
                 .limit(numberOfFragments)
                 .toList();
 
-        sendLargeEhrCoreWithVariableManifestToRepo(nhsNumber, inboundConversationId, senderOdsCode, fragmentMessageIds);
+        sendLargeEhrCoreWithVariableManifestToRepo(nhsNumber, inboundConversationId, senderOdsCode, fragmentMessageIds, associatedTestName);
         generateFragmentsWithoutReferencesForConversationId(senderOdsCode, inboundConversationId, fragmentMessageIds);
 
         stopWatch.stop();
@@ -77,7 +78,8 @@ public class RepoService {
             String nhsNumber,
             String inboundConversationId,
             String senderOdsCode,
-            List<String> fragmentMessageIds
+            List<String> fragmentMessageIds,
+            String associatedTestName
     ) {
         final LargeEhrCoreVariableManifestTemplateContext largeEhrCoreTemplateContext = LargeEhrCoreVariableManifestTemplateContext.builder()
                 .inboundConversationId(inboundConversationId)
@@ -92,6 +94,7 @@ public class RepoService {
                 .nhsNumber(nhsNumber)
                 .sourceGp(Gp2GpSystem.TPP_PTL_INT.odsCode())
                 .nemsMessageId(randomNemsMessageId())
+                .associatedTest(associatedTestName)
                 .transferStatus(INBOUND_REQUEST_SENT.name()).build());
 
         this.mhsInboundQueue.sendMessage(largeEhrCoreMessage, inboundConversationId);

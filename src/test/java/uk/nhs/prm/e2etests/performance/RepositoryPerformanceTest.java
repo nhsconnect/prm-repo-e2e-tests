@@ -3,7 +3,9 @@ package uk.nhs.prm.e2etests.performance;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.REPO_DEV;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
@@ -46,6 +48,7 @@ import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient.class)
 public class RepositoryPerformanceTest {
+    private TestInfo testInfo;
     private final RepoService repoService;
     private final TemplatingService templatingService;
     private final SimpleAmqpQueue mhsInboundQueue;
@@ -97,6 +100,11 @@ public class RepositoryPerformanceTest {
         gp2gpMessengerOQ.deleteAllMessages();
     }
 
+    @BeforeEach
+    void beforeEach(TestInfo testInfo) {
+        this.testInfo = testInfo;
+    }
+
     @Test
     void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ() {
         // Constants
@@ -108,7 +116,7 @@ public class RepositoryPerformanceTest {
         MhsMessage continueRequest = this.buildContinueRequest(outboundConversationId, REPO_DEV.odsCode(), TPP_PTL_INT.odsCode());
 
         // When
-        this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100, TPP_PTL_INT.odsCode());
+        this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100, TPP_PTL_INT.odsCode(), testInfo.getDisplayName());
         this.mhsInboundQueue.sendMessage(ehrRequest.getMessage(), outboundConversationId);
 
         sleepFor(10000);
@@ -138,7 +146,7 @@ public class RepositoryPerformanceTest {
 
         outboundConversationIds.forEach(conversationId -> {
             stopWatch.start();
-            this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, numberOfFragmentsPerEhr, TPP_PTL_INT.odsCode());
+            this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, numberOfFragmentsPerEhr, TPP_PTL_INT.odsCode(), testInfo.getDisplayName());
             stopWatch.stop();
 
             MhsMessage ehrRequest = this.buildEhrRequest(nhsNumber, conversationId, TPP_PTL_INT.odsCode(), TPP_PTL_INT.asidCode());
