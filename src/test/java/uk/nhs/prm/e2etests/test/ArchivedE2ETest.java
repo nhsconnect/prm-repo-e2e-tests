@@ -34,6 +34,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.EMIS_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.OldTransferTrackerStatus.*;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
 
 @Log4j2
 @SpringBootTest
@@ -138,34 +139,36 @@ class ArchivedE2ETest {
         assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
     }
 
-    @Disabled
-    @ParameterizedTest
-    @EnumSource(value = TemplateVariant.class, names = {"POSITIVE_ACKNOWLEDGEMENT", "NEGATIVE_ACKNOWLEDGEMENT"})
-    void shouldPutAcksOnMHSInboundAndUpdateEhrOutDbStatus(TemplateVariant templateVariant) {
-        // given
-        UUID ackMessageId = UUID.randomUUID();
-        String ackConversationId = UUID.randomUUID().toString();
-        String expectedTypeCode = templateVariant.name().equals("POSITIVE_ACKNOWLEDGEMENT") ? "AA" : "AR";
-
-        log.info("{} conversationId: {}, messageId: {}", templateVariant.name(), ackMessageId, ackConversationId);
-
-        String ackMessage = this.templatingService.getTemplatedString(templateVariant,
-                AcknowledgementTemplateContext.builder()
-                        .messageId(ackMessageId)
-                        .build());
-
-        // when
-        mhsInboundQueue.sendMessage(ackMessage, ackConversationId);
-
-        Acknowledgement acknowledgement = await().atMost(30, TimeUnit.SECONDS)
-                .with().pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> ehrOutService.findAcknowledgementByMessageId(ackMessageId), Objects::nonNull) ;
-
-        // then
-        String actualTypeCode = acknowledgement.getAcknowledgementTypeCode();
-        assertThat(actualTypeCode).isEqualTo(expectedTypeCode);
-        log.info("The acknowledgement typeCode of {} is {}.", ackMessageId, actualTypeCode);
-    }
+    // TODO PRMT-4669 commented out due to UUID/STRING discrepancy - archived test, not worth fixing at the moment
+//    @Disabled
+//    @ParameterizedTest
+//    @EnumSource(value = TemplateVariant.class, names = {"POSITIVE_ACKNOWLEDGEMENT", "NEGATIVE_ACKNOWLEDGEMENT"})
+//    void shouldPutAcksOnMHSInboundAndUpdateEhrOutDbStatus(TemplateVariant templateVariant) {
+//        // given
+//        String ackMessageId = UUID.randomUUID().toString();
+//        String ackConversationId = randomUppercaseUuidAsString();
+//        String expectedTypeCode = templateVariant.name().equals("POSITIVE_ACKNOWLEDGEMENT") ? "AA" : "AR";
+//
+//        log.info("{} conversationId: {}, messageId: {}", templateVariant.name(), ackMessageId, ackConversationId);
+//
+//        String ackMessage = this.templatingService.getTemplatedString(templateVariant,
+//                AcknowledgementTemplateContext.builder()
+//                        // TODO PRMT-4669 If we were to unarchive this, does it need the ackConversationId adding? This might be the fix to the test.
+//                        .messageId(ackMessageId)
+//                        .build());
+//
+//        // when
+//        mhsInboundQueue.sendMessage(ackMessage, ackConversationId);
+//
+//        Acknowledgement acknowledgement = await().atMost(30, TimeUnit.SECONDS)
+//                .with().pollInterval(2, TimeUnit.SECONDS)
+//                .until(() -> ehrOutService.findAcknowledgementByMessageId(ackMessageId), Objects::nonNull) ;
+//
+//        // then
+//        String actualTypeCode = acknowledgement.getAcknowledgementTypeCode();
+//        assertThat(actualTypeCode).isEqualTo(expectedTypeCode);
+//        log.info("The acknowledgement typeCode of {} is {}.", ackMessageId, actualTypeCode);
+//    }
 
     @ParameterizedTest
     @MethodSource("largeEhrScenariosToBeRunAsRequired")

@@ -23,4 +23,10 @@ public class DateTimeUtility {
                 .truncatedTo(ChronoUnit.MINUTES)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
+
+    public static String getIsoTimestamp() {
+        return ZonedDateTime.now(ZoneId.of(ZONE_ID))
+                .truncatedTo(ChronoUnit.MINUTES)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
 }

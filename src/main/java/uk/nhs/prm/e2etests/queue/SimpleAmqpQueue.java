@@ -95,7 +95,7 @@ public class SimpleAmqpQueue {
             }
         }
 
-        throw new GenericException(this.getClass().getName(), "Failed to connect to any endpoint");
+        throw new GenericException(this.getClass().getName(), "Failed to connect to any endpoint, this can occur when you are not connected to the VPN. If you are connected to the VPN, try restart the AMQP broker.");
     }
 
     private Producer connectToEndpoint(AmqpEndpoint endpoint) throws IOException, AMQPException, AuthenticationException, UnsupportedProtocolVersionException {
