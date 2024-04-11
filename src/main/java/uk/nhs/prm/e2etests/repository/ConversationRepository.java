@@ -9,6 +9,7 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 
+import static uk.nhs.prm.e2etests.utility.DateTimeUtility.getIsoTimestamp;
 import static uk.nhs.prm.e2etests.utility.DateTimeUtility.getIsoTimestampForString;
 
 import java.util.Optional;
@@ -28,6 +29,14 @@ public class ConversationRepository {
 
     public void save(ConversationRecord conversationRecord) {
         conversationRecord.setLayer(CONVERSATION_LAYER);
+
+        String currentTimestamp = getIsoTimestamp();
+
+        if (conversationRecord.getCreatedAt() == null) {
+            conversationRecord.setCreatedAt(currentTimestamp);
+        }
+        conversationRecord.setUpdatedAt(currentTimestamp);
+
         transferTrackerTable.putItem(conversationRecord);
     }
 

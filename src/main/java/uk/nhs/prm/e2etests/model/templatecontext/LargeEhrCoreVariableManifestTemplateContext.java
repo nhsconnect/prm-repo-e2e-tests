@@ -7,8 +7,8 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
 import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
 import static uk.nhs.prm.e2etests.utility.ValidationUtility.ODS_CODE_REGEX;
 import static uk.nhs.prm.e2etests.utility.ValidationUtility.UUID_REGEX;
@@ -16,17 +16,17 @@ import static uk.nhs.prm.e2etests.utility.ValidationUtility.UUID_REGEX;
 @Getter
 @Builder
 public class LargeEhrCoreVariableManifestTemplateContext implements TemplateContext {
-    @Builder.Default
     @Pattern(regexp = UUID_REGEX, message = "An invalid Inbound Conversation ID was provided.")
-    private String inboundConversationId = UUID.randomUUID().toString().toUpperCase();
+    private String inboundConversationId;
 
     @Builder.Default
     @Pattern(regexp = UUID_REGEX, message = "An invalid Large EHR Core Message ID was provided.")
-    private String largeEhrCoreMessageId = UUID.randomUUID().toString().toUpperCase();
+    private String largeEhrCoreMessageId = randomUppercaseUuidAsString();
 
+    // TODO Tech debt? - is this field still needed?
     @Builder.Default
     @Pattern(regexp = UUID_REGEX, message = "An invalid Fragment Message ID was provided.")
-    private String fragmentMessageId = UUID.randomUUID().toString().toUpperCase();
+    private String fragmentMessageId = randomUppercaseUuidAsString();
 
     @Pattern(regexp = NHS_NUMBER_REGEX, message = "An invalid NHS Number was provided.")
     private String nhsNumber;
