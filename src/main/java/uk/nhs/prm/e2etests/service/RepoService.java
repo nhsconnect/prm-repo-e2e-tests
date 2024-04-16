@@ -36,7 +36,7 @@ public class RepoService {
     private final TemplatingService templatingService;
     private final TransferTrackerService transferTrackerService;
 
-    public void addSmallEhrToEhrRepo(TemplateVariant templateVariant) {
+    public void addSmallEhrToEhrRepo(TemplateVariant templateVariant, String nhsNumber) {
         final SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
                 .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
@@ -58,7 +58,7 @@ public class RepoService {
         log.info("Small EHR with Conversation ID {} added to the repository successfully.", inboundConversationId);
     }
 
-    public void addLargeEhrWithVariableManifestToRepo(int numberOfFragments) {
+    public void addLargeEhrWithVariableManifestToRepo(String nhsNumber, int numberOfFragments) {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
@@ -68,7 +68,7 @@ public class RepoService {
                 .toList();
 
 
-        sendLargeEhrCoreWithVariableManifestToRepo(fragmentMessageIds);
+        sendLargeEhrCoreWithVariableManifestToRepo(fragmentMessageIds, nhsNumber);
         generateFragmentsWithoutReferencesForConversationId(fragmentMessageIds);
 
         stopWatch.stop();
@@ -77,7 +77,7 @@ public class RepoService {
     }
 
     // =================== HELPER METHODS ===================
-    private void sendLargeEhrCoreWithVariableManifestToRepo(List<String> fragmentMessageIds) {
+    private void sendLargeEhrCoreWithVariableManifestToRepo(List<String> fragmentMessageIds, String nhsNumber) {
         final LargeEhrCoreVariableManifestTemplateContext largeEhrCoreTemplateContext = LargeEhrCoreVariableManifestTemplateContext.builder()
                 .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)

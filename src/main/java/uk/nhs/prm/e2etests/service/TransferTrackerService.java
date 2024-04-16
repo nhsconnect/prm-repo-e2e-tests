@@ -49,6 +49,14 @@ public class TransferTrackerService {
                 timeoutMinutes);
     }
 
+    public String waitForFailureReasonMatching(String inboundConversationId, String failureReason) {
+        return waitForConversationRecordAttributeMatching(
+                inboundConversationId,
+                ConversationRecord::getFailureReason,
+                failureReason,
+                2);
+    }
+
     public String waitForFailureCodeMatching(String inboundConversationId, String failureCode) {
         return waitForConversationRecordAttributeMatching(
                 inboundConversationId,
