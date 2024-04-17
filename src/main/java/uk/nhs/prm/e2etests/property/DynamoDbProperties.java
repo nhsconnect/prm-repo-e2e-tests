@@ -15,13 +15,9 @@ public class DynamoDbProperties {
     @Value("${aws.configuration.databaseNames.oldTransferTrackerDb}")
     private String oldTransferTrackerDbName;
 
-    // TODO - PRMT-4663 - USE @Value WHERE IT IS REQUIRED,
-    // TODO - PRMT-4663 - LET'S NOT COUPLE THESE NAMES!
     @Value("${aws.configuration.databaseNames.transferTrackerDb}")
     private String transferTrackerDbName;
 
-    // TODO - PRMT-4663 - USE @Value WHERE IT IS REQUIRED,
-    // TODO - PRMT-4663 - LET'S NOT COUPLE THESE NAMES!
     @Value("${aws.configuration.databaseNames.activeSuspensionsDb}")
     private String activeSuspensionsDbName;
 }
