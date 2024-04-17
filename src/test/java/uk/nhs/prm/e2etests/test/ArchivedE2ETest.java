@@ -139,7 +139,7 @@ class ArchivedE2ETest {
         assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
     }
 
-    // TODO PRMT-4669 commented out due to UUID/STRING discrepancy - archived test, not worth fixing at the moment
+    // commented out due to UUID/STRING discrepancy - archived test, not worth fixing at the moment
 //    @Disabled
 //    @ParameterizedTest
 //    @EnumSource(value = TemplateVariant.class, names = {"POSITIVE_ACKNOWLEDGEMENT", "NEGATIVE_ACKNOWLEDGEMENT"})
@@ -153,7 +153,7 @@ class ArchivedE2ETest {
 //
 //        String ackMessage = this.templatingService.getTemplatedString(templateVariant,
 //                AcknowledgementTemplateContext.builder()
-//                        // TODO PRMT-4669 If we were to unarchive this, does it need the ackConversationId adding? This might be the fix to the test.
+//                        // If we were to unarchive this, does it need the ackConversationId adding? This might be the fix to the test.
 //                        .messageId(ackMessageId)
 //                        .build());
 //

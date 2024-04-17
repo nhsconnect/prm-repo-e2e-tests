@@ -36,18 +36,22 @@ public final class TestConstants {
         recipientOdsCode = EMIS_PTL_INT.odsCode();
         asidCode = TPP_PTL_INT.asidCode();
 
+        logTestConstants();
+    }
+
+    private static void logTestConstants() {
         log.info("==========TEST CONSTANTS==========");
-        log.info("testName: " + testName);
-        log.info("inboundConversationId: " + inboundConversationId);
-        log.info("outboundConversationId: " + outboundConversationId);
-        log.info("messageId: " + messageId);
-        log.info("largeEhrCoreMessageId: " + largeEhrCoreMessageId);
-        log.info("fragment1MessageId: " + fragment1MessageId);
-        log.info("fragment2MessageId: " + fragment2MessageId);
-        log.info("nemsMessageId: " + nemsMessageId);
-        log.info("senderOdsCode: " + senderOdsCode);
-        log.info("recipientOdsCode: " + recipientOdsCode);
-        log.info("asidCode: " + asidCode);
+        log.info("testName: {}", testName);
+        log.info("inboundConversationId: {}", inboundConversationId);
+        log.info("outboundConversationId: {}", outboundConversationId);
+        log.info("messageId: {}", messageId);
+        log.info("largeEhrCoreMessageId: {}", largeEhrCoreMessageId);
+        log.info("fragment1MessageId: {}", fragment1MessageId);
+        log.info("fragment2MessageId: {}", fragment2MessageId);
+        log.info("nemsMessageId: {}", nemsMessageId);
+        log.info("senderOdsCode: {}", senderOdsCode);
+        log.info("recipientOdsCode: {}", recipientOdsCode);
+        log.info("asidCode: {}", asidCode);
         log.info("==========TEST CONSTANTS==========");
         log.info("ANY VARIABLES LISTED BELOW HAVE BEEN DEFINED WITHIN THE TEST");
         log.info("IF A VARIABLE FROM ABOVE (SUCH AS senderOdsCode, FOR EXAMPLE) IS REPEATED BELOW, BELOW SHOULD BE CONSIDERED THE SOURCE OF TRUTH");
