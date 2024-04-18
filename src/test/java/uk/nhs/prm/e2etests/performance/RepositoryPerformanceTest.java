@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.nhs.prm.e2etests.enumeration.Patient.WITH_SINGLE_FRAGMENT_LARGE_EHR;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
 import static uk.nhs.prm.e2etests.property.TestConstants.*;
@@ -104,11 +105,14 @@ public class RepositoryPerformanceTest {
     @Test
     void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ() {
         // Given
-        MhsMessage ehrRequest = this.buildEhrRequest(outboundConversationId);
+        final String nhsNumber = "9727018157"; // existed on old version of test, what is this number?
+        log.info("nhsNumber: " + nhsNumber);
+
+        MhsMessage ehrRequest = this.buildEhrRequest(outboundConversationId, nhsNumber);
         MhsMessage continueRequest = this.buildContinueRequest(outboundConversationId);
 
         // When
-        this.repoService.addLargeEhrWithVariableManifestToRepo(100);
+        this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100);
         this.mhsInboundQueue.sendMessage(ehrRequest.getMessage(), outboundConversationId);
 
         sleepFor(10000);
@@ -125,6 +129,9 @@ public class RepositoryPerformanceTest {
     @Test
     void Given_30LargeEhrsWith5FragmentsEach_When_PutIntoRepoAndPulledOutIndividuallyEveryMinute_Then_VisibleOnGp2gpMessengerOQ() {
         // Constants
+        final String nhsNumber = "9727018157"; // existed on old version of test, what is this number?
+        log.info("nhsNumber: " + nhsNumber);
+
         final int numberOfEhrs = 30;
         final int numberOfFragmentsPerEhr = 5;
         final int pullRateMilliseconds = 60000;
@@ -137,10 +144,10 @@ public class RepositoryPerformanceTest {
 
         outboundConversationIds.forEach(conversationId -> {
             stopWatch.start();
-            this.repoService.addLargeEhrWithVariableManifestToRepo(numberOfFragmentsPerEhr);
+            this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, numberOfFragmentsPerEhr);
             stopWatch.stop();
 
-            MhsMessage ehrRequest = this.buildEhrRequest(conversationId);
+            MhsMessage ehrRequest = this.buildEhrRequest(conversationId, nhsNumber);
             MhsMessage continueRequest = this.buildContinueRequest(conversationId);
 
             mhsInboundQueue.sendMessage(ehrRequest.getMessage(), ehrRequest.getConversationId());
@@ -166,6 +173,9 @@ public class RepositoryPerformanceTest {
     @Test
     @Timeout(value = 60, unit = SECONDS)
     void shouldTransferOut20EHRsWithin1Minute() {
+        final String nhsNumber = WITH_SINGLE_FRAGMENT_LARGE_EHR.nhsNumber();
+        log.info("nhsNumber: " + nhsNumber);
+
         List<String> outboundConversationIds = Stream.generate(TestDataUtility::randomUppercaseUuidAsString)
                 .limit(20)
                 .toList();
@@ -200,7 +210,7 @@ public class RepositoryPerformanceTest {
      * @param asidCode The ASID Code.
      * @return The created `EhrRequest` instance.
      */
-    private MhsMessage buildEhrRequest(String outboundConversationId) {
+    private MhsMessage buildEhrRequest(String outboundConversationId, String nhsNumber) {
         final EhrRequestTemplateContext context =
                 EhrRequestTemplateContext.builder()
                         .nhsNumber(nhsNumber)
