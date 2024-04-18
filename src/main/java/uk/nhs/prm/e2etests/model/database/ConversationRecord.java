@@ -1,14 +1,21 @@
 package uk.nhs.prm.e2etests.model.database;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
+import uk.nhs.prm.e2etests.property.TestConstants;
 
 @Getter
+@Builder
 @DynamoDbBean
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConversationRecord {
     private String inboundConversationId; // Partition Key
     private String layer; // Sort Key
@@ -22,6 +29,8 @@ public class ConversationRecord {
     private String nemsMessageId;
     private String createdAt;
     private String updatedAt;
+    private Integer deletedAt;
+    private String associatedTest;
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("InboundConversationId")
@@ -85,5 +94,15 @@ public class ConversationRecord {
     @DynamoDbAttribute("UpdatedAt")
     public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @DynamoDbAttribute("DeletedAt")
+    public void setDeletedAt(Integer deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    @DynamoDbAttribute("AssociatedTest")
+    public void setAssociatedTest(String associatedTest) {
+        this.associatedTest = associatedTest;
     }
 }

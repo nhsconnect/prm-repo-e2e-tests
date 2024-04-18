@@ -1,10 +1,10 @@
 package uk.nhs.prm.e2etests.service;
 
 import org.springframework.util.StopWatch;
+import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrCoreVariableManifestTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrFragmentNoReferencesContext;
 import uk.nhs.prm.e2etests.model.templatecontext.SmallEhrTemplateContext;
-import uk.nhs.prm.e2etests.model.database.OldTransferTrackerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
@@ -15,16 +15,16 @@ import jakarta.validation.constraints.Pattern;
 import lombok.extern.log4j.Log4j2;
 import lombok.AllArgsConstructor;
 import jakarta.validation.Valid;
+import uk.nhs.prm.e2etests.utility.TestDataUtility;
 
 import java.util.stream.Stream;
 import java.util.List;
-import java.util.UUID;
 
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.*;
-import static uk.nhs.prm.e2etests.enumeration.OldTransferTrackerStatus.LARGE_EHR_CONTINUE_REQUEST_SENT;
-import static uk.nhs.prm.e2etests.enumeration.OldTransferTrackerStatus.EHR_TRANSFER_TO_REPO_COMPLETE;
-import static uk.nhs.prm.e2etests.enumeration.OldTransferTrackerStatus.EHR_REQUEST_SENT;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.*;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_CORE_VARIABLE_MANIFEST;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_FRAGMENT_NO_REF_4MB;
+import static uk.nhs.prm.e2etests.property.TestConstants.*;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.*;
 import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
 
 @Log4j2
@@ -34,39 +34,42 @@ import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
 public class RepoService {
     private final SimpleAmqpQueue mhsInboundQueue;
     private final TemplatingService templatingService;
-    private final OldTransferTrackerService oldTransferTrackerService;
+    private final TransferTrackerService transferTrackerService;
 
-    public void addSmallEhrToEhrRepo(@Valid @Pattern(regexp = NHS_NUMBER_REGEX) String nhsNumber, TemplateVariant templateVariant) {
+    public void addSmallEhrToEhrRepo(TemplateVariant templateVariant, String nhsNumber) {
         final SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
+                .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
                 .build();
-        final String inboundConversationId = smallEhrTemplateContext.getInboundConversationId();
+
         final String smallEhrMessage = this.templatingService.getTemplatedString(templateVariant, smallEhrTemplateContext);
 
-        this.oldTransferTrackerService.save(OldTransferTrackerRecord.builder()
-                .conversationId(inboundConversationId)
+        this.transferTrackerService.save(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
+                .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
-                .sourceGp(Gp2GpSystem.TPP_PTL_INT.odsCode())
-                .nemsMessageId(randomNemsMessageId())
-                .state(EHR_REQUEST_SENT.status).build());
+                .sourceGp(senderOdsCode)
+                .associatedTest(testName)
+                .transferStatus(INBOUND_REQUEST_SENT.name())
+                .build());
 
         this.mhsInboundQueue.sendMessage(smallEhrMessage, inboundConversationId);
-        this.oldTransferTrackerService.waitForStatusMatching(inboundConversationId, EHR_TRANSFER_TO_REPO_COMPLETE.status);
+        this.transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
         log.info("Small EHR with Conversation ID {} added to the repository successfully.", inboundConversationId);
     }
 
-    public void addLargeEhrWithVariableManifestToRepo(@Valid @Pattern(regexp = NHS_NUMBER_REGEX) String nhsNumber, int numberOfFragments, String senderOdsCode) {
+    public void addLargeEhrWithVariableManifestToRepo(String nhsNumber, int numberOfFragments) {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-        final String inboundConversationId = UUID.randomUUID().toString().toUpperCase();
         final List<String> fragmentMessageIds = Stream
-                .generate(() -> UUID.randomUUID().toString().toUpperCase())
+                .generate(TestDataUtility::randomUppercaseUuidAsString)
                 .limit(numberOfFragments)
                 .toList();
 
-        sendLargeEhrCoreWithVariableManifestToRepo(nhsNumber, inboundConversationId, senderOdsCode, fragmentMessageIds);
-        generateFragmentsWithoutReferencesForConversationId(senderOdsCode, inboundConversationId, fragmentMessageIds);
+
+        sendLargeEhrCoreWithVariableManifestToRepo(fragmentMessageIds, nhsNumber);
+        generateFragmentsWithoutReferencesForConversationId(fragmentMessageIds);
 
         stopWatch.stop();
 
@@ -74,43 +77,33 @@ public class RepoService {
     }
 
     // =================== HELPER METHODS ===================
-    private void sendLargeEhrCoreWithVariableManifestToRepo(
-            String nhsNumber,
-            String inboundConversationId,
-            String senderOdsCode,
-            List<String> fragmentMessageIds
-    ) {
+    private void sendLargeEhrCoreWithVariableManifestToRepo(List<String> fragmentMessageIds, String nhsNumber) {
         final LargeEhrCoreVariableManifestTemplateContext largeEhrCoreTemplateContext = LargeEhrCoreVariableManifestTemplateContext.builder()
                 .inboundConversationId(inboundConversationId)
-                .referencedFragmentMessageIds(fragmentMessageIds)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode).build();
+                .senderOdsCode(senderOdsCode)
+                .referencedFragmentMessageIds(fragmentMessageIds)
+                .build();
 
         final String largeEhrCoreMessage = this.templatingService.getTemplatedString(LARGE_EHR_CORE_VARIABLE_MANIFEST, largeEhrCoreTemplateContext);
 
-        this.oldTransferTrackerService.save(OldTransferTrackerRecord.builder()
-                .conversationId(inboundConversationId)
+        this.transferTrackerService.save(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
-                .sourceGp(Gp2GpSystem.TPP_PTL_INT.odsCode())
-                .nemsMessageId(randomNemsMessageId())
-                .state(EHR_REQUEST_SENT.status).build());
+                .sourceGp(senderOdsCode)
+                .nemsMessageId(nemsMessageId)
+                .associatedTest(testName)
+                .transferStatus(INBOUND_REQUEST_SENT.name()).build());
 
         this.mhsInboundQueue.sendMessage(largeEhrCoreMessage, inboundConversationId);
-        this.oldTransferTrackerService.waitForStatusMatching(inboundConversationId, LARGE_EHR_CONTINUE_REQUEST_SENT.status);
+        this.transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_CONTINUE_REQUEST_SENT.name());
         log.info("Large EHR Core has reached the EHR Repository successfully, Inbound CID: {}, MID: {}, NHS Number: {}.",
                 inboundConversationId,
                 largeEhrCoreTemplateContext.getLargeEhrCoreMessageId(),
                 nhsNumber);
     }
 
-    private void generateFragmentsWithoutReferencesForConversationId(
-            String senderOdsCode,
-            String inboundConversationId,
-            List<String> fragmentMessageIds
-    ) {
-        if (!inboundConversationId.equals(inboundConversationId.toUpperCase()))
-            inboundConversationId = inboundConversationId.toUpperCase();
-
+    private void generateFragmentsWithoutReferencesForConversationId(List<String> fragmentMessageIds) {
         for (int i = 0; i < fragmentMessageIds.size(); i++) {
             final LargeEhrFragmentNoReferencesContext context = LargeEhrFragmentNoReferencesContext.builder()
                     .inboundConversationId(inboundConversationId)
@@ -122,10 +115,10 @@ public class RepoService {
             this.mhsInboundQueue.sendMessage(fragmentMessage, inboundConversationId);
 
             log.info("Fragment {} of {} sent to the MHS Inbound Queue, Inbound CID: {}, MID: {}.",
-                    (i + 1), fragmentMessageIds.size(), context.getInboundConversationId(), fragmentMessageIds.get(i));
+                    (i + 1), fragmentMessageIds.size(), inboundConversationId, fragmentMessageIds.get(i));
         }
 
-        this.oldTransferTrackerService.waitForStatusMatching(inboundConversationId, EHR_TRANSFER_TO_REPO_COMPLETE.status, 5);
+        this.transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_COMPLETE.name(), 5);
         log.info("All fragments have reached the EHR repository successfully.");
     }
 }

@@ -17,6 +17,10 @@ import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 
 import java.util.Map;
 
+/**
+ * @deprecated PRMT-4670 old Transfer Tracker DB logic - to be removed
+ */
+@Deprecated(since="2.0.0")
 @Log4j2
 @Service
 public class HealthCheckService {
