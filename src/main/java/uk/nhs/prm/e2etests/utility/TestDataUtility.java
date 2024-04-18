@@ -29,7 +29,7 @@ public final class TestDataUtility {
         return nemsEventMessageId;
     }
 
-    public static String randomUuidAsString() {
+    public static String randomUppercaseUuidAsString() {
         return UUID.randomUUID().toString().toUpperCase();
     }
 }

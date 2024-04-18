@@ -3,16 +3,18 @@ package uk.nhs.prm.e2etests.performance;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.MhsMessage;
 import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
+import uk.nhs.prm.e2etests.property.TestConstants;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceParsingDeadLetterQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceLargeEhrFragmentsOQ;
@@ -28,17 +30,14 @@ import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsing
 import uk.nhs.prm.e2etests.utility.TestDataUtility;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.*;
-import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.REPO_DEV;
-import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUuidAsString;
+import static uk.nhs.prm.e2etests.property.TestConstants.*;
 import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
 @Log4j2
@@ -97,18 +96,19 @@ public class RepositoryPerformanceTest {
         gp2gpMessengerOQ.deleteAllMessages();
     }
 
+    @BeforeEach
+    void beforeEach(TestInfo testInfo) {
+        TestConstants.generateTestConstants(testInfo.getDisplayName());
+    }
+
     @Test
     void Given_SuperLargeEhrWith100Fragments_When_PutIntoRepoAndPulledOut_Then_VisibleOnGp2gpMessengerOQ() {
-        // Constants
-        final String nhsNumber = "9727018157";
-
         // Given
-        String outboundConversationId = randomUuidAsString();
-        MhsMessage ehrRequest = this.buildEhrRequest(nhsNumber, outboundConversationId, TPP_PTL_INT.odsCode(), TPP_PTL_INT.asidCode());
-        MhsMessage continueRequest = this.buildContinueRequest(outboundConversationId, REPO_DEV.odsCode(), TPP_PTL_INT.odsCode());
+        MhsMessage ehrRequest = this.buildEhrRequest(outboundConversationId);
+        MhsMessage continueRequest = this.buildContinueRequest(outboundConversationId);
 
         // When
-        this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, 100, TPP_PTL_INT.odsCode());
+        this.repoService.addLargeEhrWithVariableManifestToRepo(100);
         this.mhsInboundQueue.sendMessage(ehrRequest.getMessage(), outboundConversationId);
 
         sleepFor(10000);
@@ -127,22 +127,21 @@ public class RepositoryPerformanceTest {
         // Constants
         final int numberOfEhrs = 30;
         final int numberOfFragmentsPerEhr = 5;
-        final String nhsNumber = "9727018157";
         final int pullRateMilliseconds = 60000;
         final StopWatch stopWatch = new StopWatch();
         
         // Given
-        final List<String> outboundConversationIds = Stream.generate(TestDataUtility::randomUuidAsString)
+        final List<String> outboundConversationIds = Stream.generate(TestDataUtility::randomUppercaseUuidAsString)
                 .limit(numberOfEhrs)
                 .toList();
 
         outboundConversationIds.forEach(conversationId -> {
             stopWatch.start();
-            this.repoService.addLargeEhrWithVariableManifestToRepo(nhsNumber, numberOfFragmentsPerEhr, TPP_PTL_INT.odsCode());
+            this.repoService.addLargeEhrWithVariableManifestToRepo(numberOfFragmentsPerEhr);
             stopWatch.stop();
 
-            MhsMessage ehrRequest = this.buildEhrRequest(nhsNumber, conversationId, TPP_PTL_INT.odsCode(), TPP_PTL_INT.asidCode());
-            MhsMessage continueRequest = this.buildContinueRequest(conversationId, Gp2GpSystem.REPO_DEV.odsCode(), TPP_PTL_INT.odsCode());
+            MhsMessage ehrRequest = this.buildEhrRequest(conversationId);
+            MhsMessage continueRequest = this.buildContinueRequest(conversationId);
 
             mhsInboundQueue.sendMessage(ehrRequest.getMessage(), ehrRequest.getConversationId());
             log.info("EHR Request Sent for Outbound Conversation ID: {}.", conversationId);
@@ -167,18 +166,15 @@ public class RepositoryPerformanceTest {
     @Test
     @Timeout(value = 60, unit = SECONDS)
     void shouldTransferOut20EHRsWithin1Minute() {
-        String nhsNumber = "9727018076";
-        String asidCode = "200000000149";
-        List<String> outboundConversationIds = Stream.generate(() -> (UUID.randomUUID().toString()))
+        List<String> outboundConversationIds = Stream.generate(TestDataUtility::randomUppercaseUuidAsString)
                 .limit(20)
                 .toList();
 
         outboundConversationIds.forEach(conversationId -> {
-            EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext
-                    .builder()
-                    .outboundConversationId(conversationId.toUpperCase())
+            EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
+                    .outboundConversationId(conversationId)
                     .nhsNumber(nhsNumber)
-                    .sendingOdsCode(TPP_PTL_INT.odsCode())
+                    .senderOdsCode(senderOdsCode)
                     .asidCode(asidCode)
                     .build();
 
@@ -200,26 +196,22 @@ public class RepositoryPerformanceTest {
      * Generates an `EhrRequest` object, which contains the Outbound Conversation ID
      * and the generated message.
      * @param nhsNumber The patient NHS Number.
-     * @param sendingOdsCode The sending ODS Code.
+     * @param senderOdsCode The sending ODS Code.
      * @param asidCode The ASID Code.
      * @return The created `EhrRequest` instance.
      */
-    private MhsMessage buildEhrRequest(String nhsNumber,
-                                          String outboundConversationId,
-                                          String sendingOdsCode,
-                                          String asidCode) {
+    private MhsMessage buildEhrRequest(String outboundConversationId) {
         final EhrRequestTemplateContext context =
                 EhrRequestTemplateContext.builder()
                         .nhsNumber(nhsNumber)
                         .outboundConversationId(outboundConversationId)
-                        .sendingOdsCode(sendingOdsCode)
-                        .asidCode(asidCode).build();
-
-        log.info("Generated Outbound CID: {}.", context.getOutboundConversationId());
+                        .senderOdsCode(senderOdsCode)
+                        .asidCode(asidCode)
+                        .build();
 
         return MhsMessage.builder()
-                .conversationId(context.getOutboundConversationId())
-                .messageId(context.getMessageId())
+                .conversationId(outboundConversationId)
+                .messageId(messageId)
                 .message(this.templatingService.getTemplatedString(EHR_REQUEST, context))
                 .build();
     }
@@ -231,18 +223,16 @@ public class RepositoryPerformanceTest {
      * @param senderOdsCode The Sender ODS Code.
      * @return The created `ContinueRequest` instance.
      */
-    private MhsMessage buildContinueRequest(String outboundConversationId,
-                                                    String recipientOdsCode,
-                                                    String senderOdsCode) {
-        final ContinueRequestTemplateContext context =
-                ContinueRequestTemplateContext.builder()
+    private MhsMessage buildContinueRequest(String outboundConversationId) {
+        final ContinueRequestTemplateContext context = ContinueRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
+                .messageId(messageId)
                 .recipientOdsCode(recipientOdsCode)
                 .senderOdsCode(senderOdsCode).build();
 
         return MhsMessage.builder()
-                .conversationId(context.getOutboundConversationId())
-                .messageId(context.getMessageId())
+                .conversationId(outboundConversationId)
+                .messageId(messageId)
                 .message(this.templatingService.getTemplatedString(CONTINUE_REQUEST, context))
                 .build();
     }
