@@ -473,9 +473,7 @@ class RepositoryE2ETest {
 
         mhsInboundQueue.sendMessage(smallEhr, inboundConversationId);
         transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
-
         transferTrackerService.softDeleteSmallEhr(inboundConversationId, deletedAt);
-
         mhsInboundQueue.sendMessage(ehrRequest, outboundConversationId);
 
         // then
