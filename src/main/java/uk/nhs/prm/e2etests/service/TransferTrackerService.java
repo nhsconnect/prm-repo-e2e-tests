@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 import uk.nhs.prm.e2etests.repository.ConversationRepository;
+import uk.nhs.prm.e2etests.repository.CoreRepository;
 
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -15,6 +17,7 @@ import static org.hamcrest.Matchers.equalTo;
 @RequiredArgsConstructor
 public class TransferTrackerService {
     private final ConversationRepository conversationRepository;
+    private final CoreRepository coreRepository;
 
     public void saveConversation(ConversationRecord conversationRecord) {
         conversationRepository.save(conversationRecord);
@@ -86,5 +89,13 @@ public class TransferTrackerService {
                 .findConversationByInboundConversationId(inboundConversationId)
                 .map(getter)
                 .orElse("entry not found"), equalTo(valueToMatch));
+    }
+
+    public void softDeleteConversation(String inboundConversationId, Instant instant) {
+        conversationRepository.softDeleteConversation(inboundConversationId, instant);
+    }
+
+    public void softDeleteCore(String inboundConversationId, Instant instant) {
+        coreRepository.softDeleteCore(inboundConversationId, instant);
     }
 }
