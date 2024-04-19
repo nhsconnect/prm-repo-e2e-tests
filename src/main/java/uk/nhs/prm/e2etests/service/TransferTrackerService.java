@@ -22,8 +22,8 @@ public class TransferTrackerService {
 
     public boolean inboundConversationIdExists(String conversationId) {
         return conversationRepository
-                .findByInboundConversationId(conversationId)
-                .isPresent();
+            .findConversationByInboundConversationId(conversationId)
+            .isPresent();
     }
 
     public String waitForConversationTransferStatusMatching(
@@ -86,8 +86,8 @@ public class TransferTrackerService {
                 .with()
                 .pollInterval(2, TimeUnit.SECONDS)
                 .until(() -> conversationRepository
-                        .findByInboundConversationId(inboundConversationId)
-                        .map(getter)
-                        .orElse("entry not found"), equalTo(valueToMatch));
+                    .findConversationByInboundConversationId(inboundConversationId)
+                    .map(getter)
+                    .orElse("entry not found"), equalTo(valueToMatch));
     }
 }
