@@ -1,14 +1,12 @@
 package uk.nhs.prm.e2etests.model.database;
 
 import lombok.Getter;
-import lombok.Setter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 @Getter
-@Setter
 public abstract class CommonAttributes {
     private String inboundConversationId;
     private String layer;
