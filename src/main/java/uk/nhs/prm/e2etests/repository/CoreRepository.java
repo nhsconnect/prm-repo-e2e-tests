@@ -33,7 +33,7 @@ public class CoreRepository {
         return Optional.ofNullable(table.getItem(key));
     }
 
-    public void markCoreAsSoftDeleted(String inboundConversationId, Instant instant) {
+    public void softDeleteCore(String inboundConversationId, Instant instant) {
         final CoreRecord record = getRecordByInboundConversationId(inboundConversationId)
             .orElseThrow(() -> new NotFoundException(inboundConversationId));
 
