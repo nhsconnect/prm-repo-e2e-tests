@@ -41,7 +41,7 @@ public class ConversationRepository {
         table.putItem(conversationRecord);
     }
 
-    public Optional<ConversationRecord> findByInboundConversationId(String inboundConversationId) {
+    public Optional<ConversationRecord> findConversationByInboundConversationId(String inboundConversationId) {
         final Key key = Key.builder()
                 .partitionValue(inboundConversationId)
                 .sortValue(CONVERSATION_LAYER)
@@ -51,7 +51,7 @@ public class ConversationRepository {
     }
 
     public void softDeleteConversation(String inboundConversationId, Instant instant) {
-        final ConversationRecord record = findByInboundConversationId(inboundConversationId)
+        final ConversationRecord record = findConversationByInboundConversationId(inboundConversationId)
             .orElseThrow(() -> new NotFoundException(inboundConversationId));
 
         record.setDeletedAt((int) instant.toEpochMilli());
