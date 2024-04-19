@@ -91,11 +91,8 @@ public class TransferTrackerService {
                 .orElse("entry not found"), equalTo(valueToMatch));
     }
 
-    public void softDeleteConversation(String inboundConversationId, Instant instant) {
+    public void softDeleteSmallEhr(String inboundConversationId, Instant instant) {
         conversationRepository.softDeleteConversation(inboundConversationId, instant);
-    }
-
-    public void softDeleteCore(String inboundConversationId, Instant instant) {
         coreRepository.softDeleteCore(inboundConversationId, instant);
     }
 }
