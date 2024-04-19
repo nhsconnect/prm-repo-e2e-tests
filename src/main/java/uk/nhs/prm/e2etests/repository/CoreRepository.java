@@ -24,7 +24,7 @@ public class CoreRepository {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(CoreRecord.class));
     }
 
-    private Optional<CoreRecord> getRecordByInboundConversationId(String inboundConversationId) {
+    private Optional<CoreRecord> getCoreByInboundConversationId(String inboundConversationId) {
         final Key key = Key.builder()
             .partitionValue(inboundConversationId)
             .sortValue(CORE_LAYER)
@@ -34,7 +34,7 @@ public class CoreRepository {
     }
 
     public void softDeleteCore(String inboundConversationId, Instant instant) {
-        final CoreRecord record = getRecordByInboundConversationId(inboundConversationId)
+        final CoreRecord record = getCoreByInboundConversationId(inboundConversationId)
             .orElseThrow(() -> new NotFoundException(inboundConversationId));
 
         record.setDeletedAt((int) instant.toEpochMilli());
