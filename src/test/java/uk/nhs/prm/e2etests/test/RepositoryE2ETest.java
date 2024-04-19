@@ -42,13 +42,18 @@ import uk.nhs.prm.e2etests.service.RepoService;
 import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 
 import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.*;
@@ -200,7 +205,7 @@ class RepositoryE2ETest {
 
         // Given a small EHR is transferred into the repository
         // create entry in transfer tracker db with status INBOUND_REQUEST_SENT
-        this.transferTrackerService.save(ConversationRecord.builder()
+        this.transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
@@ -304,7 +309,7 @@ class RepositoryE2ETest {
         // Given a large EHR is transferred into the repository
 
         // create entry in transfer tracker db with status INBOUND_REQUEST_SENT
-        this.transferTrackerService.save(ConversationRecord.builder()
+        this.transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
@@ -430,6 +435,55 @@ class RepositoryE2ETest {
 
             assertTrue(identicalWithFragment1 || identicalWithFragment2);
         });
+    }
+
+    @Test
+    void shouldTransferOutASmallEhrWhenThePatientIsSoftDeleted() {
+        // given
+        final String nhsNumber = "9748574125";
+        final Instant deletedAt = Instant.now().plus(15, ChronoUnit.MINUTES);
+
+        // template context set-up and templating
+        final SmallEhrTemplateContext smallEhrContext = SmallEhrTemplateContext.builder()
+            .nhsNumber(nhsNumber)
+            .inboundConversationId(inboundConversationId)
+            .messageId(messageId)
+            .build();
+
+        final EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
+            .outboundConversationId(outboundConversationId)
+            .nhsNumber(nhsNumber)
+            .senderOdsCode(senderOdsCode)
+            .asidCode(asidCode)
+            .build();
+
+        final String smallEhr = templatingService.getTemplatedString(SMALL_EHR, smallEhrContext);
+        final String ehrRequest = templatingService.getTemplatedString(EHR_REQUEST, ehrRequestContext);
+
+        // when
+        transferTrackerService.saveConversation(ConversationRecord.builder()
+            .inboundConversationId(inboundConversationId)
+            .nhsNumber(nhsNumber)
+            .transferStatus(INBOUND_REQUEST_SENT.name())
+            .nemsMessageId(nemsMessageId)
+            .sourceGp(senderOdsCode)
+            .associatedTest(testName)
+            .build()
+        );
+
+        mhsInboundQueue.sendMessage(smallEhr, inboundConversationId);
+        transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
+
+        transferTrackerService.softDeleteSmallEhr(inboundConversationId, deletedAt);
+
+        mhsInboundQueue.sendMessage(ehrRequest, outboundConversationId);
+
+        // then
+        final Collection<SqsMessage> messages = gp2gpMessengerOQ.getAllMessagesContaining(EHR_CORE.interactionId, 1).stream()
+            .filter(message -> message.contains(outboundConversationId))
+            .collect(Collectors.toSet());
+
+        assertThat(messages.size()).isEqualTo(1);
     }
 
     // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
@@ -743,7 +797,7 @@ class RepositoryE2ETest {
 
 
         // create entry in transfer tracker db with status ACTION:EHR_REQUEST_SENT
-        this.transferTrackerService.save(ConversationRecord.builder()
+        this.transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
@@ -815,7 +869,7 @@ class RepositoryE2ETest {
 
         // When
         // change transfer db status to ACTION:EHR_REQUEST_SENT before putting on inbound queue
-        transferTrackerService.save(ConversationRecord.builder()
+        transferTrackerService.saveConversation(ConversationRecord.builder()
             .inboundConversationId(inboundConversationId)
             .nemsMessageId(nemsMessageId)
             .nhsNumber(nhsNumber)
@@ -910,7 +964,7 @@ class RepositoryE2ETest {
                         .senderOdsCode(senderOdsCode)
                         .build());
 
-        transferTrackerService.save(ConversationRecord.builder()
+        transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
