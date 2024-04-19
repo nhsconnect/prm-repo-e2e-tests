@@ -440,7 +440,7 @@ class RepositoryE2ETest {
     @Test
     void shouldTransferOutASmallEhrWhenThePatientIsSoftDeleted() {
         // given
-        final String nhsNumber = "9748574125";
+        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         final Instant deletedAt = Instant.now().plus(15, ChronoUnit.MINUTES);
 
         // template context set-up and templating
