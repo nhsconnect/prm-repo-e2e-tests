@@ -50,7 +50,7 @@ public class ConversationRepository {
         return Optional.ofNullable(table.getItem(key));
     }
 
-    public void markConversationAsSoftDeleted(String inboundConversationId, Instant instant) {
+    public void softDeleteConversation(String inboundConversationId, Instant instant) {
         final ConversationRecord record = findByInboundConversationId(inboundConversationId)
             .orElseThrow(() -> new NotFoundException(inboundConversationId));
 
