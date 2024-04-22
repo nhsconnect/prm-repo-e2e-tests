@@ -15,11 +15,11 @@ public class RepoIncomingMessageBuilder {
     private ZonedDateTime nemsEventLastUpdated;
     private String sourceGp;
     private String destinationGp;
-    private UUID conversationId;
+    private UUID inboundConversationId;
 
     public RepoIncomingMessageBuilder() {
         withRandomlyGeneratedNemsMessageId();
-        withRandomlyGeneratedConversationId();
+        withRandomlyGeneratedInboundConversationId();
         withNemsEventLastUpdatedToNow();
     }
 
@@ -67,13 +67,13 @@ public class RepoIncomingMessageBuilder {
         return withEhrDestinationGp(Gp2GpSystem.repoInEnv(nhsEnvironment));
     }
 
-    public RepoIncomingMessageBuilder withRandomlyGeneratedConversationId() {
-        conversationId = UUID.randomUUID();
-        log.info("Generated Conversation ID: {}.", conversationId);
+    public RepoIncomingMessageBuilder withRandomlyGeneratedInboundConversationId() {
+        inboundConversationId = UUID.randomUUID();
+        log.info("Generated Inbound Conversation ID: {}.", inboundConversationId);
         return this;
     }
 
     public RepoIncomingMessage build() {
-        return new RepoIncomingMessage(nhsNumber, nemsMessageId, sourceGp, destinationGp, conversationId, nemsEventLastUpdated);
+        return new RepoIncomingMessage(nhsNumber, nemsMessageId, sourceGp, destinationGp, inboundConversationId, nemsEventLastUpdated);
     }
 }

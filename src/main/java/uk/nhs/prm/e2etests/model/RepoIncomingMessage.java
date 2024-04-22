@@ -13,20 +13,20 @@ public class RepoIncomingMessage {
     private final UUID nemsMessageId;
     private final String sourceGp;
     private final String destinationGp;
-    private final UUID conversationId;
+    private final UUID inboundConversationId;
     private final String nemsEventLastUpdated;
 
-    public RepoIncomingMessage(String nhsNumber, UUID nemsMessageId, String sourceGp, String destinationGp, UUID conversationId, ZonedDateTime nemsEventLastUpdated) {
+    public RepoIncomingMessage(String nhsNumber, UUID nemsMessageId, String sourceGp, String destinationGp, UUID inboundConversationId, ZonedDateTime nemsEventLastUpdated) {
         this.nhsNumber = nhsNumber;
         this.nemsMessageId = nemsMessageId;
         this.sourceGp = sourceGp;
         this.destinationGp = destinationGp;
-        this.conversationId = conversationId;
+        this.inboundConversationId = inboundConversationId;
         this.nemsEventLastUpdated = nemsEventLastUpdated.toString();
     }
 
-    public String getConversationId() {
-        return conversationId.toString();
+    public String getInboundConversationId() {
+        return inboundConversationId.toString();
     }
 
     public String toJsonString() {
@@ -40,11 +40,11 @@ public class RepoIncomingMessage {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RepoIncomingMessage that = (RepoIncomingMessage) o;
-        return Objects.equals(nemsMessageId, that.nemsMessageId) && Objects.equals(conversationId, that.conversationId);
+        return Objects.equals(nemsMessageId, that.nemsMessageId) && Objects.equals(inboundConversationId, that.inboundConversationId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(nemsMessageId, conversationId);
+        return Objects.hash(nemsMessageId, inboundConversationId);
     }
 }

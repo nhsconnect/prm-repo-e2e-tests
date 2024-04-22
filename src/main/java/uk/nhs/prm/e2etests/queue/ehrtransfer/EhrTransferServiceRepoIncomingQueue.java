@@ -21,7 +21,7 @@ public class EhrTransferServiceRepoIncomingQueue extends AbstractMessageQueue {
 
     public void send(RepoIncomingMessage message) {
         super.postAMessageWithAttributes(message.toJsonString(),
-                Map.of("conversationId", message.getConversationId(),
-                        "traceId", message.getConversationId()));
+                Map.of("conversationId", message.getInboundConversationId(),
+                        "traceId", message.getInboundConversationId()));
     }
 }
