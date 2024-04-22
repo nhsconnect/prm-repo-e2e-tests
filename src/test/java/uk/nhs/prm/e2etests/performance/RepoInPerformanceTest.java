@@ -143,7 +143,7 @@ class RepoInPerformanceTest {
 
         for (int i = 0; i < numberOfMessagesToBeProcessed; i++) {
             RepoIncomingMessage message = new RepoIncomingMessageBuilder()
-                    .withNhsNumber(TestData.generateRandomNhsNumber()) // TODO: Why are NHSNumbers not part of the constants?
+                    .withNhsNumber(TestData.generateRandomNhsNumber())
                     .withEhrSourceGpOdsCode(senderOdsCode)
                     .build();
             messagesToBeProcessed.add(new RepoInPerfMessageWrapper(message));
