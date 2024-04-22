@@ -1,17 +1,20 @@
 package uk.nhs.prm.e2etests.performance;
 
 import lombok.extern.log4j.Log4j2;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.nhs.prm.e2etests.configuration.TestData;
-import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
+import uk.nhs.prm.e2etests.property.TestConstants;
+import static uk.nhs.prm.e2etests.property.TestConstants.*;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
@@ -29,7 +32,6 @@ import java.util.stream.Collectors;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getenv;
 import static java.time.LocalDateTime.now;
-import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
@@ -52,6 +54,11 @@ class RepoInPerformanceTest {
         this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
         this.inboundQueueFromMhs = inboundQueueFromMhs;
         this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceCompleteOQ;
+    }
+
+    @BeforeEach
+    void beforeEach(TestInfo testInfo) {
+        TestConstants.generateTestConstants(testInfo.getDisplayName());
     }
 
     @Test
@@ -80,13 +87,13 @@ class RepoInPerformanceTest {
         while (now().isBefore(timeout) && !messagesToBeProcessed.isEmpty()) {
 
             for (SqsMessage sqsMessage : ehrTransferServiceTransferCompleteOQ.getNextMessages(timeout)) {
-                String conversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
+                String inboundConversationId = sqsMessage.getAttributes().get("conversationId").stringValue();
                 messagesToBeProcessed.removeIf(message -> {
-                    if (message.getMessage().getConversationId().equals(conversationId)) {
+                    if (message.getMessage().getInboundConversationId().equals(inboundConversationId)) {
                         message.finish(sqsMessage.getQueuedAt());
                         ehrTransferServiceTransferCompleteOQ.deleteMessage(sqsMessage);
-                        log.info("Message found on transfer complete queue with Conversation ID: {}, which took {} seconds to be processed.",
-                                conversationId,
+                        log.info("Message found on transfer complete queue with Inbound Conversation ID: {}, which took {} seconds to be processed.",
+                                inboundConversationId,
                                 message.getProcessingTimeInSeconds());
                         messagesProcessed.add(message);
                         return true;
@@ -116,10 +123,10 @@ class RepoInPerformanceTest {
 
             messagesToBeProcessed.forEach(message -> {
                 counter.incrementAndGet();
-                String conversationId = message.getMessage().getConversationId();
-                smallEhr.set(getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId));
+                String inboundConversationId = message.getMessage().getInboundConversationId();
+                smallEhr.set(getSmallMessageWithUniqueInboundConversationIdAndMessageId(messageTemplate, inboundConversationId));
                 message.start();
-                inboundQueueFromMhs.sendMessage(smallEhr.get(), conversationId);
+                inboundQueueFromMhs.sendMessage(smallEhr.get(), inboundConversationId);
                 sleepFor(intervalBetweenMessagesSentToMq);
             });
 
@@ -131,33 +138,13 @@ class RepoInPerformanceTest {
         }
     }
 
-
-    private synchronized void processMessage(
-            RepoInPerfMessageWrapper message,
-            String messageTemplate,
-            AtomicInteger counter,
-            SimpleAmqpQueue inboundQueueFromMhs
-    ) {
-        counter.incrementAndGet();
-        String conversationId = message.getMessage().getConversationId();
-
-        String smallEhr = getSmallMessageWithUniqueConversationIdAndMessageId(messageTemplate, conversationId);
-        message.start();
-
-        log.info("[ITEM #{}] [CONVERSATION ID: {}] - Sending to message queue.", counter.get(), conversationId);
-        inboundQueueFromMhs.sendMessage(smallEhr, conversationId);
-
-        sleepFor(100);
-        message.finish(LocalDateTime.now());
-    }
-
     private List<RepoInPerfMessageWrapper> setupMessagesToBeProcessed(int numberOfMessagesToBeProcessed) {
         List<RepoInPerfMessageWrapper> messagesToBeProcessed = new ArrayList<>();
 
         for (int i = 0; i < numberOfMessagesToBeProcessed; i++) {
             RepoIncomingMessage message = new RepoIncomingMessageBuilder()
-                    .withNhsNumber(TestData.generateRandomNhsNumber())
-                    .withEhrSourceGp(Gp2GpSystem.EMIS_PTL_INT)
+                    .withNhsNumber(TestData.generateRandomNhsNumber()) // TODO: Why are NHSNumbers not part of the constants?
+                    .withEhrSourceGpOdsCode(senderOdsCode)
                     .build();
             messagesToBeProcessed.add(new RepoInPerfMessageWrapper(message));
         }
@@ -176,9 +163,8 @@ class RepoInPerformanceTest {
         return result == null ? 100 : parseInt(result);
     }
 
-    private String getSmallMessageWithUniqueConversationIdAndMessageId(String message, String conversationId) {
-        String messageId = randomUUID().toString();
-        message = message.replaceAll("__CONVERSATION_ID__", conversationId);
+    private String getSmallMessageWithUniqueInboundConversationIdAndMessageId(String message, String inboundConversationId) {
+        message = message.replaceAll("__CONVERSATION_ID__", inboundConversationId);
         message = message.replaceAll("__MESSAGE_ID__", messageId);
         return message;
     }
