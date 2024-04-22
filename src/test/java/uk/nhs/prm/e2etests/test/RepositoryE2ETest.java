@@ -187,12 +187,7 @@ class RepositoryE2ETest {
     @Test
     void shouldTransferASmallEhrInAndOut() {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        final String senderOdsCode = TPP_PTL_INT.odsCode();
-        final String asidCode = TPP_PTL_INT.asidCode();
-
         log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-        log.info("asidCode: " + asidCode);
 
         /*
         ORC-IN
@@ -289,12 +284,9 @@ class RepositoryE2ETest {
     @Test
     void shouldTransferALargeEHRInAndOut() {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        // For readability sake, it is easiest to set up test so that sender & recipient are the same practice
-        final String recipientOdsCode = TPP_PTL_INT.odsCode();
         final String repositoryOdsCode = nhsProperties.getRepoOdsCode();
 
         log.info("nhsNumber: " + nhsNumber);
-        log.info("recipientOdsCode: " + recipientOdsCode);
         log.info("repositoryOdsCode: " + repositoryOdsCode);
 
         /*
@@ -679,12 +671,8 @@ class RepositoryE2ETest {
     @Test
     void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered() {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        final String senderOdsCode = EMIS_PTL_INT.odsCode();
-        final String asidCode = TPP_PTL_INT.asidCode();
 
         log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-        log.info("asidCode: " + asidCode);
 
         // Given a small EHR exists in the repository
         this.repoService.addSmallEhrToEhrRepo(SMALL_EHR, nhsNumber);
@@ -709,7 +697,6 @@ class RepositoryE2ETest {
         assertDoesNotThrow(() -> transferTrackerService.waitForFailureReasonMatching(inboundConversationId, "OUTBOUND:incorrect_ods_code"));
         assertDoesNotThrow(() -> transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, OUTBOUND_FAILED.name()));
     }
-
 
 //    @Test
 //    void shouldNotIngestDuplicateEhr() {
@@ -736,11 +723,8 @@ class RepositoryE2ETest {
         // Given that an EHR request has been sent from the repository to an FSS
         final String NEGATIVE_ACKNOWLEDGEMENT_FAILURE_CODE = "30";
         final String nhsNumber = SUSPENDED_WITH_EHR_AT_TPP.nhsNumber();
-        final String senderOdsCode = TPP_PTL_INT.odsCode();
 
         log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-
 
         // create entry in transfer tracker db with status ACTION:EHR_REQUEST_SENT
         this.transferTrackerService.save(ConversationRecord.builder()
@@ -858,16 +842,10 @@ class RepositoryE2ETest {
     void shouldPutALargeEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
         // given
         final String nhsNumber = "9727018157"; // existed on old version of test, what is this number?
-        final String senderOdsCode = TPP_PTL_INT.odsCode();
-        final String recipientOdsCode = EMIS_PTL_INT.odsCode();
         final String repositoryOdsCode = nhsProperties.getRepoOdsCode();
-        final String asidCode = TPP_PTL_INT.asidCode();
 
         log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-        log.info("recipientOdsCode: " + recipientOdsCode);
         log.info("repositoryOdsCode: " + repositoryOdsCode);
-        log.info("asidCode: " + asidCode);
 
         String largeEhrCore = this.templatingService.getTemplatedString(LARGE_EHR_CORE,
                 LargeEhrCoreTemplateContext.builder()
