@@ -284,9 +284,12 @@ class RepositoryE2ETest {
     @Test
     void shouldTransferALargeEHRInAndOut() {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+        // For readability sake, it is easiest to set up test so that sender & recipient are the same practice
+        final String recipientOdsCode = TPP_PTL_INT.odsCode();
         final String repositoryOdsCode = nhsProperties.getRepoOdsCode();
 
         log.info("nhsNumber: " + nhsNumber);
+        log.info("recipientOdsCode: " + recipientOdsCode);
         log.info("repositoryOdsCode: " + repositoryOdsCode);
 
         /*
@@ -671,8 +674,10 @@ class RepositoryE2ETest {
     @Test
     void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered() {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+        final String senderOdsCode = EMIS_PTL_INT.odsCode();
 
         log.info("nhsNumber: " + nhsNumber);
+        log.info("senderOdsCode: " + senderOdsCode);
 
         // Given a small EHR exists in the repository
         this.repoService.addSmallEhrToEhrRepo(SMALL_EHR, nhsNumber);
