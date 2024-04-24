@@ -40,8 +40,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.property.TestConstants.nemsMessageId;
-import static uk.nhs.prm.e2etests.property.TestConstants.senderOdsCode;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.property.TestConstants.TPP_ODS_CODE;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNhsNumber;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomOdsCode;
 
@@ -140,7 +139,7 @@ class ContinuityE2ETest {
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 suspendedPatientNhsNumber,
                 nemsMessageId,
-                senderOdsCode,
+                TPP_ODS_CODE,
                 now
         );
 
@@ -176,7 +175,7 @@ class ContinuityE2ETest {
         String currentlyRegisteredPatientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
 
         NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
-                TemplateVariant.CHANGE_OF_GP_SUSPENSION,currentlyRegisteredPatientNhsNumber, nemsMessageId, senderOdsCode, now
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,currentlyRegisteredPatientNhsNumber, nemsMessageId, TPP_ODS_CODE, now
         );
 
         NoLongerSuspendedMessageNems expectedMessageOnQueue = new NoLongerSuspendedMessageNems(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
@@ -224,7 +223,7 @@ class ContinuityE2ETest {
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 syntheticPatientProperties.getNonSyntheticPatientWithoutGp(),
                 nemsMessageId,
-                senderOdsCode,
+                TPP_ODS_CODE,
                 suspensionTime
         );
 
@@ -243,7 +242,7 @@ class ContinuityE2ETest {
 
         NemsEventMessage deceasedEvent = templatingService.createNemsEventFromTemplate(
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
-                patientNhsNumber, nemsMessageId, senderOdsCode, eventTime
+                patientNhsNumber, nemsMessageId, TPP_ODS_CODE, eventTime
         );
 
         meshMailbox.sendMessage(deceasedEvent);
@@ -292,7 +291,7 @@ class ContinuityE2ETest {
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 suspendedPatientNhsNumber,
                 nemsMessageId,
-                senderOdsCode,
+                TPP_ODS_CODE,
                 now
         );
         meshMailbox.sendMessage(nemsSuspension);

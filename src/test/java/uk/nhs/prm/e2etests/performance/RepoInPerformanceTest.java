@@ -1,9 +1,7 @@
 package uk.nhs.prm.e2etests.performance;
 
 import lombok.extern.log4j.Log4j2;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +11,7 @@ import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
 import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.performance.reporting.RepoInPerformanceChartGenerator;
-import uk.nhs.prm.e2etests.property.TestConstants;
-import static uk.nhs.prm.e2etests.property.TestConstants.*;
+
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceRepoIncomingQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.EhrTransferServiceTransferCompleteOQ;
@@ -33,6 +30,8 @@ import static java.lang.Integer.parseInt;
 import static java.lang.System.getenv;
 import static java.time.LocalDateTime.now;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.nhs.prm.e2etests.property.TestConstants.TPP_ODS_CODE;
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
 import static uk.nhs.prm.e2etests.utility.ThreadUtility.sleepFor;
 
 @Log4j2
@@ -54,11 +53,6 @@ class RepoInPerformanceTest {
         this.ehrTransferServiceRepoIncomingQueue = ehrTransferServiceRepoIncomingQueue;
         this.inboundQueueFromMhs = inboundQueueFromMhs;
         this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceCompleteOQ;
-    }
-
-    @BeforeEach
-    void beforeEach(TestInfo testInfo) {
-        TestConstants.generateTestConstants(testInfo.getDisplayName());
     }
 
     @Test
@@ -144,7 +138,7 @@ class RepoInPerformanceTest {
         for (int i = 0; i < numberOfMessagesToBeProcessed; i++) {
             RepoIncomingMessage message = new RepoIncomingMessageBuilder()
                     .withNhsNumber(TestData.generateRandomNhsNumber())
-                    .withEhrSourceGpOdsCode(senderOdsCode)
+                    .withEhrSourceGpOdsCode(TPP_ODS_CODE)
                     .build();
             messagesToBeProcessed.add(new RepoInPerfMessageWrapper(message));
         }
@@ -165,7 +159,7 @@ class RepoInPerformanceTest {
 
     private String getSmallMessageWithUniqueInboundConversationIdAndMessageId(String message, String inboundConversationId) {
         message = message.replaceAll("__CONVERSATION_ID__", inboundConversationId);
-        message = message.replaceAll("__MESSAGE_ID__", messageId);
+        message = message.replaceAll("__MESSAGE_ID__", randomUppercaseUuidAsString());
         return message;
     }
 }

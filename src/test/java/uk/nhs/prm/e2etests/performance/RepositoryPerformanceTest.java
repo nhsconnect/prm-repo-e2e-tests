@@ -184,8 +184,8 @@ public class RepositoryPerformanceTest {
             EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
                     .outboundConversationId(conversationId)
                     .nhsNumber(nhsNumber)
-                    .senderOdsCode(senderOdsCode)
-                    .asidCode(asidCode)
+                    .senderOdsCode(TPP_ODS_CODE)
+                    .asidCode(TPP_ASID_CODE)
                     .build();
 
             String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
@@ -215,8 +215,8 @@ public class RepositoryPerformanceTest {
                 EhrRequestTemplateContext.builder()
                         .nhsNumber(nhsNumber)
                         .outboundConversationId(outboundConversationId)
-                        .senderOdsCode(senderOdsCode)
-                        .asidCode(asidCode)
+                        .senderOdsCode(TPP_ODS_CODE)
+                        .asidCode(TPP_ASID_CODE)
                         .build();
 
         return MhsMessage.builder()
@@ -237,8 +237,8 @@ public class RepositoryPerformanceTest {
         final ContinueRequestTemplateContext context = ContinueRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
                 .messageId(messageId)
-                .recipientOdsCode(recipientOdsCode)
-                .senderOdsCode(senderOdsCode).build();
+                .recipientOdsCode(EMIS_ODS_CODE)
+                .senderOdsCode(TPP_ODS_CODE).build();
 
         return MhsMessage.builder()
                 .conversationId(outboundConversationId)

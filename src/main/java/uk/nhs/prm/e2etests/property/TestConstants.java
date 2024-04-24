@@ -16,9 +16,10 @@ public final class TestConstants {
     public static String fragment1MessageId;
     public static String fragment2MessageId;
     public static String nemsMessageId;
-    public static String senderOdsCode;
-    public static String recipientOdsCode;
-    public static String asidCode;
+
+    public static final String TPP_ODS_CODE = TPP_PTL_INT.odsCode();
+    public static final String EMIS_ODS_CODE = EMIS_PTL_INT.odsCode();
+    public static final String TPP_ASID_CODE = TPP_PTL_INT.asidCode();
 
     private TestConstants() {}
 
@@ -32,9 +33,6 @@ public final class TestConstants {
         fragment1MessageId = randomUppercaseUuidAsString();
         fragment2MessageId = randomUppercaseUuidAsString();
         nemsMessageId = randomNemsMessageId();
-        senderOdsCode = TPP_PTL_INT.odsCode();
-        recipientOdsCode = EMIS_PTL_INT.odsCode();
-        asidCode = TPP_PTL_INT.asidCode();
 
         logTestConstants();
     }
@@ -49,9 +47,9 @@ public final class TestConstants {
         log.info("fragment1MessageId: {}", fragment1MessageId);
         log.info("fragment2MessageId: {}", fragment2MessageId);
         log.info("nemsMessageId: {}", nemsMessageId);
-        log.info("senderOdsCode: {}", senderOdsCode);
-        log.info("recipientOdsCode: {}", recipientOdsCode);
-        log.info("asidCode: {}", asidCode);
+        log.info("tppOdsCode: {}", TPP_ODS_CODE);
+        log.info("emisOdsCode: {}", EMIS_ODS_CODE);
+        log.info("asidCode: {}", TPP_ASID_CODE);
         log.info("==========TEST CONSTANTS==========");
         log.info("ANY VARIABLES LISTED BELOW HAVE BEEN DEFINED WITHIN THE TEST");
         log.info("IF A VARIABLE FROM ABOVE (SUCH AS senderOdsCode, FOR EXAMPLE) IS REPEATED BELOW, BELOW SHOULD BE CONSIDERED THE SOURCE OF TRUTH");
