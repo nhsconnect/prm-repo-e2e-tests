@@ -30,6 +30,7 @@ public enum Gp2GpSystem {
         return asidCode;
     }
 
+    @Deprecated // Use NhsProperties.getRepoOdsCode() instead
     public static Gp2GpSystem repoInEnv(String nhsEnvironment) {
         switch (nhsEnvironment) {
             case "dev" -> { return REPO_DEV; }

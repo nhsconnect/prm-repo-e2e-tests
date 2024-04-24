@@ -1,6 +1,7 @@
 package uk.nhs.prm.e2etests.property;
 
 import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import uk.nhs.prm.e2etests.service.SsmService;
 import java.util.Arrays;
 import java.util.List;
 
+@Log4j2
 @Getter
 @Component
 public class NhsProperties {
@@ -35,7 +37,9 @@ public class NhsProperties {
     }
 
     public String getRepoOdsCode() {
-        return ssmService.getSsmParameterValue(repoOdsCode);
+        String repoOdsCodeSsmParameter = ssmService.getSsmParameterValue(repoOdsCode);
+        log.info("repositoryOdsCode: {}", repoOdsCodeSsmParameter);
+        return repoOdsCodeSsmParameter;
     }
 
     public List<String> getSafeListedPatientList() {
