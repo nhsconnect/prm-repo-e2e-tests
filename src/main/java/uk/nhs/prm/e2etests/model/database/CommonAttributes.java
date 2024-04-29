@@ -20,49 +20,49 @@ public abstract class CommonAttributes {
 
     @DynamoDbPartitionKey
     @DynamoDbAttribute("InboundConversationId")
-    public void setInboundConversationId(String inboundConversationId) {
+    public final void setInboundConversationId(String inboundConversationId) {
         this.inboundConversationId = inboundConversationId;
     }
 
     @DynamoDbSortKey
     @DynamoDbAttribute("Layer")
-    public void setLayer(String layer) {
+    public final void setLayer(String layer) {
         this.layer = layer;
     }
 
     @DynamoDbAttribute("OutboundConversationId")
     @DynamoDbSecondaryPartitionKey(indexNames = "OutboundConversationIdSecondaryIndex")
-    public void setOutboundConversationId(String outboundConversationId) {
+    public final void setOutboundConversationId(String outboundConversationId) {
         this.outboundConversationId = outboundConversationId;
     }
 
     @DynamoDbAttribute("TransferStatus")
-    public void setTransferStatus(String transferStatus) {
+    public final void setTransferStatus(String transferStatus) {
         this.transferStatus = transferStatus;
     }
 
     @DynamoDbAttribute("FailureCode")
-    public void setFailureCode(String failureCode) {
+    public final void setFailureCode(String failureCode) {
         this.failureCode = failureCode;
     }
 
     @DynamoDbAttribute("FailureReason")
-    public void setFailureReason(String failureReason) {
+    public final void setFailureReason(String failureReason) {
         this.failureReason = failureReason;
     }
 
     @DynamoDbAttribute("CreatedAt")
-    public void setCreatedAt(String createdAt) {
+    public final void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
     @DynamoDbAttribute("UpdatedAt")
-    public void setUpdatedAt(String updatedAt) {
+    public final void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
     }
 
     @DynamoDbAttribute("DeletedAt")
-    public void setDeletedAt(Integer deletedAt) {
+    public final void setDeletedAt(Integer deletedAt) {
         this.deletedAt = deletedAt;
     }
 }
