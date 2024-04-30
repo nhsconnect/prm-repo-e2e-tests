@@ -2,6 +2,7 @@ package uk.nhs.prm.e2etests.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import uk.nhs.prm.e2etests.exception.NotFoundException;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 import uk.nhs.prm.e2etests.repository.ConversationRepository;
 import uk.nhs.prm.e2etests.repository.CoreRepository;
@@ -89,6 +90,14 @@ public class TransferTrackerService {
                 .findConversationByInboundConversationId(inboundConversationId)
                 .map(getter)
                 .orElse("entry not found"), equalTo(valueToMatch));
+    }
+
+    public boolean verifyInboundConversationIdContainsOutboundConversationId(String inboundConversationId, String expectedOutboundConversationId) {
+        final ConversationRecord record =
+            conversationRepository.findConversationByInboundConversationId(inboundConversationId)
+                .orElseThrow(() -> new NotFoundException(inboundConversationId));
+
+        return record.getOutboundConversationId().equals(expectedOutboundConversationId);
     }
 
     public void softDeleteSmallEhr(String inboundConversationId, Instant instant) {
