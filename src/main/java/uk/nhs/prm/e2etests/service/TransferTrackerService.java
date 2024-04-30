@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 import uk.nhs.prm.e2etests.repository.ConversationRepository;
+import uk.nhs.prm.e2etests.repository.CoreRepository;
 
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -15,54 +17,52 @@ import static org.hamcrest.Matchers.equalTo;
 @RequiredArgsConstructor
 public class TransferTrackerService {
     private final ConversationRepository conversationRepository;
+    private final CoreRepository coreRepository;
 
-    public void save(ConversationRecord conversationRecord) {
+    public void saveConversation(ConversationRecord conversationRecord) {
         conversationRepository.save(conversationRecord);
     }
 
     public boolean inboundConversationIdExists(String conversationId) {
         return conversationRepository
-                .findByInboundConversationId(conversationId)
-                .isPresent();
+            .findConversationByInboundConversationId(conversationId)
+            .isPresent();
     }
 
-    public String waitForConversationTransferStatusMatching(
-            String inboundConversationId,
-            String conversationTransferStatus
-    ) {
+    public String waitForConversationTransferStatusMatching(String inboundConversationId, String conversationTransferStatus) {
         return waitForConversationRecordAttributeMatching(
-                inboundConversationId,
-                ConversationRecord::getTransferStatus,
-                conversationTransferStatus,
-                2);
+            inboundConversationId,
+            ConversationRecord::getTransferStatus,
+            conversationTransferStatus,
+            2
+        );
     }
 
-    public void waitForConversationTransferStatusMatching(
-            String inboundConversationId,
-            String conversationTransferStatus,
-            int timeoutMinutes
-    ) {
+    public void waitForConversationTransferStatusMatching(String inboundConversationId, String conversationTransferStatus, int timeoutMinutes) {
         waitForConversationRecordAttributeMatching(
-                inboundConversationId,
-                ConversationRecord::getTransferStatus,
-                conversationTransferStatus,
-                timeoutMinutes);
+            inboundConversationId,
+            ConversationRecord::getTransferStatus,
+            conversationTransferStatus,
+            timeoutMinutes
+        );
     }
 
     public String waitForFailureReasonMatching(String inboundConversationId, String failureReason) {
         return waitForConversationRecordAttributeMatching(
-                inboundConversationId,
-                ConversationRecord::getFailureReason,
-                failureReason,
-                2);
+            inboundConversationId,
+            ConversationRecord::getFailureReason,
+            failureReason,
+            2
+        );
     }
 
     public String waitForFailureCodeMatching(String inboundConversationId, String failureCode) {
         return waitForConversationRecordAttributeMatching(
-                inboundConversationId,
-                ConversationRecord::getFailureCode,
-                failureCode,
-                2);
+            inboundConversationId,
+            ConversationRecord::getFailureCode,
+            failureCode,
+            2
+        );
     }
 
     /**
@@ -83,11 +83,16 @@ public class TransferTrackerService {
             int timeoutMinutes
     ) {
         return await().atMost(timeoutMinutes, TimeUnit.MINUTES)
-                .with()
-                .pollInterval(2, TimeUnit.SECONDS)
-                .until(() -> conversationRepository
-                        .findByInboundConversationId(inboundConversationId)
-                        .map(getter)
-                        .orElse("entry not found"), equalTo(valueToMatch));
+            .with()
+            .pollInterval(2, TimeUnit.SECONDS)
+            .until(() -> conversationRepository
+                .findConversationByInboundConversationId(inboundConversationId)
+                .map(getter)
+                .orElse("entry not found"), equalTo(valueToMatch));
+    }
+
+    public void softDeleteSmallEhr(String inboundConversationId, Instant instant) {
+        conversationRepository.softDeleteConversation(inboundConversationId, instant);
+        coreRepository.softDeleteCore(inboundConversationId, instant);
     }
 }
