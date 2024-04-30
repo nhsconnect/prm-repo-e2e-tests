@@ -8,13 +8,10 @@ import uk.nhs.prm.e2etests.model.templatecontext.SmallEhrTemplateContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
-import uk.nhs.prm.e2etests.enumeration.Gp2GpSystem;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import org.springframework.stereotype.Service;
-import jakarta.validation.constraints.Pattern;
 import lombok.extern.log4j.Log4j2;
 import lombok.AllArgsConstructor;
-import jakarta.validation.Valid;
 import uk.nhs.prm.e2etests.utility.TestDataUtility;
 
 import java.util.stream.Stream;
@@ -24,8 +21,6 @@ import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.*;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_CORE_VARIABLE_MANIFEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_FRAGMENT_NO_REF_4MB;
 import static uk.nhs.prm.e2etests.property.TestConstants.*;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.*;
-import static uk.nhs.prm.e2etests.utility.ValidationUtility.NHS_NUMBER_REGEX;
 
 @Log4j2
 @Service
@@ -44,7 +39,7 @@ public class RepoService {
 
         final String smallEhrMessage = this.templatingService.getTemplatedString(templateVariant, smallEhrTemplateContext);
 
-        this.transferTrackerService.save(ConversationRecord.builder()
+        this.transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
@@ -87,7 +82,7 @@ public class RepoService {
 
         final String largeEhrCoreMessage = this.templatingService.getTemplatedString(LARGE_EHR_CORE_VARIABLE_MANIFEST, largeEhrCoreTemplateContext);
 
-        this.transferTrackerService.save(ConversationRecord.builder()
+        this.transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
                 .sourceGp(senderOdsCode)
