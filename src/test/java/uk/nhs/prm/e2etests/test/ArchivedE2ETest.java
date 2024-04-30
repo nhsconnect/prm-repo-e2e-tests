@@ -3,19 +3,12 @@ package uk.nhs.prm.e2etests.test;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import uk.nhs.prm.e2etests.enumeration.*;
-import uk.nhs.prm.e2etests.model.RepoIncomingMessage;
-import uk.nhs.prm.e2etests.model.RepoIncomingMessageBuilder;
-import uk.nhs.prm.e2etests.model.database.Acknowledgement;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
-import uk.nhs.prm.e2etests.model.templatecontext.*;
 import uk.nhs.prm.e2etests.property.Gp2gpMessengerProperties;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
@@ -25,15 +18,12 @@ import uk.nhs.prm.e2etests.queue.ehrtransfer.observability.*;
 import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
 import uk.nhs.prm.e2etests.service.*;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.EMIS_PTL_INT;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
 
 @Log4j2
 @SpringBootTest
@@ -42,7 +32,6 @@ import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsS
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ArchivedE2ETest {
     private final RepoService repoService;
-    private final EhrOutService ehrOutService;
     private final PdsAdaptorService pdsAdaptorService;
     private final TemplatingService templatingService;
     private final SimpleAmqpQueue mhsInboundQueue;
@@ -66,7 +55,6 @@ class ArchivedE2ETest {
     @Autowired
     public ArchivedE2ETest(
             RepoService repoService,
-            EhrOutService ehrOutService,
             PdsAdaptorService pdsAdaptorService,
             TemplatingService templatingService,
             SimpleAmqpQueue mhsInboundQueue,
@@ -84,7 +72,6 @@ class ArchivedE2ETest {
             NhsProperties nhsProperties
     ) {
         this.repoService = repoService;
-        this.ehrOutService = ehrOutService;
         this.pdsAdaptorService = pdsAdaptorService;
         this.templatingService = templatingService;
         this.mhsInboundQueue = mhsInboundQueue;
