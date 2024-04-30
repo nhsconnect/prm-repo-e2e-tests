@@ -1,32 +1,30 @@
 package uk.nhs.prm.e2etests.model.database;
 
+import lombok.Getter;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 
+@Getter
 @DynamoDbBean
-public class CoreRecord extends CommonAttributes {
+public final class CoreRecord extends CommonAttributes {
+    // Getters
+    private String inboundMessageId;
+    private String outboundMessageId;
     private String receivedAt;
-    private String acknowledgementReceivedAt;
-    private String acknowledgementTypeCode;
-    private String acknowledgementDetail;
 
+    // Setters
     @DynamoDbAttribute("ReceivedAt")
     public void setReceivedAt(String receivedAt) {
         this.receivedAt = receivedAt;
     }
 
-    @DynamoDbAttribute("AcknowledgementReceivedAt")
-    public void setAcknowledgementReceivedAt(String acknowledgementReceivedAt) {
-        this.acknowledgementReceivedAt = acknowledgementReceivedAt;
+    @DynamoDbAttribute("InboundMessageId")
+    public void setInboundMessageId(String inboundMessageId) {
+        this.inboundMessageId = inboundMessageId;
     }
 
-    @DynamoDbAttribute("AcknowledgementTypeCode")
-    public void setAcknowledgementTypeCode(String acknowledgementTypeCode) {
-        this.acknowledgementTypeCode = acknowledgementTypeCode;
-    }
-
-    @DynamoDbAttribute("AcknowledgementDetail")
-    public void setAcknowledgementDetail(String acknowledgementDetail) {
-        this.acknowledgementDetail = acknowledgementDetail;
+    @DynamoDbAttribute("OutboundMessageId")
+    public void setOutboundMessageId(String outboundMessageId) {
+        this.outboundMessageId = outboundMessageId;
     }
 }
