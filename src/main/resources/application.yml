@@ -82,7 +82,6 @@ aws:
         reregistration: ${NHS_ENVIRONMENT}-ehr-transfer-service-unhandled-sns-topic
 
     databaseNames:
-      oldTransferTrackerDb: ${NHS_ENVIRONMENT}-ehr-transfer-service-transfer-tracker # TODO PRMT-4670 DEPRECATED FOR REMOVAL AS OF V2.0.0
       transferTrackerDb: ${NHS_ENVIRONMENT}-ehr-transfer-tracker
       activeSuspensionsDb: ${NHS_ENVIRONMENT}-re-registration-service-active-suspensions
 
