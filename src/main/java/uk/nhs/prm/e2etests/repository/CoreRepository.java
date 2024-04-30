@@ -19,8 +19,10 @@ public class CoreRepository {
     private static final String CORE_LAYER = "CORE";
 
     @Autowired
-    public CoreRepository(@Value("${aws.configuration.databaseNames.transferTrackerDb}") String tableName,
-                          DynamoDbEnhancedClient dynamoDbEnhancedClient) {
+    public CoreRepository(
+        @Value("${aws.configuration.databaseNames.transferTrackerDb}") String tableName,
+        DynamoDbEnhancedClient dynamoDbEnhancedClient
+    ) {
         this.table = dynamoDbEnhancedClient.table(tableName, TableSchema.fromBean(CoreRecord.class));
     }
 
