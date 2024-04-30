@@ -44,11 +44,9 @@ import uk.nhs.prm.e2etests.service.TransferTrackerService;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -477,11 +475,15 @@ class RepositoryE2ETest {
         mhsInboundQueue.sendMessage(ehrRequest, outboundConversationId);
 
         // then
-        final Collection<SqsMessage> messages = gp2gpMessengerOQ.getAllMessagesContaining(EHR_CORE.interactionId, 1).stream()
+        final List<SqsMessage> messages = gp2gpMessengerOQ.getAllMessagesContaining(EHR_CORE.interactionId, 1).stream()
             .filter(message -> message.contains(outboundConversationId))
-            .collect(Collectors.toSet());
+            .toList();
 
         assertThat(messages.size()).isEqualTo(1);
+        assertTrue(transferTrackerService.verifyInboundConversationIdContainsOutboundConversationId(
+            inboundConversationId,
+            outboundConversationId
+        ));
     }
 
     // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
