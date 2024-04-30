@@ -92,7 +92,7 @@ public class TransferTrackerService {
                 .orElse("entry not found"), equalTo(valueToMatch));
     }
 
-    public boolean verifyInboundConversationIdContainsOutboundConversationId(String inboundConversationId, String expectedOutboundConversationId) {
+    public boolean verifyConversationContainsOutboundConversationId(String inboundConversationId, String expectedOutboundConversationId) {
         final ConversationRecord record =
             conversationRepository.findConversationByInboundConversationId(inboundConversationId)
                 .orElseThrow(() -> new NotFoundException(inboundConversationId));
