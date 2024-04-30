@@ -33,7 +33,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.EMIS_PTL_INT;
-import static uk.nhs.prm.e2etests.enumeration.OldTransferTrackerStatus.*;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
 
 @Log4j2
@@ -44,10 +43,8 @@ import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsS
 class ArchivedE2ETest {
     private final RepoService repoService;
     private final EhrOutService ehrOutService;
-    private final OldTransferTrackerService oldTransferTrackerService;
     private final PdsAdaptorService pdsAdaptorService;
     private final TemplatingService templatingService;
-    private final HealthCheckService healthCheckService;
     private final SimpleAmqpQueue mhsInboundQueue;
     private final Gp2GpMessengerOQ gp2gpMessengerOQ;
     private final EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
@@ -70,10 +67,8 @@ class ArchivedE2ETest {
     public ArchivedE2ETest(
             RepoService repoService,
             EhrOutService ehrOutService,
-            OldTransferTrackerService oldTransferTrackerService,
             PdsAdaptorService pdsAdaptorService,
             TemplatingService templatingService,
-            HealthCheckService healthCheckService,
             SimpleAmqpQueue mhsInboundQueue,
             Gp2GpMessengerOQ gp2gpMessengerOQ,
             EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ,
@@ -90,10 +85,8 @@ class ArchivedE2ETest {
     ) {
         this.repoService = repoService;
         this.ehrOutService = ehrOutService;
-        this.oldTransferTrackerService = oldTransferTrackerService;
         this.pdsAdaptorService = pdsAdaptorService;
         this.templatingService = templatingService;
-        this.healthCheckService = healthCheckService;
         this.mhsInboundQueue = mhsInboundQueue;
         this.gp2gpMessengerOQ = gp2gpMessengerOQ;
         this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceTransferCompleteOQ;
@@ -121,23 +114,24 @@ class ArchivedE2ETest {
         gp2gpMessengerOQ.deleteAllMessages();
     }
 
-    @Disabled("This test was failing before refactoring. The cause seems to be related to EMIS instance not working")
-    @Test
-    void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
-        Patient largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(this.nhsProperties.getNhsEnvironment());
-
-        setManagingOrganisationToRepo(largeEhrAtEmisWithRepoMof.nhsNumber());
-
-        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
-                .withPatient(largeEhrAtEmisWithRepoMof)
-                .withEhrSourceGp(EMIS_PTL_INT)
-                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
-                .build();
-
-        ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
-        assertThat(ehrTransferServiceEhrCompleteOQ.getMessageContaining(triggerMessage.getConversationId())).isNotNull();
-        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
-    }
+    // commented out due to connection to oldTransferTrackerService being removed
+//    @Disabled("This test was failing before refactoring. The cause seems to be related to EMIS instance not working")
+//    @Test
+//    void shouldReceivingAndTrackAllLargeEhrFragments_DevAndTest() {
+//        Patient largeEhrAtEmisWithRepoMof = Patient.largeEhrAtEmisWithRepoMof(this.nhsProperties.getNhsEnvironment());
+//
+//        setManagingOrganisationToRepo(largeEhrAtEmisWithRepoMof.nhsNumber());
+//
+//        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
+//                .withPatient(largeEhrAtEmisWithRepoMof)
+//                .withEhrSourceGp(EMIS_PTL_INT)
+//                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
+//                .build();
+//
+//        ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
+//        assertThat(ehrTransferServiceEhrCompleteOQ.getMessageContaining(triggerMessage.getConversationId())).isNotNull();
+//        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
+//    }
 
     // commented out due to UUID/STRING discrepancy - archived test, not worth fixing at the moment
 //    @Disabled
@@ -170,53 +164,55 @@ class ArchivedE2ETest {
 //        log.info("The acknowledgement typeCode of {} is {}.", ackMessageId, actualTypeCode);
 //    }
 
-    @ParameterizedTest
-    @MethodSource("largeEhrScenariosToBeRunAsRequired")
-    @Disabled()
-    void shouldTransferRemainingSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
-        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
-                .withPatient(largeEhr.patient())
-                .withEhrSourceGp(sourceSystem)
-                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
-                .build();
+    // commented out due to connection to oldTransferTrackerService being removed
+//    @ParameterizedTest
+//    @MethodSource("largeEhrScenariosToBeRunAsRequired")
+//    @Disabled()
+//    void shouldTransferRemainingSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
+//        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
+//                .withPatient(largeEhr.patient())
+//                .withEhrSourceGp(sourceSystem)
+//                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
+//                .build();
+//
+//        setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
+//
+//        ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
+//
+//        assertThat(ehrTransferServiceTransferCompleteOQ.getMessageContainingAttribute(
+//                "conversationId",
+//                triggerMessage.getConversationId(),
+//                largeEhr.timeoutMinutes(),
+//                TimeUnit.MINUTES))
+//                .isNotNull();
+//
+//        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
+//    }
 
-        setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
-
-        ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
-
-        assertThat(ehrTransferServiceTransferCompleteOQ.getMessageContainingAttribute(
-                "conversationId",
-                triggerMessage.getConversationId(),
-                largeEhr.timeoutMinutes(),
-                TimeUnit.MINUTES))
-                .isNotNull();
-
-        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
-    }
-
-    @ParameterizedTest
-    @Disabled
-    @MethodSource("largeEhrScenariosRunningOnCommit_ButNotEmisWhichIsCurrentlyHavingIssues")
-    void shouldTransferRepresentativeSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
-        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
-                .withPatient(largeEhr.patient())
-                .withEhrSourceGp(sourceSystem)
-                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
-                .build();
-
-        setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
-
-        ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
-
-        assertThat(ehrTransferServiceTransferCompleteOQ.getMessageContainingAttribute(
-                "conversationId",
-                triggerMessage.getConversationId(),
-                largeEhr.timeoutMinutes(),
-                TimeUnit.MINUTES))
-                .isNotNull();
-
-        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
-    }
+    // commented out due to connection to oldTransferTrackerService being removed
+//    @ParameterizedTest
+//    @Disabled
+//    @MethodSource("largeEhrScenariosRunningOnCommit_ButNotEmisWhichIsCurrentlyHavingIssues")
+//    void shouldTransferRepresentativeSizesAndTypesOfEhrs_DevOnly(Gp2GpSystem sourceSystem, LargeEhrVariant largeEhr) {
+//        RepoIncomingMessage triggerMessage = new RepoIncomingMessageBuilder()
+//                .withPatient(largeEhr.patient())
+//                .withEhrSourceGp(sourceSystem)
+//                .withEhrDestinationAsRepo(nhsProperties.getNhsEnvironment())
+//                .build();
+//
+//        setManagingOrganisationToRepo(largeEhr.patient().nhsNumber());
+//
+//        ehrTransferServiceRepoIncomingQueue.send(triggerMessage);
+//
+//        assertThat(ehrTransferServiceTransferCompleteOQ.getMessageContainingAttribute(
+//                "conversationId",
+//                triggerMessage.getConversationId(),
+//                largeEhr.timeoutMinutes(),
+//                TimeUnit.MINUTES))
+//                .isNotNull();
+//
+//        assertTrue(oldTransferTrackerService.isStatusForConversationIdPresent(triggerMessage.getConversationId(), EHR_TRANSFER_TO_REPO_COMPLETE.status));
+//    }
 
     // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
     private static Stream<Arguments> largeEhrScenariosToBeRunAsRequired() {
