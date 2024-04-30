@@ -7,7 +7,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @Getter
 @DynamoDbBean
 public final class CoreRecord extends CommonAttributes {
-    // Getters
     private String inboundMessageId;
     private String outboundMessageId;
     private String receivedAt;
