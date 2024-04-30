@@ -480,7 +480,7 @@ class RepositoryE2ETest {
             .toList();
 
         assertThat(messages.size()).isEqualTo(1);
-        assertTrue(transferTrackerService.verifyInboundConversationIdContainsOutboundConversationId(
+        assertTrue(transferTrackerService.verifyConversationContainsOutboundConversationId(
             inboundConversationId,
             outboundConversationId
         ));
