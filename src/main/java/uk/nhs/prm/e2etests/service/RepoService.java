@@ -43,7 +43,7 @@ public class RepoService {
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
-                .sourceGp(senderOdsCode)
+                .sourceGp(TPP_ODS_CODE)
                 .associatedTest(testName)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
                 .build());
@@ -76,7 +76,7 @@ public class RepoService {
         final LargeEhrCoreVariableManifestTemplateContext largeEhrCoreTemplateContext = LargeEhrCoreVariableManifestTemplateContext.builder()
                 .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
+                .senderOdsCode(TPP_ODS_CODE)
                 .referencedFragmentMessageIds(fragmentMessageIds)
                 .build();
 
@@ -85,7 +85,7 @@ public class RepoService {
         this.transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
-                .sourceGp(senderOdsCode)
+                .sourceGp(TPP_ODS_CODE)
                 .nemsMessageId(nemsMessageId)
                 .associatedTest(testName)
                 .transferStatus(INBOUND_REQUEST_SENT.name()).build());
@@ -103,7 +103,7 @@ public class RepoService {
             final LargeEhrFragmentNoReferencesContext context = LargeEhrFragmentNoReferencesContext.builder()
                     .inboundConversationId(inboundConversationId)
                     .fragmentMessageId(fragmentMessageIds.get(i))
-                    .senderOdsCode(senderOdsCode)
+                    .senderOdsCode(TPP_ODS_CODE)
                     .build();
 
             final String fragmentMessage = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_NO_REF_4MB, context);

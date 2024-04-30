@@ -16,6 +16,7 @@ import uk.nhs.prm.e2etests.model.nems.*;
 import uk.nhs.prm.e2etests.model.response.PdsAdaptorResponse;
 import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.SyntheticPatientProperties;
+import uk.nhs.prm.e2etests.property.TestConstants;
 import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorDeadLetterQueue;
 import uk.nhs.prm.e2etests.queue.nems.NemsEventProcessorUnhandledEventsQueue;
 import uk.nhs.prm.e2etests.queue.nems.observability.MeshForwarderOQ;
@@ -38,7 +39,8 @@ import java.util.Map;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNemsMessageId;
+import static uk.nhs.prm.e2etests.property.TestConstants.nemsMessageId;
+import static uk.nhs.prm.e2etests.property.TestConstants.TPP_ODS_CODE;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomNhsNumber;
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomOdsCode;
 
@@ -121,21 +123,23 @@ class ContinuityE2ETest {
         suspensionsServiceRepoIncomingOQ.deleteAllMessages();
     }
 
+    @BeforeEach
+    void beforeEach(TestInfo testInfo) {
+        TestConstants.generateTestConstants(testInfo.getDisplayName());
+    }
+
     @Test
     @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO", matches="true")
     @Order(1)
     void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
-        String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         String now = now();
-        String previousGp = randomOdsCode();
-        log.info("Generated a random ODS code for previous GP: {}", previousGp);
 
         NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 suspendedPatientNhsNumber,
                 nemsMessageId,
-                previousGp,
+                TPP_ODS_CODE,
                 now
         );
 
@@ -149,7 +153,6 @@ class ContinuityE2ETest {
     @Test
     @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="false") //The toggle status for repo_process_only_safe_listed_ods_codes is true in dev and test
     void shouldPutAMessageForASuspendedPatientWithSafeListedODSCodeOnRepoIncomingWhenTheToggleIsTrue() {
-        String nemsMessageId = randomNemsMessageId();
         String now = now();
         NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
@@ -168,15 +171,12 @@ class ContinuityE2ETest {
     @Test
     @Order(2)
     void shouldMoveSuspensionMessageWherePatientIsNoLongerSuspendedToNotSuspendedQueue() {
-        String nemsMessageId = randomNemsMessageId();
-        String previousGp = randomOdsCode();
         String now = now();
         String currentlyRegisteredPatientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
 
         NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
-                TemplateVariant.CHANGE_OF_GP_SUSPENSION,currentlyRegisteredPatientNhsNumber, nemsMessageId, previousGp, now
+                TemplateVariant.CHANGE_OF_GP_SUSPENSION,currentlyRegisteredPatientNhsNumber, nemsMessageId, TPP_ODS_CODE, now
         );
-
 
         NoLongerSuspendedMessageNems expectedMessageOnQueue = new NoLongerSuspendedMessageNems(nemsMessageId, "NO_ACTION:NO_LONGER_SUSPENDED_ON_PDS");
 
@@ -187,8 +187,6 @@ class ContinuityE2ETest {
     @Test
     @Order(5)
     void shouldMoveNonSuspensionMessageFromNemsToUnhandledQueue() {
-        String nemsMessageId = randomNemsMessageId();
-
         NemsEventMessage nemsNonSuspension = templatingService.createNemsEventFromTemplate(
                 TemplateVariant.CHANGE_OF_GP_NON_SUSPENSION,
                 randomNhsNumber(),
@@ -219,15 +217,13 @@ class ContinuityE2ETest {
     @Order(4)
     @Disabled(" 'process_only_synthetic_or_safe_listed_patients' toggle is set to false across all the environments. ")
     void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
-        String nemsMessageId = randomNemsMessageId();
-        String previousGp = randomOdsCode();
         String suspensionTime = now();
 
         NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 syntheticPatientProperties.getNonSyntheticPatientWithoutGp(),
                 nemsMessageId,
-                previousGp,
+                TPP_ODS_CODE,
                 suspensionTime
         );
 
@@ -241,16 +237,12 @@ class ContinuityE2ETest {
     @Test
     @Order(3)
     void shouldMoveDeceasedPatientEventToDeceasedQueue() {
-        String nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = syntheticPatientProperties.getDeceasedPatient();
         String eventTime = now();
-        String previousGp = randomOdsCode();
-
-        log.info("Generated a random ODS code for previous GP: {}.", previousGp);
 
         NemsEventMessage deceasedEvent = templatingService.createNemsEventFromTemplate(
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
-                patientNhsNumber, nemsMessageId, previousGp, eventTime
+                patientNhsNumber, nemsMessageId, TPP_ODS_CODE, eventTime
         );
 
         meshMailbox.sendMessage(deceasedEvent);
@@ -263,7 +255,6 @@ class ContinuityE2ETest {
     @Test
     @Order(7)
     void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
-        String nemsMessageId = randomNemsMessageId();
         String patientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
         String reregistrationTime = now();
         storeEhrInRepositoryFor(patientNhsNumber);
@@ -293,17 +284,14 @@ class ContinuityE2ETest {
     @Test
     @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO",matches="true")
     void shouldSaveActiveSuspensionInDbWhenMofUpdatedToPreviousGp() {
-        String nemsMessageId = randomNemsMessageId();
         String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
         String now = now();
-        String previousGp = randomOdsCode();
-        log.info("Generated a random ODS code for previous GP: {}.", previousGp);
 
         NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
                 TemplateVariant.CHANGE_OF_GP_SUSPENSION,
                 suspendedPatientNhsNumber,
                 nemsMessageId,
-                previousGp,
+                TPP_ODS_CODE,
                 now
         );
         meshMailbox.sendMessage(nemsSuspension);

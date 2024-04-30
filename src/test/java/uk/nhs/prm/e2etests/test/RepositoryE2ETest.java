@@ -57,8 +57,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 
 import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.*;
-import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.EMIS_PTL_INT;
-import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_CORE;
 import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_FRAGMENT;
 import static uk.nhs.prm.e2etests.enumeration.Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP;
@@ -85,7 +83,6 @@ class RepositoryE2ETest {
     private final TransferTrackerService transferTrackerService;
     private final RepoService repoService;
     private final TemplatingService templatingService;
-    private final NhsProperties nhsProperties;
     private final SimpleAmqpQueue mhsInboundQueue;
     private final Gp2GpMessengerOQ gp2gpMessengerOQ;
     private final EhrTransferServiceTransferCompleteOQ ehrTransferServiceTransferCompleteOQ;
@@ -95,6 +92,8 @@ class RepositoryE2ETest {
     private final EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ;
     private final EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ;
     private final EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue;
+
+    private final String repositoryOdsCode;
 
     @Autowired
     public RepositoryE2ETest(
@@ -115,7 +114,6 @@ class RepositoryE2ETest {
         this.transferTrackerService = transferTrackerService;
         this.repoService = repoService;
         this.templatingService = templatingService;
-        this.nhsProperties = nhsProperties;
         this.mhsInboundQueue = mhsInboundQueue;
         this.gp2gpMessengerOQ = gp2gpMessengerOQ;
         this.ehrTransferServiceTransferCompleteOQ = ehrTransferServiceTransferCompleteOQ;
@@ -125,6 +123,8 @@ class RepositoryE2ETest {
         this.ehrTransferServiceLargeEhrOQ = ehrTransferServiceLargeEhrOQ;
         this.ehrTransferServiceNegativeAcknowledgementOQ = ehrTransferServiceNegativeAcknowledgementOQ;
         this.ehrTransferServiceParsingDeadLetterQueue = ehrTransferServiceParsingDeadLetterQueue;
+
+        repositoryOdsCode = nhsProperties.getRepoOdsCode();
     }
 
     @BeforeAll
@@ -162,7 +162,7 @@ class RepositoryE2ETest {
 
         final String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, EhrRequestTemplateContext.builder()
                 .messageId(messageId)
-                .senderOdsCode(senderOdsCode)
+                .senderOdsCode(TPP_ODS_CODE)
                 .nhsNumber(nhsNumber)
                 .outboundConversationId(outboundConversationId)
                 .build());
@@ -192,12 +192,7 @@ class RepositoryE2ETest {
     @Test
     void shouldTransferASmallEhrInAndOut() {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        final String senderOdsCode = TPP_PTL_INT.odsCode();
-        final String asidCode = TPP_PTL_INT.asidCode();
-
         log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-        log.info("asidCode: " + asidCode);
 
         /*
         ORC-IN
@@ -209,7 +204,7 @@ class RepositoryE2ETest {
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
-                .sourceGp(senderOdsCode)
+                .sourceGp(TPP_ODS_CODE)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
                 .associatedTest(testName)
                 .build());
@@ -240,8 +235,8 @@ class RepositoryE2ETest {
         EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
+                .senderOdsCode(TPP_ODS_CODE)
+                .asidCode(TPP_ASID_CODE)
                 .build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
 
@@ -290,17 +285,14 @@ class RepositoryE2ETest {
      A continue request is sent to the system.
      The system verifies that the received EHR fragments match the original large EHR fragments.
      Overall, this test ensures that a large EHR can be successfully transferred into and out of the system, with the integrity of the data maintained throughout the process
+
+     For readability's sake, it is easiest to set up test so that sender & recipient are the same practice
+
      */
     @Test
     void shouldTransferALargeEHRInAndOut() {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        // For readability sake, it is easiest to set up test so that sender & recipient are the same practice
-        final String recipientOdsCode = TPP_PTL_INT.odsCode();
-        final String repositoryOdsCode = nhsProperties.getRepoOdsCode();
-
         log.info("nhsNumber: " + nhsNumber);
-        log.info("recipientOdsCode: " + recipientOdsCode);
-        log.info("repositoryOdsCode: " + repositoryOdsCode);
 
         /*
         ORC-IN
@@ -314,7 +306,7 @@ class RepositoryE2ETest {
                 .nhsNumber(nhsNumber)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
                 .nemsMessageId(nemsMessageId)
-                .sourceGp(senderOdsCode)
+                .sourceGp(TPP_ODS_CODE)
                 .associatedTest(testName)
                 .build()
         );
@@ -325,7 +317,7 @@ class RepositoryE2ETest {
                 .largeEhrCoreMessageId(largeEhrCoreMessageId)
                 .fragmentMessageId(fragment1MessageId)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
+                .senderOdsCode(TPP_ODS_CODE)
                 .build();
         String largeEhrCore = this.templatingService.getTemplatedString(TemplateVariant.LARGE_EHR_CORE, largeEhrCoreTemplateContext);
 
@@ -344,14 +336,14 @@ class RepositoryE2ETest {
                         .inboundConversationId(inboundConversationId)
                         .fragmentMessageId(fragment1MessageId)
                         .fragmentTwoMessageId(fragment2MessageId)
-                        .recipientOdsCode(recipientOdsCode)
+                        .recipientOdsCode(TPP_ODS_CODE)
                         .senderOdsCode(repositoryOdsCode)
                         .build(),
 
                 TemplateVariant.LARGE_EHR_FRAGMENT_NO_REF, LargeEhrFragmentNoReferencesContext.builder()
                         .inboundConversationId(inboundConversationId)
                         .fragmentMessageId(fragment2MessageId)
-                        .recipientOdsCode(recipientOdsCode)
+                        .recipientOdsCode(TPP_ODS_CODE)
                         .senderOdsCode(repositoryOdsCode)
                         .build()
         ));
@@ -375,8 +367,8 @@ class RepositoryE2ETest {
         EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
+                .senderOdsCode(TPP_ODS_CODE)
+                .asidCode(TPP_ASID_CODE)
                 .build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
 
@@ -404,8 +396,8 @@ class RepositoryE2ETest {
                 CONTINUE_REQUEST,
                 ContinueRequestTemplateContext.builder()
                         .outboundConversationId(outboundConversationId)
-                        .senderOdsCode(senderOdsCode)
-                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(TPP_ODS_CODE)
+                        .recipientOdsCode(TPP_ODS_CODE)
                         .build());
 
         // Put a continue request to inboundQueueFromMhs
@@ -493,7 +485,7 @@ class RepositoryE2ETest {
         EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
+                .senderOdsCode(TPP_ODS_CODE)
                 .build();
 
         String inboundMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestContext);
@@ -514,7 +506,7 @@ class RepositoryE2ETest {
         EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
                 .nhsNumber(nonExistentNhsNumber)
-                .senderOdsCode(senderOdsCode)
+                .senderOdsCode(TPP_ODS_CODE)
                 .build();
 
         String erroneousInboundMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestContext);
@@ -529,8 +521,8 @@ class RepositoryE2ETest {
     private Arguments erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId() {
         ContinueRequestTemplateContext continueRequestContext = ContinueRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
-                .recipientOdsCode(recipientOdsCode)
-                .senderOdsCode(senderOdsCode)
+                .recipientOdsCode(EMIS_ODS_CODE)
+                .senderOdsCode(TPP_ODS_CODE)
                 .build();
 
         String continueRequestMessage = this.templatingService
@@ -599,8 +591,8 @@ class RepositoryE2ETest {
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
+                .senderOdsCode(TPP_ODS_CODE)
+                .asidCode(TPP_ASID_CODE)
                 .build();
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
 
@@ -649,8 +641,8 @@ class RepositoryE2ETest {
         EhrRequestTemplateContext templateContext1 = EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId1)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
+                .senderOdsCode(TPP_ODS_CODE)
+                .asidCode(TPP_ASID_CODE)
                 .build();
 
         String ehrRequestMessage1 = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext1);
@@ -659,8 +651,8 @@ class RepositoryE2ETest {
         EhrRequestTemplateContext templateContext2 = EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId2)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
+                .senderOdsCode(TPP_ODS_CODE)
+                .asidCode(TPP_ASID_CODE)
                 .build();
 
         String ehrRequestMessage2 = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext2);
@@ -698,8 +690,8 @@ class RepositoryE2ETest {
         // When an EHR out request is received
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
+                .senderOdsCode(TPP_ODS_CODE)
+                .asidCode(TPP_ASID_CODE)
                 .build();
 
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
@@ -731,12 +723,7 @@ class RepositoryE2ETest {
     @Test
     void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered() {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        final String senderOdsCode = EMIS_PTL_INT.odsCode();
-        final String asidCode = TPP_PTL_INT.asidCode();
-
         log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-        log.info("asidCode: " + asidCode);
 
         // Given a small EHR exists in the repository
         this.repoService.addSmallEhrToEhrRepo(SMALL_EHR, nhsNumber);
@@ -745,8 +732,8 @@ class RepositoryE2ETest {
         EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
                 .outboundConversationId(outboundConversationId)
                 .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
+                .senderOdsCode(EMIS_ODS_CODE)
+                .asidCode(TPP_ASID_CODE)
                 .build();
 
         String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
@@ -761,7 +748,6 @@ class RepositoryE2ETest {
         assertDoesNotThrow(() -> transferTrackerService.waitForFailureReasonMatching(inboundConversationId, "OUTBOUND:incorrect_ods_code"));
         assertDoesNotThrow(() -> transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, OUTBOUND_FAILED.name()));
     }
-
 
 //    @Test
 //    void shouldNotIngestDuplicateEhr() {
@@ -788,18 +774,15 @@ class RepositoryE2ETest {
         // Given that an EHR request has been sent from the repository to an FSS
         final String NEGATIVE_ACKNOWLEDGEMENT_FAILURE_CODE = "30";
         final String nhsNumber = SUSPENDED_WITH_EHR_AT_TPP.nhsNumber();
-        final String senderOdsCode = TPP_PTL_INT.odsCode();
 
         log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-
 
         // create entry in transfer tracker db with status ACTION:EHR_REQUEST_SENT
         this.transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
-                .sourceGp(senderOdsCode)
+                .sourceGp(TPP_ODS_CODE)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
                 .associatedTest(testName)
                 .build()
@@ -861,8 +844,8 @@ class RepositoryE2ETest {
         String ehrRequest = templatingService.getTemplatedString(EHR_REQUEST, EhrRequestTemplateContext.builder()
                 .nhsNumber(nhsNumber)
                 .outboundConversationId(outboundConversationId)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
+                .senderOdsCode(TPP_ODS_CODE)
+                .asidCode(TPP_ASID_CODE)
                 .build());
 
         // When
@@ -871,7 +854,7 @@ class RepositoryE2ETest {
             .inboundConversationId(inboundConversationId)
             .nemsMessageId(nemsMessageId)
             .nhsNumber(nhsNumber)
-            .sourceGp(senderOdsCode)
+            .sourceGp(TPP_ODS_CODE)
             .transferStatus(INBOUND_REQUEST_SENT.name())
             .associatedTest(testName)
             .build());
@@ -910,16 +893,9 @@ class RepositoryE2ETest {
     void shouldPutALargeEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
         // given
         final String nhsNumber = "9727018157"; // existed on old version of test, what is this number?
-        final String senderOdsCode = TPP_PTL_INT.odsCode();
-        final String recipientOdsCode = EMIS_PTL_INT.odsCode();
-        final String repositoryOdsCode = nhsProperties.getRepoOdsCode();
-        final String asidCode = TPP_PTL_INT.asidCode();
 
         log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-        log.info("recipientOdsCode: " + recipientOdsCode);
         log.info("repositoryOdsCode: " + repositoryOdsCode);
-        log.info("asidCode: " + asidCode);
 
         String largeEhrCore = this.templatingService.getTemplatedString(LARGE_EHR_CORE,
                 LargeEhrCoreTemplateContext.builder()
@@ -927,7 +903,7 @@ class RepositoryE2ETest {
                         .largeEhrCoreMessageId(largeEhrCoreMessageId)
                         .fragmentMessageId(fragment1MessageId)
                         .nhsNumber(nhsNumber)
-                        .senderOdsCode(senderOdsCode)
+                        .senderOdsCode(TPP_ODS_CODE)
                         .build());
 
         String largeEhrFragment1 = this.templatingService.getTemplatedString(LARGE_EHR_FRAGMENT_WITH_REF,
@@ -935,7 +911,7 @@ class RepositoryE2ETest {
                         .inboundConversationId(inboundConversationId)
                         .fragmentMessageId(fragment1MessageId)
                         .fragmentTwoMessageId(fragment2MessageId)
-                        .recipientOdsCode(recipientOdsCode)
+                        .recipientOdsCode(EMIS_ODS_CODE)
                         .senderOdsCode(repositoryOdsCode)
                         .build());
 
@@ -943,7 +919,7 @@ class RepositoryE2ETest {
                 LargeEhrFragmentNoReferencesContext.builder()
                         .inboundConversationId(inboundConversationId)
                         .fragmentMessageId(fragment2MessageId)
-                        .recipientOdsCode(recipientOdsCode)
+                        .recipientOdsCode(EMIS_ODS_CODE)
                         .senderOdsCode(repositoryOdsCode)
                         .build());
 
@@ -951,22 +927,22 @@ class RepositoryE2ETest {
                 EhrRequestTemplateContext.builder()
                         .outboundConversationId(outboundConversationId)
                         .nhsNumber(nhsNumber)
-                        .senderOdsCode(senderOdsCode)
-                        .asidCode(asidCode)
+                        .senderOdsCode(TPP_ODS_CODE)
+                        .asidCode(TPP_ASID_CODE)
                         .build());
 
         String continueRequest = this.templatingService.getTemplatedString(CONTINUE_REQUEST,
                 ContinueRequestTemplateContext.builder()
                         .outboundConversationId(outboundConversationId)
-                        .recipientOdsCode(recipientOdsCode)
-                        .senderOdsCode(senderOdsCode)
+                        .recipientOdsCode(EMIS_ODS_CODE)
+                        .senderOdsCode(TPP_ODS_CODE)
                         .build());
 
         transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
-                .sourceGp(senderOdsCode)
+                .sourceGp(TPP_ODS_CODE)
                 .transferStatus(INBOUND_REQUEST_SENT.name())
                 .associatedTest(testName)
                 .build());
