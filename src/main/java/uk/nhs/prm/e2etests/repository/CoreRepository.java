@@ -39,8 +39,7 @@ public class CoreRepository {
         final CoreRecord record = getCoreByInboundConversationId(inboundConversationId)
             .orElseThrow(() -> new NotFoundException(inboundConversationId));
 
-        record.setDeletedAt((int) instant.toEpochMilli());
-
+        record.setDeletedAt((int) (instant.toEpochMilli() / 1000));
         table.updateItem(record);
     }
 }

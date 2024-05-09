@@ -439,7 +439,7 @@ class RepositoryE2ETest {
     void shouldTransferOutASmallEhrWhenThePatientIsSoftDeleted() {
         // given
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        final Instant deletedAt = Instant.now().plus(15, ChronoUnit.MINUTES);
+        final Instant deletedAt = Instant.now().plus(30, ChronoUnit.DAYS);
 
         // template context set-up and templating
         final SmallEhrTemplateContext smallEhrContext = SmallEhrTemplateContext.builder()
