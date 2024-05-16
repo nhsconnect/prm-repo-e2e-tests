@@ -62,7 +62,6 @@ class ContinuityE2ETest {
     private final NemsEventProcessorReRegistrationsOQ nemsEventProcessorReRegistrationsOQ;
     private final SuspensionServiceNotSuspendedOQ suspensionServiceNotSuspendedOQ;
     private final SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue;
-    private final SuspensionServiceMofNotUpdatedQueue suspensionServiceMofNotUpdatedQueue;
     private final SuspensionServiceDeceasedPatientQueue suspensionServiceDeceasedPatientQueue;
     private final SuspensionsServiceRepoIncomingOQ suspensionsServiceRepoIncomingOQ;
     private final TemplatingService templatingService;
@@ -82,7 +81,6 @@ class ContinuityE2ETest {
             NemsEventProcessorReRegistrationsOQ nemsEventProcessorReRegistrationsOQ,
             SuspensionServiceNotSuspendedOQ suspensionServiceNotSuspendedOQ,
             SuspensionServiceMofUpdatedQueue suspensionServiceMofUpdatedQueue,
-            SuspensionServiceMofNotUpdatedQueue suspensionServiceMofNotUpdatedQueue,
             SuspensionServiceDeceasedPatientQueue suspensionServiceDeceasedPatientQueue,
             SuspensionsServiceRepoIncomingOQ suspensionsServiceRepoIncomingOQ,
             TemplatingService templatingService,
@@ -100,7 +98,6 @@ class ContinuityE2ETest {
         this.nemsEventProcessorReRegistrationsOQ = nemsEventProcessorReRegistrationsOQ;
         this.suspensionServiceNotSuspendedOQ = suspensionServiceNotSuspendedOQ;
         this.suspensionServiceMofUpdatedQueue = suspensionServiceMofUpdatedQueue;
-        this.suspensionServiceMofNotUpdatedQueue = suspensionServiceMofNotUpdatedQueue;
         this.suspensionServiceDeceasedPatientQueue = suspensionServiceDeceasedPatientQueue;
         this.suspensionsServiceRepoIncomingOQ = suspensionsServiceRepoIncomingOQ;
         this.templatingService = templatingService;
@@ -119,31 +116,6 @@ class ContinuityE2ETest {
         suspensionServiceNotSuspendedOQ.deleteAllMessages();
         nemsEventProcessorReRegistrationsOQ.deleteAllMessages();
         suspensionsServiceRepoIncomingOQ.deleteAllMessages();
-    }
-
-    @Test
-    @DisabledIfEnvironmentVariable(named = "UPDATE_MOF_TO_REPO", matches="true")
-    @Order(1)
-    void shouldMoveSuspensionMessageFromNemsToMofUpdatedQueue() {
-        String nemsMessageId = randomNemsMessageId();
-        String suspendedPatientNhsNumber = syntheticPatientProperties.getPatientWithoutGp();
-        String now = now();
-        String previousGp = randomOdsCode();
-        log.info("Generated a random ODS code for previous GP: {}", previousGp);
-
-        NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
-                TemplateVariant.CHANGE_OF_GP_SUSPENSION,
-                suspendedPatientNhsNumber,
-                nemsMessageId,
-                previousGp,
-                now
-        );
-
-        meshMailbox.sendMessage(nemsSuspension);
-        NemsResolutionMessage expectedMessageOnQueue = new MofUpdatedMessageNems(nemsMessageId, "ACTION:UPDATED_MANAGING_ORGANISATION");
-
-        assertTrue(meshForwarderOQ.hasMessage(nemsSuspension.getMessage()));
-        assertTrue(suspensionServiceMofUpdatedQueue.hasResolutionMessage(expectedMessageOnQueue));
     }
 
     @Test
@@ -216,29 +188,6 @@ class ContinuityE2ETest {
     }
 
     @Test
-    @Order(4)
-    @Disabled(" 'process_only_synthetic_or_safe_listed_patients' toggle is set to false across all the environments. ")
-    void shouldMoveNonSyntheticPatientSuspensionMessageFromNemsToMofNotUpdatedQueueWhenToggleOn() {
-        String nemsMessageId = randomNemsMessageId();
-        String previousGp = randomOdsCode();
-        String suspensionTime = now();
-
-        NemsEventMessage nemsSuspension = templatingService.createNemsEventFromTemplate(
-                TemplateVariant.CHANGE_OF_GP_SUSPENSION,
-                syntheticPatientProperties.getNonSyntheticPatientWithoutGp(),
-                nemsMessageId,
-                previousGp,
-                suspensionTime
-        );
-
-        meshMailbox.sendMessage(nemsSuspension);
-
-        NemsResolutionMessage expectedMessageOnQueue = new NemsResolutionMessage(nemsMessageId, "NO_ACTION:NOT_SYNTHETIC_OR_SAFE_LISTED");
-
-        assertTrue(suspensionServiceMofNotUpdatedQueue.hasResolutionMessage(expectedMessageOnQueue));
-    }
-
-    @Test
     @Order(3)
     void shouldMoveDeceasedPatientEventToDeceasedQueue() {
         String nemsMessageId = randomNemsMessageId();
@@ -258,36 +207,6 @@ class ContinuityE2ETest {
         DeceasedPatientMessageNems expectedMessageOnQueue = new DeceasedPatientMessageNems(nemsMessageId, "NO_ACTION:DECEASED_PATIENT");
 
         assertTrue(suspensionServiceDeceasedPatientQueue.hasResolutionMessage(expectedMessageOnQueue));
-    }
-
-    @Test
-    @Order(7)
-    void shouldDeleteEhrOfPatientOnTheirReRegistration() throws Exception {
-        String nemsMessageId = randomNemsMessageId();
-        String patientNhsNumber = syntheticPatientProperties.getPatientWithCurrentGp();
-        String reregistrationTime = now();
-        storeEhrInRepositoryFor(patientNhsNumber);
-        activeSuspensionsService.save(new ActiveSuspensionsRecord(patientNhsNumber, randomOdsCode(), now()));
-
-        NemsEventMessage reRegistration = templatingService.createNemsEventFromTemplate(
-                TemplateVariant.CHANGE_OF_GP_RE_REGISTRATION,
-                patientNhsNumber,
-                nemsMessageId,
-                "B85612", // this previous GP was hardcoded in previous implementation
-                reregistrationTime
-        );
-
-        meshMailbox.sendMessage(reRegistration);
-
-        String expectedMessageOnQueue = "{\"nhsNumber\":\"" + patientNhsNumber + "\"," +
-                "\"newlyRegisteredOdsCode\":\"B86056\"," +
-                "\"nemsMessageId\":\"" + nemsMessageId + "\"," +
-                "\"lastUpdated\":\"" + reregistrationTime + "\"}";
-
-        assertThrows(HttpClientErrorException.class, () -> ehrRepositoryService.getEhrResponse(patientNhsNumber));
-
-        assertTrue(meshForwarderOQ.hasMessage(reRegistration.getMessage()));
-        assertTrue(nemsEventProcessorReRegistrationsOQ.hasMessage(expectedMessageOnQueue));
     }
 
     @Test
@@ -314,11 +233,6 @@ class ContinuityE2ETest {
 
     private static String now() {
         return ZonedDateTime.now(ZoneOffset.ofHours(0)).toString();
-    }
-
-    private void storeEhrInRepositoryFor(String patientNhsNumber) throws Exception {
-        ehrRepositoryService.createEhr(patientNhsNumber);
-        assertThat(ehrRepositoryService.getEhrResponse(patientNhsNumber)).isEqualTo("200 OK");
     }
 
     private void setManagingOrganisationToEMISOdsCode(String nhsNumber) {
