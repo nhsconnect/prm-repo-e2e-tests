@@ -1,17 +1,12 @@
-package uk.nhs.prm.e2etests.test;
+package uk.nhs.prm.e2etests.test.repositorye2etest;
 
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -20,7 +15,6 @@ import org.xmlunit.diff.Diff;
 import uk.nhs.prm.e2etests.enumeration.*;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
-import uk.nhs.prm.e2etests.model.templatecontext.AcknowledgementTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.ContinueRequestTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
 import uk.nhs.prm.e2etests.model.templatecontext.LargeEhrCoreTemplateContext;
@@ -41,16 +35,15 @@ import uk.nhs.prm.e2etests.queue.gp2gpmessenger.observability.Gp2GpMessengerOQ;
 import uk.nhs.prm.e2etests.service.RepoService;
 import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
+import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 
@@ -60,17 +53,14 @@ import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
 import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_CORE;
 import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_FRAGMENT;
 import static uk.nhs.prm.e2etests.enumeration.Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP;
-import static uk.nhs.prm.e2etests.enumeration.Patient.SUSPENDED_WITH_EHR_AT_TPP;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.CONTINUE_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_CORE;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_FRAGMENT_NO_REF;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.LARGE_EHR_FRAGMENT_WITH_REF;
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.NEGATIVE_ACKNOWLEDGEMENT;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.SMALL_EHR_WITH_99_ATTACHMENTS;
 import static uk.nhs.prm.e2etests.property.TestConstants.*;
-import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
 import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
 
@@ -486,201 +476,6 @@ class RepositoryE2ETest {
         ));
     }
 
-    // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
-    private Arguments erroneousInboundMessage_UnrecognisedInteractionID() {
-        final String invalidInteractionId = "TEST_XX123456XX01";
-        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        log.info("nhsNumber: " + nhsNumber);
-
-        EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
-                .outboundConversationId(outboundConversationId)
-                .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .build();
-
-        String inboundMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestContext);
-
-        String erroneousInboundMessage = inboundMessage
-                .replaceAll(MessageType.EHR_REQUEST.interactionId, invalidInteractionId);
-
-        return Arguments.of(
-                Named.of("Message with unrecognised Interaction ID", erroneousInboundMessage),
-                outboundConversationId
-        );
-    }
-
-    // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
-    private Arguments erroneousInboundMessage_EhrRequestWithUnrecognisedNhsNumber() {
-        String nonExistentNhsNumber = "9729999999";
-
-        EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
-                .outboundConversationId(outboundConversationId)
-                .nhsNumber(nonExistentNhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .build();
-
-        String erroneousInboundMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestContext);
-
-        return Arguments.of(
-                Named.of("EHR Request with unrecognised NHS Number", erroneousInboundMessage),
-                outboundConversationId
-        );
-    }
-
-    // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
-    private Arguments erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId() {
-        ContinueRequestTemplateContext continueRequestContext = ContinueRequestTemplateContext.builder()
-                .outboundConversationId(outboundConversationId)
-                .recipientOdsCode(recipientOdsCode)
-                .senderOdsCode(senderOdsCode)
-                .build();
-
-        String continueRequestMessage = this.templatingService
-                .getTemplatedString(CONTINUE_REQUEST, continueRequestContext);
-
-        return Arguments.of(
-                Named.of("Continue Request with unrecognised Conversation ID", continueRequestMessage),
-                outboundConversationId
-        );
-    }
-
-    // TODO: ABSTRACT THIS OUT TO ANOTHER CLASS
-    private Stream<Arguments> erroneousInboundMessages() {
-        return Stream.of(
-                erroneousInboundMessage_UnrecognisedInteractionID(),
-                erroneousInboundMessage_EhrRequestWithUnrecognisedNhsNumber(),
-                erroneousInboundMessage_ContinueRequestWithUnrecognisedConversationId()
-        );
-    }
-
-    /**
-     * <p>Ensure that received erroneous EHR requests are rejected via the ehr-transfer-service-unhandled-queue.</p>
-     * <ul>
-     *     <li>Simulate the receipt of an erroneous GP2GP EHR request message via the mhsInboundQueue to be processed at
-     *     the ehr-transfer-service.
-     *     </li>
-     *     <li>Assert that the message is rejected via the ehr-transfer-service-unhandled-queue.</li>
-     * </ul>
-     */
-    @ParameterizedTest(name = "[Should reject {0}")
-    @MethodSource("erroneousInboundMessages")
-    @DisplayName("Should reject erroneous inbound EHR request messages")
-    void shouldRejectErroneousEhrRequestMessages(String inboundMessage, String conversationId) {
-        // Given that we have an erroneous inbound EHR request message
-        // When the message is received via the mhsInboundQueue
-        mhsInboundQueue.sendMessage(inboundMessage, conversationId);
-
-        // Then the ehr-transfer-service will reject the message via the ehr-transfer-service-unhandled-queue
-        SqsMessage unhandledMessage = ehrTransferServiceUnhandledOQ.getMessageContaining(conversationId);
-        assertThat(unhandledMessage.getBody()).isEqualTo(inboundMessage);
-
-        assertTrue(gp2gpMessengerOQ.verifyNoMessageContaining(conversationId));
-
-        //todo: assert NACK is sent out for unrecognised NHS number, probably split out from this parameterised test
-    }
-
-    /**
-     * Ensures that only one EHR is sent when multiple EHR out requests are received from the same GP and use the same
-     * ConversationId.
-     * <ul>
-     *      <li>Add a small EHR to the repository.</li>
-     *      <li>Simulate the receipt of 2 identical EHR out requests from the same GP and using the same ConversationId.</li>
-     *      <li>Assert that only one EHR is transferred to the requesting practice.</li>
-     * </ul>
-     *
-     */
-    @Test
-    void shouldRejectADuplicateEhrRequestFromTheSameGPWithSameConversationId() {
-        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        log.info("nhsNumber: " + nhsNumber);
-
-        // Given a small EHR exists in the repository
-        repoService.addSmallEhrToEhrRepo(SMALL_EHR, nhsNumber);
-
-        // When 2 identical EHR out requests are received (from same GP, using same ConversationId)
-
-        // Construct an EHR request message
-        EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
-                .outboundConversationId(outboundConversationId)
-                .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
-                .build();
-        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
-
-        // Send 2 EHR out requests
-        for (int i = 0; i < 2; i++) {
-            mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
-            log.info("Duplicate EHR Request {} of {} sent to MHS Inbound queue successfully.", (i + 1), 2);
-        }
-
-        log.info("Added duplicate EHR out requests to mhsInboundQueue");
-
-        // Then only one EHR is transferred to the requesting practice
-        boolean messagesFound = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(1, 0,
-                List.of(outboundConversationId));
-        assertTrue(messagesFound);
-    }
-
-    /**
-     * Ensure that only one EHR is sent when multiple EHR out requests are received from the same GP and use different
-     * ConversationIds.
-     * <ul>
-     *      <li>Add a small EHR to the repository.</li>
-     *      <li>Simulate the receipt of 2 identical EHR out requests from the same GP and using different ConversationIds.</li>
-     *      <li>Assert that only one EHR is transferred to the requesting practice.</li>
-     * </ul>
-     *
-     */
-    @Test
-    void shouldRejectADuplicateEhrRequestFromTheSameGPWithDifferentConversationId() {
-        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        log.info("nhsNumber: " + nhsNumber);
-
-        // Given a small EHR exists in the repository
-        String outboundConversationId1 = randomUppercaseUuidAsString();
-        String outboundConversationId2 = randomUppercaseUuidAsString();
-
-        log.info("Ignore 'outboundConversationId', this test uses outboundConversationId1 and outboundConversationId2");
-        log.info("outboundConversationId1: " + outboundConversationId1);
-        log.info("outboundConversationId2: " + outboundConversationId2);
-
-        repoService.addSmallEhrToEhrRepo(SMALL_EHR, nhsNumber);
-
-        // When 2 identical EHR out requests are received (from same GP, using same ConversationId)
-
-        // Construct an EHR request message
-        EhrRequestTemplateContext templateContext1 = EhrRequestTemplateContext.builder()
-                .outboundConversationId(outboundConversationId1)
-                .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
-                .build();
-
-        String ehrRequestMessage1 = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext1);
-
-        // Construct an EHR request message
-        EhrRequestTemplateContext templateContext2 = EhrRequestTemplateContext.builder()
-                .outboundConversationId(outboundConversationId2)
-                .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
-                .build();
-
-        String ehrRequestMessage2 = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext2);
-
-        // Send 2 EHR out requests
-        mhsInboundQueue.sendMessage(ehrRequestMessage1, outboundConversationId1);
-        mhsInboundQueue.sendMessage(ehrRequestMessage2, outboundConversationId2);
-
-        log.info("added EHR out requests to mhsInboundQueue");
-
-        // Then only one EHR is transferred to the requesting practice
-        boolean messagesFound = this.gp2gpMessengerOQ.getAllMessagesFromQueueWithConversationIds(1, 0,
-                List.of(outboundConversationId1, outboundConversationId2));
-        assertTrue(messagesFound);
-    }
-
     /**
      * Ensure that a small EHR with 99 attachments is transferred in and out of the repository successfully.
      * <ul>
@@ -719,53 +514,6 @@ class RepositoryE2ETest {
         assertTrue(messageFound);
     }
 
-    /**
-     * Ensure that an EHR out request is rejected when the ODS code of the requesting GP is different to the ODS code
-     * of the patient as is returned by PDS.
-     * <ul>
-     *     <li>Add an entry to the transfer tracker db, bypassing the repo-incoming-queue and sending of an EHR
-     *     request by the ehr-transfer-service.</li>
-     *     <li>Simulate the receipt of a small EHR from an FSS/GP via the mhsInboundQueue and ensure this is
-     *     transferred into the repository.</li>
-     *     <li>Simulate the receipt of a EHR out request from an FSS/GP via the mhsInboundQueue for which the ODS code differs
-     *     to that of the patient.</li>
-     *     <li>Assert that the EHR is not sent out to the FSS/GP.</li>
-     * </ul>
-     */
-    @Test
-    void shouldRejectEhrOutRequestFromGpWherePatientIsNotRegistered() {
-        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
-        final String senderOdsCode = EMIS_PTL_INT.odsCode();
-        final String asidCode = TPP_PTL_INT.asidCode();
-
-        log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-        log.info("asidCode: " + asidCode);
-
-        // Given a small EHR exists in the repository
-        this.repoService.addSmallEhrToEhrRepo(SMALL_EHR, nhsNumber);
-
-        // When an EHR out request is received from a GP where the patient is not registered (different ODS code)
-        EhrRequestTemplateContext templateContext = EhrRequestTemplateContext.builder()
-                .outboundConversationId(outboundConversationId)
-                .nhsNumber(nhsNumber)
-                .senderOdsCode(senderOdsCode)
-                .asidCode(asidCode)
-                .build();
-
-        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, templateContext);
-
-        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
-        log.info("EHR out request sent successfully");
-
-        // Then the EHR request is rejected
-
-        // Assert that the EHR has not been sent
-        assertTrue(gp2gpMessengerOQ.verifyNoMessageContaining(outboundConversationId, 20));
-        assertDoesNotThrow(() -> transferTrackerService.waitForFailureReasonMatching(inboundConversationId, "OUTBOUND:incorrect_ods_code"));
-        assertDoesNotThrow(() -> transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, OUTBOUND_FAILED.name()));
-    }
-
 
 //    @Test
 //    void shouldNotIngestDuplicateEhr() {
@@ -777,79 +525,7 @@ class RepositoryE2ETest {
 //        this.repoService.addSmallEhrToEhrRepo(nhsNumber, SMALL_EHR);
 //    }
 
-    /**
-     * Ensure the correct behaviour on the receipt of a negative acknowledgement from an FSS following an outbound EHR request.
-     * <ul>
-     *     <li>Add an entry to the transfer tracker db, bypassing the repo-incoming-queue and sending of an EHR
-     *     request by the ehr-transfer-service.</li>
-     *     <li>Simulate the receipt of a negative acknowledgment message from the requested GP.</li>
-     *     <li>Assert the transfer tracker db is updated accordingly.</li>
-     *     <li>Assert the negative acknowledgement message is processed accordingly via the expected queues.</li>
-     * </ul>
-     */
-    @Test
-    void shouldUpdateTransferTrackerDbStatusAndPublishToTransferCompleteQueueWhenNackReceived() {
-        // Given that an EHR request has been sent from the repository to an FSS
-        final String NEGATIVE_ACKNOWLEDGEMENT_FAILURE_CODE = "30";
-        final String nhsNumber = SUSPENDED_WITH_EHR_AT_TPP.nhsNumber();
-        final String senderOdsCode = TPP_PTL_INT.odsCode();
 
-        log.info("nhsNumber: " + nhsNumber);
-        log.info("senderOdsCode: " + senderOdsCode);
-
-
-        // create entry in transfer tracker db with status ACTION:EHR_REQUEST_SENT
-        this.transferTrackerService.saveConversation(ConversationRecord.builder()
-                .inboundConversationId(inboundConversationId)
-                .nemsMessageId(nemsMessageId)
-                .nhsNumber(nhsNumber)
-                .sourceGp(senderOdsCode)
-                .transferStatus(INBOUND_REQUEST_SENT.name())
-                .associatedTest(testName)
-                .build()
-        );
-
-        // When a negative acknowledgement message is received
-        String ackMessage = this.templatingService.getTemplatedString(NEGATIVE_ACKNOWLEDGEMENT,
-                AcknowledgementTemplateContext.builder()
-                        .messageId(messageId)
-                        .inboundConversationId(inboundConversationId)
-                        .build());
-
-        mhsInboundQueue.sendMessage(ackMessage, inboundConversationId);
-        log.info("negative acknowledgement message successfully added for stubbed EHR request with conversationId: {}", inboundConversationId);
-
-        // Then the negative acknowledgement message is processed and the transferTrackerStatus is updated as expected
-        assertThat(ehrTransferServiceNegativeAcknowledgementOQ.getMessageContaining(inboundConversationId)).isNotNull();
-
-        assertDoesNotThrow(() -> transferTrackerService.waitForFailureCodeMatching(inboundConversationId, NEGATIVE_ACKNOWLEDGEMENT_FAILURE_CODE));
-        assertDoesNotThrow(() -> transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_FAILED.name()));
-    }
-
-    /**
-     * Assert that unexpected message formats received via the mhsInboundQueue are rejected via the
-     * ehr-transfer-service parsing dead-letter queue.
-     * <ul>
-     *     <li>Simulate the receipt of an EHR message of an invalid format via the mhsInboundQueue.</li>
-     *     <li>Assert that this is unprocessed and added to the ehr-transfer-service parsing dead-letter queue.</li>
-     * </ul>
-     */
-    @Test
-    void shouldSendUnexpectedMessageFormatsThroughToEhrTransferServiceDeadLetterQueue() {
-        final List<String> unexpectedMessages = List.of(
-                "Hello World!",
-                "SELECT * FROM Fragment",
-                "<html><body><h1>This is html!</body></html>",
-                "100110 111010 001011 101001",
-                "{}",
-                randomUppercaseUuidAsString()
-        );
-
-        unexpectedMessages.forEach(message -> {
-            mhsInboundQueue.sendUnexpectedMessage(message);
-            assertThat(ehrTransferServiceParsingDeadLetterQueue.getMessageContaining(message)).isNotNull();
-        });
-    }
 
     @Test
     void shouldPutASmallEHROntoRepoAndSendEHRToMHSOutboundWhenReceivingRequestFromGP() {
