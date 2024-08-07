@@ -26,9 +26,9 @@ public class DatabaseConfiguration {
     public DataSource ehrOutDatabase() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName(org.postgresql.Driver.class.getName());
-        dataSource.setUrl(postgresDbProperties.getJdbcUrl());
-        dataSource.setUsername(postgresDbProperties.getEhrOutDatabaseUsername());
-        dataSource.setPassword(postgresDbProperties.getEhrOutDatabasePassword());
+        dataSource.setUrl("");
+        dataSource.setUsername("");
+        dataSource.setPassword("");
 
         return dataSource;
     }
