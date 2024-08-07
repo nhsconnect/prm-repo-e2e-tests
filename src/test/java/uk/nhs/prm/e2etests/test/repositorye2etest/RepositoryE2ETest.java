@@ -575,6 +575,8 @@ class RepositoryE2ETest {
         assertThat(unhandledMessage.getBody()).isEqualTo(inboundMessage);
 
         assertTrue(gp2gpMessengerOQ.verifyNoMessageContaining(conversationId));
+
+        //todo: assert NACK is sent out for unrecognised NHS number, probably split out from this parameterised test
     }
 
     /**
