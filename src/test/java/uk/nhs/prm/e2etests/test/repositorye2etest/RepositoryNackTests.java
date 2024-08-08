@@ -87,11 +87,26 @@ class RepositoryNackTests {
         TestConstants.generateTestConstants(testInfo.getDisplayName());
     }
 
+    final String knownNackTypeCode = "typeCode=\\\"AR\\\"";
+    final String unknownNackTypeCode = "typeCode=\\\"AE\\\"";
+
+    void assertNackMessageReceived(String nackCode){
+        //find message with the outbound ID
+        final SqsMessage outboundMessage = gp2gpMessengerOQ.getMessageContaining(outboundConversationId);
+
+        //assert the error code is correct
+        assertTrue(outboundMessage.contains("code=\\\"" + nackCode + "\\\""));
+
+        //assert the type code is correct dependent on error code
+        if(nackCode.equals("99")){
+            assertTrue(outboundMessage.contains(unknownNackTypeCode));
+        }
+        else assertTrue(outboundMessage.contains(knownNackTypeCode));
+    }
+
     @Test
     void shouldSend06NackWhenNHSNumberNotFound() {
         final String nonExistentNhsNumber = "9729999999";
-        final String nackTypeCode = "typeCode=\\\"AR\\\"";
-        final String nackCode = "code=\\\"06\\\"";
 
         //Given we have a message with an unrecognised NHS number
         EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
@@ -105,23 +120,11 @@ class RepositoryNackTests {
         // When the message is received via the mhsInboundQueue
         mhsInboundQueue.sendMessage(erroneousInboundMessage, outboundConversationId);
 
-        // Then the ehr-transfer-service will reject the message via the ehr-transfer-service-unhandled-queue
-//        SqsMessage unhandledMessage = ehrTransferServiceUnhandledOQ.getMessageContaining(outboundConversationId);
-//        assertThat(unhandledMessage.getBody()).isEqualTo(outboundConversationId);
-
-        final SqsMessage outboundMessage = gp2gpMessengerOQ.getMessageContaining(outboundConversationId);
-        log.info("NACK 06 ____________________________" + outboundMessage.getBody());
-        log.info("MESSAGE__________" + outboundMessage.getMessage());
-        log.info("MESSAGE ATTRIBUTES__________" + outboundMessage.getAttributes());
-        assertTrue(outboundMessage.contains(nackCode));
-        assertTrue(outboundMessage.contains(nackTypeCode));
-
+        assertNackMessageReceived("06");
     }
 
     @Test
     void shouldSend06NackWhenIncompleteInbound() {
-        final String nackTypeCode = "typeCode=\\\"AR\\\"";
-        final String nackCode = "code=\\\"06\\\"";
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         //set up an 'inbound' EHR with an unsuccessful status
@@ -148,9 +151,6 @@ class RepositoryNackTests {
         mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
         log.info("added EHR OUT request to mhsInboundQueue");
 
-        //assert NACK 06 is sent
-        final SqsMessage outboundMessage = gp2gpMessengerOQ.getMessageContaining(outboundConversationId);
-        assertTrue(outboundMessage.contains(nackCode));
-        assertTrue(outboundMessage.contains(nackTypeCode));
+        assertNackMessageReceived("06");
     }
 }
