@@ -87,6 +87,12 @@ class RepositoryNackTests {
         TestConstants.generateTestConstants(testInfo.getDisplayName());
     }
 
+    @AfterEach
+    void afterEach() throws InterruptedException {
+        transferTrackerService.clearConversation(inboundConversationId);
+        Thread.sleep(1000);
+    }
+
     final String knownNackTypeCode = "typeCode=\\\"AR\\\"";
     final String unknownNackTypeCode = "typeCode=\\\"AE\\\"";
 
