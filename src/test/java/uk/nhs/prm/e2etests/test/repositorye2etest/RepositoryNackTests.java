@@ -23,6 +23,7 @@ import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_COMPLETE;
 import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_FAILED;
 import static uk.nhs.prm.e2etests.enumeration.Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP;
 import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
@@ -103,6 +104,7 @@ class RepositoryNackTests {
     private void assertNackMessageReceived(String nackCode){
         //find message with the outbound ID
         final SqsMessage outboundMessage = gp2gpMessengerOQ.getMessageContaining(outboundConversationId);
+        log.info(outboundMessage.getBody());
 
         //assert the error code is correct
         assertTrue(outboundMessage.contains("code=\\\"" + nackCode + "\\\""));
@@ -111,7 +113,9 @@ class RepositoryNackTests {
         if(nackCode.equals("99")){
             assertTrue(outboundMessage.contains(unknownNackTypeCode));
         }
-        else assertTrue(outboundMessage.contains(knownNackTypeCode));
+        else {
+            assertTrue(outboundMessage.contains(knownNackTypeCode));
+        }
     }
 
     @Test
@@ -125,7 +129,7 @@ class RepositoryNackTests {
                 .senderOdsCode(senderOdsCode)
                 .build();
 
-        String erroneousInboundMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestContext);
+        String erroneousInboundMessage = templatingService.getTemplatedString(EHR_REQUEST, ehrRequestContext);
 
         // When the message is received via the mhsInboundQueue
         mhsInboundQueue.sendMessage(erroneousInboundMessage, outboundConversationId);
@@ -139,7 +143,7 @@ class RepositoryNackTests {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         //set up an 'inbound' EHR with an unsuccessful status
-        this.transferTrackerService.saveConversation(ConversationRecord.builder()
+        transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
                 .transferStatus(transferStatus.name())
@@ -156,7 +160,7 @@ class RepositoryNackTests {
                 .senderOdsCode(senderOdsCode)
                 .asidCode(asidCode)
                 .build();
-        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
+        String ehrRequestMessage = templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
 
         // Add EHR out request to mhsInboundQueue
         mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
