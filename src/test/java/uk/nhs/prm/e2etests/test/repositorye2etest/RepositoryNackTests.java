@@ -3,9 +3,13 @@ package uk.nhs.prm.e2etests.test.repositorye2etest;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
@@ -96,7 +100,7 @@ class RepositoryNackTests {
     final String knownNackTypeCode = "typeCode=\\\"AR\\\"";
     final String unknownNackTypeCode = "typeCode=\\\"AE\\\"";
 
-    void assertNackMessageReceived(String nackCode){
+    private void assertNackMessageReceived(String nackCode){
         //find message with the outbound ID
         final SqsMessage outboundMessage = gp2gpMessengerOQ.getMessageContaining(outboundConversationId);
 
@@ -129,15 +133,16 @@ class RepositoryNackTests {
         assertNackMessageReceived("06");
     }
 
-    @Test
-    void shouldSend06NackWhenIncompleteInbound() {
+    @ParameterizedTest(name = "[Should send NACK 06 when transfer status is {0}")
+    @EnumSource(value = ConversationTransferStatus.class, names = {"INBOUND_FAILED", "INBOUND_REQUEST_SENT", "INBOUND_TIMEOUT"})
+    void shouldSend06NackWhenIncompleteInbound(ConversationTransferStatus transferStatus) {
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 
         //set up an 'inbound' EHR with an unsuccessful status
         this.transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nhsNumber(nhsNumber)
-                .transferStatus(INBOUND_FAILED.name())
+                .transferStatus(transferStatus.name())
                 .nemsMessageId(nemsMessageId)
                 .sourceGp(senderOdsCode)
                 .associatedTest(testName)
