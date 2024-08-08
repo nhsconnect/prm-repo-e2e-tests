@@ -110,7 +110,7 @@ class RepositoryNackTests {
         assertTrue(outboundMessage.contains("code=\\\"" + nackCode + "\\\""));
 
         //assert the type code is correct dependent on error code
-        if(nackCode.equals("99")){
+        if("99".equals(nackCode)){
             assertTrue(outboundMessage.contains(unknownNackTypeCode));
         }
         else {
