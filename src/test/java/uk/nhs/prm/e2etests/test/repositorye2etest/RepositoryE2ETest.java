@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -130,6 +131,12 @@ class RepositoryE2ETest {
     @BeforeEach
     void beforeEach(TestInfo testInfo) {
         TestConstants.generateTestConstants(testInfo.getDisplayName());
+    }
+
+    @AfterEach
+    void afterEach() throws InterruptedException {
+        transferTrackerService.clearConversation(inboundConversationId);
+        Thread.sleep(1000);
     }
 
     /**
