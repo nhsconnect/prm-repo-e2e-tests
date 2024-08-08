@@ -104,4 +104,8 @@ public class TransferTrackerService {
         conversationRepository.softDeleteConversation(inboundConversationId, instant);
         coreRepository.softDeleteCore(inboundConversationId, instant);
     }
+
+    public void clearConversation(String inboundConversationId) {
+        conversationRepository.clearConversation(inboundConversationId);
+    }
 }

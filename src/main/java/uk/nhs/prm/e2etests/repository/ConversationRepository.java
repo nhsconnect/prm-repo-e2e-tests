@@ -57,4 +57,12 @@ public class ConversationRepository {
         record.setDeletedAt((int) (instant.toEpochMilli() / 1000));
         table.updateItem(record);
     }
+
+    public void clearConversation(String inboundConversationId) {
+        final Key key = Key.builder()
+                .partitionValue(inboundConversationId)
+                .sortValue(CONVERSATION_LAYER)
+                .build();
+        table.deleteItem(key);
+    }
 }
