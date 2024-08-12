@@ -9,10 +9,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import org.xmlunit.diff.Diff;
 import uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus;
+import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
-import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
+import uk.nhs.prm.e2etests.model.templatecontext.*;
+import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.TestConstants;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceParsingDeadLetterQueue;
@@ -22,13 +25,24 @@ import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_COMPLETE;
-import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_FAILED;
+import static org.springframework.test.util.AssertionErrors.assertFalse;
+import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.*;
+import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_CONTINUE_REQUEST_SENT;
+import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
+import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_CORE;
+import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_FRAGMENT;
 import static uk.nhs.prm.e2etests.enumeration.Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP;
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.*;
 import static uk.nhs.prm.e2etests.property.TestConstants.*;
 import static uk.nhs.prm.e2etests.property.TestConstants.asidCode;
+import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
+import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
 
 @Log4j2
 @SpringBootTest
@@ -47,7 +61,7 @@ class RepositoryNackTests {
     private final EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ;
     private final EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ;
     private final EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue;
-
+    private final NhsProperties nhsProperties;
     @Autowired
     public RepositoryNackTests(
             TransferTrackerService transferTrackerService,
@@ -60,7 +74,8 @@ class RepositoryNackTests {
             EhrTransferServiceSmallEhrOQ ehrTransferServiceSmallEhrOQ,
             EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ,
             EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ,
-            EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue
+            EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue,
+            NhsProperties nhsProperties
     ) {
         this.transferTrackerService = transferTrackerService;
         this.templatingService = templatingService;
@@ -73,6 +88,7 @@ class RepositoryNackTests {
         this.ehrTransferServiceLargeEhrOQ = ehrTransferServiceLargeEhrOQ;
         this.ehrTransferServiceNegativeAcknowledgementOQ = ehrTransferServiceNegativeAcknowledgementOQ;
         this.ehrTransferServiceParsingDeadLetterQueue = ehrTransferServiceParsingDeadLetterQueue;
+        this.nhsProperties = nhsProperties;
     }
 
     @BeforeAll
@@ -167,5 +183,102 @@ class RepositoryNackTests {
         log.info("added EHR OUT request to mhsInboundQueue");
 
         assertNackMessageReceived("06");
+    }
+
+    @Test
+    void shouldSend10NackWhenEHRNotFound() {
+        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+
+        //set up a complete inbound transfer
+        transferTrackerService.saveConversation(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
+                .nhsNumber(nhsNumber)
+                .transferStatus(INBOUND_COMPLETE.name())
+                .nemsMessageId(nemsMessageId)
+                .sourceGp(senderOdsCode)
+                .associatedTest(testName)
+                .build()
+        );
+
+        //do not transfer the EHR, continue to set up the outbound request
+        EhrRequestTemplateContext ehrRequestContext = EhrRequestTemplateContext.builder()
+                .outboundConversationId(outboundConversationId)
+                .nhsNumber(nhsNumber)
+                .senderOdsCode(senderOdsCode)
+                .build();
+
+        String inboundMessage = templatingService.getTemplatedString(EHR_REQUEST, ehrRequestContext);
+
+        // When the message is received via the mhsInboundQueue
+        mhsInboundQueue.sendMessage(inboundMessage, outboundConversationId);
+
+        assertNackMessageReceived("10");
+    }
+
+    @Test
+    void shouldSend10NackWhenCoreNotFound(){
+        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+        final String senderOdsCode = TPP_PTL_INT.odsCode();
+        final String asidCode = TPP_PTL_INT.asidCode();
+
+        /*
+        ORC-IN
+         */
+
+        // Given a small EHR is transferred into the repository
+        // create entry in transfer tracker db with status INBOUND_REQUEST_SENT
+        this.transferTrackerService.saveConversation(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
+                .nemsMessageId(nemsMessageId)
+                .nhsNumber(nhsNumber)
+                .sourceGp(senderOdsCode)
+                .transferStatus(INBOUND_REQUEST_SENT.name())
+                .associatedTest(testName)
+                .build());
+
+        // Construct small EHR message
+        SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
+                .inboundConversationId(inboundConversationId)
+                .nhsNumber(nhsNumber)
+                .build();
+
+        String smallEhrMessage = this.templatingService.getTemplatedString(TemplateVariant.SMALL_EHR_WITHOUT_LINEBREAKS, smallEhrTemplateContext);
+
+        // Put the patient EHR onto the mhsInboundQueue
+        mhsInboundQueue.sendMessage(smallEhrMessage, inboundConversationId);
+
+        // Wait until the patient EHR is successfully transferred to the repository
+        log.info("conversationIdExists: {}", transferTrackerService.inboundConversationIdExists(inboundConversationId));
+        String status = transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
+        log.info("tracker db status: {}", status);
+
+        /*
+        ORC-OUT
+         */
+
+        // When an EHR OUT request is received
+
+        // Construct an EHR request
+        EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
+                .outboundConversationId(outboundConversationId)
+                .nhsNumber(nhsNumber)
+                .senderOdsCode(senderOdsCode)
+                .asidCode(asidCode)
+                .build();
+        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
+
+        // Add EHR request to mhsInboundQueue
+        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+
+        // Then the patient EHR is transferred to the requesting practice
+
+        // Assert that the outgoing EHR is added to the gp2gp messenger observability queue
+
+
+        // Then the patient EHR is transferred to the requesting practice
+
+        // Assert that the outgoing EHR core is added to the gp2gp messenger observability queue
+        assertNackMessageReceived("10");
+
     }
 }
