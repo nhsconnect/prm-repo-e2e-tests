@@ -95,6 +95,7 @@ class RepositoryNackTests {
     @AfterEach
     void afterEach() throws InterruptedException {
         transferTrackerService.clearConversation(inboundConversationId);
+        gp2gpMessengerOQ.deleteAllMessages();
         Thread.sleep(1000);
     }
 
