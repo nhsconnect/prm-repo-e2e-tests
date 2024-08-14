@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.in;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertFalse;
 import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.*;
@@ -216,10 +217,14 @@ class RepositoryNackTests {
     }
 
     @Test
-    void shouldSend10NackWhenCoreNotFound(){
+    void shouldSend10NackWhenEHRNotFoundWithInboundId(){
         final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
         final String senderOdsCode = TPP_PTL_INT.odsCode();
         final String asidCode = TPP_PTL_INT.asidCode();
+
+        log.info("nhsNumber: " + nhsNumber);
+        log.info("senderOdsCode: " + senderOdsCode);
+        log.info("asidCode: " + asidCode);
 
         /*
         ORC-IN
@@ -227,7 +232,7 @@ class RepositoryNackTests {
 
         // Given a small EHR is transferred into the repository
         // create entry in transfer tracker db with status INBOUND_REQUEST_SENT
-        this.transferTrackerService.saveConversation(ConversationRecord.builder()
+        transferTrackerService.saveConversation(ConversationRecord.builder()
                 .inboundConversationId(inboundConversationId)
                 .nemsMessageId(nemsMessageId)
                 .nhsNumber(nhsNumber)
@@ -252,9 +257,8 @@ class RepositoryNackTests {
         String status = transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
         log.info("tracker db status: {}", status);
 
-        /*
-        ORC-OUT
-         */
+        //edit the core inbound message ID so that the EHR cannot be found in S3
+        transferTrackerService.editCoreInboundMessageId(inboundConversationId);
 
         // When an EHR OUT request is received
 
@@ -270,15 +274,72 @@ class RepositoryNackTests {
         // Add EHR request to mhsInboundQueue
         mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
 
-        // Then the patient EHR is transferred to the requesting practice
-
-        // Assert that the outgoing EHR is added to the gp2gp messenger observability queue
-
-
-        // Then the patient EHR is transferred to the requesting practice
-
-        // Assert that the outgoing EHR core is added to the gp2gp messenger observability queue
+        // Assert that a NACK 10 is sent out
         assertNackMessageReceived("10");
 
     }
+
+    @Test
+    void shouldSend10NackWhenCoreNotFound(){
+        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+        final String senderOdsCode = TPP_PTL_INT.odsCode();
+        final String asidCode = TPP_PTL_INT.asidCode();
+
+        log.info("nhsNumber: " + nhsNumber);
+        log.info("senderOdsCode: " + senderOdsCode);
+        log.info("asidCode: " + asidCode);
+
+        /*
+        ORC-IN
+         */
+
+        // Given a small EHR is transferred into the repository
+        // create entry in transfer tracker db with status INBOUND_REQUEST_SENT
+        transferTrackerService.saveConversation(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
+                .nemsMessageId(nemsMessageId)
+                .nhsNumber(nhsNumber)
+                .sourceGp(senderOdsCode)
+                .transferStatus(INBOUND_REQUEST_SENT.name())
+                .associatedTest(testName)
+                .build());
+
+        // Construct small EHR message
+        SmallEhrTemplateContext smallEhrTemplateContext = SmallEhrTemplateContext.builder()
+                .inboundConversationId(inboundConversationId)
+                .nhsNumber(nhsNumber)
+                .build();
+
+        String smallEhrMessage = this.templatingService.getTemplatedString(TemplateVariant.SMALL_EHR_WITHOUT_LINEBREAKS, smallEhrTemplateContext);
+
+        // Put the patient EHR onto the mhsInboundQueue
+        mhsInboundQueue.sendMessage(smallEhrMessage, inboundConversationId);
+
+        // Wait until the patient EHR is successfully transferred to the repository
+        log.info("conversationIdExists: {}", transferTrackerService.inboundConversationIdExists(inboundConversationId));
+        String status = transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
+        log.info("tracker db status: {}", status);
+
+        //delete the EHR core
+        transferTrackerService.hardDeleteCore(inboundConversationId);
+
+        // When an EHR OUT request is received
+
+        // Construct an EHR request
+        EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
+                .outboundConversationId(outboundConversationId)
+                .nhsNumber(nhsNumber)
+                .senderOdsCode(senderOdsCode)
+                .asidCode(asidCode)
+                .build();
+        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
+
+        // Add EHR request to mhsInboundQueue
+        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+
+        // Assert that a NACK 10 is sent out
+        assertNackMessageReceived("10");
+    }
+
+
 }

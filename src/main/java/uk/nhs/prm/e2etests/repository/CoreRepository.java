@@ -13,6 +13,8 @@ import uk.nhs.prm.e2etests.model.database.CoreRecord;
 import java.time.Instant;
 import java.util.Optional;
 
+import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
+
 @Component
 public class CoreRepository {
     private final DynamoDbTable<CoreRecord> table;
@@ -41,5 +43,20 @@ public class CoreRepository {
 
         record.setDeletedAt((int) (instant.toEpochMilli() / 1000));
         table.updateItem(record);
+    }
+
+    public void editInboundMessageId(String inboundConversationId) {
+        final CoreRecord record = getCoreByInboundConversationId(inboundConversationId)
+                .orElseThrow(() -> new NotFoundException(inboundConversationId));
+
+        record.setInboundMessageId(randomUppercaseUuidAsString());
+        table.updateItem(record);
+    }
+
+    public void hardDeleteCore(String inboundConversationId) {
+        final CoreRecord record = getCoreByInboundConversationId(inboundConversationId)
+                .orElseThrow(() -> new NotFoundException(inboundConversationId));
+
+        table.deleteItem(record);
     }
 }
