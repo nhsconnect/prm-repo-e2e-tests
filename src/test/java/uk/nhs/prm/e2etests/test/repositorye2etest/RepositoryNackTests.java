@@ -5,17 +5,16 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-import org.xmlunit.diff.Diff;
 import uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus;
 import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 import uk.nhs.prm.e2etests.model.templatecontext.*;
 import uk.nhs.prm.e2etests.property.NhsProperties;
+import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
 import uk.nhs.prm.e2etests.property.TestConstants;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceParsingDeadLetterQueue;
@@ -25,25 +24,15 @@ import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.in;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.util.AssertionErrors.assertFalse;
 import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.*;
-import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_CONTINUE_REQUEST_SENT;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
-import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_CORE;
-import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_FRAGMENT;
 import static uk.nhs.prm.e2etests.enumeration.Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP;
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.*;
 import static uk.nhs.prm.e2etests.property.TestConstants.*;
 import static uk.nhs.prm.e2etests.property.TestConstants.asidCode;
-import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.comparePayloads;
-import static uk.nhs.prm.e2etests.utility.XmlComparisonUtility.getPayloadOptional;
+import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_COMPLETE;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
+
 
 @Log4j2
 @SpringBootTest
@@ -62,7 +51,7 @@ class RepositoryNackTests {
     private final EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ;
     private final EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ;
     private final EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue;
-    private final NhsProperties nhsProperties;
+
     @Autowired
     public RepositoryNackTests(
             TransferTrackerService transferTrackerService,
@@ -75,8 +64,7 @@ class RepositoryNackTests {
             EhrTransferServiceSmallEhrOQ ehrTransferServiceSmallEhrOQ,
             EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ,
             EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ,
-            EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue,
-            NhsProperties nhsProperties
+            EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue
     ) {
         this.transferTrackerService = transferTrackerService;
         this.templatingService = templatingService;
@@ -89,7 +77,6 @@ class RepositoryNackTests {
         this.ehrTransferServiceLargeEhrOQ = ehrTransferServiceLargeEhrOQ;
         this.ehrTransferServiceNegativeAcknowledgementOQ = ehrTransferServiceNegativeAcknowledgementOQ;
         this.ehrTransferServiceParsingDeadLetterQueue = ehrTransferServiceParsingDeadLetterQueue;
-        this.nhsProperties = nhsProperties;
     }
 
     @BeforeAll
@@ -112,6 +99,7 @@ class RepositoryNackTests {
     @AfterEach
     void afterEach() throws InterruptedException {
         transferTrackerService.clearConversation(inboundConversationId);
+        gp2gpMessengerOQ.deleteAllMessages();
         Thread.sleep(1000);
     }
 
@@ -127,7 +115,7 @@ class RepositoryNackTests {
         assertTrue(outboundMessage.contains("code=\\\"" + nackCode + "\\\""));
 
         //assert the type code is correct dependent on error code
-        if(nackCode.equals("99")){
+        if("99".equals(nackCode)){
             assertTrue(outboundMessage.contains(unknownNackTypeCode));
         }
         else {
@@ -340,6 +328,4 @@ class RepositoryNackTests {
         // Assert that a NACK 10 is sent out
         assertNackMessageReceived("10");
     }
-
-
 }
