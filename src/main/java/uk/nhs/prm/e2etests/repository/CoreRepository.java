@@ -1,20 +1,25 @@
 package uk.nhs.prm.e2etests.repository;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Key;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.*;
+import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import uk.nhs.prm.e2etests.exception.NotFoundException;
 import uk.nhs.prm.e2etests.model.database.CoreRecord;
 
+import javax.management.Query;
 import java.time.Instant;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
-
+@Log4j2
 @Component
 public class CoreRepository {
     private final DynamoDbTable<CoreRecord> table;
@@ -35,6 +40,37 @@ public class CoreRepository {
             .build();
 
         return Optional.ofNullable(table.getItem(key));
+    }
+
+    private PageIterable<CoreRecord> getFragmentsByMessageId(String inboundConversationId, String fragmentMessageId) {
+        //find items with inbound ID and FRAGMENT at start of Layer
+        final QueryConditional condition = QueryConditional.keyEqualTo(k -> k.partitionValue(inboundConversationId));
+        final Expression filter = Expression.builder()
+                .expression("InboundMessageId = :id")
+                .expressionValues(Map.of(":id", AttributeValue.builder().s(fragmentMessageId).build()))
+                .build();
+
+        final QueryEnhancedRequest request = QueryEnhancedRequest.builder()
+                .queryConditional(condition)
+                .filterExpression(filter)
+                .build();
+
+        return table.query(request);
+    }
+
+    public void hardDeleteFirstFragment(String inboundConversationId, String fragmentMessageId) {
+        Iterator<CoreRecord> fragmentRecords = getFragmentsByMessageId(inboundConversationId, fragmentMessageId).items().stream().iterator();
+
+        if(fragmentRecords.hasNext()) {
+            CoreRecord fragmentToDelete = fragmentRecords.next();
+
+            // Delete the item
+            table.deleteItem(fragmentToDelete);
+
+            System.out.println("Fragment with messageId" + fragmentToDelete.getInboundMessageId() + "has been deleted.");
+        } else {
+            System.out.println("No matching items found.");
+        }
     }
 
     public void softDeleteCore(String inboundConversationId, Instant instant) {

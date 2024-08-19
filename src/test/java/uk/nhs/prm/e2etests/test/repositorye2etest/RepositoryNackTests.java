@@ -13,8 +13,8 @@ import uk.nhs.prm.e2etests.enumeration.TemplateVariant;
 import uk.nhs.prm.e2etests.model.SqsMessage;
 import uk.nhs.prm.e2etests.model.database.ConversationRecord;
 import uk.nhs.prm.e2etests.model.templatecontext.*;
-import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.model.templatecontext.EhrRequestTemplateContext;
+import uk.nhs.prm.e2etests.property.NhsProperties;
 import uk.nhs.prm.e2etests.property.TestConstants;
 import uk.nhs.prm.e2etests.queue.SimpleAmqpQueue;
 import uk.nhs.prm.e2etests.queue.ehrtransfer.EhrTransferServiceParsingDeadLetterQueue;
@@ -24,14 +24,19 @@ import uk.nhs.prm.e2etests.service.TemplatingService;
 import uk.nhs.prm.e2etests.service.TransferTrackerService;
 import uk.nhs.prm.e2etests.test.ForceXercesParserSoLogbackDoesNotBlowUpWhenUsingSwiftMqClient;
 
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.*;
 import static uk.nhs.prm.e2etests.enumeration.Gp2GpSystem.TPP_PTL_INT;
+import static uk.nhs.prm.e2etests.enumeration.MessageType.EHR_CORE;
 import static uk.nhs.prm.e2etests.enumeration.Patient.PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP;
+import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.*;
 import static uk.nhs.prm.e2etests.property.TestConstants.*;
 import static uk.nhs.prm.e2etests.property.TestConstants.asidCode;
 import static uk.nhs.prm.e2etests.enumeration.ConversationTransferStatus.INBOUND_COMPLETE;
-import static uk.nhs.prm.e2etests.enumeration.TemplateVariant.EHR_REQUEST;
 
 
 @Log4j2
@@ -51,6 +56,7 @@ class RepositoryNackTests {
     private final EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ;
     private final EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ;
     private final EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue;
+    private final NhsProperties nhsProperties;
 
     @Autowired
     public RepositoryNackTests(
@@ -64,7 +70,8 @@ class RepositoryNackTests {
             EhrTransferServiceSmallEhrOQ ehrTransferServiceSmallEhrOQ,
             EhrTransferServiceLargeEhrOQ ehrTransferServiceLargeEhrOQ,
             EhrTransferServiceNegativeAcknowledgementOQ ehrTransferServiceNegativeAcknowledgementOQ,
-            EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue
+            EhrTransferServiceParsingDeadLetterQueue ehrTransferServiceParsingDeadLetterQueue,
+            NhsProperties nhsProperties
     ) {
         this.transferTrackerService = transferTrackerService;
         this.templatingService = templatingService;
@@ -77,6 +84,7 @@ class RepositoryNackTests {
         this.ehrTransferServiceLargeEhrOQ = ehrTransferServiceLargeEhrOQ;
         this.ehrTransferServiceNegativeAcknowledgementOQ = ehrTransferServiceNegativeAcknowledgementOQ;
         this.ehrTransferServiceParsingDeadLetterQueue = ehrTransferServiceParsingDeadLetterQueue;
+        this.nhsProperties = nhsProperties;
     }
 
     @BeforeAll
@@ -98,7 +106,7 @@ class RepositoryNackTests {
 
     @AfterEach
     void afterEach() throws InterruptedException {
-        transferTrackerService.clearConversation(inboundConversationId);
+        //transferTrackerService.clearConversation(inboundConversationId);
         gp2gpMessengerOQ.deleteAllMessages();
         Thread.sleep(1000);
     }
@@ -324,6 +332,111 @@ class RepositoryNackTests {
 
         // Add EHR request to mhsInboundQueue
         mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+
+        // Assert that a NACK 10 is sent out
+        assertNackMessageReceived("10");
+    }
+
+    @Test
+    void shouldSendNack10WhenFragmentNotFound(){
+        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
+        // For readability sake, it is easiest to set up test so that sender & recipient are the same practice
+        final String recipientOdsCode = TPP_PTL_INT.odsCode();
+        final String repositoryOdsCode = nhsProperties.getRepoOdsCode();
+
+        log.info("nhsNumber: " + nhsNumber);
+        log.info("recipientOdsCode: " + recipientOdsCode);
+        log.info("repositoryOdsCode: " + repositoryOdsCode);
+
+        // create entry in transfer tracker db with status INBOUND_REQUEST_SENT
+        this.transferTrackerService.saveConversation(ConversationRecord.builder()
+                .inboundConversationId(inboundConversationId)
+                .nhsNumber(nhsNumber)
+                .transferStatus(INBOUND_REQUEST_SENT.name())
+                .nemsMessageId(nemsMessageId)
+                .sourceGp(senderOdsCode)
+                .associatedTest(testName)
+                .build()
+        );
+
+        // Construct large EHR core message
+        LargeEhrCoreTemplateContext largeEhrCoreTemplateContext = LargeEhrCoreTemplateContext.builder()
+                .inboundConversationId(inboundConversationId)
+                .largeEhrCoreMessageId(largeEhrCoreMessageId)
+                .fragmentMessageId(fragment1MessageId)
+                .nhsNumber(nhsNumber)
+                .senderOdsCode(senderOdsCode)
+                .build();
+        String largeEhrCore = this.templatingService.getTemplatedString(TemplateVariant.LARGE_EHR_CORE, largeEhrCoreTemplateContext);
+
+        // Put the large EHR core message onto the mhsInboundQueue
+        mhsInboundQueue.sendMessage(largeEhrCore, inboundConversationId);
+        log.info("added EHR IN message containing large EHR core to mhsInboundQueue");
+        log.info("conversationId {} exists in transferTrackerDb: {}", inboundConversationId, transferTrackerService.inboundConversationIdExists(inboundConversationId));
+
+        // Wait until the large EHR core is processed by the ehr-transfer-service
+        String status = transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_CONTINUE_REQUEST_SENT.name());
+        log.info("tracker db status: {}", status);
+
+        // Construct large EHR fragment messages
+        List<String> largeEhrFragments = this.templatingService.getMultipleTemplatedStrings(Map.of(
+                TemplateVariant.LARGE_EHR_FRAGMENT_WITH_REF, LargeEhrFragmentWithReferencesContext.builder()
+                        .inboundConversationId(inboundConversationId)
+                        .fragmentMessageId(fragment1MessageId)
+                        .fragmentTwoMessageId(fragment2MessageId)
+                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(repositoryOdsCode)
+                        .build(),
+
+                TemplateVariant.LARGE_EHR_FRAGMENT_NO_REF, LargeEhrFragmentNoReferencesContext.builder()
+                        .inboundConversationId(inboundConversationId)
+                        .fragmentMessageId(fragment2MessageId)
+                        .recipientOdsCode(recipientOdsCode)
+                        .senderOdsCode(repositoryOdsCode)
+                        .build()
+        ));
+
+        // Put the large fragment messages onto the mhsInboundQueue
+        largeEhrFragments.forEach(fragment -> mhsInboundQueue.sendMessage(fragment, inboundConversationId));
+        log.info("added EHR IN messages containing large EHR fragments to mhsInboundQueue");
+
+        // Wait until the patient EHR is successfully transferred to the repository
+        log.info("Waiting for transferTrackerDb status of INBOUND_COMPLETE");
+        transferTrackerService.waitForConversationTransferStatusMatching(inboundConversationId, INBOUND_COMPLETE.name());
+
+        //delete a fragment
+        transferTrackerService.hardDeleteFragment(inboundConversationId, fragment1MessageId);
+
+        // Construct an EHR out request
+        EhrRequestTemplateContext ehrRequestTemplateContext = EhrRequestTemplateContext.builder()
+                .outboundConversationId(outboundConversationId)
+                .nhsNumber(nhsNumber)
+                .senderOdsCode(senderOdsCode)
+                .asidCode(asidCode)
+                .build();
+        String ehrRequestMessage = this.templatingService.getTemplatedString(EHR_REQUEST, ehrRequestTemplateContext);
+
+        // Add EHR out request to mhsInboundQueue
+        mhsInboundQueue.sendMessage(ehrRequestMessage, outboundConversationId);
+        log.info("added EHR OUT request to mhsInboundQueue");
+
+        SqsMessage gp2gpMessageUK06 = gp2gpMessengerOQ.getMessageContaining(outboundConversationId);
+        assertThat(gp2gpMessageUK06).isNotNull();
+        assertTrue(gp2gpMessageUK06.contains(EHR_CORE.interactionId));
+
+        String continueRequestMessage = this.templatingService.getTemplatedString(
+                CONTINUE_REQUEST,
+                ContinueRequestTemplateContext.builder()
+                        .outboundConversationId(outboundConversationId)
+                        .senderOdsCode(senderOdsCode)
+                        .recipientOdsCode(recipientOdsCode)
+                        .build());
+
+        // Put a continue request to inboundQueueFromMhs
+        mhsInboundQueue.sendMessage(
+                continueRequestMessage,
+                outboundConversationId
+        );
 
         // Assert that a NACK 10 is sent out
         assertNackMessageReceived("10");
