@@ -337,7 +337,7 @@ class RepositoryNackTests {
     }
 
 //    @Test
-//    void shouldSendNack30WhenFragmentNotFound(){
+//    void shouldSendNack99WhenFragmentNotFound(){
 //        final String nhsNumber = PATIENT_WITH_SMALL_EHR_IN_REPO_AND_MOF_SET_TO_TPP.nhsNumber();
 //        // For readability sake, it is easiest to set up test so that sender & recipient are the same practice
 //        final String recipientOdsCode = TPP_PTL_INT.odsCode();
@@ -438,6 +438,6 @@ class RepositoryNackTests {
 //        );
 //
 //        // Assert that a NACK 30 is sent out
-//        assertNackMessageReceived("30");
+//        assertNackMessageReceived("99");
 //    }
 }
