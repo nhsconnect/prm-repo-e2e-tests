@@ -108,4 +108,16 @@ public class TransferTrackerService {
     public void clearConversation(String inboundConversationId) {
         conversationRepository.clearConversation(inboundConversationId);
     }
+
+    public void editCoreInboundMessageId(String inboundConversationId) {
+        coreRepository.editInboundMessageId(inboundConversationId);
+    }
+
+    public void hardDeleteCore(String inboundConversationId) {
+        coreRepository.hardDeleteCore(inboundConversationId);
+    }
+
+    public void hardDeleteFragment(String inboundConversationId, String fragmentMessageId){
+        coreRepository.hardDeleteFragmentWithId(inboundConversationId, fragmentMessageId);
+    }
 }
