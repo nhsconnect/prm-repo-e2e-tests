@@ -12,14 +12,13 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import uk.nhs.prm.e2etests.exception.NotFoundException;
 import uk.nhs.prm.e2etests.model.database.CoreRecord;
 
-import javax.management.Query;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
 import static uk.nhs.prm.e2etests.utility.TestDataUtility.randomUppercaseUuidAsString;
-@Log4j2
+
 @Component
 public class CoreRepository {
     private final DynamoDbTable<CoreRecord> table;
@@ -58,19 +57,13 @@ public class CoreRepository {
         return table.query(request);
     }
 
-    public void hardDeleteFirstFragment(String inboundConversationId, String fragmentMessageId) {
-        Iterator<CoreRecord> fragmentRecords = getFragmentsByMessageId(inboundConversationId, fragmentMessageId).items().stream().iterator();
+    public void hardDeleteFragmentWithId(String inboundConversationId, String fragmentMessageId) {
+        CoreRecord fragmentToDelete = getFragmentsByMessageId(inboundConversationId, fragmentMessageId).items().stream().findFirst()
+                .orElseThrow(() -> new NotFoundException(fragmentMessageId));
 
-        if(fragmentRecords.hasNext()) {
-            CoreRecord fragmentToDelete = fragmentRecords.next();
-
-            // Delete the item
-            table.deleteItem(fragmentToDelete);
-
-            System.out.println("Fragment with messageId" + fragmentToDelete.getInboundMessageId() + "has been deleted.");
-        } else {
-            System.out.println("No matching items found.");
-        }
+        // Delete the item
+        table.deleteItem(fragmentToDelete);
+        System.out.println("Fragment with messageId" + fragmentToDelete.getInboundMessageId() + "has been deleted.");
     }
 
     public void softDeleteCore(String inboundConversationId, Instant instant) {
