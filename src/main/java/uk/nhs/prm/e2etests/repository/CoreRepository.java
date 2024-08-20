@@ -4,6 +4,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.pagination.sync.SdkIterable;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
@@ -41,7 +42,7 @@ public class CoreRepository {
         return Optional.ofNullable(table.getItem(key));
     }
 
-    private PageIterable<CoreRecord> getFragmentsByMessageId(String inboundConversationId, String fragmentMessageId) {
+    private SdkIterable<CoreRecord> getFragmentsByMessageId(String inboundConversationId, String fragmentMessageId) {
         //find items with inbound ID and FRAGMENT at start of Layer
         final QueryConditional condition = QueryConditional.keyEqualTo(k -> k.partitionValue(inboundConversationId));
         final Expression filter = Expression.builder()
@@ -54,11 +55,11 @@ public class CoreRepository {
                 .filterExpression(filter)
                 .build();
 
-        return table.query(request);
+        return table.query(request).items();
     }
 
     public void hardDeleteFragmentWithId(String inboundConversationId, String fragmentMessageId) {
-        CoreRecord fragmentToDelete = getFragmentsByMessageId(inboundConversationId, fragmentMessageId).items().stream().findFirst()
+        CoreRecord fragmentToDelete = getFragmentsByMessageId(inboundConversationId, fragmentMessageId).stream().findFirst()
                 .orElseThrow(() -> new NotFoundException(fragmentMessageId));
 
         // Delete the item
