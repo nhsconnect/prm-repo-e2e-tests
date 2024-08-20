@@ -118,6 +118,6 @@ public class TransferTrackerService {
     }
 
     public void hardDeleteFragment(String inboundConversationId, String fragmentMessageId){
-        coreRepository.hardDeleteFirstFragment(inboundConversationId, fragmentMessageId);
+        coreRepository.hardDeleteFragmentWithId(inboundConversationId, fragmentMessageId);
     }
 }
