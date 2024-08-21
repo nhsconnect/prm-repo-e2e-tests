@@ -38,7 +38,7 @@ dependencies {
     implementation 'software.amazon.awssdk:cloudwatchlogs'
     implementation 'software.amazon.awssdk:dynamodb-enhanced'
 
-    implementation 'org.awaitility:awaitility:4.2.1'
+    implementation 'org.awaitility:awaitility:4.2.2'
     implementation 'org.jfree:jfreechart:1.5.5'
     implementation 'com.google.code.gson:gson:2.11.0'
     implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
