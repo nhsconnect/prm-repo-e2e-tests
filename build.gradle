@@ -40,7 +40,7 @@ dependencies {
 
     implementation 'org.awaitility:awaitility:4.2.1'
     implementation 'org.jfree:jfreechart:1.5.5'
-    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.google.code.gson:gson:2.12.1'
     implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
     implementation 'org.json:json:20240303'
     implementation 'com.swiftmq:swiftmq-client:13.0.2'
